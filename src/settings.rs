@@ -1,0 +1,45 @@
+use config::{Config, ConfigError, Environment, File};
+use once_cell::sync::Lazy;
+use serde::Deserialize;
+use std::env;
+use url::Url;
+
+#[derive(Deserialize)]
+pub struct DB {
+    pub uri: String,
+}
+
+#[derive(Deserialize)]
+pub struct Server {
+    pub port: u16,
+}
+
+#[derive(Deserialize)]
+pub struct Auth {
+    pub issuer_url: String,
+    pub client_id: String,
+    pub client_secret: String,
+    pub scopes: String,
+    pub redirect_url: Url,
+    pub auth_cookie_name: String,
+    pub auth_cookie_secure: bool,
+}
+
+#[derive(Deserialize)]
+pub struct Settings {
+    pub db: DB,
+    pub server: Server,
+    pub auth: Auth,
+}
+
+impl Settings {
+    pub fn new() -> Result<Self, ConfigError> {
+        let file = env::var("MDN_SETTINGS").unwrap_or_else(|_| String::from(".settings.toml"));
+        let s = Config::builder()
+            .add_source(File::with_name(&file))
+            .add_source(Environment::with_prefix("mdn").separator("__"));
+        s.build()?.try_deserialize()
+    }
+}
+
+pub static SETTINGS: Lazy<Settings> = Lazy::new(|| Settings::new().unwrap());

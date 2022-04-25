@@ -1,0 +1,12 @@
+[db]
+uri = "postgres://postgres:mdn@127.0.0.1/mdn "
+
+[server]
+port = 8000
+
+[auth]
+issuer_url = "https://accounts.stage.mozaws.net"
+redirect_url = "http://localhost:8000/users/fxa/login/callback/"
+scopes = "openid profile email profile:subscriptions"
+auth_cookie_name = "auth-cookie"
+auth_cookie_secure = false
