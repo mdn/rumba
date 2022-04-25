@@ -7,12 +7,7 @@ use std::sync::{Arc, RwLock};
 use actix_identity::{CookieIdentityPolicy, IdentityService};
 use actix_web::{middleware::Logger, web::Data, App, HttpServer};
 use log::{debug, info};
-use rumba::{
-    api::{self, healthz},
-    db,
-    fxa::LoginManager,
-    settings::SETTINGS,
-};
+use rumba::{add_services, db, fxa::LoginManager, settings::SETTINGS};
 
 embed_migrations!();
 
@@ -33,12 +28,12 @@ async fn main() -> anyhow::Result<()> {
         let policy = CookieIdentityPolicy::new(&[0; 32])
             .name(&SETTINGS.auth.auth_cookie_name)
             .secure(SETTINGS.auth.auth_cookie_secure);
-        App::new()
-            .app_data(Data::new(login_manager.clone()))
+        let app = App::new()
             .wrap(Logger::default().exclude("/healthz"))
             .wrap(IdentityService::new(policy))
-            .service(healthz::healthz_app())
-            .service(api::auth::auth_service())
+            .app_data(Data::new(pool.clone()))
+            .app_data(Data::new(login_manager.clone()));
+        add_services(app)
     })
     .bind(("0.0.0.0", SETTINGS.server.port))?
     .run()
