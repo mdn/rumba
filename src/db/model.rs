@@ -1,5 +1,5 @@
-use chrono::{NaiveDateTime};
 use crate::db::types::Subscription;
+use chrono::NaiveDateTime;
 
 use crate::db::schema::*;
 
@@ -10,6 +10,6 @@ pub struct User {
     pub fxa_uid: String,
     pub fxa_refresh_token: String,
     pub avatar_url: Option<String>,
-    pub is_subscriber:  bool,
+    pub is_subscriber: bool,
     pub subscription_type: Subscription,
 }

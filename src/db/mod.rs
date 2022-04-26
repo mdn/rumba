@@ -1,8 +1,8 @@
+mod model;
 #[allow(unused_imports)]
 pub mod schema;
 pub mod types;
 pub mod users;
-mod model;
 
 use diesel::pg::PgConnection;
 use diesel::r2d2::ConnectionManager;

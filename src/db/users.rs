@@ -1,10 +1,14 @@
-use diesel::{insert_into, PgConnection, QueryResult, RunQueryDsl};
-use crate::db::schema;
-use schema::users::dsl::*;
 use crate::db::model::User;
-use crate::fxa::{FxAUser};
+use crate::db::schema;
+use crate::fxa::FxAUser;
+use diesel::{insert_into, PgConnection, QueryResult, RunQueryDsl};
+use schema::users::dsl::*;
 
-pub fn create_or_update_user(conn_pool: &PgConnection, mut fxa_user: FxAUser, refresh_token: &String) -> QueryResult<usize> {
+pub fn create_or_update_user(
+    conn_pool: &PgConnection,
+    mut fxa_user: FxAUser,
+    refresh_token: &str,
+) -> QueryResult<usize> {
     if fxa_user.subscriptions.len() > 1 {
         fxa_user.subscriptions.sort();
     }
@@ -19,7 +23,8 @@ pub fn create_or_update_user(conn_pool: &PgConnection, mut fxa_user: FxAUser, re
         subscription_type: sub,
     };
 
-    insert_into(users).values(&user)
+    insert_into(users)
+        .values(&user)
         .on_conflict(fxa_uid)
         .do_update()
         .set(&user)

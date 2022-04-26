@@ -1,6 +1,7 @@
 use config::{Config, ConfigError, Environment, File};
 use once_cell::sync::Lazy;
 use serde::Deserialize;
+use serde_with::{base64::Base64, serde_as};
 use std::env;
 use url::Url;
 
@@ -14,6 +15,7 @@ pub struct Server {
     pub port: u16,
 }
 
+#[serde_as]
 #[derive(Deserialize)]
 pub struct Auth {
     pub issuer_url: String,
@@ -23,6 +25,8 @@ pub struct Auth {
     pub redirect_url: Url,
     pub auth_cookie_name: String,
     pub auth_cookie_secure: bool,
+    #[serde_as(as = "Base64")]
+    pub auth_cookie_key: [u8; 64],
 }
 
 #[derive(Deserialize)]

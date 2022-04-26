@@ -1,8 +1,5 @@
-#![allow(
-non_camel_case_types,
-)]
+#![allow(non_camel_case_types)]
 use serde::{Deserialize, Serialize};
-
 
 #[derive(Copy, Clone, DbEnum, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 #[DieselType = "Subscription_type"]
@@ -26,19 +23,20 @@ impl From<String> for Subscription {
             "mdn_plus_5y" => Subscription::MdnPlus_5y,
             "mdn_plus_10y" => Subscription::MdnPlus_10y,
             "mdn_plus_10m" => Subscription::MdnPlus_10m,
-            _ => Subscription::Core
+            _ => Subscription::Core,
         }
     }
 }
 
-impl Into<String> for Subscription {
-    fn into(self) -> String {
-        match self {
+impl From<Subscription> for String {
+    fn from(val: Subscription) -> Self {
+        match val {
             Subscription::MdnPlus_5m => "mdn_plus_5m",
             Subscription::MdnPlus_5y => "mdn_plus_5y",
-             Subscription::MdnPlus_10y => "mdn_plus_10y",
-             Subscription::MdnPlus_10m => "mdn_plus_10m",
-             Subscription::Core => "core"
-        }.into()
+            Subscription::MdnPlus_10y => "mdn_plus_10y",
+            Subscription::MdnPlus_10m => "mdn_plus_10m",
+            Subscription::Core => "core",
+        }
+        .into()
     }
 }

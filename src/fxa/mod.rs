@@ -3,23 +3,21 @@ use actix_web::web;
 use anyhow::anyhow;
 use openidconnect::core::{CoreAuthenticationFlow, CoreClient, CoreProviderMetadata};
 use openidconnect::reqwest::async_http_client;
+use openidconnect::OAuth2TokenResponse;
 use openidconnect::{
     AdditionalClaims, AuthorizationCode, ClientId, ClientSecret, CsrfToken, IssuerUrl, Nonce,
     RedirectUrl, Scope,
 };
-use openidconnect::{OAuth2TokenResponse, TokenResponse};
 use reqwest::{Client, IntoUrl, Method, RequestBuilder};
 use serde::{Deserialize, Serialize};
 
 use url::Url;
 
-use anyhow::Error;
-use crate::db::Pool;
 use crate::db::users::create_or_update_user;
+use crate::db::Pool;
+use anyhow::Error;
 
 use crate::settings::SETTINGS;
-
-
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -72,8 +70,8 @@ impl LoginManager {
         })
     }
 
-    pub fn login(&mut self) -> (Url, CsrfToken) {
-        let (auth_url, csrf_token, _nonce) = self
+    pub fn login(&mut self) -> (Url, CsrfToken, Nonce) {
+        let (auth_url, csrf_token, nonce) = self
             .login_client
             .authorize_url(
                 CoreAuthenticationFlow::AuthorizationCode,
@@ -83,10 +81,16 @@ impl LoginManager {
             .add_scope(Scope::new(SETTINGS.auth.scopes.clone()))
             .add_extra_param("access_type", "offline")
             .url();
-        (auth_url, csrf_token)
+        println!("{}", auth_url);
+        (auth_url, csrf_token, nonce)
     }
 
-    pub async fn callback(&mut self, code: String, pool: &web::Data<Pool>) -> Result<String, Error> {
+    pub async fn callback(
+        &mut self,
+        code: String,
+        _nonce: Nonce,
+        pool: &web::Data<Pool>,
+    ) -> Result<String, Error> {
         println!("{}", code);
         let token_response = self
             .login_client
@@ -95,10 +99,11 @@ impl LoginManager {
             .await?;
         println!("token");
         let id_token = token_response
+            .extra_fields()
             .id_token()
             .ok_or_else(|| anyhow!("Server did not return an ID token"))?;
         println!("{}", id_token.to_string());
-        //let claims = id_token.claims(&self.login_client.id_token_verifier(), &nonce)?;
+        // let claims = id_token.claims(&self.login_client.id_token_verifier(), &nonce)?;
 
         let access_token = token_response.access_token().secret().clone();
         println!("access: {:?}", &access_token);

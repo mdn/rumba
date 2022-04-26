@@ -18,6 +18,7 @@ actix-web = "4"
 actix-http = "3"
 actix-rt = "2"
 actix-identity = "0.4"
+actix-session = { version = "0.6", features = ["cookie-session"] }
 
 diesel = { version = "1.4", features = ["postgres", "uuid", "r2d2", "chrono", "serde_json"] }
 diesel_migrations = "1.4"
@@ -30,6 +31,7 @@ reqwest = { version = "0.11", features = ["blocking", "json"] }
 
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+serde_with = { version = "1", features = ["base64"]}
 
 log = "0.4"
 env_logger = "0.9"
