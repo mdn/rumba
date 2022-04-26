@@ -2,6 +2,7 @@ use std::sync::{Arc, RwLock};
 
 use actix_identity::Identity;
 use actix_web::{dev::HttpServiceFactory, http, web, Error, HttpRequest, HttpResponse};
+use crate::db::Pool;
 
 use crate::fxa::{AuthResponse, LoginManager};
 
@@ -30,6 +31,7 @@ async fn logout(id: Identity, _req: HttpRequest) -> Result<HttpResponse, Error> 
 async fn callback(
     _req: HttpRequest,
     id: Identity,
+    pool: web::Data<Pool>,
     web::Query(q): web::Query<AuthResponse>,
     login_manager: web::Data<Arc<RwLock<LoginManager>>>,
 ) -> Result<HttpResponse, Error> {
@@ -40,7 +42,7 @@ async fn callback(
                 .try_write()
                 .map_err(|_| actix_web::error::ErrorInternalServerError("lock"))?;
             let uid = lm
-                .callback(q.code)
+                .callback(q.code, &pool)
                 .await
                 .map_err(actix_web::error::ErrorInternalServerError)?;
             id.remember(uid);

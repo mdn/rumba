@@ -21,6 +21,8 @@ actix-identity = "0.4"
 
 diesel = { version = "1.4", features = ["postgres", "uuid", "r2d2", "chrono", "serde_json"] }
 diesel_migrations = "1.4"
+diesel-derive-enum = { version = "1", features = ["postgres"] } # "postgres", "mysql" or "sqlite"
+
 r2d2 = "0.8"
 
 openidconnect = "2"

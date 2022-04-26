@@ -1,3 +1,5 @@
+pub mod types;
+use actix_web::web;
 use anyhow::anyhow;
 use openidconnect::core::{CoreAuthenticationFlow, CoreClient, CoreProviderMetadata};
 use openidconnect::reqwest::async_http_client;
@@ -11,6 +13,14 @@ use serde::{Deserialize, Serialize};
 
 use url::Url;
 
+use anyhow::Error;
+use crate::db::Pool;
+use crate::db::users::create_or_update_user;
+
+use crate::settings::SETTINGS;
+
+
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FxAUser {
@@ -22,7 +32,7 @@ pub struct FxAUser {
     pub amr_values: Vec<String>,
     pub uid: String,
     #[serde(default)]
-    pub subscriptions: Vec<String>,
+    pub subscriptions: Vec<types::Subscription>,
 }
 
 #[derive(Deserialize)]
@@ -38,9 +48,6 @@ pub struct LoginManager {
     http_client: Client,
     user_info_endpoint: Url,
 }
-use anyhow::Error;
-
-use crate::settings::SETTINGS;
 
 impl LoginManager {
     pub async fn init() -> Result<Self, Error> {
@@ -79,7 +86,7 @@ impl LoginManager {
         (auth_url, csrf_token)
     }
 
-    pub async fn callback(&mut self, code: String) -> Result<String, Error> {
+    pub async fn callback(&mut self, code: String, pool: &web::Data<Pool>) -> Result<String, Error> {
         println!("{}", code);
         let token_response = self
             .login_client
@@ -109,7 +116,9 @@ impl LoginManager {
 
         let uid = user.uid.clone();
         println!("{:#?}", serde_json::to_string_pretty(&user));
-        //TODO: add user to db
+        let pg_conn = pool.get()?;
+
+        create_or_update_user(&pg_conn, user, &refresh_token)?;
         Ok(uid)
     }
     fn request<U: IntoUrl>(&self, method: Method, url: U, bearer: &str) -> RequestBuilder {
