@@ -20,9 +20,9 @@ actix-rt = "2"
 actix-identity = "0.4"
 actix-session = { version = "0.6", features = ["cookie-session"] }
 
-diesel = { version = "1.4", features = ["postgres", "uuid", "r2d2", "chrono", "serde_json"] }
-diesel_migrations = "1.4"
-diesel-derive-enum = { version = "1", features = ["postgres"] } # "postgres", "mysql" or "sqlite"
+diesel = { version = "2.0.0-rc.0", features = ["postgres", "uuid", "r2d2", "chrono", "serde_json"] }
+diesel_migrations = "2.0.0-rc.0"
+diesel-derive-enum = { git = "https://github.com/adwhit/diesel-derive-enum", version = "2.0.0-pre", features = ["postgres"] } # "postgres", "mysql" or "sqlite"
 
 r2d2 = "0.8"
 

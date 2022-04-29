@@ -1,15 +1,15 @@
 #![warn(clippy::all)]
-#[macro_use]
-extern crate diesel_migrations;
 
 use std::sync::{Arc, RwLock};
 
 use actix_identity::{CookieIdentityPolicy, IdentityService};
 use actix_web::{middleware::Logger, web::Data, App, HttpServer};
+use diesel_migrations::MigrationHarness;
 use log::{debug, info};
 use rumba::{add_services, db, fxa::LoginManager, settings::SETTINGS};
 
-embed_migrations!();
+const MIGRATIONS: diesel_migrations::EmbeddedMigrations =
+    diesel_migrations::embed_migrations!();
 
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
@@ -21,7 +21,7 @@ async fn main() -> anyhow::Result<()> {
     debug!("DEBUG logging enabled");
 
     let pool = db::establish_connection(&SETTINGS.db.uri);
-    embedded_migrations::run_with_output(&pool.get()?, &mut std::io::stdout())?;
+    pool.get()?.run_pending_migrations(MIGRATIONS).expect("failed to run migrations");
     let login_manager = Arc::new(RwLock::new(LoginManager::init().await?));
 
     HttpServer::new(move || {

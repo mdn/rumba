@@ -5,7 +5,7 @@ use diesel::{insert_into, PgConnection, QueryResult, RunQueryDsl};
 use schema::users::dsl::*;
 
 pub fn create_or_update_user(
-    conn_pool: &PgConnection,
+    conn: &mut PgConnection,
     mut fxa_user: FxAUser,
     refresh_token: &str,
 ) -> QueryResult<usize> {
@@ -28,5 +28,5 @@ pub fn create_or_update_user(
         .on_conflict(fxa_uid)
         .do_update()
         .set(&user)
-        .execute(conn_pool)
+        .execute(conn)
 }

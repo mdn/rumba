@@ -11,9 +11,6 @@ pub mod settings;
 #[macro_use]
 extern crate diesel;
 
-#[macro_use]
-extern crate diesel_derive_enum;
-
 pub fn add_services<T>(app: App<T>) -> App<T>
 where
     T: ServiceFactory<ServiceRequest, Config = (), Error = Error, InitError = ()>,
