@@ -17,7 +17,6 @@ use crate::db::users::create_or_update_user;
 use crate::db::Pool;
 use anyhow::Error;
 
-
 use crate::settings::SETTINGS;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

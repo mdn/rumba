@@ -5,8 +5,7 @@ use rumba::{
     settings::SETTINGS,
 };
 
-const MIGRATIONS: diesel_migrations::EmbeddedMigrations =
-    diesel_migrations::embed_migrations!();
+const MIGRATIONS: diesel_migrations::EmbeddedMigrations = diesel_migrations::embed_migrations!();
 
 pub fn get_pool() -> Pool {
     establish_connection(&SETTINGS.db.uri)
@@ -15,7 +14,11 @@ pub fn get_pool() -> Pool {
 pub fn reset() -> Result<(), Error> {
     let mut connection = get_pool().get()?;
 
-    connection.revert_all_migrations(MIGRATIONS).expect("failed to revert migrations");
-    connection.run_pending_migrations(MIGRATIONS).expect("failed to run migrations");
+    connection
+        .revert_all_migrations(MIGRATIONS)
+        .expect("failed to revert migrations");
+    connection
+        .run_pending_migrations(MIGRATIONS)
+        .expect("failed to run migrations");
     Ok(())
 }

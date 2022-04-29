@@ -8,8 +8,7 @@ use diesel_migrations::MigrationHarness;
 use log::{debug, info};
 use rumba::{add_services, db, fxa::LoginManager, settings::SETTINGS};
 
-const MIGRATIONS: diesel_migrations::EmbeddedMigrations =
-    diesel_migrations::embed_migrations!();
+const MIGRATIONS: diesel_migrations::EmbeddedMigrations = diesel_migrations::embed_migrations!();
 
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
@@ -21,7 +20,9 @@ async fn main() -> anyhow::Result<()> {
     debug!("DEBUG logging enabled");
 
     let pool = db::establish_connection(&SETTINGS.db.uri);
-    pool.get()?.run_pending_migrations(MIGRATIONS).expect("failed to run migrations");
+    pool.get()?
+        .run_pending_migrations(MIGRATIONS)
+        .expect("failed to run migrations");
     let login_manager = Arc::new(RwLock::new(LoginManager::init().await?));
 
     HttpServer::new(move || {
