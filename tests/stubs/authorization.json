@@ -1,0 +1,26 @@
+{
+  "uuid": "authorization",
+  "request": {
+    "method": "GET",
+    "url": "/authorization"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "keys": [
+        {
+          "kty": "RSA",
+          "alg": "RS256",
+          "kid": "TEST_KEY",
+          "fxa-createdAt": 1564502400,
+          "use": "sig",
+          "n":"m8iTlV2dw7PZhjmsMboUwl8S2Zcny0HiRLbXXD9YugIGui6dbPpyhfSnjawi00X_SF59qWDnTYq-crPVAPGvVY6QOYzEXidafG_unvneSvH3M9qV483mYuXIKR_VX5Hhvv-ICxET_UeVezMOySc6rkr5uyENP8WDNJBnmpnyeU0tx7w1nwUavW0UUAKIsnOaMqyurMtQaYL3HndRCHyMsMyR4oyFyzz3tE3cDX6xwlt3FAAD6sJYScudM75yFHR2su-PgO2ultxxS7z2EMrBhMifrCgC8xD46cNJfne0fxLw0U5dehYykKOaa9VCIEcfcA5Noucwbrj33LalQm9wlQ",
+          "e": "AQAB"
+        }
+      ]
+    }
+  }
+}

@@ -17,6 +17,7 @@ use crate::db::users::create_or_update_user;
 use crate::db::Pool;
 use anyhow::Error;
 
+
 use crate::settings::SETTINGS;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -49,6 +50,7 @@ pub struct LoginManager {
 
 impl LoginManager {
     pub async fn init() -> Result<Self, Error> {
+        println!("AUTH URL {:?}", SETTINGS.auth.issuer_url);
         let provider_metadata = CoreProviderMetadata::discover_async(
             IssuerUrl::new(SETTINGS.auth.issuer_url.clone())?,
             async_http_client,

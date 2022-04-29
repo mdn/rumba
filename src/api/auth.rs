@@ -56,10 +56,10 @@ async fn callback(
             let mut lm = login_manager
                 .try_write()
                 .map_err(|_| actix_web::error::ErrorInternalServerError("lock"))?;
-            let uid = lm
-                .callback(q.code, nonce, &pool)
-                .await
-                .map_err(actix_web::error::ErrorInternalServerError)?;
+            let uid = lm.callback(q.code, nonce, &pool).await.map_err(|err| {
+                println!("{:?}", err);
+                actix_web::error::ErrorInternalServerError(err)
+            })?;
             id.remember(uid);
 
             return Ok(HttpResponse::TemporaryRedirect()

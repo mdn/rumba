@@ -1,0 +1,47 @@
+{
+  "uuid": "openid-configuration",
+  "request": {
+    "method": "GET",
+    "url": "/.well-known/openid-configuration"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "authorization_endpoint": "http://localhost:4321/authorization",
+      "introspection_endpoint": "http://localhost:4321/v1/introspect",
+      "issuer": "http://localhost:4321",
+      "jwks_uri": "http://localhost:4321/v1/jwks",
+      "revocation_endpoint": "http://localhost:4321/v1/destroy",
+      "token_endpoint": "http://localhost:4321/v1/token",
+      "userinfo_endpoint": "http://localhost:4321/v1/profile",
+      "claims_supported": [
+        "aud",
+        "exp",
+        "iat",
+        "iss",
+        "sub"
+      ],
+      "id_token_signing_alg_values_supported": [
+        "RS256"
+      ],
+      "response_types_supported": [
+        "code",
+        "token"
+      ],
+      "scopes_supported": [
+        "openid",
+        "profile",
+        "email"
+      ],
+      "subject_types_supported": [
+        "public"
+      ],
+      "token_endpoint_auth_methods_supported": [
+        "client_secret_post"
+      ]
+    }
+  }
+}

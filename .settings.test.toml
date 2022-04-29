@@ -1,0 +1,15 @@
+[db]
+uri = "postgres://kuma:kuma@127.0.0.1:5432/mdn"
+
+[server]
+port = 8000
+
+[auth]
+issuer_url = "http://localhost:4321"
+redirect_url = "http://localhost:8000/users/fxa/login/callback/"
+scopes = "openid profile email profile:subscriptions"
+auth_cookie_name = "auth-cookie"
+auth_cookie_secure = false
+client_id="TEST_CLIENT_ID"
+client_secret="TEST_CLIENT_SECRET"
+auth_cookie_key = "DUwIFZuUYzRhHPlhOm6DwTHSDUSyR5SyvZHIeHdx4DIanxm5/GD/4dqXROLvn5vMofOYUq37HhhivjCyMCWP4w=="

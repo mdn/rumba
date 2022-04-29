@@ -1,4 +1,5 @@
 use config::{Config, ConfigError, Environment, File};
+
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde_with::{base64::Base64, serde_as};
@@ -46,4 +47,13 @@ impl Settings {
     }
 }
 
-pub static SETTINGS: Lazy<Settings> = Lazy::new(|| Settings::new().unwrap());
+pub static SETTINGS: Lazy<Settings> = Lazy::new(|| {
+    let settings = Settings::new();
+    match settings {
+        Ok(settings) => settings,
+        Err(err) => {
+            println!("{:?}", err);
+            Settings::new().unwrap()
+        }
+    }
+});
