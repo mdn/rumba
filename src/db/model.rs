@@ -12,4 +12,19 @@ pub struct User {
     pub avatar_url: Option<String>,
     pub is_subscriber: bool,
     pub subscription_type: Subscription,
+    pub email: String,
+}
+
+#[derive(Queryable, AsChangeset)]
+#[table_name = "users"]
+pub struct UserQuery {
+    pub id: i64,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+    pub email: String,
+    pub fxa_uid: String,
+    pub fxa_refresh_token: String,
+    pub avatar_url: Option<String>,
+    pub is_subscriber: bool,
+    pub subscription_type: Option<Subscription>,
 }

@@ -20,4 +20,5 @@ where
 {
     app.service(api::healthz::healthz_app())
         .service(api::auth::auth_service())
+        .service(api::api_v1::api_v1_service())
 }

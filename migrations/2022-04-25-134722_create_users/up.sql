@@ -6,6 +6,7 @@ CREATE TABLE users
     id                BIGSERIAL PRIMARY KEY,
     created_at        TIMESTAMP    NOT NULL DEFAULT now(),
     updated_at        TIMESTAMP    NOT NULL DEFAULT now(),
+    email             TEXT         NOT NULL,
     fxa_uid           VARCHAR(255) NOT NULL UNIQUE,
     fxa_refresh_token VARCHAR(255) NOT NULL,
     avatar_url        TEXT,
