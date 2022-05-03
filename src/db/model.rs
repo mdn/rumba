@@ -4,7 +4,7 @@ use chrono::NaiveDateTime;
 use crate::db::schema::*;
 
 #[derive(Insertable, AsChangeset)]
-#[table_name = "users"]
+#[diesel(table_name = users)]
 pub struct User {
     pub updated_at: NaiveDateTime,
     pub fxa_uid: String,

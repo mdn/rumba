@@ -1,8 +1,20 @@
 #![allow(non_camel_case_types)]
+use crate::db::schema::sql_types::SubscriptionType;
 use serde::{Deserialize, Serialize};
 
-#[derive(Copy, Clone, DbEnum, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
-#[DieselType = "Subscription_type"]
+#[derive(
+    Copy,
+    Clone,
+    diesel_derive_enum::DbEnum,
+    Debug,
+    Deserialize,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+)]
+#[DieselExistingType = "SubscriptionType"]
 pub enum Subscription {
     #[serde(rename(serialize = "core"))]
     Core,

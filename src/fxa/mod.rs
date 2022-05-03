@@ -17,7 +17,6 @@ use crate::db::users::create_or_update_user;
 use crate::db::Pool;
 use anyhow::Error;
 
-
 use crate::settings::SETTINGS;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -123,9 +122,9 @@ impl LoginManager {
 
         let uid = user.uid.clone();
         println!("{:#?}", serde_json::to_string_pretty(&user));
-        let pg_conn = pool.get()?;
+        let mut pg_conn = pool.get()?;
 
-        create_or_update_user(&pg_conn, user, &refresh_token)?;
+        web::block(move || create_or_update_user(&mut pg_conn, user, &refresh_token)).await??;
         Ok(uid)
     }
     fn request<U: IntoUrl>(&self, method: Method, url: U, bearer: &str) -> RequestBuilder {

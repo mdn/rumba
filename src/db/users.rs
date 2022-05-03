@@ -7,7 +7,7 @@ use schema::users::dsl::*;
 use crate::diesel::ExpressionMethods;
 
 pub fn create_or_update_user(
-    conn_pool: &PgConnection,
+    conn: &mut PgConnection,
     mut fxa_user: FxAUser,
     refresh_token: &str,
 ) -> QueryResult<usize> {
@@ -31,7 +31,7 @@ pub fn create_or_update_user(
         .on_conflict(fxa_uid)
         .do_update()
         .set(&user)
-        .execute(conn_pool)
+        .execute(conn)
 }
 
 pub async fn get_user(conn_pool: &PgConnection, user: String) -> Result<UserQuery, Error> {
