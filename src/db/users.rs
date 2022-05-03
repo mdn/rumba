@@ -2,7 +2,7 @@ use anyhow::Error;
 use crate::db::model::{User, UserQuery};
 use crate::db::schema;
 use crate::fxa::FxAUser;
-use diesel::{insert_into, PgConnection, QueryDsl, QueryResult, RunQueryDsl, select};
+use diesel::{insert_into, PgConnection, QueryDsl, QueryResult, RunQueryDsl};
 use schema::users::dsl::*;
 use crate::diesel::ExpressionMethods;
 

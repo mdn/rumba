@@ -1,5 +1,5 @@
 use actix_identity::Identity;
-use actix_session::{Session};
+
 use serde::{Serialize};
 
 use actix_web::{HttpRequest, HttpResponse, web};
