@@ -34,6 +34,6 @@ pub fn create_or_update_user(
         .execute(conn)
 }
 
-pub async fn get_user(conn_pool: &PgConnection, user: String) -> Result<UserQuery, Error> {
+pub async fn get_user(conn_pool: &mut PgConnection, user: String) -> Result<UserQuery, Error> {
     schema::users::table.filter(schema::users::fxa_uid.eq(&user)).first::<UserQuery>(conn_pool).map_err(Into::into)
 }

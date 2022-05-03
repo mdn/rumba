@@ -38,7 +38,7 @@ pub async fn whoami(
     match id.identity() {
         Some(id) => {
             println!("Whoami logged in");
-            let user = db::users::get_user(&pool.get().unwrap(), id).await;
+            let user = db::users::get_user(&mut pool.get().unwrap(), id).await;
             match user {
                 Ok(found) => {
                     let response = WhoamiResponse {
