@@ -1,6 +1,6 @@
 {
   "uuid": "userinfo",
-  "priority": 2,
+  "priority": 1,
   "request": {
     "method": "GET",
     "url": "/v1/profile"
@@ -22,7 +22,8 @@
       "uid": "TEST_SUB",
       "subscriptions": [
         "mdn_plus",
-        "mdn_plus_5m"
+        "mdn_plus_10y",
+        "mdn_plus_5y"
       ]
     }
   }
