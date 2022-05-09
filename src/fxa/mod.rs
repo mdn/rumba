@@ -82,7 +82,7 @@ impl LoginManager {
             .add_scope(Scope::new(SETTINGS.auth.scopes.clone()))
             .add_extra_param("access_type", "offline")
             .url();
-        println!("{}", auth_url);
+        // println!("{}", auth_url);
         (auth_url, csrf_token, nonce)
     }
 
@@ -92,27 +92,27 @@ impl LoginManager {
         _nonce: Nonce,
         pool: &web::Data<Pool>,
     ) -> Result<String, Error> {
-        println!("{}", code);
+        // println!("{}", code);
         let token_response = self
             .login_client
             .exchange_code(AuthorizationCode::new(code))
             .request_async(async_http_client)
             .await?;
-        println!("token");
-        let id_token = token_response
+        // println!("token");
+        let _id_token = token_response
             .extra_fields()
             .id_token()
             .ok_or_else(|| anyhow!("Server did not return an ID token"))?;
-        println!("{}", id_token.to_string());
+        // println!("{}", id_token.to_string());
         // let claims = id_token.claims(&self.login_client.id_token_verifier(), &nonce)?;
 
         let access_token = token_response.access_token().secret().clone();
-        println!("access: {:?}", &access_token);
+        // println!("access: {:?}", &access_token);
         let refresh_token = token_response
             .refresh_token()
             .map(|r| r.secret().clone())
             .unwrap_or_default();
-        println!("refresh: {:?}", refresh_token);
+        // println!("refresh: {:?}", refresh_token);
 
         let res = self
             .request(Method::GET, self.user_info_endpoint.clone(), &access_token)

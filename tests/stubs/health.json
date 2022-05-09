@@ -1,0 +1,10 @@
+{
+  "uuid": "health",
+  "request": {
+    "method": "GET",
+    "url": "/healthz"
+  },
+  "response": {
+    "status": 200
+  }
+}

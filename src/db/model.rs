@@ -16,7 +16,7 @@ pub struct User {
 }
 
 #[derive(Queryable, AsChangeset)]
-#[table_name = "users"]
+#[diesel(table_name = users)]
 pub struct UserQuery {
     pub id: i64,
     pub created_at: NaiveDateTime,

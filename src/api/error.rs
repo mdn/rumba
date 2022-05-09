@@ -1,7 +1,8 @@
 use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, ResponseError};
+use r2d2::Error;
+use serde::Serialize;
 use thiserror::Error;
-use serde::{Serialize};
 
 #[derive(Error, Debug)]
 pub enum ApiError {
@@ -9,6 +10,8 @@ pub enum ApiError {
     Unknown,
     #[error("Invalid Session info")]
     InvalidSession,
+    #[error("Database error")]
+    ServerError
 }
 
 impl ApiError {
@@ -16,6 +19,7 @@ impl ApiError {
         match self {
             Self::Unknown => "Unknown".to_string(),
             Self::InvalidSession => "Invalid Session".to_string(),
+            Self::ServerError => "Server error".to_string()
         }
     }
 }
@@ -32,6 +36,7 @@ impl ResponseError for ApiError {
         match *self {
             Self::Unknown => StatusCode::INTERNAL_SERVER_ERROR,
             Self::InvalidSession => StatusCode::BAD_REQUEST,
+            Self::ServerError => StatusCode::INTERNAL_SERVER_ERROR
         }
     }
 
@@ -43,5 +48,11 @@ impl ResponseError for ApiError {
             error: self.name(),
         };
         HttpResponse::build(status_code).json(error_response)
+    }
+}
+
+impl From<r2d2::Error> for ApiError {
+    fn from(_: Error) -> Self {
+        ApiError::ServerError
     }
 }
