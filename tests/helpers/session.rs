@@ -1,22 +1,25 @@
-use std::collections::HashMap;
 use actix_http::body::{BoxBody, EitherBody};
 use actix_http::Request;
-use actix_web::{Error, test};
-use actix_web::cookie::{CookieJar};
+use actix_web::cookie::CookieJar;
 use actix_web::dev::{Service, ServiceResponse};
+use actix_web::{test, Error};
+use std::collections::HashMap;
 
 use reqwest::{Client, Method, StatusCode};
 use url::Url;
 
-
-pub struct TestHttpClient<T: Service<Request, Response=ServiceResponse<EitherBody<BoxBody>>, Error=Error>> {
+pub struct TestHttpClient<
+    T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error = Error>,
+> {
     service: T,
     cookies: CookieJar,
 }
 
-impl<T: Service<Request, Response=ServiceResponse<EitherBody<BoxBody>>, Error=Error>> TestHttpClient<T> {
+impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error = Error>>
+    TestHttpClient<T>
+{
     pub async fn new(service: T) -> Self {
-        check_stubr_initialized().await;
+        check_stubr_initialized().await.unwrap();
 
         let login_req = test::TestRequest::get()
             .uri("/users/fxa/login/authenticate")
@@ -54,10 +57,17 @@ impl<T: Service<Request, Response=ServiceResponse<EitherBody<BoxBody>>, Error=Er
         for cookie in cookies {
             cookie_jar.add(cookie.into_owned());
         }
-        Self { service, cookies: cookie_jar }
+        Self {
+            service,
+            cookies: cookie_jar,
+        }
     }
 
-    pub async fn get(mut self, uri: String, headers: Option<Vec<(&str, &str)>>) -> ServiceResponse<EitherBody<BoxBody>> {
+    pub async fn get(
+        mut self,
+        uri: String,
+        headers: Option<Vec<(&str, &str)>>,
+    ) -> ServiceResponse<EitherBody<BoxBody>> {
         let mut base = test::TestRequest::get().uri(&*uri);
         match headers {
             Some(headers) => {
@@ -81,7 +91,10 @@ impl<T: Service<Request, Response=ServiceResponse<EitherBody<BoxBody>>, Error=Er
 
 async fn check_stubr_initialized() -> Result<(), ()> {
     //Hardcoded for now. We will 'always' spin stubr at localhost:4321.
-    let res = Client::new().request(Method::GET, "http://localhost:4321/healthz").send().await;
+    let res = Client::new()
+        .request(Method::GET, "http://localhost:4321/healthz")
+        .send()
+        .await;
     assert_eq!(res.unwrap().status(), StatusCode::OK);
     Ok(())
 }

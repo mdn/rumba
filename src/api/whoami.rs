@@ -1,11 +1,11 @@
 use actix_identity::Identity;
 
-use serde::{Serialize};
+use serde::Serialize;
 
-use actix_web::{HttpRequest, HttpResponse, web};
 use crate::api::error::ApiError;
 use crate::db;
 use crate::db::Pool;
+use actix_web::{web, HttpRequest, HttpResponse};
 
 #[derive(Serialize)]
 pub struct GeoInfo {
@@ -33,12 +33,14 @@ pub async fn whoami(
 ) -> Result<HttpResponse, ApiError> {
     let header_info = _req.headers().get(CLOUDFRONT_COUNTRY_HEADER);
 
-    let country = header_info.map(|header| GeoInfo { country: String::from(header.to_str().unwrap_or("Unknown")) });
+    let country = header_info.map(|header| GeoInfo {
+        country: String::from(header.to_str().unwrap_or("Unknown")),
+    });
 
     match id.identity() {
         Some(id) => {
             println!("Whoami logged in");
-            let user = db::users::get_user(&mut pool.get().unwrap(), id).await;
+            let user = db::users::get_user(&mut pool.get()?, id).await;
             match user {
                 Ok(found) => {
                     let response = WhoamiResponse {
@@ -52,11 +54,19 @@ pub async fn whoami(
                     };
                     Ok(HttpResponse::Ok().json(response))
                 }
-                Err(_err) => Err(ApiError::InvalidSession)
+                Err(_err) => Err(ApiError::InvalidSession),
             }
         }
         None => {
-            let res = WhoamiResponse { geo: country, username: None, is_authenticated: None, email: None, avatar_url: None, is_subscriber: None, subscription_type: None };
+            let res = WhoamiResponse {
+                geo: country,
+                username: None,
+                is_authenticated: None,
+                email: None,
+                avatar_url: None,
+                is_subscriber: None,
+                subscription_type: None,
+            };
             Ok(HttpResponse::Ok().json(res))
         }
     }

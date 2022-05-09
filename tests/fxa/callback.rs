@@ -37,7 +37,6 @@ async fn basic() -> Result<(), Error> {
         .collect();
     let state = params.get("state").to_owned().unwrap().clone();
 
-
     let mut base = test::TestRequest::get().uri(&*format!(
         "/users/fxa/login/callback/?code={:1}&state={:2}",
         "ABC123", state
@@ -49,7 +48,7 @@ async fn basic() -> Result<(), Error> {
     let res = test::call_service(&app, base.to_request()).await;
     println!("{:?}", res);
     assert!(res.status().is_redirection());
-    assert!(res.headers().get("Location").unwrap().eq("/"));
+    assert_eq!(res.headers().get("Location").unwrap(), "/");
 
     Ok(())
 }

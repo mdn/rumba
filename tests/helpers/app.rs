@@ -41,7 +41,7 @@ pub async fn test_app_with_login() -> anyhow::Result<
 > {
     let pool = get_pool();
     let login_manager = Arc::new(RwLock::new(LoginManager::init().await?));
-    env_logger::try_init();
+    env_logger::try_init()?;
     let policy = CookieIdentityPolicy::new(&[0; 32])
         .name(&SETTINGS.auth.auth_cookie_name)
         .secure(SETTINGS.auth.auth_cookie_secure);
