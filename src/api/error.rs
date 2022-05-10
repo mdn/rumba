@@ -74,7 +74,7 @@ impl From<DbError> for ApiError {
 }
 
 impl From<r2d2::Error> for ApiError {
-    fn from(_: Error) -> Self {
+    fn from(e: Error) -> Self {
         ApiError::ServerError
     }
 }
