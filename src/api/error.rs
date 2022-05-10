@@ -1,3 +1,4 @@
+use crate::db::error::DbError;
 use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, ResponseError};
 use r2d2::Error;
@@ -11,7 +12,9 @@ pub enum ApiError {
     #[error("Invalid Session info")]
     InvalidSession,
     #[error("Database error")]
-    ServerError
+    ServerError,
+    #[error("Document Not found")]
+    DocumentNotFound,
 }
 
 impl ApiError {
@@ -19,7 +22,8 @@ impl ApiError {
         match self {
             Self::Unknown => "Unknown".to_string(),
             Self::InvalidSession => "Invalid Session".to_string(),
-            Self::ServerError => "Server error".to_string()
+            Self::ServerError => "Server error".to_string(),
+            Self::DocumentNotFound => "Document not found".to_string(),
         }
     }
 }
@@ -36,7 +40,8 @@ impl ResponseError for ApiError {
         match *self {
             Self::Unknown => StatusCode::INTERNAL_SERVER_ERROR,
             Self::InvalidSession => StatusCode::BAD_REQUEST,
-            Self::ServerError => StatusCode::INTERNAL_SERVER_ERROR
+            Self::ServerError => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::DocumentNotFound => StatusCode::NOT_FOUND,
         }
     }
 
@@ -51,8 +56,17 @@ impl ResponseError for ApiError {
     }
 }
 
+impl From<DbError> for ApiError {
+    fn from(err: DbError) -> Self {
+        match err {
+            DbError::DieselResult(e) => ApiError::Unknown,
+            DbError::R2D2Error(e) => ApiError::Unknown,
+        }
+    }
+}
+
 impl From<r2d2::Error> for ApiError {
-    fn from(_: Error) -> Self {
+    fn from(e: Error) -> Self {
         ApiError::ServerError
     }
 }

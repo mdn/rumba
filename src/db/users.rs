@@ -1,10 +1,10 @@
+use crate::db::error::DbError;
 use crate::db::model::{User, UserQuery};
 use crate::db::schema;
 use crate::diesel::ExpressionMethods;
 use crate::fxa::FxAUser;
-use anyhow::Error;
-use diesel::{insert_into, PgConnection, QueryDsl, QueryResult, RunQueryDsl};
 use diesel::r2d2::ConnectionManager;
+use diesel::{insert_into, PgConnection, QueryDsl, QueryResult, RunQueryDsl};
 use r2d2::PooledConnection;
 use schema::users::dsl::*;
 
@@ -36,7 +36,10 @@ pub fn create_or_update_user(
         .execute(conn)
 }
 
-pub async fn get_user(conn_pool: &mut PooledConnection<ConnectionManager<PgConnection>>, user: String) -> Result<UserQuery, Error> {
+pub async fn get_user(
+    conn_pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
+    user: String,
+) -> Result<UserQuery, DbError> {
     schema::users::table
         .filter(schema::users::fxa_uid.eq(&user))
         .first::<UserQuery>(conn_pool)

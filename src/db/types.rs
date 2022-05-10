@@ -1,5 +1,6 @@
 #![allow(non_camel_case_types)]
-use crate::db::schema::sql_types::SubscriptionType;
+use crate::db::schema;
+use schema::sql_types::SubscriptionType;
 use serde::{Deserialize, Serialize};
 
 #[derive(

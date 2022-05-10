@@ -1,3 +1,4 @@
+use crate::api::collections::collections;
 use crate::api::whoami::whoami;
 use crate::settings::SETTINGS;
 use actix_session::storage::CookieSessionStore;
@@ -12,5 +13,6 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
             CookieSessionStore::default(),
             Key::from(&SETTINGS.auth.auth_cookie_key),
         ))
+        .service(web::resource("/collections").route(web::get().to(collections)))
         .service(web::resource("/whoami").route(web::get().to(whoami)))
 }
