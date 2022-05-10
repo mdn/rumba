@@ -1,4 +1,6 @@
-mod model;
+pub mod collections;
+pub mod error;
+pub mod model;
 #[allow(unused_imports)]
 pub mod schema;
 pub mod types;
