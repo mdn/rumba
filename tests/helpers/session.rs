@@ -19,7 +19,7 @@ impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error 
     TestHttpClient<T>
 {
     pub async fn new(service: T) -> Self {
-        check_stubr_initialized().await.unwrap();
+        let _stubr_ok = check_stubr_initialized().await;
 
         let login_req = test::TestRequest::get()
             .uri("/users/fxa/login/authenticate")
