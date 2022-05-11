@@ -59,14 +59,14 @@ impl ResponseError for ApiError {
 impl From<DbError> for ApiError {
     fn from(err: DbError) -> Self {
         match err {
-            DbError::DieselResult(e) => ApiError::Unknown,
-            DbError::R2D2Error(e) => ApiError::Unknown,
+            DbError::DieselResult(_) => ApiError::Unknown,
+            DbError::R2D2Error(_) => ApiError::Unknown,
         }
     }
 }
 
 impl From<r2d2::Error> for ApiError {
-    fn from(e: Error) -> Self {
+    fn from(_: Error) -> Self {
         ApiError::ServerError
     }
 }
