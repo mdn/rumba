@@ -48,7 +48,7 @@ pub struct LoginManager {
 }
 
 impl LoginManager {
-    pub async fn init() -> Result<Self, Error> {
+    pub async fn init(client: Client) -> Result<Self, Error> {
         println!("AUTH URL {:?}", SETTINGS.auth.issuer_url);
         let provider_metadata = CoreProviderMetadata::discover_async(
             IssuerUrl::new(SETTINGS.auth.issuer_url.clone())?,
@@ -63,10 +63,9 @@ impl LoginManager {
             Some(ClientSecret::new(SETTINGS.auth.client_secret.clone())),
         )
         .set_redirect_uri(RedirectUrl::from_url(SETTINGS.auth.redirect_url.clone()));
-
         Ok(LoginManager {
             login_client,
-            http_client: Client::new(),
+            http_client: client,
             user_info_endpoint,
         })
     }

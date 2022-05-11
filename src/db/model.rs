@@ -51,13 +51,22 @@ pub struct CollectionParent {
     pub title: String,
 }
 
-#[derive(Queryable, AsChangeset)]
-#[diesel(table_name = documents)]
-pub struct DocumentQuery {
-    pub id: i64,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
-    pub absolute_uri: String,
-    pub uri: String,
+#[derive(Insertable, AsChangeset)]
+#[diesel(table_name = collections)]
+pub struct CollectionInsert {
+    pub document_id: i64,
+    pub custom_name: Option<String>,
+    pub user_id: i64,
     pub metadata: Option<Value>,
+    pub notes: Option<String>,
+}
+
+#[derive(Insertable, AsChangeset)]
+#[diesel(table_name = documents)]
+pub struct DocumentInsert {
+    pub document_id: i64,
+    pub custom_name: Option<String>,
+    pub user_id: i64,
+    pub metadata: Option<Value>,
+    pub notes: Option<String>,
 }
