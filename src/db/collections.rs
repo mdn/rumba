@@ -1,6 +1,6 @@
-use crate::api::collections::CollectionsQueryParams;
+use crate::api::collections::{CollectionsQueryParams, Sorting};
 use crate::db::error::DbError;
-use crate::db::model::{CollectionAndDocumentQuery, UserQuery};
+use crate::db::model::{CollectionAndDocumentQuery, CollectionInsert, DocumentInsert, UserQuery};
 use crate::db::schema;
 use crate::diesel::BoolExpressionMethods;
 use crate::diesel::NullableExpressionMethods;
@@ -11,6 +11,7 @@ use diesel::PgConnection;
 use diesel::QueryDsl;
 use diesel::RunQueryDsl;
 use r2d2::PooledConnection;
+use crate::settings::SETTINGS;
 
 pub async fn get_collection(
     user: UserQuery,
@@ -65,6 +66,16 @@ pub async fn get_collections_paginated(
             );
     }
 
+    collections_query = match query_params.sort {
+        Some(Sorting::TITLE) => collections_query
+            .order_by(schema::collections::custom_name.desc())
+            .then_order_by(schema::documents::title.desc()),
+        Some(Sorting::CREATED) => {
+            collections_query.order_by(schema::collections::created_at.desc())
+        }
+        None => collections_query,
+    };
+
     if query_params.limit.is_some() {
         collections_query = collections_query.limit(query_params.limit.unwrap().into())
     }
@@ -88,3 +99,64 @@ pub async fn get_collections_paginated(
         ))
         .get_results::<CollectionAndDocumentQuery>(pool)?)
 }
+
+pub async fn create_collection(
+    user: UserQuery,
+    pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
+    url: &String,
+    document: DocumentInsert,
+) -> Result<Vec<CollectionAndDocumentQuery>, DbError> {
+
+
+    if query_params.q.is_some() {
+        let query = query_params.q.as_ref().unwrap();
+        collections_query = collections_query
+            .filter(
+                schema::collections::custom_name.is_not_null().and(
+                    schema::collections::custom_name
+                        .nullable()
+                        .ilike(query.to_owned() + "%"),
+                ),
+            )
+            .or_filter(
+                schema::collections::custom_name
+                    .is_null()
+                    .and(schema::documents::title.ilike(query.to_owned() + "%")),
+            );
+    }
+
+    collections_query = match query_params.sort {
+        Some(Sorting::TITLE) => collections_query
+            .order_by(schema::collections::custom_name.desc())
+            .then_order_by(schema::documents::title.desc()),
+        Some(Sorting::CREATED) => {
+            collections_query.order_by(schema::collections::created_at.desc())
+        }
+        None => collections_query,
+    };
+
+    if query_params.limit.is_some() {
+        collections_query = collections_query.limit(query_params.limit.unwrap().into())
+    }
+
+    if query_params.offset.is_some() {
+        collections_query = collections_query.offset(query_params.offset.unwrap().into())
+    }
+
+    Ok(collections_query
+        .select((
+            schema::collections::id,
+            schema::collections::created_at,
+            schema::collections::updated_at,
+            schema::collections::document_id,
+            schema::collections::notes,
+            schema::collections::custom_name,
+            schema::collections::user_id,
+            schema::documents::uri,
+            schema::documents::metadata,
+            schema::documents::title,
+        ))
+        .get_results::<CollectionAndDocumentQuery>(pool)?)
+}
+
+

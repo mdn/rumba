@@ -31,10 +31,16 @@ pub struct Auth {
 }
 
 #[derive(Deserialize)]
+pub struct Application {
+    pub document_base_url: String,
+}
+
+#[derive(Deserialize)]
 pub struct Settings {
     pub db: DB,
     pub server: Server,
     pub auth: Auth,
+    pub application: Application
 }
 
 impl Settings {

@@ -9,8 +9,10 @@ use crate::db::Pool;
 
 use actix_web::web::Data;
 use actix_web::{web, HttpRequest, HttpResponse};
+use actix_web::dev::Url;
 
 use chrono::NaiveDateTime;
+use reqwest::Client;
 
 use crate::db;
 use crate::db::error::DbError;
@@ -18,9 +20,17 @@ use crate::db::model::{CollectionAndDocumentQuery, UserQuery};
 use crate::db::users::get_user;
 
 #[derive(Deserialize)]
+pub enum Sorting {
+    #[serde(rename = "title")]
+    TITLE,
+    #[serde(rename = "created")]
+    CREATED,
+}
+
+#[derive(Deserialize)]
 pub struct CollectionsQueryParams {
     pub q: Option<String>,
-    pub sort: Option<String>,
+    pub sort: Option<Sorting>,
     pub url: Option<String>,
     pub limit: Option<u32>,
     pub offset: Option<u32>,
@@ -56,6 +66,17 @@ pub struct CollectionResponse {
     items: Vec<CollectionItem>,
     csrfmiddlewaretoken: String,
     subscription_limit_reached: bool,
+}
+
+#[derive(Deserialize)]
+pub struct CollectionCreationForm {
+    pub name: String,
+    pub notes: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct CollectionCreationParams {
+    pub url: String,
 }
 
 impl From<CollectionAndDocumentQuery> for CollectionItem {
@@ -131,15 +152,12 @@ async fn get_paginated_collection_items(
     query: &CollectionsQueryParams,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = pool.get()?;
-    let collection = get_collections_paginated(user, &mut conn, query)
-        .await;
-    
+    let collection = get_collections_paginated(user, &mut conn, query).await;
+
     let items = match collection {
         Ok(val) => val
             .iter()
-            .map(|query_result| {
-                Into::<CollectionItem>::into(query_result.clone())
-            })
+            .map(|query_result| Into::<CollectionItem>::into(query_result.clone()))
             .collect(),
         Err(e) => return Err(e.into()),
     };
@@ -152,4 +170,18 @@ async fn get_paginated_collection_items(
         subscription_limit_reached: false,
     };
     Ok(HttpResponse::Ok().json(result))
+}
+
+pub fn create_or_update_collections(pool: Data<Pool>,http_client: Data<Client>, id: Identity, query: web::Query<CollectionCreationParams>, creation_form: web::Form<CollectionCreationForm>) -> Result<HttpResponse, ApiError> {
+    match id.identity() {
+        Some(id) => {
+            let mut conn_pool = pool.get()?;
+            let user: UserQuery = get_user(&mut conn_pool, id).await?;
+            let document_url = Url::new()
+            let document = http_client.get()
+            Ok(HttpResponse::Ok().finish())
+
+        }
+        None => Ok(HttpResponse::Unauthorized().finish()),
+    }
 }

@@ -6,6 +6,8 @@ use actix_identity::{CookieIdentityPolicy, IdentityService};
 use actix_web::{middleware::Logger, web::Data, App, HttpServer};
 use diesel_migrations::MigrationHarness;
 use log::{debug, info};
+use openidconnect::Client;
+use reqwest::Client as HttpClient;
 use rumba::{add_services, db, fxa::LoginManager, settings::SETTINGS};
 
 const MIGRATIONS: diesel_migrations::EmbeddedMigrations = diesel_migrations::embed_migrations!();
@@ -23,7 +25,9 @@ async fn main() -> anyhow::Result<()> {
     pool.get()?
         .run_pending_migrations(MIGRATIONS)
         .expect("failed to run migrations");
-    let login_manager = Arc::new(RwLock::new(LoginManager::init().await?));
+
+    let http_client = HttpClient::new();
+    let login_manager = Arc::new(RwLock::new(LoginManager::init(http_client).await?));
 
     HttpServer::new(move || {
         let policy = CookieIdentityPolicy::new(&[0; 32])
@@ -33,6 +37,7 @@ async fn main() -> anyhow::Result<()> {
             .wrap(Logger::default().exclude("/healthz"))
             .wrap(IdentityService::new(policy))
             .app_data(Data::new(pool.clone()))
+            .app_data(Data::new(http_client.clone()))
             .app_data(Data::new(login_manager.clone()));
         add_services(app)
     })
