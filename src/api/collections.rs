@@ -9,6 +9,7 @@ use crate::db::Pool;
 
 use actix_web::web::{Data, Query};
 use actix_web::{web, HttpRequest, HttpResponse};
+use actix_web::dev::Url;
 
 use chrono::NaiveDateTime;
 use reqwest::{Client, StatusCode};
@@ -26,6 +27,14 @@ pub enum Sorting {
     Title,
     #[serde(rename = "created")]
     Created,
+}
+
+#[derive(Deserialize)]
+pub enum Sorting {
+    #[serde(rename = "title")]
+    TITLE,
+    #[serde(rename = "created")]
+    CREATED,
 }
 
 #[derive(Deserialize)]
