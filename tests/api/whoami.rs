@@ -12,7 +12,6 @@ async fn whoami_anonymous_test() -> Result<(), Error> {
     reset()?;
     let app = test_app_with_login().await.unwrap();
     let service = test::init_service(app).await;
-
     let request = test::TestRequest::get()
         .uri("/api/v1/whoami")
         .insert_header(("CloudFront-Viewer-Country-Name", "Iceland"))
@@ -62,7 +61,7 @@ async fn whoami_logged_in_test() -> Result<(), Error> {
 async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
     reset()?;
 
-    Stubr::start_blocking_with(
+    let _stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/whoami"],
         Config {
             port: Some(4321),

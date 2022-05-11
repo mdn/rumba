@@ -1,5 +1,5 @@
 [db]
-uri = "postgres://kuma:kuma@127.0.0.1:5432/mdn"
+uri = "postgres://rumba:rumba@127.0.0.1:5432/mdn"
 
 [server]
 port = 8000
