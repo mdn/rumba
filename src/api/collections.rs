@@ -14,21 +14,16 @@ use chrono::NaiveDateTime;
 
 use crate::db;
 use crate::db::error::DbError;
-use crate::db::model::{CollectionAndDocumentQuery, CollectionQuery, UserQuery};
+use crate::db::model::{CollectionAndDocumentQuery, UserQuery};
 use crate::db::users::get_user;
 
 #[derive(Deserialize)]
 pub struct CollectionsQueryParams {
-    q: Option<String>,
-    sort: Option<String>,
-    url: Option<String>,
-    limit: Option<u32>,
-    offset: Option<u32>,
-}
-
-#[derive(Deserialize)]
-pub struct SingleCollectionQuery {
-    url: String,
+    pub q: Option<String>,
+    pub sort: Option<String>,
+    pub url: Option<String>,
+    pub limit: Option<u32>,
+    pub offset: Option<u32>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -47,11 +42,11 @@ struct CollectionItem {
     created: NaiveDateTime,
 }
 
-impl Into<CollectionParent> for db::model::CollectionParent {
-    fn into(self) -> CollectionParent {
+impl From<db::model::CollectionParent> for CollectionParent {
+    fn from(parent: db::model::CollectionParent) -> Self {
         CollectionParent {
-            uri: self.uri,
-            title: self.title,
+            uri: parent.uri,
+            title: parent.title,
         }
     }
 }
@@ -70,7 +65,11 @@ impl From<CollectionAndDocumentQuery> for CollectionItem {
         match collection_and_document.metadata {
             Some(metadata) => {
                 parents = serde_json::from_value(metadata["parents"].clone()).unwrap_or(None);
-                title = Some(collection_and_document.custom_name.unwrap_or(collection_and_document.title));
+                title = Some(
+                    collection_and_document
+                        .custom_name
+                        .unwrap_or(collection_and_document.title),
+                );
             }
             None => (),
         }
@@ -131,13 +130,22 @@ async fn get_paginated_collection_items(
     user: UserQuery,
     query: &CollectionsQueryParams,
 ) -> Result<HttpResponse, ApiError> {
-    let collection = get_collections_paginated(user, pool, query)
-        .await
-        .map_err(|e| ApiError::ServerError);
+    let mut conn = pool.get()?;
+    let collection = get_collections_paginated(user, &mut conn, query)
+        .await;
+    
     let items = match collection {
-        Ok(val) => val.iter().map(CollectionQuery::Into<CollectionItem>.into()).collect(),
-        Err(e) => return Err(e),
+        Ok(val) => val
+            .iter()
+            .map(|query_result| {
+                Into::<CollectionItem>::into(query_result.clone())
+            })
+            .collect(),
+        Err(e) => return Err(e.into()),
     };
+
+    //##TODO Handle subscription limits
+
     let result = CollectionResponse {
         items,
         csrfmiddlewaretoken: "abc".to_string(),

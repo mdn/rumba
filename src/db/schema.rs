@@ -57,8 +57,4 @@ diesel::table! {
 diesel::joinable!(collections -> documents (document_id));
 diesel::joinable!(collections -> users (user_id));
 
-diesel::allow_tables_to_appear_in_same_query!(
-    collections,
-    documents,
-    users,
-);
+diesel::allow_tables_to_appear_in_same_query!(collections, documents, users,);

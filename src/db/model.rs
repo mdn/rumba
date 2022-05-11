@@ -31,20 +31,7 @@ pub struct UserQuery {
     pub subscription_type: Option<Subscription>,
 }
 
-#[derive(Queryable, AsChangeset)]
-#[diesel(table_name = collections)]
-#[diesel(belongs_to(User))]
-pub struct CollectionQuery {
-    pub id: i64,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
-    pub document_id: i64,
-    pub notes: Option<String>,
-    pub custom_name: Option<String>,
-    pub user_id: i64,
-}
-
-#[derive(Queryable)]
+#[derive(Queryable, Clone)]
 pub struct CollectionAndDocumentQuery {
     pub id: i64,
     pub created_at: NaiveDateTime,
@@ -74,12 +61,3 @@ pub struct DocumentQuery {
     pub uri: String,
     pub metadata: Option<Value>,
 }
-
-// id -> Int8,
-// created_at -> Timestamp,
-// updated_at -> Timestamp,
-// absolute_uri -> Text,
-// uri -> Text,
-// metadata -> Nullable<Jsonb>,
-// notes -> Nullable<Text>,
-// custom_name -> Nullable<Text>,

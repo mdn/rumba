@@ -1,13 +1,15 @@
 use crate::api::collections::CollectionsQueryParams;
-use crate::db::model::{CollectionAndDocumentQuery, CollectionQuery, DocumentQuery, UserQuery};
-use crate::db::schema;
-use crate::db::Pool;
-use actix_web::{web, HttpRequest};
-
 use crate::db::error::DbError;
+use crate::db::model::{CollectionAndDocumentQuery, UserQuery};
+use crate::db::schema;
+use crate::diesel::BoolExpressionMethods;
+use crate::diesel::NullableExpressionMethods;
+use crate::diesel::PgTextExpressionMethods;
 use diesel::expression_methods::ExpressionMethods;
 use diesel::r2d2::ConnectionManager;
-use diesel::{PgConnection, QueryDsl, RunQueryDsl};
+use diesel::PgConnection;
+use diesel::QueryDsl;
+use diesel::RunQueryDsl;
 use r2d2::PooledConnection;
 
 pub async fn get_collection(
@@ -36,18 +38,42 @@ pub async fn get_collection(
     Ok(collection)
 }
 
-
-
 pub async fn get_collections_paginated(
     user: UserQuery,
-    pool: web::Data<Pool>,
+    pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     query_params: &CollectionsQueryParams,
-) -> Result<Vec<CollectionQuery>, DbError> {
-    let collections: Vec<CollectionAndDocumentQuery> = schema::collections::table
+) -> Result<Vec<CollectionAndDocumentQuery>, DbError> {
+    let mut collections_query = schema::collections::table
         .filter(schema::collections::user_id.eq(user.id))
         .inner_join(schema::documents::table)
-        .filter(schema::documents::uri.eq(query_params.url))
+        .into_boxed();
 
+    if query_params.q.is_some() {
+        let query = query_params.q.as_ref().unwrap();
+        collections_query = collections_query
+            .filter(
+                schema::collections::custom_name.is_not_null().and(
+                    schema::collections::custom_name
+                        .nullable()
+                        .ilike(query.to_owned() + "%"),
+                ),
+            )
+            .or_filter(
+                schema::collections::custom_name
+                    .is_null()
+                    .and(schema::documents::title.ilike(query.to_owned() + "%")),
+            );
+    }
+
+    if query_params.limit.is_some() {
+        collections_query = collections_query.limit(query_params.limit.unwrap().into())
+    }
+
+    if query_params.offset.is_some() {
+        collections_query = collections_query.offset(query_params.offset.unwrap().into())
+    }
+
+    Ok(collections_query
         .select((
             schema::collections::id,
             schema::collections::created_at,
@@ -58,7 +84,7 @@ pub async fn get_collections_paginated(
             schema::collections::user_id,
             schema::documents::uri,
             schema::documents::metadata,
+            schema::documents::title,
         ))
-        .get_results::<CollectionAndDocumentQuery>(pool)?;
-    Err(DbError::DieselResult(diesel::result::Error::NotFound))
+        .get_results::<CollectionAndDocumentQuery>(pool)?)
 }
