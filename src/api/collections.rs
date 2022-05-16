@@ -3,21 +3,23 @@ use actix_identity::Identity;
 use serde::{Deserialize, Serialize};
 
 use crate::api::error::ApiError;
-use crate::db::collections::{get_collection, get_collections_paginated};
+use crate::db::collections::{create_collection, get_collection, get_collections_paginated};
 
 use crate::db::Pool;
 
-use actix_web::web::Data;
+use actix_web::web::{Data, Query};
 use actix_web::{web, HttpRequest, HttpResponse};
-use actix_web::dev::Url;
 
 use chrono::NaiveDateTime;
-use reqwest::Client;
+use reqwest::{Client, StatusCode};
+use serde_json::Value;
+use url::Url;
 
 use crate::db;
 use crate::db::error::DbError;
-use crate::db::model::{CollectionAndDocumentQuery, UserQuery};
+use crate::db::model::{CollectionAndDocumentQuery, DocumentMetadata, UserQuery};
 use crate::db::users::get_user;
+use crate::settings::SETTINGS;
 
 #[derive(Deserialize)]
 pub enum Sorting {
@@ -62,8 +64,15 @@ impl From<db::model::CollectionParent> for CollectionParent {
 }
 
 #[derive(Serialize)]
-pub struct CollectionResponse {
+pub struct CollectionsResponse {
     items: Vec<CollectionItem>,
+    csrfmiddlewaretoken: String,
+    subscription_limit_reached: bool,
+}
+
+#[derive(Serialize)]
+pub struct CollectionResponse {
+    bookmarked: Option<CollectionItem>,
     csrfmiddlewaretoken: String,
     subscription_limit_reached: bool,
 }
@@ -83,6 +92,7 @@ impl From<CollectionAndDocumentQuery> for CollectionItem {
     fn from(collection_and_document: CollectionAndDocumentQuery) -> Self {
         let mut parents: Option<Vec<CollectionParent>> = None;
         let mut title: Option<String> = None;
+        let mut url = collection_and_document.uri;
         match collection_and_document.metadata {
             Some(metadata) => {
                 parents = serde_json::from_value(metadata["parents"].clone()).unwrap_or(None);
@@ -91,6 +101,7 @@ impl From<CollectionAndDocumentQuery> for CollectionItem {
                         .custom_name
                         .unwrap_or(collection_and_document.title),
                 );
+                url = serde_json::from_value(metadata["mdn_url"].clone()).unwrap_or(url);
             }
             None => (),
         }
@@ -98,7 +109,7 @@ impl From<CollectionAndDocumentQuery> for CollectionItem {
             parents: parents.unwrap_or_default(),
             created: collection_and_document.created_at,
             notes: collection_and_document.notes,
-            url: collection_and_document.uri,
+            url,
             title: title.unwrap(),
             id: collection_and_document.id,
         }
@@ -131,15 +142,15 @@ async fn get_single_collection_item(
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = pool.get()?;
     let collection = get_collection(user, &mut conn, url).await;
-    let items = match collection {
-        Ok(val) => vec![val.into()],
+    let bookmarked = match collection {
+        Ok(val) => Some(val.into()),
         Err(e) => match e {
-            DbError::DieselResult(_) => vec![],
+            DbError::DieselResult(_) => None,
             _ => return Err(ApiError::Unknown),
         },
     };
     let result = CollectionResponse {
-        items,
+        bookmarked,
         csrfmiddlewaretoken: "abc".to_string(),
         subscription_limit_reached: false,
     };
@@ -164,7 +175,7 @@ async fn get_paginated_collection_items(
 
     //##TODO Handle subscription limits
 
-    let result = CollectionResponse {
+    let result = CollectionsResponse {
         items,
         csrfmiddlewaretoken: "abc".to_string(),
         subscription_limit_reached: false,
@@ -172,16 +183,60 @@ async fn get_paginated_collection_items(
     Ok(HttpResponse::Ok().json(result))
 }
 
-pub fn create_or_update_collections(pool: Data<Pool>,http_client: Data<Client>, id: Identity, query: web::Query<CollectionCreationParams>, creation_form: web::Form<CollectionCreationForm>) -> Result<HttpResponse, ApiError> {
+pub async fn create_or_update_collections(
+    pool: Data<Pool>,
+    http_client: Data<Client>,
+    id: Identity,
+    query: web::Query<CollectionCreationParams>,
+    collection_form: web::Form<CollectionCreationForm>,
+) -> Result<HttpResponse, ApiError> {
     match id.identity() {
         Some(id) => {
             let mut conn_pool = pool.get()?;
             let user: UserQuery = get_user(&mut conn_pool, id).await?;
-            let document_url = Url::new()
-            let document = http_client.get()
-            Ok(HttpResponse::Ok().finish())
+            let metadata = get_document_metadata(http_client, &query).await?;
+            create_collection(
+                user,
+                &mut conn_pool,
+                query.url.clone(),
+                metadata,
+                collection_form.into_inner(),
+            )
+            .await
+            .map_err(DbError::from)?;
 
+            Ok(HttpResponse::Created().finish())
         }
         None => Ok(HttpResponse::Unauthorized().finish()),
     }
+}
+
+async fn get_document_metadata(
+    http_client: Data<Client>,
+    query: &Query<CollectionCreationParams>,
+) -> Result<DocumentMetadata, ApiError> {
+    let document_url =
+        Url::parse(&(SETTINGS.application.document_base_url.clone() + &query.url + "/index.json"))
+            .map_err(|_| ApiError::MalformedUrl)?;
+
+    let document = http_client
+        .get(document_url)
+        .send()
+        .await
+        .map_err(|err: reqwest::Error| {
+            if let Some(code) = err.status() {
+                match code {
+                    StatusCode::NOT_FOUND => ApiError::DocumentNotFound,
+                    _ => ApiError::Unknown,
+                }
+            } else {
+                ApiError::Unknown
+            }
+        })?;
+    let res_json: Value = document.json().await.unwrap();
+    Ok(DocumentMetadata {
+        title: serde_json::from_value(res_json["doc"]["title"].clone())?,
+        parents: serde_json::from_value(res_json["doc"]["parents"].clone())?,
+        mdn_url: serde_json::from_value(res_json["doc"]["mdn_url"].clone())?,
+    })
 }

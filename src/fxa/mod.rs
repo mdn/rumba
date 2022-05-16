@@ -49,7 +49,6 @@ pub struct LoginManager {
 
 impl LoginManager {
     pub async fn init(client: Client) -> Result<Self, Error> {
-        println!("AUTH URL {:?}", SETTINGS.auth.issuer_url);
         let provider_metadata = CoreProviderMetadata::discover_async(
             IssuerUrl::new(SETTINGS.auth.issuer_url.clone())?,
             async_http_client,
@@ -120,7 +119,7 @@ impl LoginManager {
         let user: FxAUser = res.json().await?;
 
         let uid = user.uid.clone();
-        println!("{:#?}", serde_json::to_string_pretty(&user));
+        // println!("{:#?}", serde_json::to_string_pretty(&user));
         let mut pg_conn = pool.get()?;
 
         web::block(move || create_or_update_user(&mut pg_conn, user, &refresh_token)).await??;

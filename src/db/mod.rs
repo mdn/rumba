@@ -1,4 +1,5 @@
 pub mod collections;
+mod documents;
 pub mod error;
 pub mod model;
 #[allow(unused_imports)]

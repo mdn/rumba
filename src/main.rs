@@ -6,7 +6,6 @@ use actix_identity::{CookieIdentityPolicy, IdentityService};
 use actix_web::{middleware::Logger, web::Data, App, HttpServer};
 use diesel_migrations::MigrationHarness;
 use log::{debug, info};
-use openidconnect::Client;
 use reqwest::Client as HttpClient;
 use rumba::{add_services, db, fxa::LoginManager, settings::SETTINGS};
 
@@ -27,7 +26,7 @@ async fn main() -> anyhow::Result<()> {
         .expect("failed to run migrations");
 
     let http_client = HttpClient::new();
-    let login_manager = Arc::new(RwLock::new(LoginManager::init(http_client).await?));
+    let login_manager = Arc::new(RwLock::new(LoginManager::init(http_client.clone()).await?));
 
     HttpServer::new(move || {
         let policy = CookieIdentityPolicy::new(&[0; 32])

@@ -2,10 +2,13 @@ use actix_http::body::{BoxBody, EitherBody};
 use actix_http::Request;
 use actix_web::cookie::CookieJar;
 use actix_web::dev::{Service, ServiceResponse};
+use actix_web::test::TestRequest;
 use actix_web::{test, Error};
 use std::collections::HashMap;
 
 use reqwest::{Client, Method, StatusCode};
+
+use serde_json::Value;
 use url::Url;
 
 pub struct TestHttpClient<
@@ -13,6 +16,13 @@ pub struct TestHttpClient<
 > {
     service: T,
     cookies: CookieJar,
+}
+
+type FormData = Vec<(String, String)>;
+
+pub enum PostPayload {
+    Json(Value),
+    FormData(FormData),
 }
 
 impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error = Error>>
@@ -64,11 +74,43 @@ impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error 
     }
 
     pub async fn get(
-        mut self,
+        &mut self,
         uri: String,
         headers: Option<Vec<(&str, &str)>>,
     ) -> ServiceResponse<EitherBody<BoxBody>> {
         let mut base = test::TestRequest::get().uri(&*uri);
+        base = self.add_cookies_and_headers(headers, base);
+        let res = test::call_service(&self.service, base.to_request()).await;
+        for cookie in res.response().cookies() {
+            self.cookies.add(cookie.into_owned());
+        }
+        res
+    }
+
+    pub(crate) async fn post(
+        &mut self,
+        uri: String,
+        headers: Option<Vec<(&str, &str)>>,
+        payload: PostPayload,
+    ) -> ServiceResponse<EitherBody<BoxBody>> {
+        let mut base = test::TestRequest::post().uri(&*uri);
+        match payload {
+            PostPayload::FormData(form) => base = base.set_form(form),
+            PostPayload::Json(val) => base = base.set_json(val),
+        }
+        base = self.add_cookies_and_headers(headers, base);
+        let res = test::call_service(&self.service, base.to_request()).await;
+        for cookie in res.response().cookies() {
+            self.cookies.add(cookie.into_owned());
+        }
+        res
+    }
+
+    fn add_cookies_and_headers(
+        &self,
+        headers: Option<Vec<(&str, &str)>>,
+        mut base: TestRequest,
+    ) -> TestRequest {
         match headers {
             Some(headers) => {
                 for header in headers {
@@ -80,12 +122,7 @@ impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error 
         for cookie in self.cookies.iter() {
             base = base.cookie(cookie.clone());
         }
-        let res = test::call_service(&self.service, base.to_request()).await;
-
-        for cookie in res.response().cookies() {
-            self.cookies.add(cookie.into_owned());
-        }
-        res
+        return base;
     }
 }
 

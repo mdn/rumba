@@ -17,7 +17,8 @@ CREATE TABLE collections
     document_id BIGSERIAL references documents (id),
     notes       TEXT,
     custom_name TEXT,
-    user_id     BIGSERIAL REFERENCES users (id)
+    user_id     BIGSERIAL REFERENCES users (id),
+    UNIQUE(document_id, user_id)
 );
 
-CREATE INDEX document_uri on documents (uri)
+CREATE UNIQUE INDEX document_uri on documents (uri)

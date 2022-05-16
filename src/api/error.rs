@@ -15,6 +15,10 @@ pub enum ApiError {
     ServerError,
     #[error("Document Not found")]
     DocumentNotFound,
+    #[error("Malformed Url")]
+    MalformedUrl,
+    #[error("Json error")]
+    JsonProcessingError,
 }
 
 impl ApiError {
@@ -24,6 +28,8 @@ impl ApiError {
             Self::InvalidSession => "Invalid Session".to_string(),
             Self::ServerError => "Server error".to_string(),
             Self::DocumentNotFound => "Document not found".to_string(),
+            Self::MalformedUrl => "Malformed URL".to_string(),
+            Self::JsonProcessingError => "Error processing JSON document".to_string(),
         }
     }
 }
@@ -42,6 +48,8 @@ impl ResponseError for ApiError {
             Self::InvalidSession => StatusCode::BAD_REQUEST,
             Self::ServerError => StatusCode::INTERNAL_SERVER_ERROR,
             Self::DocumentNotFound => StatusCode::NOT_FOUND,
+            Self::MalformedUrl => StatusCode::BAD_REQUEST,
+            Self::JsonProcessingError => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 
@@ -68,5 +76,11 @@ impl From<DbError> for ApiError {
 impl From<r2d2::Error> for ApiError {
     fn from(_: Error) -> Self {
         ApiError::ServerError
+    }
+}
+
+impl From<serde_json::Error> for ApiError {
+    fn from(_: serde_json::Error) -> Self {
+        ApiError::JsonProcessingError
     }
 }

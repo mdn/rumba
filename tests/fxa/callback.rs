@@ -46,7 +46,6 @@ async fn basic() -> Result<(), Error> {
     }
 
     let res = test::call_service(&app, base.to_request()).await;
-    println!("{:?}", res);
     assert!(res.status().is_redirection());
     assert_eq!(res.headers().get("Location").unwrap(), "/");
 

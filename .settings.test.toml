@@ -13,3 +13,6 @@ auth_cookie_secure = false
 client_id="TEST_CLIENT_ID"
 client_secret="TEST_CLIENT_SECRET"
 auth_cookie_key = "DUwIFZuUYzRhHPlhOm6DwTHSDUSyR5SyvZHIeHdx4DIanxm5/GD/4dqXROLvn5vMofOYUq37HhhivjCyMCWP4w=="
+
+[application]
+document_base_url = "http://localhost:4321"

@@ -5,10 +5,18 @@ use rumba::{
     settings::SETTINGS,
 };
 
-const MIGRATIONS: diesel_migrations::EmbeddedMigrations = diesel_migrations::embed_migrations!();
+use once_cell::sync::OnceCell;
 
-pub fn get_pool() -> Pool {
-    establish_connection(&SETTINGS.db.uri)
+const MIGRATIONS: diesel_migrations::EmbeddedMigrations = diesel_migrations::embed_migrations!();
+static CONN_POOL: OnceCell<Pool> = OnceCell::new();
+
+pub fn get_pool() -> &'static Pool {
+    if let Some(val) = CONN_POOL.get() {
+        val
+    } else {
+        CONN_POOL.set(establish_connection(&SETTINGS.db.uri));
+        return CONN_POOL.get().unwrap();
+    }
 }
 
 pub fn reset() -> Result<(), Error> {
