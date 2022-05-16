@@ -40,7 +40,7 @@ pub struct Settings {
     pub db: DB,
     pub server: Server,
     pub auth: Auth,
-    pub application: Application
+    pub application: Application,
 }
 
 impl Settings {

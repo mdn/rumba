@@ -1,0 +1,54 @@
+{
+  "uuid": "CSS_Index2_json",
+  "priority": 1,
+  "request": {
+    "method": "GET",
+    "url": "/en-US/docs/Web/CSS2/index.json"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "doc": {
+        "isMarkdown": true,
+        "isTranslated": false,
+        "isActive": true,
+        "flaws": {},
+        "title": "B CSS: Cascading Style Sheets",
+        "mdn_url": "/en-US/docs/Web/CSS2",
+        "locale": "en-US",
+        "native": "English (US)",
+        "sidebarHTML": "<ul><li>Lots of html</li></ul>",
+        "body": [
+          {
+            "type": "prose",
+            "value": {
+              "id": null,
+              "title": null,
+              "isH3": false,
+              "content": "<p><strong>Cascading Style Sheets</strong></p>"
+            }
+          }
+        ],
+        "toc": [
+          {
+            "text": "Key resources",
+            "id": "key_resources"
+          }
+        ],
+        "parents": [
+          {
+            "uri": "/en-US/docs/Web",
+            "title": "References"
+          },
+          {
+            "uri": "/en-US/docs/Web/CSS2",
+            "title": "CSS"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -5,7 +5,9 @@ use actix_web::{
     dev::{ServiceFactory, ServiceRequest, ServiceResponse},
     App, Error,
 };
+use reqwest::Client;
 use rumba::add_services;
+use rumba::db::Pool;
 use rumba::fxa::LoginManager;
 use rumba::settings::SETTINGS;
 use std::sync::{Arc, RwLock};
@@ -40,7 +42,7 @@ pub async fn test_app_with_login() -> anyhow::Result<
     >,
 > {
     let pool = get_pool();
-    let login_manager = Arc::new(RwLock::new(LoginManager::init().await?));
+    let login_manager = Arc::new(RwLock::new(LoginManager::init(Client::new()).await?));
     let _result = env_logger::try_init();
     let policy = CookieIdentityPolicy::new(&[0; 32])
         .name(&SETTINGS.auth.auth_cookie_name)
@@ -48,7 +50,8 @@ pub async fn test_app_with_login() -> anyhow::Result<
 
     let app = App::new()
         .wrap(IdentityService::new(policy))
-        .app_data(Data::new(pool))
+        .app_data(Data::new(pool.clone()))
+        .app_data(Data::new(Client::new()))
         .app_data(Data::new(login_manager));
     Ok(add_services(app))
 }

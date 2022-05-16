@@ -1,7 +1,7 @@
 use crate::helpers::app::test_app_with_login;
 use crate::helpers::db::reset;
+use crate::helpers::http_client::TestHttpClient;
 use crate::helpers::read_json;
-use crate::helpers::session::TestHttpClient;
 use actix_web::test;
 use anyhow::Error;
 use stubr::{Config, Stubr};
@@ -31,7 +31,7 @@ async fn whoami_logged_in_test() -> Result<(), Error> {
     reset()?;
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
-    let logged_in_client = TestHttpClient::new(service).await;
+    let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
         .get(
             "/api/v1/whoami".to_string(),
@@ -73,7 +73,7 @@ async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
 
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
-    let logged_in_client = TestHttpClient::new(service).await;
+    let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
         .get(
             "/api/v1/whoami".to_string(),

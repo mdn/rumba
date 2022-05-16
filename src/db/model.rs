@@ -57,16 +57,22 @@ pub struct CollectionInsert {
     pub document_id: i64,
     pub custom_name: Option<String>,
     pub user_id: i64,
-    pub metadata: Option<Value>,
     pub notes: Option<String>,
 }
 
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = documents)]
 pub struct DocumentInsert {
-    pub document_id: i64,
-    pub custom_name: Option<String>,
-    pub user_id: i64,
+    pub absolute_uri: String,
+    pub uri: String,
     pub metadata: Option<Value>,
-    pub notes: Option<String>,
+    pub updated_at: NaiveDateTime,
+    pub title: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct DocumentMetadata {
+    pub mdn_url: String,
+    pub parents: Option<Vec<CollectionParent>>,
+    pub title: String,
 }
