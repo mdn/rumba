@@ -12,7 +12,6 @@ use diesel::{insert_into, PgConnection};
 use diesel::{update, RunQueryDsl};
 use diesel::{QueryDsl, QueryResult};
 use r2d2::PooledConnection;
-use crate::settings::SETTINGS;
 
 pub async fn get_collection(
     user: UserQuery,
