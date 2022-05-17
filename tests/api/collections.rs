@@ -281,3 +281,66 @@ async fn test_filters_by_custom_name_over_title() -> Result<(), Error> {
 
     Ok(())
 }
+
+#[actix_rt::test]
+async fn test_query_finds_strings_in_notes() -> Result<(), Error> {
+    reset()?;
+
+    let _stubr = Stubr::start_blocking_with(
+        vec!["tests/stubs", "tests/test_specific_stubs/collections"],
+        Config {
+            port: Some(4321),
+            latency: None,
+            global_delay: None,
+            verbose: Some(true),
+        },
+    );
+
+    let app = test_app_with_login().await?;
+    let service = test::init_service(app).await;
+    let mut logged_in_client = TestHttpClient::new(service).await;
+    let mut base_url = "/api/v1/collections?url=/en-US/docs/Web/CSS1".to_string();
+    let request_no_custom_name = vec![
+        (
+            "name".to_string(),
+            "CSS: Cascading Style Sheets".to_string(),
+        ),
+        ("notes".to_string(), "Notes notes notes".to_string()),
+    ];
+    logged_in_client
+        .post(
+            base_url.clone(),
+            None,
+            PostPayload::FormData(request_no_custom_name),
+        )
+        .await;
+
+    base_url = "/api/v1/collections?url=/en-US/docs/Web/CSS2".to_string();
+    let request_custom_name = vec![
+        (
+            "name".to_string(),
+            "CSS: Cascading Style Sheets".to_string(),
+        ),
+        ("notes".to_string(), "RANDOM".to_string()),
+    ];
+    logged_in_client
+        .post(
+            base_url.clone(),
+            None,
+            PostPayload::FormData(request_custom_name),
+        )
+        .await;
+
+    base_url = "/api/v1/collections?q=RANDOM".to_string();
+
+    let mut collection_res = logged_in_client.get(base_url, None).await;
+    let collection_json = read_json(collection_res).await;
+
+    let items = &collection_json["items"];
+    assert_eq!(items.as_array().unwrap().len(), 1);
+
+    assert_eq!(items[0]["title"], "CSS: Cascading Style Sheets");
+    assert_eq!(items[0]["url"], "/en-US/docs/Web/CSS2");
+    assert_eq!(items[0]["notes"], "RANDOM");
+    Ok(())
+}
