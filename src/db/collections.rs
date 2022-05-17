@@ -55,13 +55,18 @@ pub async fn get_collections_paginated(
                 schema::collections::custom_name.is_not_null().and(
                     schema::collections::custom_name
                         .nullable()
-                        .ilike(format!("%{}%", query.to_owned())),
+                        .ilike(format!("%{}%", query)),
                 ),
             )
             .or_filter(
                 schema::collections::custom_name
                     .is_null()
-                    .and(schema::documents::title.ilike(format!("%{}%", query.to_owned()))),
+                    .and(schema::documents::title.ilike(format!("%{}%", query))),
+            )
+            .or_filter(
+                schema::collections::notes
+                    .nullable()
+                    .ilike(format!("%{}%", query)),
             );
     }
 
