@@ -7,7 +7,7 @@ use actix_web::{
 };
 use reqwest::Client;
 use rumba::add_services;
-use rumba::db::Pool;
+
 use rumba::fxa::LoginManager;
 use rumba::settings::SETTINGS;
 use std::sync::{Arc, RwLock};

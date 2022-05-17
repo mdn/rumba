@@ -14,7 +14,7 @@ pub fn get_pool() -> &'static Pool {
     if let Some(val) = CONN_POOL.get() {
         val
     } else {
-        CONN_POOL.set(establish_connection(&SETTINGS.db.uri));
+        let _res = CONN_POOL.set(establish_connection(&SETTINGS.db.uri));
         return CONN_POOL.get().unwrap();
     }
 }
