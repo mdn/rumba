@@ -12,7 +12,6 @@ use actix_web::{web, HttpRequest, HttpResponse};
 
 use chrono::NaiveDateTime;
 use reqwest::{Client, StatusCode};
-use serde_json::Value;
 use url::Url;
 
 use crate::db;
