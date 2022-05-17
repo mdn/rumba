@@ -24,9 +24,9 @@ use crate::settings::SETTINGS;
 #[derive(Deserialize)]
 pub enum Sorting {
     #[serde(rename = "title")]
-    TITLE,
+    Title,
     #[serde(rename = "created")]
-    CREATED,
+    Created,
 }
 
 #[derive(Deserialize)]
@@ -211,32 +211,38 @@ pub async fn create_or_update_collections(
     }
 }
 
+#[derive(Deserialize)]
+pub struct DocumentMetadataResponse {
+    doc: DocumentMetadata,
+}
+
 async fn get_document_metadata(
     http_client: Data<Client>,
     query: &Query<CollectionCreationParams>,
 ) -> Result<DocumentMetadata, ApiError> {
-    let document_url =
-        Url::parse(&(SETTINGS.application.document_base_url.clone() + &query.url + "/index.json"))
-            .map_err(|_| ApiError::MalformedUrl)?;
+    let document_url = Url::parse(&format!(
+        "{}{}/index.json",
+        SETTINGS.application.document_base_url.clone(),
+        query.url
+    ))
+    .map_err(|_| ApiError::MalformedUrl)?;
 
     let document = http_client
         .get(document_url)
         .send()
         .await
-        .map_err(|err: reqwest::Error| {
-            if let Some(code) = err.status() {
-                match code {
-                    StatusCode::NOT_FOUND => ApiError::DocumentNotFound,
-                    _ => ApiError::Unknown,
-                }
-            } else {
-                ApiError::Unknown
-            }
+        .map_err(|err: reqwest::Error| match err.status() {
+            Some(StatusCode::NOT_FOUND) => ApiError::DocumentNotFound,
+            _ => ApiError::Unknown,
         })?;
-    let res_json: Value = document.json().await.unwrap();
+
+    let res: DocumentMetadataResponse = document
+        .json()
+        .await
+        .map_err(|_| ApiError::DocumentNotFound)?;
     Ok(DocumentMetadata {
-        title: serde_json::from_value(res_json["doc"]["title"].clone())?,
-        parents: serde_json::from_value(res_json["doc"]["parents"].clone())?,
-        mdn_url: serde_json::from_value(res_json["doc"]["mdn_url"].clone())?,
+        title: res.doc.title,
+        parents: res.doc.parents,
+        mdn_url: res.doc.mdn_url,
     })
 }

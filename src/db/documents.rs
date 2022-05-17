@@ -10,14 +10,9 @@ pub fn create_or_update_document(
     document: DocumentMetadata,
     uri: String,
 ) -> QueryResult<i64> {
-    let absolute_uri = SETTINGS.application.document_base_url.clone() + &uri;
-
-    let mut metadata = None;
+    let absolute_uri = format!("{}{}", SETTINGS.application.document_base_url.clone(), uri);
     let title = document.title.clone();
-    if let Ok(i) = serde_json::to_value(document) {
-        metadata = Some(i);
-    }
-
+    let metadata = serde_json::to_value(document).ok();
     let insert = DocumentInsert {
         title,
         absolute_uri,

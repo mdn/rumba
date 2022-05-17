@@ -49,39 +49,38 @@ pub async fn get_collections_paginated(
         .inner_join(schema::documents::table)
         .into_boxed();
 
-    if query_params.q.is_some() {
-        let query = query_params.q.as_ref().unwrap();
+    if let Some(query) = &query_params.q {
         collections_query = collections_query
             .filter(
                 schema::collections::custom_name.is_not_null().and(
                     schema::collections::custom_name
                         .nullable()
-                        .ilike(query.to_owned() + "%"),
+                        .ilike(format!("%{}%", query.to_owned())),
                 ),
             )
             .or_filter(
                 schema::collections::custom_name
                     .is_null()
-                    .and(schema::documents::title.ilike(query.to_owned() + "%")),
+                    .and(schema::documents::title.ilike(format!("%{}%", query.to_owned()))),
             );
     }
 
     collections_query = match query_params.sort {
-        Some(Sorting::TITLE) => collections_query
+        Some(Sorting::Title) => collections_query
             .order_by(schema::collections::custom_name.desc())
             .then_order_by(schema::documents::title.desc()),
-        Some(Sorting::CREATED) => {
+        Some(Sorting::Created) => {
             collections_query.order_by(schema::collections::created_at.desc())
         }
         None => collections_query.order_by(schema::collections::created_at.desc()),
     };
 
-    if query_params.limit.is_some() {
-        collections_query = collections_query.limit(query_params.limit.unwrap().into())
+    if let Some(limit) = query_params.limit {
+        collections_query = collections_query.limit(limit.into())
     }
 
-    if query_params.offset.is_some() {
-        collections_query = collections_query.offset(query_params.offset.unwrap().into())
+    if let Some(offset) = query_params.offset {
+        collections_query = collections_query.offset(offset.into())
     }
 
     Ok(collections_query

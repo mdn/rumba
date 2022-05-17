@@ -22,14 +22,14 @@ pub enum ApiError {
 }
 
 impl ApiError {
-    pub fn name(&self) -> String {
+    pub fn name(&self) -> &str {
         match self {
-            Self::Unknown => "Unknown".to_string(),
-            Self::InvalidSession => "Invalid Session".to_string(),
-            Self::ServerError => "Server error".to_string(),
-            Self::DocumentNotFound => "Document not found".to_string(),
-            Self::MalformedUrl => "Malformed URL".to_string(),
-            Self::JsonProcessingError => "Error processing JSON document".to_string(),
+            Self::Unknown => "Unknown",
+            Self::InvalidSession => "Invalid Session",
+            Self::ServerError => "Server error",
+            Self::DocumentNotFound => "Document not found",
+            Self::MalformedUrl => "Malformed URL",
+            Self::JsonProcessingError => "Error processing JSON document",
         }
     }
 }
@@ -58,7 +58,7 @@ impl ResponseError for ApiError {
         let error_response = ErrorResponse {
             code: status_code.as_u16(),
             message: self.to_string(),
-            error: self.name(),
+            error: self.name().to_string(),
         };
         HttpResponse::build(status_code).json(error_response)
     }
