@@ -45,7 +45,7 @@ async fn test_create_and_get_collection() -> Result<(), Error> {
     let collection_json = read_json(collection_res).await;
 
     let bookmarked = &collection_json["bookmarked"];
-    assert_eq!(bookmarked.is_null(), false);
+    assert!(!bookmarked.is_null());
     assert_eq!(bookmarked["title"], "CSS: Cascading Style Sheets");
     assert_eq!(bookmarked["url"], "/en-US/docs/Web/CSS");
     assert_eq!(bookmarked["notes"], "Notes notes notes");
@@ -333,7 +333,7 @@ async fn test_query_finds_strings_in_notes() -> Result<(), Error> {
 
     base_url = "/api/v1/collections?q=RANDOM".to_string();
 
-    let mut collection_res = logged_in_client.get(base_url, None).await;
+    let collection_res = logged_in_client.get(base_url, None).await;
     let collection_json = read_json(collection_res).await;
 
     let items = &collection_json["items"];
@@ -342,5 +342,47 @@ async fn test_query_finds_strings_in_notes() -> Result<(), Error> {
     assert_eq!(items[0]["title"], "CSS: Cascading Style Sheets");
     assert_eq!(items[0]["url"], "/en-US/docs/Web/CSS2");
     assert_eq!(items[0]["notes"], "RANDOM");
+    Ok(())
+}
+
+#[actix_rt::test]
+async fn test_delete_collection() -> Result<(), Error> {
+    reset()?;
+
+    let _stubr = Stubr::start_blocking_with(
+        vec!["tests/stubs", "tests/test_specific_stubs/collections"],
+        Config {
+            port: Some(4321),
+            latency: None,
+            global_delay: None,
+            verbose: Some(true),
+        },
+    );
+
+    let app = test_app_with_login().await?;
+    let service = test::init_service(app).await;
+
+    let mut logged_in_client = TestHttpClient::new(service).await;
+    let base_url = "/api/v1/collections?url=/en-US/docs/Web/CSS".to_string();
+    let payload = vec![
+        (
+            "name".to_string(),
+            "CSS: Cascading Style Sheets".to_string(),
+        ),
+        ("notes".to_string(), "Notes notes notes".to_string()),
+    ];
+    let create_res = logged_in_client
+        .post(base_url.clone(), None, PostPayload::FormData(payload))
+        .await;
+    assert_eq!(create_res.status(), 201);
+    let collection_res = logged_in_client.get(base_url.clone(), None).await;
+    let collection_json = read_json(collection_res).await;
+    let bookmarked = &collection_json["bookmarked"];
+    assert!(!bookmarked.is_null());
+    let delete_res = logged_in_client.delete(base_url.clone(), None).await;
+    assert_eq!(delete_res.status(), 200);
+    let try_get_collection_res = logged_in_client.get(base_url.clone(), None).await;
+    let collection_json = read_json(try_get_collection_res).await;
+    assert!(collection_json["bookmarked"].is_null());
     Ok(())
 }

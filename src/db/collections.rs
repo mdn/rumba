@@ -8,7 +8,7 @@ use crate::diesel::NullableExpressionMethods;
 use crate::diesel::PgTextExpressionMethods;
 use diesel::expression_methods::ExpressionMethods;
 use diesel::r2d2::ConnectionManager;
-use diesel::RunQueryDsl;
+use diesel::{update, RunQueryDsl};
 use diesel::{insert_into, PgConnection};
 use diesel::{QueryDsl, QueryResult};
 use r2d2::PooledConnection;
@@ -21,7 +21,11 @@ pub async fn get_collection(
     let collection: CollectionAndDocumentQuery = schema::collections::table
         .filter(schema::collections::user_id.eq(user.id))
         .inner_join(schema::documents::table)
-        .filter(schema::documents::uri.eq(normalize_uri(url.to_string())))
+        .filter(
+            schema::documents::uri
+                .eq(normalize_uri(url.to_string()))
+                .and(schema::collections::deleted_at.is_null()),
+        )
         .select((
             schema::collections::id,
             schema::collections::created_at,
@@ -45,7 +49,11 @@ pub async fn get_collections_paginated(
     query_params: &CollectionsQueryParams,
 ) -> Result<Vec<CollectionAndDocumentQuery>, DbError> {
     let mut collections_query = schema::collections::table
-        .filter(schema::collections::user_id.eq(user.id))
+        .filter(
+            schema::collections::user_id
+                .eq(user.id)
+                .and(schema::collections::deleted_at.is_null()),
+        )
         .inner_join(schema::documents::table)
         .into_boxed();
 
@@ -102,6 +110,24 @@ pub async fn get_collections_paginated(
             schema::documents::title,
         ))
         .get_results::<CollectionAndDocumentQuery>(pool)?)
+}
+
+pub async fn delete_collection_item(
+    user: UserQuery,
+    pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
+    url: String,
+) -> QueryResult<usize> {
+    update(schema::collections::table)
+        .filter(
+            schema::collections::document_id.eq_any(
+                schema::documents::table
+                    .filter(schema::documents::uri.eq(normalize_uri(url)))
+                    .select(schema::documents::id),
+            ),
+        )
+        .filter(schema::collections::user_id.eq(user.id))
+        .set(schema::collections::deleted_at.eq(chrono::offset::Utc::now().naive_utc()))
+        .execute(pool)
 }
 
 fn normalize_uri(input: String) -> String {
