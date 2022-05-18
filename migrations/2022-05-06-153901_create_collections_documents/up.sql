@@ -14,6 +14,7 @@ CREATE TABLE collections
     id          BIGSERIAL PRIMARY KEY,
     created_at  TIMESTAMP NOT NULL DEFAULT now(),
     updated_at  TIMESTAMP NOT NULL DEFAULT now(),
+    deleted_at     TIMESTAMP,
     document_id BIGSERIAL references documents (id),
     notes       TEXT,
     custom_name TEXT,

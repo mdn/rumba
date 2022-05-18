@@ -1,4 +1,4 @@
-use crate::api::collections::{collections, create_or_update_collections};
+use crate::api::collections::{collections, create_or_update_collections, delete_collection_item};
 use crate::api::whoami::whoami;
 use crate::settings::SETTINGS;
 use actix_session::storage::CookieSessionStore;
@@ -16,7 +16,8 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
         .service(
             web::resource("/collections")
                 .route(web::get().to(collections))
-                .route(web::post().to(create_or_update_collections)),
+                .route(web::post().to(create_or_update_collections))
+                .route(web::delete().to(delete_collection_item)),
         )
         .service(web::resource("/whoami").route(web::get().to(whoami)))
 }

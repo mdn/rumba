@@ -87,6 +87,11 @@ pub struct CollectionCreationParams {
     pub url: String,
 }
 
+#[derive(Deserialize)]
+pub struct CollectionDeletionParams {
+    pub url: String,
+}
+
 impl From<CollectionAndDocumentQuery> for CollectionItem {
     fn from(collection_and_document: CollectionAndDocumentQuery) -> Self {
         let mut parents: Option<Vec<CollectionParent>> = None;
@@ -205,6 +210,24 @@ pub async fn create_or_update_collections(
             .map_err(DbError::from)?;
 
             Ok(HttpResponse::Created().finish())
+        }
+        None => Ok(HttpResponse::Unauthorized().finish()),
+    }
+}
+
+pub async fn delete_collection_item(
+    pool: Data<Pool>,
+    id: Identity,
+    query: web::Query<CollectionDeletionParams>,
+) -> Result<HttpResponse, ApiError> {
+    match id.identity() {
+        Some(id) => {
+            let mut conn_pool = pool.get()?;
+            let user: UserQuery = get_user(&mut conn_pool, id).await?;
+            crate::db::collections::delete_collection_item(user, &mut conn_pool, query.url.clone())
+                .await
+                .map_err(DbError::from)?;
+            Ok(HttpResponse::Ok().finish())
         }
         None => Ok(HttpResponse::Unauthorized().finish()),
     }

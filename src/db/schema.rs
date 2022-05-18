@@ -14,6 +14,7 @@ diesel::table! {
         id -> Int8,
         created_at -> Timestamp,
         updated_at -> Timestamp,
+        deleted_at -> Nullable<Timestamp>,
         document_id -> Int8,
         notes -> Nullable<Text>,
         custom_name -> Nullable<Text>,

@@ -87,7 +87,7 @@ impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error 
         res
     }
 
-    pub(crate) async fn post(
+    pub async fn post(
         &mut self,
         uri: String,
         headers: Option<Vec<(&str, &str)>>,
@@ -98,6 +98,20 @@ impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error 
             PostPayload::FormData(form) => base = base.set_form(form),
             PostPayload::Json(val) => base = base.set_json(val),
         }
+        base = self.add_cookies_and_headers(headers, base);
+        let res = test::call_service(&self.service, base.to_request()).await;
+        for cookie in res.response().cookies() {
+            self.cookies.add(cookie.into_owned());
+        }
+        res
+    }
+
+    pub async fn delete(
+        &mut self,
+        uri: String,
+        headers: Option<Vec<(&str, &str)>>,
+    ) -> ServiceResponse<EitherBody<BoxBody>> {
+        let mut base = test::TestRequest::delete().uri(&*uri);
         base = self.add_cookies_and_headers(headers, base);
         let res = test::call_service(&self.service, base.to_request()).await;
         for cookie in res.response().cookies() {
@@ -122,7 +136,7 @@ impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error 
         for cookie in self.cookies.iter() {
             base = base.cookie(cookie.clone());
         }
-        return base;
+        base
     }
 }
 
