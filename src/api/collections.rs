@@ -3,7 +3,9 @@ use actix_identity::Identity;
 use serde::{Deserialize, Serialize};
 
 use crate::api::error::ApiError;
-use crate::db::collections::{create_collection, get_collection, get_collections_paginated};
+use crate::db::collections::{
+    create_collection_item, get_collection_item, get_collection_items_paginated,
+};
 
 use crate::db::Pool;
 
@@ -20,13 +22,7 @@ use crate::db::model::{CollectionAndDocumentQuery, DocumentMetadata, UserQuery};
 use crate::db::users::get_user;
 use crate::settings::SETTINGS;
 
-#[derive(Deserialize)]
-pub enum Sorting {
-    #[serde(rename = "title")]
-    Title,
-    #[serde(rename = "created")]
-    Created,
-}
+use super::common::Sorting;
 
 #[derive(Deserialize)]
 pub struct CollectionsQueryParams {
@@ -157,7 +153,7 @@ async fn get_single_collection_item(
     url: &String,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = pool.get()?;
-    let collection = get_collection(user, &mut conn, url).await;
+    let collection = get_collection_item(user, &mut conn, url).await;
     let bookmarked = match collection {
         Ok(val) => Some(val.into()),
         Err(e) => match e {
@@ -179,7 +175,7 @@ async fn get_paginated_collection_items(
     query: &CollectionsQueryParams,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = pool.get()?;
-    let collection = get_collections_paginated(user, &mut conn, query).await;
+    let collection = get_collection_items_paginated(user, &mut conn, query).await;
 
     let items = match collection {
         Ok(val) => val
@@ -199,7 +195,7 @@ async fn get_paginated_collection_items(
     Ok(HttpResponse::Ok().json(result))
 }
 
-pub async fn create_or_update_collections(
+pub async fn create_or_update_collection_item(
     pool: Data<Pool>,
     http_client: Data<Client>,
     id: Identity,
@@ -212,7 +208,7 @@ pub async fn create_or_update_collections(
                 let mut conn_pool = pool.get()?;
                 let user: UserQuery = get_user(&mut conn_pool, id).await?;
                 let metadata = get_document_metadata(http_client, &query).await?;
-                create_collection(
+                create_collection_item(
                     user,
                     &mut conn_pool,
                     query.url.clone(),

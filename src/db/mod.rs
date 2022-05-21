@@ -2,6 +2,7 @@ pub mod collections;
 mod documents;
 pub mod error;
 pub mod model;
+pub mod notifications;
 #[allow(unused_imports)]
 pub mod schema;
 pub mod settings;

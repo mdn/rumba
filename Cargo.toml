@@ -19,6 +19,7 @@ actix-http = "3"
 actix-rt = "2"
 actix-identity = "0.4"
 actix-session = { version = "0.6", features = ["cookie-session"] }
+actix-web-prom = "0.6.0"
 
 diesel = { version = "2.0.0-rc.0", features = ["postgres", "uuid", "r2d2", "chrono", "serde_json"] }
 diesel_migrations = "2.0.0-rc.0"

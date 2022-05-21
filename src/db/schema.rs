@@ -6,6 +6,10 @@ pub mod sql_types {
     pub struct Locale;
 
     #[derive(diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "notification_type"))]
+    pub struct NotificationType;
+
+    #[derive(diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "subscription_type"))]
     pub struct SubscriptionType;
 }
@@ -38,6 +42,40 @@ diesel::table! {
         uri -> Text,
         metadata -> Nullable<Jsonb>,
         title -> Text,
+        paths -> Array<Nullable<Text>>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+    use super::sql_types::NotificationType;
+
+    notification_data (id) {
+        id -> Int8,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+        text -> Text,
+        url -> Text,
+        data -> Nullable<Jsonb>,
+        title -> Text,
+        #[sql_name = "type"]
+        type_ -> NotificationType,
+        document_id -> Int8,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+
+    notifications (id) {
+        id -> Int8,
+        user_id -> Int8,
+        starred -> Bool,
+        read -> Bool,
+        deleted_at -> Nullable<Timestamp>,
+        notification_data_id -> Int8,
     }
 }
 
@@ -72,8 +110,32 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+
+    watched_items (user_id, document_id) {
+        user_id -> Int8,
+        document_id -> Int8,
+        created_at -> Timestamp,
+    }
+}
+
 diesel::joinable!(collections -> documents (document_id));
 diesel::joinable!(collections -> users (user_id));
+diesel::joinable!(notification_data -> documents (document_id));
+diesel::joinable!(notifications -> notification_data (notification_data_id));
+diesel::joinable!(notifications -> users (user_id));
 diesel::joinable!(settings -> users (user_id));
+diesel::joinable!(watched_items -> documents (document_id));
+diesel::joinable!(watched_items -> users (user_id));
 
-diesel::allow_tables_to_appear_in_same_query!(collections, documents, settings, users,);
+diesel::allow_tables_to_appear_in_same_query!(
+    collections,
+    documents,
+    notification_data,
+    notifications,
+    settings,
+    users,
+    watched_items,
+);

@@ -95,3 +95,15 @@ pub struct DocumentMetadata {
     pub parents: Option<Vec<CollectionParent>>,
     pub title: String,
 }
+
+#[derive(Queryable, Clone)]
+pub struct NotificationsQuery {
+    pub id: i64,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+    pub starred: bool,
+    pub read: bool,
+    pub title: String,
+    pub text: String,
+    pub url: String,
+}

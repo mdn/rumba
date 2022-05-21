@@ -1,4 +1,5 @@
-use crate::api::collections::{CollectionCreationForm, CollectionsQueryParams, Sorting};
+use crate::api::collections::{CollectionCreationForm, CollectionsQueryParams};
+use crate::api::common::Sorting;
 use crate::db::documents::create_or_update_document;
 use crate::db::error::DbError;
 use crate::db::model::{CollectionAndDocumentQuery, CollectionInsert, DocumentMetadata, UserQuery};
@@ -13,7 +14,7 @@ use diesel::{update, RunQueryDsl};
 use diesel::{QueryDsl, QueryResult};
 use r2d2::PooledConnection;
 
-pub async fn get_collection(
+pub async fn get_collection_item(
     user: UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     url: &String,
@@ -43,7 +44,7 @@ pub async fn get_collection(
     Ok(collection)
 }
 
-pub async fn get_collections_paginated(
+pub async fn get_collection_items_paginated(
     user: UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     query_params: &CollectionsQueryParams,
@@ -134,7 +135,7 @@ fn normalize_uri(input: String) -> String {
     input.to_lowercase().trim().to_string()
 }
 
-pub async fn create_collection(
+pub async fn create_collection_item(
     user: UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     url: String,
