@@ -1,6 +1,7 @@
 use crate::api::collections::{
     collections, create_or_update_collection_item, delete_collection_item,
 };
+use crate::api::search::search;
 use crate::api::settings::update_settings;
 use crate::api::whoami::whoami;
 use crate::settings::SETTINGS;
@@ -62,5 +63,6 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
                 )
                 .service(web::resource("/unwatch-many/").route(web::post().to(unwatch_many))),
         )
+        .service(web::resource("/search").route(web::get().to(search)))
         .service(web::resource("/whoami").route(web::get().to(whoami)))
 }
