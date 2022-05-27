@@ -97,7 +97,6 @@ async fn test_pagination_default_sort_by_created() -> Result<(), Error> {
     let mut collection_json = read_json(collection_res).await;
 
     assert_eq!(collection_json["items"].as_array().unwrap().len(), 5);
-    println!("{:?}", collection_json["items"].as_array());
     let mut items = collection_json["items"].as_array().unwrap();
     assert_eq!(items.len(), 5);
     assert!(items[0]["url"]
