@@ -1,7 +1,6 @@
 use crate::db::error::DbError;
 use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, ResponseError};
-use r2d2::Error;
 use serde::Serialize;
 use thiserror::Error;
 
@@ -84,7 +83,19 @@ impl From<diesel::result::Error> for ApiError {
 }
 
 impl From<r2d2::Error> for ApiError {
-    fn from(_: Error) -> Self {
+    fn from(_: r2d2::Error) -> Self {
+        ApiError::ServerError
+    }
+}
+
+impl From<elasticsearch::Error> for ApiError {
+    fn from(_: elasticsearch::Error) -> Self {
+        ApiError::ServerError
+    }
+}
+
+impl From<actix_web::error::QueryPayloadError> for ApiError {
+    fn from(_: actix_web::error::QueryPayloadError) -> Self {
         ApiError::ServerError
     }
 }
