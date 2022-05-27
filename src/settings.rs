@@ -58,8 +58,7 @@ pub static SETTINGS: Lazy<Settings> = Lazy::new(|| {
     match settings {
         Ok(settings) => settings,
         Err(err) => {
-            println!("{:?}", err);
-            Settings::new().unwrap()
+            panic!("{:?}", err);
         }
     }
 });

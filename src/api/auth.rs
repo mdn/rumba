@@ -1,4 +1,4 @@
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 use actix_identity::Identity;
 use actix_session::{storage::CookieSessionStore, Session, SessionMiddleware};
@@ -17,13 +17,10 @@ async fn login(
     _req: HttpRequest,
     id: Identity,
     session: Session,
-    login_manager: web::Data<Arc<RwLock<LoginManager>>>,
+    login_manager: web::Data<Arc<LoginManager>>,
 ) -> Result<HttpResponse, Error> {
     id.forget();
-    let (url, csrf_token, nonce) = login_manager
-        .try_write()
-        .map_err(|_| actix_web::error::ErrorInternalServerError("login"))?
-        .login();
+    let (url, csrf_token, nonce) = login_manager.login();
     session.insert("csrf_token", csrf_token)?;
     session.insert("nonce", nonce)?;
     Ok(HttpResponse::TemporaryRedirect()
@@ -45,7 +42,7 @@ async fn callback(
     pool: web::Data<Pool>,
     session: Session,
     web::Query(q): web::Query<AuthResponse>,
-    login_manager: web::Data<Arc<RwLock<LoginManager>>>,
+    login_manager: web::Data<Arc<LoginManager>>,
 ) -> Result<HttpResponse, Error> {
     let csrf_token: Option<CsrfToken> = session.get("csrf_token")?;
     let nonce: Option<Nonce> = session.get("nonce")?;
@@ -53,13 +50,13 @@ async fn callback(
     match (csrf_token, nonce) {
         (Some(state), Some(nonce)) if state.secret() == &q.state => {
             println!("callback");
-            let mut lm = login_manager
-                .try_write()
-                .map_err(|_| actix_web::error::ErrorInternalServerError("lock"))?;
-            let uid = lm.callback(q.code, nonce, &pool).await.map_err(|err| {
-                println!("{:?}", err);
-                actix_web::error::ErrorInternalServerError(err)
-            })?;
+            let uid = login_manager
+                .callback(q.code, nonce, &pool)
+                .await
+                .map_err(|err| {
+                    println!("{:?}", err);
+                    actix_web::error::ErrorInternalServerError(err)
+                })?;
             id.remember(uid);
 
             return Ok(HttpResponse::TemporaryRedirect()

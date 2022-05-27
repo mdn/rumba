@@ -29,6 +29,12 @@ pub enum Subscription {
     MdnPlus_10y,
 }
 
+impl Default for Subscription {
+    fn default() -> Self {
+        Self::Core
+    }
+}
+
 impl From<String> for Subscription {
     fn from(s: String) -> Self {
         match s.as_str() {

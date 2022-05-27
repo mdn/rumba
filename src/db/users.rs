@@ -8,6 +8,8 @@ use diesel::{insert_into, PgConnection, QueryDsl, QueryResult, RunQueryDsl};
 use r2d2::PooledConnection;
 use schema::users::dsl::*;
 
+use super::types::Subscription;
+
 pub fn create_or_update_user(
     conn: &mut PgConnection,
     mut fxa_user: FxAUser,
@@ -16,7 +18,13 @@ pub fn create_or_update_user(
     if fxa_user.subscriptions.len() > 1 {
         fxa_user.subscriptions.sort();
     }
-    let sub = (*fxa_user.subscriptions.get(0).unwrap()).into();
+
+    let sub: Subscription = fxa_user
+        .subscriptions
+        .get(0)
+        .cloned()
+        .unwrap_or_default()
+        .into();
 
     let user = User {
         updated_at: chrono::offset::Utc::now().naive_utc(),

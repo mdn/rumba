@@ -17,6 +17,12 @@ pub enum Subscription {
     Unknown,
 }
 
+impl Default for Subscription {
+    fn default() -> Self {
+        Self::Core
+    }
+}
+
 impl From<Subscription> for db::types::Subscription {
     fn from(val: Subscription) -> Self {
         match val {

@@ -10,7 +10,7 @@ use rumba::add_services;
 
 use rumba::fxa::LoginManager;
 use rumba::settings::SETTINGS;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 use super::{db::get_pool, identity::TestIdentityPolicy};
 
@@ -42,7 +42,7 @@ pub async fn test_app_with_login() -> anyhow::Result<
     >,
 > {
     let pool = get_pool();
-    let login_manager = Arc::new(RwLock::new(LoginManager::init(Client::new()).await?));
+    let login_manager = Arc::new(LoginManager::init(Client::new()).await?);
     let _result = env_logger::try_init();
     let policy = CookieIdentityPolicy::new(&[0; 32])
         .name(&SETTINGS.auth.auth_cookie_name)

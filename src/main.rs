@@ -1,6 +1,6 @@
 #![warn(clippy::all)]
 
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 use actix_identity::{CookieIdentityPolicy, IdentityService};
 use actix_web::{middleware::Logger, web::Data, App, HttpServer};
@@ -26,7 +26,7 @@ async fn main() -> anyhow::Result<()> {
         .expect("failed to run migrations");
 
     let http_client = HttpClient::new();
-    let login_manager = Arc::new(RwLock::new(LoginManager::init(http_client.clone()).await?));
+    let login_manager = Arc::new(LoginManager::init(http_client.clone()).await?);
 
     HttpServer::new(move || {
         let policy = CookieIdentityPolicy::new(&[0; 32])

@@ -46,7 +46,9 @@ pub async fn whoami(
                     let response = WhoamiResponse {
                         geo: country,
                         username: Option::Some(found.fxa_uid),
-                        subscription_type: Option::Some(found.subscription_type.unwrap().into()),
+                        subscription_type: Option::Some(
+                            found.subscription_type.unwrap_or_default().into(),
+                        ),
                         avatar_url: found.avatar_url,
                         is_subscriber: Option::Some(found.is_subscriber),
                         is_authenticated: Option::Some(true),

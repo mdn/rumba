@@ -114,7 +114,7 @@ impl From<CollectionAndDocumentQuery> for CollectionItem {
             created: collection_and_document.created_at,
             notes: collection_and_document.notes,
             url,
-            title: title.unwrap(),
+            title: title.unwrap_or_default(),
             id: collection_and_document.id,
         }
     }

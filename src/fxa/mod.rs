@@ -69,7 +69,7 @@ impl LoginManager {
         })
     }
 
-    pub fn login(&mut self) -> (Url, CsrfToken, Nonce) {
+    pub fn login(&self) -> (Url, CsrfToken, Nonce) {
         let (auth_url, csrf_token, nonce) = self
             .login_client
             .authorize_url(
@@ -85,7 +85,7 @@ impl LoginManager {
     }
 
     pub async fn callback(
-        &mut self,
+        &self,
         code: String,
         _nonce: Nonce,
         pool: &web::Data<Pool>,
