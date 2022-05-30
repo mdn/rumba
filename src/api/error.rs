@@ -15,6 +15,8 @@ pub enum ApiError {
     ServerError,
     #[error("Document Not found")]
     DocumentNotFound,
+    #[error("Notification Not found")]
+    NotificationNotFound,
     #[error("Malformed Url")]
     MalformedUrl,
     #[error("Json error")]
@@ -29,6 +31,7 @@ impl ApiError {
             Self::ServerError => "Server error",
             Self::DocumentNotFound => "Document not found",
             Self::MalformedUrl => "Malformed URL",
+            Self::NotificationNotFound => "Notification not found",
             Self::JsonProcessingError => "Error processing JSON document",
         }
     }
@@ -48,6 +51,7 @@ impl ResponseError for ApiError {
             Self::InvalidSession => StatusCode::BAD_REQUEST,
             Self::ServerError => StatusCode::INTERNAL_SERVER_ERROR,
             Self::DocumentNotFound => StatusCode::NOT_FOUND,
+            Self::NotificationNotFound => StatusCode::NOT_FOUND,
             Self::MalformedUrl => StatusCode::BAD_REQUEST,
             Self::JsonProcessingError => StatusCode::INTERNAL_SERVER_ERROR,
         }
@@ -70,6 +74,12 @@ impl From<DbError> for ApiError {
             DbError::DieselResult(_) => ApiError::Unknown,
             DbError::R2D2Error(_) => ApiError::Unknown,
         }
+    }
+}
+
+impl From<diesel::result::Error> for ApiError {
+    fn from(_: diesel::result::Error) -> Self {        
+        ApiError::Unknown    
     }
 }
 

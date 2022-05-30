@@ -1,12 +1,14 @@
 use crate::db::model::{DocumentInsert, DocumentMetadata};
 use crate::db::schema;
 
+use diesel::r2d2::ConnectionManager;
 use diesel::{insert_into, PgConnection, QueryResult, RunQueryDsl};
+use r2d2::PooledConnection;
 
 use crate::settings::SETTINGS;
 
-pub fn create_or_update_document(
-    conn: &mut PgConnection,
+pub async fn create_or_update_document(
+    conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
     document: DocumentMetadata,
     uri: String,
 ) -> QueryResult<i64> {

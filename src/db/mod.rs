@@ -1,5 +1,5 @@
 pub mod collections;
-mod documents;
+pub mod documents;
 pub mod error;
 pub mod model;
 pub mod notifications;

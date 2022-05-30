@@ -150,7 +150,7 @@ pub async fn create_collection_item(
 
     let url_normalized = normalize_uri(url);
 
-    let document_id = create_or_update_document(pool, document, url_normalized)?;
+    let document_id = create_or_update_document(pool, document, url_normalized).await?;
 
     let collection_insert = CollectionInsert {
         document_id,

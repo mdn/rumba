@@ -1,6 +1,7 @@
 #![allow(non_camel_case_types)]
 use crate::db::schema;
 use schema::sql_types::{Locale as DbLocale, SubscriptionType};
+use schema::sql_types::NotificationType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, diesel_derive_enum::DbEnum, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -85,4 +86,24 @@ impl From<Subscription> for String {
         }
         .into()
     }
+}
+
+#[derive(
+    Copy,
+    Clone,
+    diesel_derive_enum::DbEnum,
+    Debug,
+    Deserialize,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+)]
+#[DieselExistingType = "NotificationType"]
+pub enum NotificationTypeEnum {
+    #[serde(rename(serialize = "content"))]
+    Content,
+    #[serde(rename(serialize = "compat"))]
+    Compat,
 }
