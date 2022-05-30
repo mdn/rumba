@@ -41,6 +41,5 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
                 .service(web::resource("/star-ids/").route(web::post().to(star_ids)))
                 .service(web::resource("/unstar-ids/").route(web::post().to(unstar_ids))),
         )
-        .service(web::resource("/notifications").route(web::get().to(notifications)))
         .service(web::resource("/whoami").route(web::get().to(whoami)))
 }

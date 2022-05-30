@@ -22,7 +22,16 @@ async fn test_get_notifications() -> Result<(), Error> {
     let mut offset = 0;
     let mut limit = 10;
 
-    let res = logged_in_client.get(format!("/api/v1/notifications/?offset={}&limit={}", offset,limit), None).await;
+    let res = logged_in_client
+        .get(
+            format!(
+                "/api/v1/plus/notifications/?offset={}&limit={}",
+                offset, limit
+            )
+            .as_str(),
+            None,
+        )
+        .await;
     assert_eq!(res.response().status(), 200);
 
     let res_json = read_json(res).await;
