@@ -34,7 +34,7 @@ async fn whoami_logged_in_test() -> Result<(), Error> {
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
         .get(
-            "/api/v1/whoami".to_string(),
+            "/api/v1/whoami",
             Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
         )
         .await;
@@ -76,7 +76,7 @@ async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
         .get(
-            "/api/v1/whoami".to_string(),
+            "/api/v1/whoami",
             Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
         )
         .await;

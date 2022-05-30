@@ -4,6 +4,7 @@ use crate::helpers::http_client::{PostPayload, TestHttpClient};
 use crate::helpers::read_json;
 use actix_web::test;
 use anyhow::Error;
+use serde_json::json;
 
 use std::thread;
 use std::time::Duration;
@@ -29,16 +30,13 @@ async fn test_create_and_get_collection() -> Result<(), Error> {
     let service = test::init_service(app).await;
 
     let mut logged_in_client = TestHttpClient::new(service).await;
-    let base_url = "/api/v1/collections?url=/en-US/docs/Web/CSS".to_string();
-    let payload = vec![
-        (
-            "name".to_string(),
-            "CSS: Cascading Style Sheets".to_string(),
-        ),
-        ("notes".to_string(), "Notes notes notes".to_string()),
-    ];
+    let base_url = "/api/v1/plus/collection/?url=/en-US/docs/Web/CSS";
+    let payload = json!({
+        "name": "CSS: Cascading Style Sheets",
+        "notes": "Notes notes notes",
+    });
     let create_res = logged_in_client
-        .post(base_url.clone(), None, PostPayload::FormData(payload))
+        .post(base_url, None, PostPayload::FormData(payload))
         .await;
     assert_eq!(create_res.status(), 201);
     let collection_res = logged_in_client.get(base_url, None).await;
@@ -78,21 +76,18 @@ async fn test_pagination_default_sort_by_created() -> Result<(), Error> {
     let mut logged_in_client = TestHttpClient::new(service).await;
 
     for i in 1..12 {
-        let base_url = "/api/v1/collections?url=/en-US/docs/Web/CSS".to_string() + &i.to_string();
-        let payload = vec![
-            (
-                "name".to_string(),
-                "CSS: Cascading Style Sheets".to_string() + &i.to_string(),
-            ),
-            ("notes".to_string(), "Notes notes notes".to_string()),
-        ];
+        let base_url = format!("/api/v1/plus/collection/?url=/en-US/docs/Web/CSS{}", i);
+        let payload = json!({
+            "name": format!("CSS: Cascading Style Sheets{}", i),
+            "notes": "Notes notes notes",
+        });
         logged_in_client
-            .post(base_url.clone(), None, PostPayload::FormData(payload))
+            .post(&base_url, None, PostPayload::FormData(payload))
             .await;
         thread::sleep(Duration::from_millis(10));
     }
 
-    let mut base_url = "/api/v1/collections?limit=5".to_string();
+    let base_url = "/api/v1/plus/collection/?limit=5";
     let mut collection_res = logged_in_client.get(base_url, None).await;
     let mut collection_json = read_json(collection_res).await;
 
@@ -125,7 +120,7 @@ async fn test_pagination_default_sort_by_created() -> Result<(), Error> {
         .to_string()
         .ends_with("CSS7"));
 
-    base_url = "/api/v1/collections?limit=5&offset=5".to_string();
+    let base_url = "/api/v1/plus/collection/?limit=5&offset=5";
     collection_res = logged_in_client.get(base_url, None).await;
     collection_json = read_json(collection_res).await;
     items = collection_json["items"].as_array().unwrap();
@@ -156,7 +151,7 @@ async fn test_pagination_default_sort_by_created() -> Result<(), Error> {
         .to_string()
         .ends_with("CSS2"));
 
-    let base_url = "/api/v1/collections?limit=5&offset=10".to_string();
+    let base_url = "/api/v1/plus/collection/?limit=5&offset=10";
     collection_res = logged_in_client.get(base_url, None).await;
     collection_json = read_json(collection_res).await;
     items = collection_json["items"].as_array().unwrap();
@@ -187,17 +182,13 @@ async fn test_create_fails_404_no_index_found() -> Result<(), Error> {
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
-    let base_url =
-        "/api/v1/collections?url=/en-US/docs/Web/CSS_DEFINITELY_DOESNT_EXIST".to_string();
-    let payload = vec![
-        (
-            "name".to_string(),
-            "CSS: Cascading Style Sheets".to_string(),
-        ),
-        ("notes".to_string(), "Notes notes notes".to_string()),
-    ];
+    let base_url = "/api/v1/plus/collection/?url=/en-US/docs/Web/CSS_DEFINITELY_DOESNT_EXIST";
+    let payload = json!({
+        "name": "CSS: Cascading Style Sheets",
+        "notes": "Notes notes notes",
+    });
     let create_res = logged_in_client
-        .post(base_url.clone(), None, PostPayload::FormData(payload))
+        .post(base_url, None, PostPayload::FormData(payload))
         .await;
     assert_eq!(create_res.status(), 404);
 
@@ -225,36 +216,29 @@ async fn test_filters_by_custom_name_over_title() -> Result<(), Error> {
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
-    let mut base_url = "/api/v1/collections?url=/en-US/docs/Web/CSS1".to_string();
-    let request_no_custom_name = vec![
-        (
-            "name".to_string(),
-            "CSS: Cascading Style Sheets".to_string(),
-        ),
-        ("notes".to_string(), "Notes notes notes".to_string()),
-    ];
+    let mut base_url = "/api/v1/plus/collection/?url=/en-US/docs/Web/CSS1";
+    let request_no_custom_name = json!({
+        "name": "CSS: Cascading Style Sheets",
+        "notes": "Notes notes notes",
+    });
     logged_in_client
         .post(
-            base_url.clone(),
+            base_url,
             None,
             PostPayload::FormData(request_no_custom_name),
         )
         .await;
 
-    base_url = "/api/v1/collections?url=/en-US/docs/Web/CSS2".to_string();
-    let request_custom_name = vec![
-        ("name".to_string(), "Crippling Style Shorts".to_string()),
-        ("notes".to_string(), "Notes for CSS2".to_string()),
-    ];
+    base_url = "/api/v1/plus/collection/?url=/en-US/docs/Web/CSS2";
+    let request_custom_name = json!({
+        "name": "Crippling Style Shorts",
+        "notes": "Notes for CSS2",
+    });
     logged_in_client
-        .post(
-            base_url.clone(),
-            None,
-            PostPayload::FormData(request_custom_name),
-        )
+        .post(base_url, None, PostPayload::FormData(request_custom_name))
         .await;
 
-    base_url = "/api/v1/collections?q=Style".to_string();
+    base_url = "/api/v1/plus/collection/?q=Style";
 
     let mut collection_res = logged_in_client.get(base_url, None).await;
     let collection_json = read_json(collection_res).await;
@@ -269,7 +253,7 @@ async fn test_filters_by_custom_name_over_title() -> Result<(), Error> {
 
     // Query the API with the 'custom_name' to ensure it is the only result returned.
 
-    base_url = "/api/v1/collections?q=Style+Shorts".to_string();
+    base_url = "/api/v1/plus/collection/?q=Style+Shorts";
 
     collection_res = logged_in_client.get(base_url, None).await;
     let filtered_collection_json = read_json(collection_res).await;
@@ -298,39 +282,29 @@ async fn test_query_finds_strings_in_notes() -> Result<(), Error> {
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
-    let mut base_url = "/api/v1/collections?url=/en-US/docs/Web/CSS1".to_string();
-    let request_no_custom_name = vec![
-        (
-            "name".to_string(),
-            "CSS: Cascading Style Sheets".to_string(),
-        ),
-        ("notes".to_string(), "Notes notes notes".to_string()),
-    ];
+    let base_url = "/api/v1/plus/collection/?url=/en-US/docs/Web/CSS1";
+    let request_no_custom_name = json!({
+        "name": "CSS: Cascading Style Sheets",
+        "notes": "Notes notes notes",
+    });
     logged_in_client
         .post(
-            base_url.clone(),
+            base_url,
             None,
             PostPayload::FormData(request_no_custom_name),
         )
         .await;
 
-    base_url = "/api/v1/collections?url=/en-US/docs/Web/CSS2".to_string();
-    let request_custom_name = vec![
-        (
-            "name".to_string(),
-            "CSS: Cascading Style Sheets".to_string(),
-        ),
-        ("notes".to_string(), "RANDOM".to_string()),
-    ];
+    let base_url = "/api/v1/plus/collection/?url=/en-US/docs/Web/CSS2";
+    let request_custom_name = json!({
+        "name": "CSS: Cascading Style Sheets",
+        "notes": "RANDOM",
+    });
     logged_in_client
-        .post(
-            base_url.clone(),
-            None,
-            PostPayload::FormData(request_custom_name),
-        )
+        .post(base_url, None, PostPayload::FormData(request_custom_name))
         .await;
 
-    base_url = "/api/v1/collections?q=RANDOM".to_string();
+    let base_url = "/api/v1/plus/collection/?q=RANDOM";
 
     let collection_res = logged_in_client.get(base_url, None).await;
     let collection_json = read_json(collection_res).await;
@@ -362,25 +336,67 @@ async fn test_delete_collection() -> Result<(), Error> {
     let service = test::init_service(app).await;
 
     let mut logged_in_client = TestHttpClient::new(service).await;
-    let base_url = "/api/v1/collections?url=/en-US/docs/Web/CSS".to_string();
-    let payload = vec![
-        (
-            "name".to_string(),
-            "CSS: Cascading Style Sheets".to_string(),
-        ),
-        ("notes".to_string(), "Notes notes notes".to_string()),
-    ];
+    let base_url = "/api/v1/plus/collection/?url=/en-US/docs/Web/CSS";
+    let payload = json!({
+        "name": "CSS: Cascading Style Sheets",
+        "notes": "Notes notes notes",
+    });
     let create_res = logged_in_client
-        .post(base_url.clone(), None, PostPayload::FormData(payload))
+        .post(base_url, None, PostPayload::FormData(payload))
         .await;
     assert_eq!(create_res.status(), 201);
-    let collection_res = logged_in_client.get(base_url.clone(), None).await;
+    let collection_res = logged_in_client.get(base_url, None).await;
     let collection_json = read_json(collection_res).await;
     let bookmarked = &collection_json["bookmarked"];
     assert!(!bookmarked.is_null());
-    let delete_res = logged_in_client.delete(base_url.clone(), None).await;
+    let delete_res = logged_in_client.delete(base_url, None).await;
     assert_eq!(delete_res.status(), 200);
-    let try_get_collection_res = logged_in_client.get(base_url.clone(), None).await;
+    let try_get_collection_res = logged_in_client.get(base_url, None).await;
+    let collection_json = read_json(try_get_collection_res).await;
+    assert!(collection_json["bookmarked"].is_null());
+    Ok(())
+}
+
+#[actix_rt::test]
+async fn test_delete_collection_via_post() -> Result<(), Error> {
+    reset()?;
+
+    let _stubr = Stubr::start_blocking_with(
+        vec!["tests/stubs", "tests/test_specific_stubs/collections"],
+        Config {
+            port: Some(4321),
+            latency: None,
+            global_delay: None,
+            verbose: Some(true),
+        },
+    );
+
+    let app = test_app_with_login().await?;
+    let service = test::init_service(app).await;
+
+    let mut logged_in_client = TestHttpClient::new(service).await;
+    let base_url = "/api/v1/plus/collection/?url=/en-US/docs/Web/CSS";
+    let payload = json!({
+        "name": "CSS: Cascading Style Sheets",
+        "notes": "Notes notes notes",
+    });
+    let create_res = logged_in_client
+        .post(base_url, None, PostPayload::FormData(payload))
+        .await;
+    assert_eq!(create_res.status(), 201);
+    let collection_res = logged_in_client.get(base_url, None).await;
+    let collection_json = read_json(collection_res).await;
+    let bookmarked = &collection_json["bookmarked"];
+    assert!(!bookmarked.is_null());
+    let delete_res = logged_in_client
+        .post(
+            base_url,
+            None,
+            PostPayload::FormData(json!({"delete": "true"})),
+        )
+        .await;
+    assert_eq!(delete_res.status(), 200);
+    let try_get_collection_res = logged_in_client.get(base_url, None).await;
     let collection_json = read_json(try_get_collection_res).await;
     assert!(collection_json["bookmarked"].is_null());
     Ok(())

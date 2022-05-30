@@ -76,20 +76,32 @@ pub struct CollectionResponse {
     subscription_limit_reached: bool,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct CollectionCreationForm {
     pub name: String,
     pub notes: Option<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct CollectionCreationParams {
     pub url: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
+pub struct CollectionDeletionForm {
+    pub delete: String,
+}
+
+#[derive(Deserialize, Debug)]
 pub struct CollectionDeletionParams {
     pub url: String,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(untagged)]
+pub enum CollectionCreationOrDeletionForm {
+    Deletion(CollectionDeletionForm),
+    Creation(CollectionCreationForm),
 }
 
 impl From<CollectionAndDocumentQuery> for CollectionItem {
@@ -192,26 +204,41 @@ pub async fn create_or_update_collections(
     http_client: Data<Client>,
     id: Identity,
     query: web::Query<CollectionCreationParams>,
-    collection_form: web::Form<CollectionCreationForm>,
+    collection_form: web::Form<CollectionCreationOrDeletionForm>,
 ) -> Result<HttpResponse, ApiError> {
-    match id.identity() {
-        Some(id) => {
-            let mut conn_pool = pool.get()?;
-            let user: UserQuery = get_user(&mut conn_pool, id).await?;
-            let metadata = get_document_metadata(http_client, &query).await?;
-            create_collection(
-                user,
-                &mut conn_pool,
-                query.url.clone(),
-                metadata,
-                collection_form.into_inner(),
+    match collection_form.into_inner() {
+        CollectionCreationOrDeletionForm::Creation(collection_form) => match id.identity() {
+            Some(id) => {
+                let mut conn_pool = pool.get()?;
+                let user: UserQuery = get_user(&mut conn_pool, id).await?;
+                let metadata = get_document_metadata(http_client, &query).await?;
+                create_collection(
+                    user,
+                    &mut conn_pool,
+                    query.url.clone(),
+                    metadata,
+                    collection_form,
+                )
+                .await
+                .map_err(DbError::from)?;
+
+                Ok(HttpResponse::Created().finish())
+            }
+            None => Ok(HttpResponse::Unauthorized().finish()),
+        },
+        CollectionCreationOrDeletionForm::Deletion(collection_form)
+            if collection_form.delete.to_lowercase() == "true" =>
+        {
+            delete_collection_item(
+                pool,
+                id,
+                web::Query(CollectionDeletionParams {
+                    url: query.into_inner().url,
+                }),
             )
             .await
-            .map_err(DbError::from)?;
-
-            Ok(HttpResponse::Created().finish())
         }
-        None => Ok(HttpResponse::Unauthorized().finish()),
+        CollectionCreationOrDeletionForm::Deletion(_) => Ok(HttpResponse::BadRequest().finish()),
     }
 }
 
@@ -244,8 +271,7 @@ async fn get_document_metadata(
 ) -> Result<DocumentMetadata, ApiError> {
     let document_url = Url::parse(&format!(
         "{}{}/index.json",
-        SETTINGS.application.document_base_url.clone(),
-        query.url
+        SETTINGS.application.document_base_url, query.url
     ))
     .map_err(|_| ApiError::MalformedUrl)?;
 
