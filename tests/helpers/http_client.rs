@@ -18,11 +18,9 @@ pub struct TestHttpClient<
     cookies: CookieJar,
 }
 
-type FormData = Vec<(String, String)>;
-
 pub enum PostPayload {
     Json(Value),
-    FormData(FormData),
+    FormData(Value),
 }
 
 impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error = Error>>
@@ -75,7 +73,7 @@ impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error 
 
     pub async fn get(
         &mut self,
-        uri: String,
+        uri: &str,
         headers: Option<Vec<(&str, &str)>>,
     ) -> ServiceResponse<EitherBody<BoxBody>> {
         let mut base = test::TestRequest::get().uri(&*uri);
@@ -89,7 +87,7 @@ impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error 
 
     pub async fn post(
         &mut self,
-        uri: String,
+        uri: &str,
         headers: Option<Vec<(&str, &str)>>,
         payload: PostPayload,
     ) -> ServiceResponse<EitherBody<BoxBody>> {
@@ -108,7 +106,7 @@ impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error 
 
     pub async fn delete(
         &mut self,
-        uri: String,
+        uri: &str,
         headers: Option<Vec<(&str, &str)>>,
     ) -> ServiceResponse<EitherBody<BoxBody>> {
         let mut base = test::TestRequest::delete().uri(&*uri);
