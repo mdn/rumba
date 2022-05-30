@@ -12,15 +12,6 @@ use super::notifications::{
     mark_all_as_read, mark_as_read, notifications, star_ids, toggle_starred, unstar_ids,
 };
 
-// @notifications_router.post("/all/mark-as-read/", response=Ok)
-// @notifications_router.post("/{int:pk}/mark-as-read/", response=Ok)
-// @notifications_router.post("/{int:pk}/toggle-starred/", response={200: Ok, 400: str})
-// class StarMany(Schema):
-//     ids: list[int]
-// @notifications_router.post(
-//     "/star-ids/", response={200: Ok, 400: str}, url_name="notifications_star_ids"
-// )
-
 pub fn api_v1_service() -> impl HttpServiceFactory {
     web::scope("/api/v1")
         .wrap(SessionMiddleware::new(
