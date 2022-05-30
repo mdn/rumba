@@ -16,3 +16,6 @@ auth_cookie_key = "DUwIFZuUYzRhHPlhOm6DwTHSDUSyR5SyvZHIeHdx4DIanxm5/GD/4dqXROLvn
 document_base_url = "https://developer.allizom.org"
 subscriptions_limit_watched_items = 3
 subscriptions_limit_collections = 5
+
+[search]
+url = "http://elastic:9200"
