@@ -36,11 +36,17 @@ pub struct Application {
 }
 
 #[derive(Deserialize)]
+pub struct Search {
+    pub url: String,
+}
+
+#[derive(Deserialize)]
 pub struct Settings {
     pub db: DB,
     pub server: Server,
     pub auth: Auth,
     pub application: Application,
+    pub search: Search,
 }
 
 impl Settings {

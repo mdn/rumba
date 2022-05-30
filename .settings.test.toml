@@ -16,3 +16,6 @@ auth_cookie_key = "DUwIFZuUYzRhHPlhOm6DwTHSDUSyR5SyvZHIeHdx4DIanxm5/GD/4dqXROLvn
 
 [application]
 document_base_url = "http://localhost:4321"
+
+[search]
+url = "http://elastic:9200"

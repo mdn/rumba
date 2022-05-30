@@ -8,7 +8,8 @@ pub struct Search {
     pub query: Query,
     pub _source: Source,
     pub highlight: Highlight,
-    pub suggest: Suggest,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub suggest: Option<Suggest>,
     pub sort: Vec<SortField>,
 }
 
@@ -17,42 +18,19 @@ pub struct Count {
     pub query: Query,
 }
 
-// TODO: figure out how to actually use enums properly
 #[derive(Serialize)]
-#[serde(untagged)]
+#[serde(rename_all = "snake_case")]
 pub enum Query {
-    QueryBool(QueryBool),
-    QueryTerms(QueryTerms),
-    QueryMatch(QueryMatch),
-    QueryMatchPhrase(QueryMatchPhrase),
-    QueryMultiMatch(QueryMultiMatch),
-    QueryFunctionScore(QueryFunctionScore),
+    Bool(QueryBool),
+    Terms(QueryTerms),
+    Match(QueryMatch),
+    MatchPhrase(QueryMatch),
+    MultiMatch(QueryMultiMatch),
+    FunctionScore(QueryFunctionScore),
 }
 
-#[derive(Serialize)]
+#[derive(Default, Serialize)]
 pub struct QueryBool {
-    pub bool: QueryBoolBody,
-}
-
-impl QueryBool {
-    pub fn new_query(occurrence: &str, queries: Vec<Query>) -> Query {
-        let mut body = QueryBoolBody {
-            filter: None,
-            must: None,
-            should: None,
-        };
-        match occurrence {
-            "filter" => body.filter = Some(queries),
-            "must" => body.must = Some(queries),
-            "should" => body.should = Some(queries),
-            _ => unreachable!(),
-        }
-        Query::QueryBool(QueryBool { bool: body })
-    }
-}
-
-#[derive(Serialize)]
-pub struct QueryBoolBody {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub filter: Option<Vec<Query>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -62,71 +40,56 @@ pub struct QueryBoolBody {
 }
 
 #[derive(Serialize)]
-pub struct QueryTerms {
-    pub terms: QueryTermsBody,
+#[serde(rename_all = "lowercase")]
+pub enum QueryTerms {
+    Locale(Vec<Locale>),
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub enum Locale {
+    #[serde(rename = "en-us")]
+    English,
+    #[serde(rename = "de")]
+    German,
+    #[serde(rename = "es")]
+    Spanish,
+    #[serde(rename = "fr")]
+    French,
+    #[serde(rename = "ja")]
+    Japanese,
+    #[serde(rename = "ko")]
+    Korean,
+    #[serde(rename = "pl")]
+    Polish,
+    #[serde(rename = "pt-br")]
+    PortugueseBrazilian,
+    #[serde(rename = "ru")]
+    Russian,
+    #[serde(rename = "zn-cn")]
+    ChineseSimplified,
+    #[serde(rename = "zh-tw")]
+    ChineseTraditional,
 }
 
 #[derive(Serialize)]
-pub struct QueryTermsBody {
-    pub locale: Vec<String>,
-}
-
-#[derive(Serialize)]
-pub struct QueryMatch {
-    pub r#match: QueryMatchBody, // need to escape match keyword
-}
-
-impl QueryMatch {
-    pub fn new_query(field: &str, field_body: QueryMatchField) -> Query {
-        Query::QueryMatch(QueryMatch {
-            r#match: create_query_match_body(field, field_body), // need to escape match keyword
-        })
-    }
-}
-
-#[derive(Serialize)]
-pub struct QueryMatchPhrase {
-    pub match_phrase: QueryMatchBody,
-}
-
-impl QueryMatchPhrase {
-    pub fn new_query(field: &str, field_body: QueryMatchField) -> Query {
-        Query::QueryMatchPhrase(QueryMatchPhrase {
-            match_phrase: create_query_match_body(field, field_body),
-        })
-    }
-}
-
-fn create_query_match_body(field: &str, field_body: QueryMatchField) -> QueryMatchBody {
-    let mut body = QueryMatchBody {
-        title: None,
-        body: None,
-    };
-    match field {
-        "title" => body.title = Some(field_body),
-        "body" => body.body = Some(field_body),
-        _ => unreachable!(),
-    }
-    body
-}
-
-#[derive(Serialize)]
-pub struct QueryMatchBody {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub title: Option<QueryMatchField>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub body: Option<QueryMatchField>,
+#[serde(rename_all = "lowercase")]
+pub enum QueryMatch {
+    Title(QueryMatchField),
+    Body(QueryMatchField),
 }
 
 #[derive(Serialize)]
 pub struct QueryMultiMatch {
-    pub multi_match: QueryMultiMatchBody,
+    pub query: String,
+    pub fields: Vec<Field>,
 }
 
 #[derive(Serialize)]
-pub struct QueryMultiMatchBody {
-    pub query: String,
-    pub fields: Vec<String>,
+#[serde(rename_all = "lowercase")]
+pub enum Field {
+    Title,
+    Body,
+    Popularity,
 }
 
 #[derive(Serialize)]
@@ -137,32 +100,40 @@ pub struct QueryMatchField {
 
 #[derive(Serialize)]
 pub struct QueryFunctionScore {
-    pub function_score: QueryFunctionScoreBody,
-}
-
-#[derive(Serialize)]
-pub struct QueryFunctionScoreBody {
     pub query: Box<Query>,
     pub functions: Vec<QueryFunctionScoreFunction>,
-    pub boost_mode: String,
-    pub score_mode: String,
+    pub boost_mode: BoostMode,
+    pub score_mode: ScoreMode,
 }
 
 #[derive(Serialize)]
-pub struct QueryFunctionScoreFunction {
-    pub field_value_factor: QueryFunctionScoreFunctionBody,
+#[serde(rename_all = "lowercase")]
+pub enum BoostMode {
+    Sum,
 }
 
 #[derive(Serialize)]
-pub struct QueryFunctionScoreFunctionBody {
-    pub field: String,
+#[serde(rename_all = "lowercase")]
+pub enum ScoreMode {
+    Max,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum QueryFunctionScoreFunction {
+    FieldValueFactor(QueryFunctionScoreFunctionFieldValueFactor),
+}
+
+#[derive(Serialize)]
+pub struct QueryFunctionScoreFunctionFieldValueFactor {
+    pub field: Field,
     pub factor: u64,
     pub missing: u64,
 }
 
 #[derive(Serialize)]
 pub struct Source {
-    pub excludes: Vec<String>,
+    pub excludes: Vec<Field>,
 }
 
 #[derive(Serialize)]
@@ -172,7 +143,13 @@ pub struct Highlight {
     pub post_tags: Vec<String>,
     pub number_of_fragments: u64,
     pub fragment_size: u64,
-    pub encoder: String,
+    pub encoder: HighlightEncoder,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum HighlightEncoder {
+    HTML,
 }
 
 #[derive(Serialize)]
@@ -183,51 +160,41 @@ pub struct HighlightFields {
 
 #[derive(Serialize)]
 pub struct Suggest {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub text: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub title_suggestions: Option<SuggestBody>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub body_suggestions: Option<SuggestBody>,
+    pub text: String,
+    pub title_suggestions: Suggester,
+    pub body_suggestions: Suggester,
 }
 
 #[derive(Serialize)]
-pub struct SuggestBody {
-    pub term: SuggestTerm,
+#[serde(rename_all = "lowercase")]
+pub enum Suggester {
+    Term(TermSuggester),
 }
 
 #[derive(Serialize)]
-pub struct SuggestTerm {
-    pub field: String,
+pub struct TermSuggester {
+    pub field: Field,
 }
 
 #[derive(Serialize)]
-pub struct SortField {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub _score: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub popularity: Option<String>,
+#[serde(rename_all = "lowercase")]
+pub enum SortField {
+    #[serde(rename = "_score")]
+    Score(Order),
+    Popularity(Order),
 }
 
-impl SortField {
-    pub fn new(field: &str, order: &str) -> SortField {
-        let mut sort_field = SortField {
-            _score: None,
-            popularity: None,
-        };
-        match field {
-            "_score" => sort_field._score = Some(order.to_string()),
-            "popularity" => sort_field.popularity = Some(order.to_string()),
-            _ => unreachable!(),
-        }
-        sort_field
-    }
+#[derive(Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Order {
+    Asc,
+    Desc,
 }
 
 #[derive(Deserialize)]
 pub struct SearchResponse {
     pub hits: ResponseHits,
-    pub suggest: ResponseSuggest,
+    pub suggest: Option<ResponseSuggest>,
     pub took: u64,
 }
 
@@ -248,7 +215,7 @@ pub struct ResponseHit {
 #[derive(Deserialize)]
 pub struct ResponseSource {
     pub title: String,
-    pub locale: String,
+    pub locale: Locale,
     pub slug: String,
     pub popularity: f64,
     pub summary: String,
@@ -283,7 +250,15 @@ pub struct ResponseSuggestionOption {
 #[derive(Deserialize, Serialize)]
 pub struct ResponseTotal {
     pub value: u64,
-    pub relation: String,
+    pub relation: ResponseTotalRelation,
+}
+
+#[derive(Deserialize, Serialize)]
+pub enum ResponseTotalRelation {
+    #[serde(rename = "eq")]
+    Equal,
+    #[serde(rename = "gte")]
+    GreaterThanOrEqual,
 }
 
 #[derive(Deserialize)]
