@@ -69,6 +69,7 @@ pub async fn get_notifications(
             schema::notifications::id,
             schema::notification_data::created_at,
             schema::notification_data::updated_at,
+            schema::notifications::deleted_at,
             schema::notifications::starred,
             schema::notifications::read,
             schema::notification_data::title,

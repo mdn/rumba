@@ -38,6 +38,7 @@ pub struct Notification {
     pub text: String,
     pub url: String,
     pub created: NaiveDateTime,
+    pub deleted: bool,
     pub read: bool,
     pub starred: bool,
 }
@@ -63,6 +64,7 @@ impl From<NotificationsQuery> for Notification {
             created: notification.created_at,
             id: notification.id,
             read: notification.read,
+            deleted: notification.deleted_at.is_some(),
             starred: notification.starred,
             text: notification.text,
             title: notification.title,
@@ -97,6 +99,7 @@ pub async fn mark_all_as_read(
     id: Identity,
     pool: web::Data<Pool>,
 ) -> Result<HttpResponse, ApiError> {
+    
     match id.identity() {
         Some(id) => {
             let mut conn_pool = pool.get()?;
