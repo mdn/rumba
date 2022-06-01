@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+#[serde_with::skip_serializing_none]
 #[derive(Serialize)]
 pub struct Search {
     pub from: i64,
@@ -8,7 +9,6 @@ pub struct Search {
     pub query: Query,
     pub _source: Source,
     pub highlight: Highlight,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub suggest: Option<Suggest>,
     pub sort: Vec<SortField>,
 }
@@ -29,13 +29,11 @@ pub enum Query {
     FunctionScore(QueryFunctionScore),
 }
 
+#[serde_with::skip_serializing_none]
 #[derive(Default, Serialize)]
 pub struct QueryBool {
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub filter: Option<Vec<Query>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub must: Option<Vec<Query>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub should: Option<Vec<Query>>,
 }
 

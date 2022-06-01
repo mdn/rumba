@@ -25,6 +25,7 @@ diesel_migrations = "2.0.0-rc.0"
 diesel-derive-enum = { git = "https://github.com/adwhit/diesel-derive-enum", version = "2.0.0-pre", features = ["postgres"] } # "postgres", "mysql" or "sqlite"
 
 elasticsearch = "7.14.0-alpha.1"
+ron = "0.7.0"
 
 r2d2 = "0.8"
 
