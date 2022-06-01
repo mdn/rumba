@@ -26,6 +26,9 @@ diesel-derive-enum = { git = "https://github.com/adwhit/diesel-derive-enum", ver
 
 elasticsearch = "7.14.0-alpha.1"
 ron = "0.7.0"
+serde_urlencoded = "0.7.1"
+form_urlencoded = "1.0.1"
+serde_path_to_error = "0.1.7"
 
 r2d2 = "0.8"
 
