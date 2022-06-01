@@ -5,6 +5,20 @@ use serde::Serialize;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
+pub enum SearchError {
+    #[error("Elastic error: {0}")]
+    Elastic(#[from] elasticsearch::Error),
+    #[error("Elastic error: {source}, with reason: {reason}")]
+    ElasticContext {
+        reason: String,
+        #[source]
+        source: elasticsearch::Error,
+    },
+    #[error("Failed to parse elastic response")]
+    ParseResponse,
+}
+
+#[derive(Error, Debug)]
 pub enum ApiError {
     #[error("unknown error")]
     Unknown,
@@ -20,6 +34,10 @@ pub enum ApiError {
     MalformedUrl,
     #[error("Json error")]
     JsonProcessingError,
+    #[error("Query error")]
+    Query(#[from] actix_web::error::QueryPayloadError),
+    #[error("Search error")]
+    Search(#[from] SearchError),
 }
 
 impl ApiError {
@@ -32,6 +50,8 @@ impl ApiError {
             Self::MalformedUrl => "Malformed URL",
             Self::NotificationNotFound => "Notification not found",
             Self::JsonProcessingError => "Error processing JSON document",
+            Self::Query(_) => "Query error",
+            Self::Search(_) => "Search error",
         }
     }
 }
@@ -46,13 +66,12 @@ struct ErrorResponse {
 impl ResponseError for ApiError {
     fn status_code(&self) -> StatusCode {
         match *self {
-            Self::Unknown => StatusCode::INTERNAL_SERVER_ERROR,
             Self::InvalidSession => StatusCode::BAD_REQUEST,
-            Self::ServerError => StatusCode::INTERNAL_SERVER_ERROR,
             Self::DocumentNotFound => StatusCode::NOT_FOUND,
             Self::NotificationNotFound => StatusCode::NOT_FOUND,
             Self::MalformedUrl => StatusCode::BAD_REQUEST,
-            Self::JsonProcessingError => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::Query(_) => StatusCode::BAD_REQUEST,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 
@@ -84,18 +103,6 @@ impl From<diesel::result::Error> for ApiError {
 
 impl From<r2d2::Error> for ApiError {
     fn from(_: r2d2::Error) -> Self {
-        ApiError::ServerError
-    }
-}
-
-impl From<elasticsearch::Error> for ApiError {
-    fn from(_: elasticsearch::Error) -> Self {
-        ApiError::ServerError
-    }
-}
-
-impl From<actix_web::error::QueryPayloadError> for ApiError {
-    fn from(_: actix_web::error::QueryPayloadError) -> Self {
         ApiError::ServerError
     }
 }
