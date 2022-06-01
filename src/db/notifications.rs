@@ -1,3 +1,4 @@
+use chrono::NaiveDateTime;
 use diesel::dsl::not;
 use diesel::r2d2::ConnectionManager;
 
@@ -86,6 +87,42 @@ pub async fn mark_all_as_read(
     update(schema::notifications::table)
         .filter(schema::notifications::user_id.eq(user_id))
         .set(schema::notifications::read.eq(true))
+        .execute(pool)
+}
+
+pub async fn set_deleted(
+    pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
+    user_id: i64,
+    id: i64,
+) -> QueryResult<usize> {
+    update(schema::notifications::table)
+        .filter(schema::notifications::user_id.eq(user_id))
+        .filter(schema::notifications::id.eq(id))
+        .set(schema::notifications::deleted_at.eq(chrono::offset::Utc::now().naive_utc()))
+        .execute(pool)
+}
+
+pub async fn set_deleted_many(
+    pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
+    user_id: i64,
+    ids: Vec<i64>,
+) -> QueryResult<usize> {
+    update(schema::notifications::table)
+        .filter(schema::notifications::user_id.eq(user_id))
+        .filter(schema::notifications::id.eq_any(ids))
+        .set(schema::notifications::deleted_at.eq(chrono::offset::Utc::now().naive_utc()))
+        .execute(pool)
+}
+
+pub async fn clear_deleted(
+    pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
+    user_id: i64,
+    id: i64,
+) -> QueryResult<usize> {
+    update(schema::notifications::table)
+        .filter(schema::notifications::user_id.eq(user_id))
+        .filter(schema::notifications::id.eq(id))
+        .set(schema::notifications::deleted_at.eq::<Option<NaiveDateTime>>(None))
         .execute(pool)
 }
 

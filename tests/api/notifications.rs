@@ -1,6 +1,6 @@
 use crate::helpers::app::test_app_with_login;
 use crate::helpers::db::{get_pool, reset};
-use crate::helpers::http_client::{TestHttpClient, PostPayload};
+use crate::helpers::http_client::{PostPayload, TestHttpClient};
 use crate::helpers::read_json;
 use actix_web::test;
 use anyhow::Error;
@@ -119,7 +119,7 @@ async fn test_mark_all_read() -> Result<(), Error> {
     let mut res_json = read_json(res).await;
     let mut items = res_json["items"].as_array().unwrap();
     items.iter().for_each(|val| assert_eq!(val["read"], false));
-    
+
     res = logged_in_client
         .post("/api/v1/plus/notifications/all/mark-as-read/", None, None)
         .await;
@@ -148,12 +148,12 @@ async fn test_mark_id_as_read() -> Result<(), Error> {
         .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
         .await;
     let mut res_json = read_json(res).await;
-    let mut items = res_json["items"].as_array().unwrap();    
-    
+    let mut items = res_json["items"].as_array().unwrap();
+
     assert_eq!(items[0]["read"], false);
     assert_eq!(items[1]["read"], false);
     assert_eq!(items[2]["read"], false);
-    
+
     res = logged_in_client
         .post("/api/v1/plus/notifications/99/mark-as-read/", None, None)
         .await;
@@ -186,24 +186,34 @@ async fn test_star_unstar_many() -> Result<(), Error> {
         .await;
     let mut res_json = read_json(res).await;
     let items = res_json["items"].as_array().unwrap();
-    items.iter().for_each(|val| assert_eq!(val["starred"], false));    
+    items
+        .iter()
+        .for_each(|val| assert_eq!(val["starred"], false));
     res = logged_in_client
-        .post("/api/v1/plus/notifications/star-ids/", None, Some(PostPayload::Json(json!({"ids": [98,99,100]}))))
+        .post(
+            "/api/v1/plus/notifications/star-ids/",
+            None,
+            Some(PostPayload::Json(json!({"ids": [98,99,100]}))),
+        )
         .await;
-    
-    assert_eq!(res.status(), 200);    
+
+    assert_eq!(res.status(), 200);
     res = logged_in_client
         .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
         .await;
     res_json = read_json(res).await;
     let items = res_json["items"].as_array().unwrap();
-    assert_eq!(items[0]["starred"], true);    
+    assert_eq!(items[0]["starred"], true);
     assert_eq!(items[1]["starred"], true);
     assert_eq!(items[2]["starred"], true);
 
     logged_in_client
-    .post("/api/v1/plus/notifications/unstar-ids/", None, Some(PostPayload::Json(json!({"ids": [98,99]}))))
-    .await;
+        .post(
+            "/api/v1/plus/notifications/unstar-ids/",
+            None,
+            Some(PostPayload::Json(json!({"ids": [98,99]}))),
+        )
+        .await;
     res = logged_in_client
         .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
         .await;
@@ -231,24 +241,26 @@ async fn test_toggle_starred() -> Result<(), Error> {
         .await;
     let mut res_json = read_json(res).await;
     let items = res_json["items"].as_array().unwrap();
-    items.iter().for_each(|val| assert_eq!(val["starred"], false));    
+    items
+        .iter()
+        .for_each(|val| assert_eq!(val["starred"], false));
     res = logged_in_client
         .post("/api/v1/plus/notifications/99/toggle-starred/", None, None)
         .await;
-    
-    assert_eq!(res.status(), 200);    
+
+    assert_eq!(res.status(), 200);
     res = logged_in_client
         .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
         .await;
     res_json = read_json(res).await;
     let items = res_json["items"].as_array().unwrap();
-    assert_eq!(items[0]["starred"], false);    
+    assert_eq!(items[0]["starred"], false);
     assert_eq!(items[1]["starred"], true);
     assert_eq!(items[2]["starred"], false);
 
     logged_in_client
-    .post("/api/v1/plus/notifications/99/toggle-starred/", None, None)
-    .await;
+        .post("/api/v1/plus/notifications/99/toggle-starred/", None, None)
+        .await;
 
     res = logged_in_client
         .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
@@ -258,6 +270,91 @@ async fn test_toggle_starred() -> Result<(), Error> {
     assert_eq!(items[0]["starred"], false);
     assert_eq!(items[1]["starred"], false);
     assert_eq!(items[2]["starred"], false);
+    Ok(())
+}
+
+#[actix_rt::test]
+#[stubr::mock(port = 4321)]
+
+async fn test_delete_and_undo() -> Result<(), Error> {
+    reset()?;
+    let app = test_app_with_login().await?;
+    let service = test::init_service(app).await;
+    let mut logged_in_client = TestHttpClient::new(service).await;
+    //Database was reset so we can naively assume user_id = 1.
+    let _ids = create_notifications(1, 10).await;
+
+    let mut res = logged_in_client
+        .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
+        .await;
+    let mut res_json = read_json(res).await;
+    assert_eq!(res_json["items"].as_array().unwrap().len(), 10);
+    res = logged_in_client
+        .post("/api/v1/plus/notifications/9/delete/", None, None)
+        .await;
+    assert_eq!(res.status(), 200);
+    res = logged_in_client
+        .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
+        .await;
+    res_json = read_json(res).await;
+    let items = res_json["items"].as_array().unwrap();
+    assert_eq!(items[0]["id"], 10);
+    assert_eq!(items[1]["id"], 8);
+    assert_eq!(items[2]["id"], 7);
+
+    res = logged_in_client
+        .post("/api/v1/plus/notifications/9/undo-deletion/", None, None)
+        .await;
+    assert_eq!(res.status(), 200);
+    res = logged_in_client
+        .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
+        .await;
+    res_json = read_json(res).await;
+    let items = res_json["items"].as_array().unwrap();
+    assert_eq!(items[0]["id"], 10);
+    assert_eq!(items[1]["id"], 9);
+    assert_eq!(items[2]["id"], 8);
+
+    Ok(())
+}
+
+#[actix_rt::test]
+#[stubr::mock(port = 4321)]
+
+async fn test_delete_many() -> Result<(), Error> {
+    reset()?;
+    let app = test_app_with_login().await?;
+    let service = test::init_service(app).await;
+    let mut logged_in_client = TestHttpClient::new(service).await;
+    //Database was reset so we can naively assume user_id = 1.
+    let _ids = create_notifications(1, 10).await;
+
+    let mut res = logged_in_client
+        .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
+        .await;
+    let mut res_json = read_json(res).await;
+    let mut items = res_json["items"].as_array().unwrap();
+    assert_eq!(items.len(), 10);
+    res = logged_in_client
+        .post(
+            "/api/v1/plus/notifications/delete-ids/",
+            None,
+            Some(PostPayload::Json(json!({"ids": [10,9,8]}))),
+        )
+        .await;
+
+    assert_eq!(res.status(), 200);
+    res = logged_in_client
+        .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
+        .await;
+    res_json = read_json(res).await;
+    items = res_json["items"].as_array().unwrap();
+
+    assert_eq!(items.len(), 7);
+    assert_eq!(items[0]["id"], 7);
+    assert_eq!(items[1]["id"], 6);
+    assert_eq!(items[2]["id"], 5);
+
     Ok(())
 }
 

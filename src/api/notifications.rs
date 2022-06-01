@@ -99,7 +99,6 @@ pub async fn mark_all_as_read(
     id: Identity,
     pool: web::Data<Pool>,
 ) -> Result<HttpResponse, ApiError> {
-    
     match id.identity() {
         Some(id) => {
             let mut conn_pool = pool.get()?;
@@ -108,6 +107,60 @@ pub async fn mark_all_as_read(
             Ok(HttpResponse::Ok().finish())
         }
         None => Ok(HttpResponse::Unauthorized().finish()),
+    }
+}
+
+pub async fn delete_by_id(
+    _req: HttpRequest,
+    id: Identity,
+    pool: web::Data<Pool>,
+    notification_id: web::Path<NotificationId>,
+) -> Result<HttpResponse, ApiError> {
+    if let Some(id) = id.identity() {
+        let mut conn_pool = pool.get()?;
+        let user: UserQuery = get_user(&mut conn_pool, id).await?;
+        let res = notifications::set_deleted(&mut conn_pool, user.id, notification_id.id).await?;
+        if res == 0 {
+            return Err(ApiError::NotificationNotFound);
+        }
+        Ok(HttpResponse::Ok().finish())
+    } else {
+        Ok(HttpResponse::Unauthorized().finish())
+    }
+}
+
+pub async fn undo_delete_by_id(
+    _req: HttpRequest,
+    id: Identity,
+    pool: web::Data<Pool>,
+    notification_id: web::Path<NotificationId>,
+) -> Result<HttpResponse, ApiError> {
+    if let Some(id) = id.identity() {
+        let mut conn_pool = pool.get()?;
+        let user: UserQuery = get_user(&mut conn_pool, id).await?;
+        let res = notifications::clear_deleted(&mut conn_pool, user.id, notification_id.id).await?;
+        if res == 0 {
+            return Err(ApiError::NotificationNotFound);
+        }
+        Ok(HttpResponse::Ok().finish())
+    } else {
+        Ok(HttpResponse::Unauthorized().finish())
+    }
+}
+
+pub async fn delete_many(
+    _req: HttpRequest,
+    id: Identity,
+    pool: web::Data<Pool>,
+    data: web::Json<NotificationIds>,
+) -> Result<HttpResponse, ApiError> {
+    if let Some(id) = id.identity() {
+        let mut conn_pool = pool.get()?;
+        let user: UserQuery = get_user(&mut conn_pool, id).await?;
+        let _res = notifications::set_deleted_many(&mut conn_pool, user.id, data.0.ids).await?;
+        Ok(HttpResponse::Ok().finish())
+    } else {
+        Ok(HttpResponse::Unauthorized().finish())
     }
 }
 

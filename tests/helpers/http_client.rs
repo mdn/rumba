@@ -93,7 +93,7 @@ impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error 
     ) -> ServiceResponse<EitherBody<BoxBody>> {
         let mut base = test::TestRequest::post().uri(&*uri);
         match payload {
-            Some(payload) => match (payload) {
+            Some(payload) => match payload {
                 PostPayload::FormData(form) => base = base.set_form(form),
                 PostPayload::Json(val) => base = base.set_json(val),
             },

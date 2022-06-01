@@ -9,7 +9,8 @@ use actix_web::dev::HttpServiceFactory;
 use actix_web::web;
 
 use super::notifications::{
-    mark_all_as_read, mark_as_read, notifications, star_ids, toggle_starred, unstar_ids,
+    delete_by_id, delete_many, mark_all_as_read, mark_as_read, notifications, star_ids,
+    toggle_starred, undo_delete_by_id, unstar_ids,
 };
 
 pub fn api_v1_service() -> impl HttpServiceFactory {
