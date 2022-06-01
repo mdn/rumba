@@ -1,11 +1,12 @@
 use crate::helpers::app::test_app_with_login;
 use crate::helpers::db::{get_pool, reset};
-use crate::helpers::http_client::{TestHttpClient};
+use crate::helpers::http_client::{TestHttpClient, PostPayload};
 use crate::helpers::read_json;
 use actix_web::test;
 use anyhow::Error;
 use rumba::db;
-use rumba::db::model::{DocumentMetadata, NotificationDataInsert, NotificationInsert};
+use rumba::db::model::{DocumentMetadata, NotificationDataInsert};
+use serde_json::json;
 
 
 #[actix_rt::test]
@@ -75,7 +76,7 @@ async fn test_get_notifications() -> Result<(), Error> {
         .await;
 
     res_json = read_json(res).await;
-    assert_eq!(res_json["items"].as_array().unwrap().len(), 5);
+    assert_eq!(res_json["items"].as_array().unwrap().len(), 6);
     assert_eq!(
         res_json["items"].as_array().unwrap()[0]["title"],
         "Test title 5"
@@ -122,7 +123,6 @@ async fn test_mark_all_read() -> Result<(), Error> {
     res = logged_in_client
         .post("/api/v1/plus/notifications/all/mark-as-read/", None, None)
         .await;
-    println!("{:?}",res);
     assert_eq!(res.status(), 200);
     res = logged_in_client
         .get("/api/v1/plus/notifications/?offset=0&limit=100", None)
@@ -135,20 +135,136 @@ async fn test_mark_all_read() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
-async fn test_unstar_many() -> Result<(), Error> {
+#[stubr::mock(port = 4321)]
+async fn test_mark_id_as_read() -> Result<(), Error> {
+    reset()?;
+    let app = test_app_with_login().await?;
+    let service = test::init_service(app).await;
+    let mut logged_in_client = TestHttpClient::new(service).await;
+    //Database was reset so we can naively assume user_id = 1.
+    let _ids = create_notifications(1, 100).await;
+
+    let mut res = logged_in_client
+        .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
+        .await;
+    let mut res_json = read_json(res).await;
+    let mut items = res_json["items"].as_array().unwrap();    
+    
+    assert_eq!(items[0]["read"], false);
+    assert_eq!(items[1]["read"], false);
+    assert_eq!(items[2]["read"], false);
+    
+    res = logged_in_client
+        .post("/api/v1/plus/notifications/99/mark-as-read/", None, None)
+        .await;
+    assert_eq!(res.status(), 200);
+    res = logged_in_client
+        .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
+        .await;
+    res_json = read_json(res).await;
+    items = res_json["items"].as_array().unwrap();
+    assert_eq!(items[0]["read"], false);
+    assert_eq!(items[1]["read"], true);
+    assert_eq!(items[2]["read"], false);
+
     Ok(())
 }
 
 #[actix_rt::test]
-async fn test_star_many() -> Result<(), Error> {
+#[stubr::mock(port = 4321)]
+
+async fn test_star_unstar_many() -> Result<(), Error> {
     reset()?;
+    let app = test_app_with_login().await?;
+    let service = test::init_service(app).await;
+    let mut logged_in_client = TestHttpClient::new(service).await;
+    //Database was reset so we can naively assume user_id = 1.
+    let _ids = create_notifications(1, 100).await;
+
+    let mut res = logged_in_client
+        .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
+        .await;
+    let mut res_json = read_json(res).await;
+    let items = res_json["items"].as_array().unwrap();
+    items.iter().for_each(|val| assert_eq!(val["starred"], false));    
+    res = logged_in_client
+        .post("/api/v1/plus/notifications/star-ids/", None, Some(PostPayload::Json(json!({"ids": [98,99,100]}))))
+        .await;
+    
+    assert_eq!(res.status(), 200);    
+    res = logged_in_client
+        .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
+        .await;
+    res_json = read_json(res).await;
+    let items = res_json["items"].as_array().unwrap();
+    assert_eq!(items[0]["starred"], true);    
+    assert_eq!(items[1]["starred"], true);
+    assert_eq!(items[2]["starred"], true);
+
+    logged_in_client
+    .post("/api/v1/plus/notifications/unstar-ids/", None, Some(PostPayload::Json(json!({"ids": [98,99]}))))
+    .await;
+    res = logged_in_client
+        .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
+        .await;
+    res_json = read_json(res).await;
+    let items = res_json["items"].as_array().unwrap();
+    assert_eq!(items[0]["starred"], true);
+    assert_eq!(items[1]["starred"], false);
+    assert_eq!(items[2]["starred"], false);
+    Ok(())
+}
+
+#[actix_rt::test]
+#[stubr::mock(port = 4321)]
+
+async fn test_toggle_starred() -> Result<(), Error> {
+    reset()?;
+    let app = test_app_with_login().await?;
+    let service = test::init_service(app).await;
+    let mut logged_in_client = TestHttpClient::new(service).await;
+    //Database was reset so we can naively assume user_id = 1.
+    let _ids = create_notifications(1, 100).await;
+
+    let mut res = logged_in_client
+        .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
+        .await;
+    let mut res_json = read_json(res).await;
+    let items = res_json["items"].as_array().unwrap();
+    items.iter().for_each(|val| assert_eq!(val["starred"], false));    
+    res = logged_in_client
+        .post("/api/v1/plus/notifications/99/toggle-starred/", None, None)
+        .await;
+    
+    assert_eq!(res.status(), 200);    
+    res = logged_in_client
+        .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
+        .await;
+    res_json = read_json(res).await;
+    let items = res_json["items"].as_array().unwrap();
+    assert_eq!(items[0]["starred"], false);    
+    assert_eq!(items[1]["starred"], true);
+    assert_eq!(items[2]["starred"], false);
+
+    logged_in_client
+    .post("/api/v1/plus/notifications/99/toggle-starred/", None, None)
+    .await;
+
+    res = logged_in_client
+        .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
+        .await;
+    res_json = read_json(res).await;
+    let items = res_json["items"].as_array().unwrap();
+    assert_eq!(items[0]["starred"], false);
+    assert_eq!(items[1]["starred"], false);
+    assert_eq!(items[2]["starred"], false);
     Ok(())
 }
 
 async fn create_notifications(user_id: i64, number: usize) -> Vec<i64> {
     let conn_pool = get_pool();
-    let mut notification_ids: Vec<i64>= vec![];
-    for i in 1..number {
+    let mut notification_ids: Vec<i64> = vec![];
+    for i in 0..number {
         let uri = format!("{}/{}", "https://developer.allizom.org", i);
         let document = DocumentMetadata {
             parents: None,

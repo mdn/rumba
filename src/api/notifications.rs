@@ -134,7 +134,7 @@ pub async fn star_ids(
     _req: HttpRequest,
     id: Identity,
     pool: web::Data<Pool>,
-    data: web::Form<NotificationIds>,
+    data: web::Json<NotificationIds>,
 ) -> Result<HttpResponse, ApiError> {
     if let Some(id) = id.identity() {
         let mut conn_pool = pool.get()?;
@@ -150,7 +150,7 @@ pub async fn unstar_ids(
     _req: HttpRequest,
     id: Identity,
     pool: web::Data<Pool>,
-    data: web::Form<NotificationIds>,
+    data: web::Json<NotificationIds>,
 ) -> Result<HttpResponse, ApiError> {
     match id.identity() {
         Some(id) => {
