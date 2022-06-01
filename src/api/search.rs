@@ -1,8 +1,9 @@
 use crate::api::elastic;
 use crate::api::error::{ApiError, SearchError};
+use actix_http::StatusCode;
 use actix_web::{web, HttpRequest, HttpResponse};
-use elasticsearch::{CountParts, Elasticsearch, SearchParts};
 use elasticsearch::http::response::Response as ElasticResponse;
+use elasticsearch::{CountParts, Elasticsearch, SearchParts};
 use log::{debug, error};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -84,7 +85,25 @@ pub async fn search(
     request: HttpRequest,
     client: web::Data<Elasticsearch>,
 ) -> Result<HttpResponse, ApiError> {
-    let mut params = web::Query::<Params>::from_query(request.query_string())?.into_inner();
+    let mut params: Params =
+        match serde_path_to_error::deserialize(serde_urlencoded::Deserializer::new(
+            form_urlencoded::parse(request.query_string().as_bytes()),
+        )) {
+            Ok(x) => x,
+            Err(e) => {
+                debug!("{:?}", e);
+                return Ok(HttpResponse::build(StatusCode::BAD_REQUEST).json(json!({
+                    "errors": {
+                        e.path().to_string(): [
+                            {
+                                "message": e.inner().to_string(),
+                                "code": "invalid",
+                            }
+                        ]
+                    }
+                })));
+            }
+        };
     params.locale = web::Query::<Vec<(String, String)>>::from_query(request.query_string())
         .unwrap_or_else(|_| web::Query(vec![("locale".to_string(), "en-US".to_string())]))
         .iter()
