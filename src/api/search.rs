@@ -1,12 +1,13 @@
 use crate::api::elastic;
-use crate::api::error::ApiError;
+use crate::api::error::{ApiError, SearchError};
 use actix_web::{web, HttpRequest, HttpResponse};
 use elasticsearch::{CountParts, Elasticsearch, SearchParts};
+use elasticsearch::http::response::Response as ElasticResponse;
+use log::{debug, error};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::cmp::Ordering;
 
-// TODO: log errors appropriately?
 // TODO: add caching headers from kuma
 // TODO: add retry logic from kuma
 // TODO: tests
@@ -89,16 +90,21 @@ pub async fn search(
         .iter()
         .filter_map(|(key, value)| {
             if key == "locale" {
-                // TODO: this can't be right
-                serde_json::from_str::<elastic::Locale>(&format!("\"{}\"", value.to_lowercase()))
-                    .ok()
+                ron::from_str(&value.to_lowercase()).ok()
             } else {
                 None
             }
         })
         .collect();
 
-    let search_response = do_search(&client, &params).await?;
+    let search_response: elastic::SearchResponse =
+        match parse_or_get_error_reason(do_search(&client, &params).await).await {
+            Ok(x) => x,
+            Err(e) => {
+                error!("{}", e);
+                return Err(e.into());
+            }
+        };
 
     let response = SearchResponse {
         documents: search_response
@@ -135,7 +141,7 @@ pub async fn search(
 async fn do_search(
     client: &Elasticsearch,
     params: &Params,
-) -> Result<elastic::SearchResponse, elasticsearch::Error> {
+) -> Result<ElasticResponse, elasticsearch::Error> {
     let suggest = if params.q.len() > 100 || params.q.split(' ').any(|x| x.len() > 30) {
         /*
         If it's a really long query, or a specific word is just too long, you can get those tricky
@@ -265,13 +271,11 @@ async fn do_search(
         highlight,
         suggest,
     };
-    println!("{}", serde_json::to_string(&search_body).unwrap());
+    debug!("elastic request: {}", serde_json::to_string(&search_body)?);
     client
         .search(SearchParts::Index(&["mdn_docs"]))
         .body(search_body)
         .send()
-        .await?
-        .json::<elastic::SearchResponse>()
         .await
 }
 
@@ -293,9 +297,14 @@ async fn get_suggestion(
     });
     for option in options {
         // Sure, this is different way to spell, but what will it yield if you actually search it?
-        let count = match do_count(client, &option.text, locales).await {
-            Ok(x) => x,
-            Err(_) => {
+        let count = match parse_or_get_error_reason::<elastic::CountResponse>(
+            do_count(client, &option.text, locales).await,
+        )
+        .await
+        {
+            Ok(x) => x.count,
+            Err(e) => {
+                error!("{}", e);
                 continue;
             }
         };
@@ -320,24 +329,54 @@ async fn do_count(
     client: &Elasticsearch,
     query: &str,
     locales: &[elastic::Locale],
-) -> Result<u64, elasticsearch::Error> {
-    Ok(client
+) -> Result<ElasticResponse, elasticsearch::Error> {
+    let body = elastic::Count {
+        query: elastic::Query::Bool(elastic::QueryBool {
+            filter: Some(vec![
+                elastic::Query::MultiMatch(elastic::QueryMultiMatch {
+                    query: query.to_string(),
+                    fields: vec![elastic::Field::Title, elastic::Field::Body],
+                }),
+                elastic::Query::Terms(elastic::QueryTerms::Locale(locales.to_vec())),
+            ]),
+            ..elastic::QueryBool::default()
+        }),
+    };
+    debug!("elastic request: {}", serde_json::to_string(&body)?);
+    client
         .count(CountParts::Index(&["mdn_docs"]))
-        .body(elastic::Count {
-            query: elastic::Query::Bool(elastic::QueryBool {
-                filter: Some(vec![
-                    elastic::Query::MultiMatch(elastic::QueryMultiMatch {
-                        query: query.to_string(),
-                        fields: vec![elastic::Field::Title, elastic::Field::Body],
-                    }),
-                    elastic::Query::Terms(elastic::QueryTerms::Locale(locales.to_vec())),
-                ]),
-                ..elastic::QueryBool::default()
-            }),
-        })
+        .body(body)
         .send()
-        .await?
-        .json::<elastic::CountResponse>()
-        .await?
-        .count)
+        .await
+}
+
+async fn parse_or_get_error_reason<T>(
+    result: Result<ElasticResponse, elasticsearch::Error>,
+) -> Result<T, SearchError>
+where
+    T: serde::de::DeserializeOwned,
+{
+    let response = result?;
+    match response.error_for_status_code_ref() {
+        Ok(_) => {
+            let text = response.text().await?;
+            debug!("elastic response: {}", text);
+            serde_json::from_str(&text).map_err(|_| SearchError::ParseResponse)
+        }
+        Err(e) => {
+            let exception = response
+                .exception()
+                .await?
+                .ok_or(SearchError::ParseResponse)?;
+            debug!("{:?}", exception);
+            Err(SearchError::ElasticContext {
+                reason: exception
+                    .error()
+                    .reason()
+                    .ok_or(SearchError::ParseResponse)?
+                    .to_string(),
+                source: e,
+            })
+        }
+    }
 }
