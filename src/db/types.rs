@@ -1,7 +1,34 @@
 #![allow(non_camel_case_types)]
 use crate::db::schema;
-use schema::sql_types::SubscriptionType;
+use schema::sql_types::{Locale as DbLocale, SubscriptionType};
 use serde::{Deserialize, Serialize};
+
+#[derive(Copy, Clone, diesel_derive_enum::DbEnum, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[DieselExistingType = "DbLocale"]
+pub enum Locale {
+    #[serde(rename = "de")]
+    De,
+    #[serde(rename = "en-US")]
+    EnUs,
+    #[serde(rename = "es")]
+    Es,
+    #[serde(rename = "fr")]
+    Fr,
+    #[serde(rename = "ja")]
+    Ja,
+    #[serde(rename = "ko")]
+    Ko,
+    #[serde(rename = "pl")]
+    Pl,
+    #[serde(rename = "pt-BR")]
+    PtBr,
+    #[serde(rename = "ru")]
+    Ru,
+    #[serde(rename = "zh-CN")]
+    ZhCn,
+    #[serde(rename = "zh-TW")]
+    ZhTw,
+}
 
 #[derive(
     Copy,

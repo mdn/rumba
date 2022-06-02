@@ -5,6 +5,8 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use super::types::Locale;
+
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = users)]
 pub struct User {
@@ -17,7 +19,7 @@ pub struct User {
     pub email: String,
 }
 
-#[derive(Queryable, AsChangeset)]
+#[derive(Queryable, AsChangeset, Debug)]
 #[diesel(table_name = users)]
 pub struct UserQuery {
     pub id: i64,
@@ -68,6 +70,38 @@ pub struct DocumentInsert {
     pub metadata: Option<Value>,
     pub updated_at: NaiveDateTime,
     pub title: String,
+}
+
+#[derive(Queryable, Debug)]
+#[diesel(table_name = settings)]
+pub struct Settings {
+    pub id: i64,
+    pub user_id: i64,
+    pub col_in_search: bool,
+    pub locale_override: Option<Locale>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SettingsQuery {
+    pub col_in_search: Option<bool>,
+    pub locale_override: Option<Option<Locale>>,
+}
+
+impl From<Settings> for SettingsQuery {
+    fn from(val: Settings) -> Self {
+        SettingsQuery {
+            col_in_search: Some(val.col_in_search),
+            locale_override: Some(val.locale_override),
+        }
+    }
+}
+
+#[derive(Insertable, AsChangeset)]
+#[diesel(table_name = settings)]
+pub struct SettingsInsert {
+    pub user_id: i64,
+    pub col_in_search: Option<bool>,
+    pub locale_override: Option<Option<Locale>>,
 }
 
 #[derive(Serialize, Deserialize)]
