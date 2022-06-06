@@ -2,6 +2,7 @@ use crate::db::error::DbError;
 use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, ResponseError};
 use serde::Serialize;
+use serde_json::json;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -16,6 +17,8 @@ pub enum SearchError {
     },
     #[error("Failed to parse elastic response")]
     ParseResponse,
+    #[error("Query string parsing failed for {key}: {message}")]
+    Query { key: String, message: String },
 }
 
 #[derive(Error, Debug)]
@@ -71,18 +74,31 @@ impl ResponseError for ApiError {
             Self::NotificationNotFound => StatusCode::NOT_FOUND,
             Self::MalformedUrl => StatusCode::BAD_REQUEST,
             Self::Query(_) => StatusCode::BAD_REQUEST,
+            Self::Search(SearchError::Query { .. }) => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 
     fn error_response(&self) -> HttpResponse {
         let status_code = self.status_code();
-        let error_response = ErrorResponse {
-            code: status_code.as_u16(),
-            message: self.to_string(),
-            error: self.name().to_string(),
-        };
-        HttpResponse::build(status_code).json(error_response)
+        let mut builder = HttpResponse::build(status_code);
+        match self {
+            Self::Search(SearchError::Query { key, message }) => builder.json(json!({
+                "errors": {
+                    key: [
+                        {
+                            "message": message,
+                            "code": "invalid",
+                        }
+                    ]
+                }
+            })),
+            _ => builder.json(ErrorResponse {
+                code: status_code.as_u16(),
+                message: self.to_string(),
+                error: self.name().to_string(),
+            }),
+        }
     }
 }
 
