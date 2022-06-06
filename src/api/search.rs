@@ -1,6 +1,5 @@
 use crate::api::elastic;
 use crate::api::error::{ApiError, SearchError};
-use actix_http::StatusCode;
 use actix_web::{web, HttpRequest, HttpResponse};
 use elasticsearch::http::response::Response as ElasticResponse;
 use elasticsearch::{CountParts, Elasticsearch, SearchParts};
@@ -8,6 +7,7 @@ use log::{debug, error};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::cmp::Ordering;
+use std::str::FromStr;
 
 // TODO: add caching headers from kuma
 // TODO: add retry logic from kuma
@@ -81,40 +81,53 @@ fn default_page() -> i64 {
     1
 }
 
+impl FromStr for Params {
+    type Err = SearchError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        /*
+        FIXME: this horrendous complexity only exists because no mature rust library supports
+        repeated query keys to specify an array value. after we fully migrate away from rumba,
+        and no longer need to remain api-compatible, we should change this behaviour.
+        */
+        let mut params: Params = serde_path_to_error::deserialize(
+            serde_urlencoded::Deserializer::new(form_urlencoded::parse(s.as_bytes())),
+        )
+        .map_err(|e| SearchError::Query {
+            key: e.path().to_string(),
+            message: e.inner().to_string(),
+        })?;
+        for value in web::Query::<Vec<(String, String)>>::from_query(s)
+            .unwrap_or_else(|_| web::Query(vec![]))
+            .iter()
+            .filter_map(
+                |(key, value)| {
+                    if key == "locale" {
+                        Some(value)
+                    } else {
+                        None
+                    }
+                },
+            )
+        {
+            params.locale.push(
+                value
+                    .to_lowercase()
+                    .parse::<elastic::Locale>()
+                    .map_err(|e| SearchError::Query {
+                        key: "locale".to_string(),
+                        message: e.to_string(),
+                    })?,
+            );
+        }
+        Ok(params)
+    }
+}
+
 pub async fn search(
     request: HttpRequest,
     client: web::Data<Elasticsearch>,
 ) -> Result<HttpResponse, ApiError> {
-    let mut params: Params =
-        match serde_path_to_error::deserialize(serde_urlencoded::Deserializer::new(
-            form_urlencoded::parse(request.query_string().as_bytes()),
-        )) {
-            Ok(x) => x,
-            Err(e) => {
-                debug!("{:?}", e);
-                return Ok(HttpResponse::build(StatusCode::BAD_REQUEST).json(json!({
-                    "errors": {
-                        e.path().to_string(): [
-                            {
-                                "message": e.inner().to_string(),
-                                "code": "invalid",
-                            }
-                        ]
-                    }
-                })));
-            }
-        };
-    params.locale = web::Query::<Vec<(String, String)>>::from_query(request.query_string())
-        .unwrap_or_else(|_| web::Query(vec![("locale".to_string(), "en-US".to_string())]))
-        .iter()
-        .filter_map(|(key, value)| {
-            if key == "locale" {
-                ron::from_str(&value.to_lowercase()).ok()
-            } else {
-                None
-            }
-        })
-        .collect();
+    let params: Params = request.query_string().parse()?;
 
     let search_response: elastic::SearchResponse =
         match parse_or_get_error_reason(do_search(&client, &params).await).await {

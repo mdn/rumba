@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -67,6 +69,13 @@ pub enum Locale {
     ChineseSimplified,
     #[serde(rename = "zh-tw")]
     ChineseTraditional,
+}
+
+impl FromStr for Locale {
+    type Err = serde_json::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        serde_json::from_value(serde_json::Value::String(s.to_string()))
+    }
 }
 
 #[derive(Serialize)]
