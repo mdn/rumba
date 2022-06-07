@@ -1,7 +1,7 @@
 #![allow(non_camel_case_types)]
 use crate::db::schema;
 use schema::sql_types::NotificationType;
-use schema::sql_types::{Locale as DbLocale, SubscriptionType};
+use schema::sql_types::{FxaEventStatusType, FxaEventType, Locale as DbLocale, SubscriptionType};
 use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, diesel_derive_enum::DbEnum, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -43,6 +43,56 @@ pub enum Locale {
     PartialOrd,
     Serialize,
 )]
+#[DieselExistingType = "FxaEventStatusType"]
+pub enum FxaEventStatus {
+    #[serde(rename = "processed")]
+    Processed,
+    #[serde(rename = "ignored")]
+    Ignored,
+    #[serde(rename = "pending")]
+    Pending,
+    #[serde(rename = "failed")]
+    Failed,
+}
+
+#[derive(
+    Copy,
+    Clone,
+    diesel_derive_enum::DbEnum,
+    Debug,
+    Deserialize,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+)]
+#[DieselExistingType = "FxaEventType"]
+pub enum FxaEvent {
+    #[serde(rename = "delete_user")]
+    DeleteUser,
+    #[serde(rename = "password_change")]
+    PasswordChange,
+    #[serde(rename = "profile_change")]
+    ProfileChange,
+    #[serde(rename = "subscription_state_change")]
+    SubscriptionStateChange,
+    #[serde(rename = "unknown")]
+    Unknown,
+}
+
+#[derive(
+    Copy,
+    Clone,
+    diesel_derive_enum::DbEnum,
+    Debug,
+    Deserialize,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+)]
 #[DieselExistingType = "SubscriptionType"]
 pub enum Subscription {
     #[serde(rename(serialize = "core"))]
@@ -55,6 +105,18 @@ pub enum Subscription {
     MdnPlus_5y,
     #[serde(rename = "mdn_plus_10y")]
     MdnPlus_10y,
+}
+
+impl Subscription {
+    pub fn is_subscriber(&self) -> bool {
+        match self {
+            Subscription::Core => false,
+            Subscription::MdnPlus_5m
+            | Subscription::MdnPlus_10m
+            | Subscription::MdnPlus_5y
+            | Subscription::MdnPlus_10y => true,
+        }
+    }
 }
 
 impl Default for Subscription {

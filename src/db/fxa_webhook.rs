@@ -1,0 +1,169 @@
+use crate::api::fxa_webhook::{ProfileChange, SubscriptionStateChange};
+use crate::db::error::DbError;
+use crate::db::model::{UserQuery, WebHooksEvent};
+use crate::db::types::FxaEvent;
+use crate::db::users::get_user_opt;
+use crate::db::{schema, Pool};
+use crate::diesel::ExpressionMethods;
+use crate::fxa::LoginManager;
+use actix_web::web;
+use chrono::{DateTime, Utc};
+use diesel::insert_into;
+use diesel::prelude::*;
+use serde_json::json;
+
+use super::types::{FxaEventStatus, Subscription};
+
+pub async fn delete_profile_from_webhook(
+    pool: web::Data<Pool>,
+    fxa_uid: String,
+    issue_time: DateTime<Utc>,
+) -> Result<(), DbError> {
+    let fxa_event = WebHooksEvent {
+        fxa_uid: fxa_uid.clone(),
+        change_time: None,
+        issue_time: issue_time.naive_utc(),
+        typ: FxaEvent::SubscriptionStateChange,
+        status: FxaEventStatus::Pending,
+        payload: json!({}),
+    };
+    let mut conn = pool.get()?;
+    let id = insert_into(schema::webhook_events::table)
+        .values(fxa_event)
+        .returning(schema::webhook_events::id)
+        .get_result::<i64>(&mut conn)?;
+    match diesel::delete(schema::users::table.filter(schema::users::fxa_uid.eq(&fxa_uid)))
+        .execute(&mut conn)
+    {
+        Ok(_) => {
+            diesel::update(schema::webhook_events::table.filter(schema::webhook_events::id.eq(id)))
+                .set(schema::webhook_events::status.eq(FxaEventStatus::Processed))
+                .execute(&mut conn)?;
+            Ok(())
+        }
+        Err(e) => {
+            diesel::update(schema::webhook_events::table.filter(schema::webhook_events::id.eq(id)))
+                .set(schema::webhook_events::status.eq(FxaEventStatus::Failed))
+                .execute(&mut conn)?;
+            Err(e.into())
+        }
+    }
+}
+pub async fn update_profile_from_webhook(
+    pool: web::Data<Pool>,
+    fxa_uid: String,
+    login_manager: web::Data<LoginManager>,
+    update: ProfileChange,
+    issue_time: DateTime<Utc>,
+) -> Result<(), DbError> {
+    let mut conn = pool.get()?;
+    let user: Option<UserQuery> = get_user_opt(&mut conn, &fxa_uid).await?;
+    let mut fxa_event = WebHooksEvent {
+        fxa_uid,
+        change_time: None,
+        issue_time: issue_time.naive_utc(),
+        typ: FxaEvent::ProfileChange,
+        status: FxaEventStatus::Pending,
+        payload: serde_json::value::to_value(&update).unwrap(),
+    };
+    if let Some(user) = user {
+        let id = insert_into(schema::webhook_events::table)
+            .values(fxa_event)
+            .returning(schema::webhook_events::id)
+            .get_result::<i64>(&mut conn)?;
+        match login_manager
+            .get_and_update_user_info_with_refresh_token(&pool, user.fxa_refresh_token.clone())
+            .await
+        {
+            Ok(_) => {
+                diesel::update(
+                    schema::webhook_events::table.filter(schema::webhook_events::id.eq(id)),
+                )
+                .set(schema::webhook_events::status.eq(FxaEventStatus::Processed))
+                .execute(&mut conn)?;
+                Ok(())
+            }
+            Err(e) => {
+                diesel::update(
+                    schema::webhook_events::table.filter(schema::webhook_events::id.eq(id)),
+                )
+                .set(schema::webhook_events::status.eq(FxaEventStatus::Failed))
+                .execute(&mut conn)?;
+                Err(e.into())
+            }
+        }
+    } else {
+        fxa_event.status = FxaEventStatus::Ignored;
+        insert_into(schema::webhook_events::table)
+            .values(fxa_event)
+            .execute(&mut conn)?;
+        Ok(())
+    }
+}
+pub async fn update_subscription_state_from_webhook(
+    pool: web::Data<Pool>,
+    fxa_uid: String,
+    update: SubscriptionStateChange,
+    issue_time: DateTime<Utc>,
+) -> Result<(), DbError> {
+    let mut conn = pool.get()?;
+    let user: Option<UserQuery> = get_user_opt(&mut conn, &fxa_uid).await?;
+    let mut fxa_event = WebHooksEvent {
+        fxa_uid,
+        change_time: Some(update.change_time.naive_utc()),
+        issue_time: issue_time.naive_utc(),
+        typ: FxaEvent::SubscriptionStateChange,
+        status: FxaEventStatus::Pending,
+        payload: serde_json::value::to_value(&update).unwrap(),
+    };
+
+    if let Some(user) = user {
+        let ignore = schema::webhook_events::table
+            .filter(
+                schema::webhook_events::fxa_uid.eq(&fxa_event.fxa_uid).and(
+                    schema::webhook_events::typ
+                        .eq(&fxa_event.typ)
+                        .and(schema::webhook_events::change_time.ge(&fxa_event.change_time)),
+                ),
+            )
+            .count()
+            .first::<i64>(&mut conn)?;
+        if ignore == 0 {
+            let id = insert_into(schema::webhook_events::table)
+                .values(fxa_event)
+                .returning(schema::webhook_events::id)
+                .get_result::<i64>(&mut conn)?;
+            let subscription: Subscription = match update.capabilities.first() {
+                Some(c) => Subscription::from(*c),
+                None => Subscription::Core,
+            };
+            match diesel::update(schema::users::table.filter(schema::users::id.eq(user.id)))
+                .set(schema::users::subscription_type.eq(subscription))
+                .execute(&mut conn)
+            {
+                Ok(_) => {
+                    diesel::update(
+                        schema::webhook_events::table.filter(schema::webhook_events::id.eq(id)),
+                    )
+                    .set(schema::webhook_events::status.eq(FxaEventStatus::Processed))
+                    .execute(&mut conn)?;
+                    return Ok(());
+                }
+                Err(e) => {
+                    diesel::update(
+                        schema::webhook_events::table.filter(schema::webhook_events::id.eq(id)),
+                    )
+                    .set(schema::webhook_events::status.eq(FxaEventStatus::Failed))
+                    .execute(&mut conn)?;
+                    return Err(e.into());
+                }
+            }
+        }
+    }
+
+    fxa_event.status = FxaEventStatus::Ignored;
+    insert_into(schema::webhook_events::table)
+        .values(fxa_event)
+        .execute(&mut conn)?;
+    Ok(())
+}

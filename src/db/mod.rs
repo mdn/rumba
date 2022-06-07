@@ -1,6 +1,7 @@
 pub mod collections;
 pub mod documents;
 pub mod error;
+pub mod fxa_webhook;
 pub mod model;
 pub mod notifications;
 #[allow(unused_imports)]

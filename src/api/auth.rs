@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use actix_identity::Identity;
 use actix_session::{storage::CookieSessionStore, Session, SessionMiddleware};
 use actix_web::{
@@ -17,7 +15,7 @@ async fn login(
     _req: HttpRequest,
     id: Identity,
     session: Session,
-    login_manager: web::Data<Arc<LoginManager>>,
+    login_manager: web::Data<LoginManager>,
 ) -> Result<HttpResponse, Error> {
     id.forget();
     let (url, csrf_token, nonce) = login_manager.login();
@@ -42,7 +40,7 @@ async fn callback(
     pool: web::Data<Pool>,
     session: Session,
     web::Query(q): web::Query<AuthResponse>,
-    login_manager: web::Data<Arc<LoginManager>>,
+    login_manager: web::Data<LoginManager>,
 ) -> Result<HttpResponse, Error> {
     let csrf_token: Option<CsrfToken> = session.get("csrf_token")?;
     let nonce: Option<Nonce> = session.get("nonce")?;

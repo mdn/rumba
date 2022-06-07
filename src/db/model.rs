@@ -1,5 +1,5 @@
-use crate::db::schema::*;
-use crate::db::types::Subscription;
+use crate::db::types::{FxaEventStatus, Subscription};
+use crate::db::{schema::*, types::FxaEvent};
 use chrono::NaiveDateTime;
 
 use serde::{Deserialize, Serialize};
@@ -15,7 +15,6 @@ pub struct User {
     pub fxa_uid: String,
     pub fxa_refresh_token: String,
     pub avatar_url: Option<String>,
-    pub is_subscriber: bool,
     pub subscription_type: Subscription,
     pub email: String,
 }
@@ -30,8 +29,15 @@ pub struct UserQuery {
     pub fxa_uid: String,
     pub fxa_refresh_token: String,
     pub avatar_url: Option<String>,
-    pub is_subscriber: bool,
     pub subscription_type: Option<Subscription>,
+}
+
+#[derive(Queryable, AsChangeset)]
+#[diesel(table_name = users)]
+pub struct UserUpdateFromWebhook {
+    pub fxa_uid: String,
+    pub email: Option<String>,
+    pub subscription_type: Option<Option<Subscription>>,
 }
 
 #[derive(Queryable, Clone)]
@@ -166,4 +172,15 @@ pub struct WatchedItemInsert {
 #[derive(Queryable)]
 pub struct IdQuery {
     id: i64,
+}
+
+#[derive(Insertable, Queryable, AsChangeset)]
+#[diesel(table_name = webhook_events)]
+pub struct WebHooksEvent {
+    pub fxa_uid: String,
+    pub change_time: Option<NaiveDateTime>,
+    pub issue_time: NaiveDateTime,
+    pub typ: FxaEvent,
+    pub status: FxaEventStatus,
+    pub payload: Value,
 }

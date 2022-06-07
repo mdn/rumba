@@ -107,6 +107,7 @@ impl From<DbError> for ApiError {
         match err {
             DbError::DieselResult(_) => ApiError::Unknown,
             DbError::R2D2Error(_) => ApiError::Unknown,
+            DbError::FxAError(_) => ApiError::Unknown,
         }
     }
 }

@@ -4,6 +4,7 @@ pub mod collections;
 pub mod common;
 pub mod elastic;
 pub mod error;
+pub mod fxa_webhook;
 pub mod healthz;
 pub mod notifications;
 pub mod search;
