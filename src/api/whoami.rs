@@ -3,8 +3,8 @@ use actix_identity::Identity;
 use serde::Serialize;
 
 use crate::api::error::ApiError;
+use crate::api::settings::SettingUpdateRequest;
 use crate::db;
-use crate::db::model::SettingsQuery;
 use crate::db::Pool;
 use actix_web::{web, HttpRequest, HttpResponse};
 
@@ -23,7 +23,7 @@ pub struct WhoamiResponse {
     avatar_url: Option<String>,
     is_subscriber: Option<bool>,
     subscription_type: Option<String>,
-    settings: Option<SettingsQuery>,
+    settings: Option<SettingUpdateRequest>,
 }
 
 const CLOUDFRONT_COUNTRY_HEADER: &str = "CloudFront-Viewer-Country-Name";

@@ -3,12 +3,11 @@ use crate::db::schema;
 use diesel::prelude::*;
 use diesel::{insert_into, PgConnection};
 
+use crate::api::settings::SettingUpdateRequest;
+use crate::db::error::DbError;
 use crate::db::model::Settings;
 use crate::db::model::SettingsInsert;
 use crate::db::model::UserQuery;
-
-use crate::db::error::DbError;
-use crate::db::model::SettingsQuery;
 
 pub fn get_settings(
     conn: &mut PgConnection,
@@ -24,7 +23,7 @@ pub fn get_settings(
 pub fn create_or_update_settings(
     conn: &mut PgConnection,
     user: &UserQuery,
-    settings_update: SettingsQuery,
+    settings_update: SettingUpdateRequest,
 ) -> QueryResult<usize> {
     let settings = SettingsInsert {
         user_id: user.id,

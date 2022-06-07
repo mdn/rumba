@@ -81,21 +81,6 @@ pub struct Settings {
     pub locale_override: Option<Locale>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct SettingsQuery {
-    pub col_in_search: Option<bool>,
-    pub locale_override: Option<Option<Locale>>,
-}
-
-impl From<Settings> for SettingsQuery {
-    fn from(val: Settings) -> Self {
-        SettingsQuery {
-            col_in_search: Some(val.col_in_search),
-            locale_override: Some(val.locale_override),
-        }
-    }
-}
-
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = settings)]
 pub struct SettingsInsert {
