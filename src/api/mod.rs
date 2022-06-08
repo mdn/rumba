@@ -3,4 +3,5 @@ pub mod auth;
 pub mod collections;
 pub mod error;
 pub mod healthz;
+pub mod settings;
 pub mod whoami;

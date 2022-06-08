@@ -2,6 +2,10 @@
 
 pub mod sql_types {
     #[derive(diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "locale"))]
+    pub struct Locale;
+
+    #[derive(diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "subscription_type"))]
     pub struct SubscriptionType;
 }
@@ -40,6 +44,19 @@ diesel::table! {
 diesel::table! {
     use diesel::sql_types::*;
     use crate::db::types::*;
+    use super::sql_types::Locale;
+
+    settings (id) {
+        id -> Int8,
+        user_id -> Int8,
+        col_in_search -> Bool,
+        locale_override -> Nullable<Locale>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
     use super::sql_types::SubscriptionType;
 
     users (id) {
@@ -57,5 +74,6 @@ diesel::table! {
 
 diesel::joinable!(collections -> documents (document_id));
 diesel::joinable!(collections -> users (user_id));
+diesel::joinable!(settings -> users (user_id));
 
-diesel::allow_tables_to_appear_in_same_query!(collections, documents, users,);
+diesel::allow_tables_to_appear_in_same_query!(collections, documents, settings, users,);

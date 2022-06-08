@@ -3,6 +3,7 @@ use actix_identity::Identity;
 use serde::Serialize;
 
 use crate::api::error::ApiError;
+use crate::api::settings::SettingUpdateRequest;
 use crate::db;
 use crate::db::Pool;
 use actix_web::{web, HttpRequest, HttpResponse};
@@ -12,7 +13,7 @@ pub struct GeoInfo {
     country: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 pub struct WhoamiResponse {
     geo: Option<GeoInfo>,
     // #[deprecated(note="Confusing name. We should consider just changing to user_id")]
@@ -22,6 +23,7 @@ pub struct WhoamiResponse {
     avatar_url: Option<String>,
     is_subscriber: Option<bool>,
     subscription_type: Option<String>,
+    settings: Option<SettingUpdateRequest>,
 }
 
 const CLOUDFRONT_COUNTRY_HEADER: &str = "CloudFront-Viewer-Country-Name";
@@ -39,10 +41,11 @@ pub async fn whoami(
 
     match id.identity() {
         Some(id) => {
-            println!("Whoami logged in");
-            let user = db::users::get_user(&mut pool.get()?, id).await;
+            let mut conn_pool = pool.get()?;
+            let user = db::users::get_user(&mut conn_pool, id).await;
             match user {
                 Ok(found) => {
+                    let settings = db::settings::get_settings(&mut conn_pool, &found)?;
                     let response = WhoamiResponse {
                         geo: country,
                         username: Option::Some(found.fxa_uid),
@@ -53,6 +56,7 @@ pub async fn whoami(
                         is_subscriber: Option::Some(found.is_subscriber),
                         is_authenticated: Option::Some(true),
                         email: Option::Some(found.email),
+                        settings: settings.map(Into::into),
                     };
                     Ok(HttpResponse::Ok().json(response))
                 }
@@ -62,12 +66,7 @@ pub async fn whoami(
         None => {
             let res = WhoamiResponse {
                 geo: country,
-                username: None,
-                is_authenticated: None,
-                email: None,
-                avatar_url: None,
-                is_subscriber: None,
-                subscription_type: None,
+                ..Default::default()
             };
             Ok(HttpResponse::Ok().json(res))
         }
