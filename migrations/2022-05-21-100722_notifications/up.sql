@@ -23,4 +23,13 @@ CREATE TABLE notifications
     notification_data_id BIGSERIAL NOT NULL references notification_data (id)
 );
 
-CREATE INDEX notification_user_id on notifications(user_id);
+CREATE TABLE watched_items
+(    
+    -- id BIGSERIAL PRIMARY KEY,
+    user_id BIGSERIAL references users(id),
+    document_id BIGSERIAL references documents(id),
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, document_id)
+);
+
+CREATE INDEX notification_user_id on notifications(user_id); 

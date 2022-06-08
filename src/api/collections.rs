@@ -1,5 +1,4 @@
 use actix_identity::Identity;
-
 use serde::{Deserialize, Serialize};
 
 use crate::api::error::ApiError;
@@ -9,20 +8,18 @@ use crate::db::collections::{
 
 use crate::db::Pool;
 
-use actix_web::web::{Data, Query};
+use actix_web::web::Data;
 use actix_web::{web, HttpRequest, HttpResponse};
 
 use chrono::NaiveDateTime;
-use reqwest::{Client, StatusCode};
-use url::Url;
+use reqwest::Client;
 
 use crate::db;
 use crate::db::error::DbError;
-use crate::db::model::{CollectionAndDocumentQuery, DocumentMetadata, UserQuery};
+use crate::db::model::{CollectionAndDocumentQuery, UserQuery};
 use crate::db::users::get_user;
-use crate::settings::SETTINGS;
 
-use super::common::Sorting;
+use super::common::{get_document_metadata, Sorting};
 
 #[derive(Deserialize)]
 pub struct CollectionsQueryParams {
@@ -207,7 +204,7 @@ pub async fn create_or_update_collection_item(
             Some(id) => {
                 let mut conn_pool = pool.get()?;
                 let user: UserQuery = get_user(&mut conn_pool, id).await?;
-                let metadata = get_document_metadata(http_client, &query).await?;
+                let metadata = get_document_metadata(http_client, &query.url).await?;
                 create_collection_item(
                     user,
                     &mut conn_pool,
@@ -254,39 +251,4 @@ pub async fn delete_collection_item(
         }
         None => Ok(HttpResponse::Unauthorized().finish()),
     }
-}
-
-#[derive(Deserialize)]
-pub struct DocumentMetadataResponse {
-    doc: DocumentMetadata,
-}
-
-async fn get_document_metadata(
-    http_client: Data<Client>,
-    query: &Query<CollectionCreationParams>,
-) -> Result<DocumentMetadata, ApiError> {
-    let document_url = Url::parse(&format!(
-        "{}{}/index.json",
-        SETTINGS.application.document_base_url, query.url
-    ))
-    .map_err(|_| ApiError::MalformedUrl)?;
-
-    let document = http_client
-        .get(document_url)
-        .send()
-        .await
-        .map_err(|err: reqwest::Error| match err.status() {
-            Some(StatusCode::NOT_FOUND) => ApiError::DocumentNotFound,
-            _ => ApiError::Unknown,
-        })?;
-
-    let res: DocumentMetadataResponse = document
-        .json()
-        .await
-        .map_err(|_| ApiError::DocumentNotFound)?;
-    Ok(DocumentMetadata {
-        title: res.doc.title,
-        parents: res.doc.parents,
-        mdn_url: res.doc.mdn_url,
-    })
 }

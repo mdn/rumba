@@ -7,6 +7,7 @@ pub mod api;
 pub mod db;
 pub mod fxa;
 pub mod settings;
+pub mod util;
 
 #[macro_use]
 extern crate diesel;

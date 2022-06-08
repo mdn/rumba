@@ -71,6 +71,7 @@ pub struct DocumentInsert {
     pub metadata: Option<Value>,
     pub updated_at: NaiveDateTime,
     pub title: String,
+    pub paths: Vec<String>,
 }
 
 #[derive(Queryable, Debug)]
@@ -95,6 +96,7 @@ pub struct DocumentMetadata {
     pub mdn_url: String,
     pub parents: Option<Vec<CollectionParent>>,
     pub title: String,
+    pub paths: Vec<String>,
 }
 
 #[derive(Queryable, Clone)]
@@ -141,4 +143,21 @@ pub struct NotificationDataInsert {
     pub title: String,
     pub type_: NotificationTypeEnum,
     pub document_id: i64,
+}
+
+#[derive(Queryable, Clone)]
+pub struct WatchedItemsQuery {
+    pub document_id: i64,
+    pub user_id: i64,
+    pub created_at: NaiveDateTime,
+    pub uri: String,
+    pub title: String,
+    pub paths: Vec<Option<String>>,
+}
+
+#[derive(Insertable, AsChangeset, Clone)]
+#[diesel(table_name = watched_items)]
+pub struct WatchedItemInsert {
+    pub document_id: i64,
+    pub user_id: i64,
 }

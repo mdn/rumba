@@ -93,6 +93,26 @@
               "isH3": false,
               "content": "<ul>\n  <li><a href=\"/en-US/docs/Web/Demos#css\">CSS demos</a>: Get a creative boost by exploring examples of the latest CSS technologies in action.</li>\n  <li>Web languages to which CSS is often applied: <a href=\"/en-US/docs/Web/HTML\">HTML</a>, <a href=\"/en-US/docs/Web/SVG\">SVG</a>, <a href=\"/en-US/docs/Web/MathML\">MathML</a>, <a href=\"/en-US/docs/Glossary/XHTML\">XHTML</a>, and <a href=\"/en-US/docs/Web/XML/XML_introduction\">XML</a>.</li>\n  <li><a href=\"https://stackoverflow.com/questions/tagged/css\" class=\"external\" rel=\" noopener\">Stack Overflow questions about CSS</a></li>\n</ul>"
             }
+          },
+          {
+            "type": "browser_compatibility",
+            "value": {
+              "title": "background-blend-mode property",
+              "id": "background-blend-mode_property",
+              "isH3": true,
+              "query": "css.properties.background-blend-mode",
+              "dataURL": "/en-US/docs/Web/CSS/Compositing_and_Blending/bcd.json"
+            }
+          },
+          {
+            "type": "browser_compatibility",
+            "value": {
+              "title": "isolation property",
+              "id": "isolation_property",
+              "isH3": true,
+              "query": "css.properties.isolation",
+              "dataURL": "/en-US/docs/Web/CSS/Compositing_and_Blending/bcd-2.json"
+            }
           }
         ],
         "toc": [

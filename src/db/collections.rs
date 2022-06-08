@@ -7,6 +7,7 @@ use crate::db::schema;
 use crate::diesel::BoolExpressionMethods;
 use crate::diesel::NullableExpressionMethods;
 use crate::diesel::PgTextExpressionMethods;
+use crate::util::normalize_uri;
 use diesel::expression_methods::ExpressionMethods;
 use diesel::r2d2::ConnectionManager;
 use diesel::{insert_into, PgConnection};
@@ -129,10 +130,6 @@ pub async fn delete_collection_item(
         .filter(schema::collections::user_id.eq(user.id))
         .set(schema::collections::deleted_at.eq(chrono::offset::Utc::now().naive_utc()))
         .execute(pool)
-}
-
-fn normalize_uri(input: String) -> String {
-    input.to_lowercase().trim().to_string()
 }
 
 pub async fn create_collection_item(

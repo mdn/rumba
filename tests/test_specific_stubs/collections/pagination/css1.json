@@ -30,6 +30,28 @@
               "isH3": false,
               "content": "<p><strong>Cascading Style Sheets</strong></p>"
             }
+          },
+          {
+            "type": "browser_compatibility",
+            "value": {
+              "title" : "First BCD Table",
+              "query": "docs.web.css.1.first.bcd.in.array"
+            }
+          },
+          {
+            "type": "browser_compatibility",
+            "value": {
+              "title" : "Second BCD Table",
+              "query": "docs.web.css.1.second.bcd.in.array"
+            }
+          }
+          ,
+          {
+            "type": "browser_compatibility",
+            "value": {
+              "title" : "Third BCD Table",
+              "query": "docs.web.css.1.third.bcd.in.array"
+            }
           }
         ],
         "toc": [

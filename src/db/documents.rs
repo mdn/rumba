@@ -14,12 +14,14 @@ pub async fn create_or_update_document(
 ) -> QueryResult<i64> {
     let absolute_uri = format!("{}{}", SETTINGS.application.document_base_url, uri);
     let title = document.title.clone();
-    let metadata = serde_json::to_value(document).ok();
+    let metadata = serde_json::to_value(&document).ok();
+    let paths = document.paths;
     let insert = DocumentInsert {
         title,
         absolute_uri,
         uri,
         metadata,
+        paths,
         updated_at: chrono::offset::Utc::now().naive_utc(),
     };
 

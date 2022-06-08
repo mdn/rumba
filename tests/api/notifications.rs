@@ -366,6 +366,7 @@ async fn create_notifications(user_id: i64, number: usize) -> Vec<i64> {
         let document = DocumentMetadata {
             parents: None,
             mdn_url: uri.to_string(),
+            paths: vec![],
             title: format!("{} {}", "Test", i),
         };
 
