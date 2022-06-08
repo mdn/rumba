@@ -3,7 +3,7 @@ CREATE TABLE documents
     id           BIGSERIAL PRIMARY KEY,
     created_at   TIMESTAMP NOT NULL DEFAULT now(),
     updated_at   TIMESTAMP NOT NULL DEFAULT now(),
-    absolute_uri TEXT      NOT NULL UNIQUE,    
+    absolute_uri TEXT      NOT NULL UNIQUE,
     uri          TEXT      NOT NULL UNIQUE,
     metadata     JSONB,
     title        TEXT NOT NULL,
