@@ -1,4 +1,6 @@
-use crate::api::collections::{collections, create_or_update_collection_item, delete_collection_item};
+use crate::api::collections::{
+    collections, create_or_update_collection_item, delete_collection_item,
+};
 use crate::api::settings::update_settings;
 use crate::api::whoami::whoami;
 use crate::settings::SETTINGS;
@@ -28,7 +30,7 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
                         .route(web::post().to(create_or_update_collection_item))
                         .route(web::delete().to(delete_collection_item)),
                 )
-                .service(web::resource("/settings/").route(web::post().to(update_settings)))            
+                .service(web::resource("/settings/").route(web::post().to(update_settings)))
                 .service(
                     web::scope("/notifications")
                         .service(web::resource("/").route(web::get().to(notifications)))
@@ -52,12 +54,12 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
                                 .route(web::post().to(undo_delete_by_id)),
                         )
                         .service(web::resource("/delete-ids/").route(web::post().to(delete_many))),
-                    )
-                    .service(
-                        web::resource("/watching/")
-                            .route(web::post().to(update_watched_item))
-                            .route(web::get().to(get_watched_items)),
-                    )
+                )
+                .service(
+                    web::resource("/watching/")
+                        .route(web::post().to(update_watched_item))
+                        .route(web::get().to(get_watched_items)),
+                )
                 .service(web::resource("/unwatch-many/").route(web::post().to(unwatch_many))),
         )
         .service(web::resource("/whoami").route(web::get().to(whoami)))

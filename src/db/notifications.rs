@@ -6,9 +6,7 @@ use r2d2::PooledConnection;
 
 use super::error::DbError;
 use super::model::UserQuery;
-use super::model::{
-    NotificationDataInsert, NotificationInsert, NotificationsQuery,
-};
+use super::model::{NotificationDataInsert, NotificationInsert, NotificationsQuery};
 use crate::api::common::Sorting;
 use crate::api::notifications::{NotificationIds, NotificationQueryParams};
 use crate::db::schema;

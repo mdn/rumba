@@ -112,7 +112,9 @@ async fn whoami_settings_test() -> Result<(), Error> {
         .post(
             "/api/v1/plus/settings/",
             None,
-            Some(PostPayload::Json(json!({"col_in_search": false, "locale_override": "zh-TW"}))),
+            Some(PostPayload::Json(
+                json!({"col_in_search": false, "locale_override": "zh-TW"}),
+            )),
         )
         .await;
 

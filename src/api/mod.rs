@@ -4,7 +4,7 @@ pub mod collections;
 pub mod common;
 pub mod error;
 pub mod healthz;
-pub mod settings;
 pub mod notifications;
+pub mod settings;
 pub mod watched_items;
 pub mod whoami;

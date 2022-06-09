@@ -78,8 +78,8 @@ impl From<DbError> for ApiError {
 }
 
 impl From<diesel::result::Error> for ApiError {
-    fn from(_: diesel::result::Error) -> Self {        
-        ApiError::Unknown    
+    fn from(_: diesel::result::Error) -> Self {
+        ApiError::Unknown
     }
 }
 

@@ -1,7 +1,7 @@
 #![allow(non_camel_case_types)]
 use crate::db::schema;
-use schema::sql_types::{Locale as DbLocale, SubscriptionType};
 use schema::sql_types::NotificationType;
+use schema::sql_types::{Locale as DbLocale, SubscriptionType};
 use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, diesel_derive_enum::DbEnum, Debug, Deserialize, Eq, PartialEq, Serialize)]

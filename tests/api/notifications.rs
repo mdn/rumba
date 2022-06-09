@@ -8,7 +8,6 @@ use rumba::db;
 use rumba::db::model::{DocumentMetadata, NotificationDataInsert};
 use serde_json::json;
 
-
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn test_get_notifications() -> Result<(), Error> {
@@ -399,7 +398,9 @@ async fn create_notifications(user_id: i64, number: usize) -> Vec<i64> {
             &mut conn_pool.get().unwrap(),
             user_id,
             notification_data_id,
-        ).await.unwrap();
+        )
+        .await
+        .unwrap();
         notification_ids.push(id);
     }
     notification_ids
