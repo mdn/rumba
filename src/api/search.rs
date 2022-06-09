@@ -65,19 +65,13 @@ struct Params {
     q: String,
     #[serde(default)]
     sort: Sort,
-    #[serde(default = "default_size")]
-    size: i64,
     #[serde(default = "default_page")]
-    page: i64,
+    page: u64,
     #[serde(skip)]
     locale: Vec<elastic::Locale>,
 }
 
-fn default_size() -> i64 {
-    10
-}
-
-fn default_page() -> i64 {
+fn default_page() -> u64 {
     1
 }
 
@@ -96,6 +90,23 @@ impl FromStr for Params {
             key: e.path().to_string(),
             message: e.inner().to_string(),
         })?;
+
+        match params.page {
+            x if x < 1 => {
+                return Err(SearchError::Query {
+                    key: "page".to_string(),
+                    message: "Ensure this value is greater than or equal to 1.".to_string(),
+                })
+            }
+            x if x > 10 => {
+                return Err(SearchError::Query {
+                    key: "page".to_string(),
+                    message: "Ensure this value is less than or equal to 10.".to_string(),
+                })
+            }
+            _ => (),
+        }
+
         for value in web::Query::<Vec<(String, String)>>::from_query(s)
             .unwrap_or_else(|_| web::Query(vec![]))
             .iter()
@@ -119,6 +130,10 @@ impl FromStr for Params {
                     })?,
             );
         }
+        if params.locale.is_empty() {
+            params.locale.push(elastic::Locale::English);
+        }
+
         Ok(params)
     }
 }
@@ -158,7 +173,7 @@ pub async fn search(
             took_ms: search_response.took,
             total: search_response.hits.total,
             size: 10,
-            page: 1,
+            page: params.page,
         },
         suggestions: match search_response.suggest {
             Some(x) => get_suggestion(x, &client, &params.locale)
@@ -256,21 +271,21 @@ async fn do_search(
 
     let (sort, query) = match params.sort {
         Sort::Relevance => (
-            vec![
+            Some(vec![
                 elastic::SortField::Score(elastic::Order::Desc),
                 elastic::SortField::Popularity(elastic::Order::Desc),
-            ],
+            ]),
             subquery,
         ),
         Sort::Popularity => (
-            vec![
+            Some(vec![
                 elastic::SortField::Popularity(elastic::Order::Desc),
                 elastic::SortField::Score(elastic::Order::Desc),
-            ],
+            ]),
             subquery,
         ),
         Sort::Best => (
-            vec![],
+            None,
             elastic::Query::FunctionScore(elastic::QueryFunctionScore {
                 query: Box::new(subquery),
                 functions: vec![elastic::QueryFunctionScoreFunction::FieldValueFactor(
@@ -287,8 +302,8 @@ async fn do_search(
     };
 
     let search_body = elastic::Search {
-        from: params.size * (params.page - 1),
-        size: params.size * params.page,
+        from: 10 * (params.page - 1),
+        size: 10,
         _source: elastic::Source {
             excludes: vec![elastic::Field::Body],
         },

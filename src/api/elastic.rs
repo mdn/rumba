@@ -6,13 +6,13 @@ use serde_json::Value;
 #[serde_with::skip_serializing_none]
 #[derive(Serialize)]
 pub struct Search {
-    pub from: i64,
-    pub size: i64,
+    pub from: u64,
+    pub size: u64,
     pub query: Query,
     pub _source: Source,
     pub highlight: Highlight,
     pub suggest: Option<Suggest>,
-    pub sort: Vec<SortField>,
+    pub sort: Option<Vec<SortField>>,
 }
 
 #[derive(Serialize)]
