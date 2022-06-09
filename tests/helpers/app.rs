@@ -5,6 +5,8 @@ use actix_web::{
     dev::{ServiceFactory, ServiceRequest, ServiceResponse},
     App, Error,
 };
+use elasticsearch::http::transport::Transport;
+use elasticsearch::Elasticsearch;
 use reqwest::Client;
 use rumba::add_services;
 use rumba::fxa::LoginManager;
@@ -53,4 +55,22 @@ pub async fn test_app_with_login() -> anyhow::Result<
         .app_data(Data::new(Client::new()))
         .app_data(Data::new(login_manager));
     Ok(add_services(app))
+}
+
+pub async fn test_app_only_search() -> App<
+    impl ServiceFactory<
+        ServiceRequest,
+        Response = ServiceResponse<EitherBody<BoxBody>>,
+        Error = Error,
+        Config = (),
+        InitError = (),
+    >,
+> {
+    let elastic_transport = Transport::single_node("http://localhost:4321").unwrap();
+    let elastic_client = Elasticsearch::new(elastic_transport);
+
+    let app = App::new()
+        .wrap(IdentityService::new(TestIdentityPolicy::new()))
+        .app_data(Data::new(elastic_client));
+    add_services(app)
 }

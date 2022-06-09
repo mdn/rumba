@@ -1,0 +1,391 @@
+{
+  "uuid": "search",
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "url": "/mdn_docs/_search",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "from": 0,
+          "size": 10,
+          "query": {
+            "bool": {
+              "filter": [
+                {
+                  "terms": {
+                    "locale": [
+                      "en-us"
+                    ]
+                  }
+                }
+              ],
+              "must": [
+                {
+                  "bool": {
+                    "should": [
+                      {
+                        "match": {
+                          "title": {
+                            "query": "mozilla",
+                            "boost": 5.0
+                          }
+                        }
+                      },
+                      {
+                        "match": {
+                          "body": {
+                            "query": "mozilla",
+                            "boost": 1.0
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          "_source": {
+            "excludes": [
+              "body"
+            ]
+          },
+          "highlight": {
+            "fields": {
+              "title": {},
+              "body": {}
+            },
+            "pre_tags": [
+              "<mark>"
+            ],
+            "post_tags": [
+              "</mark>"
+            ],
+            "number_of_fragments": 3,
+            "fragment_size": 120,
+            "encoder": "html"
+          },
+          "suggest": {
+            "text": "mozilla",
+            "title_suggestions": {
+              "term": {
+                "field": "title"
+              }
+            },
+            "body_suggestions": {
+              "term": {
+                "field": "body"
+              }
+            }
+          },
+          "sort": [
+            {
+              "_score": "desc"
+            },
+            {
+              "popularity": "desc"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "took": 87,
+      "timed_out": false,
+      "_shards": {
+        "total": 1,
+        "successful": 1,
+        "skipped": 0,
+        "failed": 0
+      },
+      "hits": {
+        "total": {
+          "value": 745,
+          "relation": "eq"
+        },
+        "max_score": null,
+        "hits": [
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Mozilla",
+            "_score": 53.880974,
+            "_source": {
+              "summary": "The articles below include content about downloading and building Mozilla code. In addition, you'll find helpful articles about how the code works, how to build add-ons for Mozilla applications and the like.",
+              "popularity": 0.007,
+              "title": "Mozilla",
+              "locale": "en-us",
+              "slug": "mozilla"
+            },
+            "highlight": {
+              "title": [
+                "<mark>Mozilla</mark>"
+              ],
+              "body": [
+                "The articles below include content about downloading and building <mark>Mozilla</mark> code.",
+                "In addition, you&#x27;ll find helpful articles about how the code works, how to build add-ons for <mark>Mozilla</mark> applications and the",
+                "written using standard Web technologies - JavaScript, HTML, and CSS - plus some dedicated JavaScript APIs.FirefoxFirefox is <mark>Mozilla</mark>&#x27;s"
+              ]
+            },
+            "sort": [
+              53.880974,
+              0.007
+            ]
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Glossary/Mozilla_Firefox",
+            "_score": 47.215904,
+            "_source": {
+              "summary": "Mozilla Firefox is a free open-source browser whose development is overseen by the Mozilla Corporation. Firefox runs on Windows, OS X, Linux, and Android.",
+              "popularity": 0.0012,
+              "title": "Mozilla Firefox",
+              "locale": "en-us",
+              "slug": "glossary/mozilla_firefox"
+            },
+            "highlight": {
+              "title": [
+                "<mark>Mozilla</mark> Firefox"
+              ],
+              "body": [
+                "<mark>Mozilla</mark> Firefox is a free open-source browser whose development is overseen by the <mark>Mozilla</mark> Corporation.",
+                "<mark>Mozilla</mark> Firefox official website\nFirefox developer documentations on MDN"
+              ]
+            },
+            "sort": [
+              47.215904,
+              0.0012
+            ]
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Learn/HTML/Multimedia_and_embedding/Mozilla_splash_page",
+            "_score": 42.415543,
+            "_source": {
+              "summary": "In this assessment, we'll test your knowledge of some of the techniques discussed in this module's articles, getting you to add some images and video to a funky splash page all about Mozilla!",
+              "popularity": 0.0031,
+              "title": "Mozilla splash page",
+              "locale": "en-us",
+              "slug": "learn/html/multimedia_and_embedding/mozilla_splash_page"
+            },
+            "highlight": {
+              "title": [
+                "<mark>Mozilla</mark> splash page"
+              ],
+              "body": [
+                "techniques discussed in this module&#x27;s articles, getting you to add some images and video to a funky splash page all about <mark>Mozilla</mark>",
+                "interesting about what <mark>Mozilla</mark> stands for, and provide some links to further resources.",
+                "Your post should include:\nA descriptive title such as &quot;Assessment wanted for <mark>Mozilla</mark> splash page&quot;."
+              ]
+            },
+            "sort": [
+              42.415543,
+              0.0031
+            ]
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/CSS/Mozilla_Extensions",
+            "_score": 42.146893,
+            "_source": {
+              "summary": "Mozilla applications such as Firefox support a number of special Mozilla extensions to CSS, including properties, values, pseudo-elements and pseudo-classes, at-rules, and media queries. These extensions are prefixed with -moz-.",
+              "popularity": 0.0024,
+              "title": "Mozilla CSS extensions",
+              "locale": "en-us",
+              "slug": "web/css/mozilla_extensions"
+            },
+            "highlight": {
+              "title": [
+                "<mark>Mozilla</mark> CSS extensions"
+              ],
+              "body": [
+                "<mark>Mozilla</mark> applications such as Firefox support a number of special <mark>Mozilla</mark> extensions to CSS, including properties, values,",
+                "Note: These properties and pseudo-classes will only work in <mark>Mozilla</mark> applications such as Firefox, and are not on a standards"
+              ]
+            },
+            "sort": [
+              42.146893,
+              0.0024
+            ]
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/API/XSLTProcessor/XSL_Transformations_in_Mozilla_FAQ",
+            "_score": 35.24224,
+            "_source": {
+              "summary": "Make sure the mime type for both source and stylesheet are set to an XML mimetype, namely text/xml or application/xml. The XSLT namespace is http://www.w3.org/1999/XSL/Transform. Use the <?xml-stylesheet ?> processing instruction instead of the non-standard xml:stylesheet. The most common cause is the MIME type handling. To find out which MIME type your server sends, look at Page Info, use extensions like LiveHTTPHeaders or a download manager like wget. Mozilla won't load XSLT stylesheets from a different domain for security reasons.",
+              "popularity": 0,
+              "title": "XSL Transformations in Mozilla FAQ",
+              "locale": "en-us",
+              "slug": "web/api/xsltprocessor/xsl_transformations_in_mozilla_faq"
+            },
+            "highlight": {
+              "title": [
+                "XSL Transformations in <mark>Mozilla</mark> FAQ"
+              ],
+              "body": [
+                "<mark>Mozilla</mark> won&#x27;t load XSLT stylesheets from a different domain for security reasons.",
+                "<mark>Mozilla</mark> in contrast renders exactly the result of your transformation.",
+                "There is transformToDocument and transformToFragment starting with <mark>Mozilla</mark> 1.2 final, see Using the <mark>Mozilla</mark> JavaScript interface"
+              ]
+            },
+            "sort": [
+              35.24224,
+              0.0
+            ]
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/API/Touch_events/Mozilla_experimental_events",
+            "_score": 33.28213,
+            "_source": {
+              "summary": "The experimental touch events API described on this page was available from Gecko 2.0 (Firefox 4 / Thunderbird 3.3 / SeaMonkey 2.1) to Gecko/Firefox 17. You should instead use the standard touch events API, supported since Gecko/Firefox 6 with multi-touch support added in Gecko/Firefox 12.",
+              "popularity": 0,
+              "title": "Touch events (Mozilla experimental)",
+              "locale": "en-us",
+              "slug": "web/api/touch_events/mozilla_experimental_events"
+            },
+            "highlight": {
+              "title": [
+                "Touch events (<mark>Mozilla</mark> experimental)"
+              ]
+            },
+            "sort": [
+              33.28213,
+              0.0
+            ]
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/MathML/Fonts",
+            "_score": 31.544662,
+            "_source": {
+              "summary": "Fonts with appropriate Unicode coverage and Open Font Format features are required for good math rendering.\n  This page describes how users can install and use such math fonts with Mozilla's MathML engine.\n  Note that most of these instructions may as well apply to other Web rendering engines.",
+              "popularity": 0,
+              "title": "Fonts for Mozilla's MathML engine",
+              "locale": "en-us",
+              "slug": "web/mathml/fonts"
+            },
+            "highlight": {
+              "title": [
+                "Fonts for <mark>Mozilla</mark>&#x27;s MathML engine"
+              ],
+              "body": [
+                "This page describes how users can install and use such math fonts with <mark>Mozilla</mark>&#x27;s MathML engine."
+              ]
+            },
+            "sort": [
+              31.544662,
+              0.0
+            ]
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/XSLT/Using_the_Mozilla_JavaScript_interface_to_XSL_Transformations",
+            "_score": 27.97814,
+            "_source": {
+              "summary": "This document describes the JavaScript interface in Mozilla 1.2 and up to the XSLT Processing Engine (TransforMiiX).",
+              "popularity": 0.0006,
+              "title": "Using the Mozilla JavaScript interface to XSL Transformations",
+              "locale": "en-us",
+              "slug": "web/xslt/using_the_mozilla_javascript_interface_to_xsl_transformations"
+            },
+            "highlight": {
+              "title": [
+                "Using the <mark>Mozilla</mark> JavaScript interface to XSL Transformations"
+              ],
+              "body": [
+                "This document describes the JavaScript interface in <mark>Mozilla</mark> 1.2 and up to the XSLT Processing Engine (TransforMiiX).",
+                "Instead of this:\nvar processor = new XSLTProcessor();\nDo this:\nvar processor = Components.classes[&quot;@<mark>mozilla</mark>.org&#x2F;document-transformer"
+              ]
+            },
+            "sort": [
+              27.97814,
+              0.0006
+            ]
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Mozilla/Add-ons/WebExtensions/Match_patterns",
+            "_score": 5.34614,
+            "_source": {
+              "summary": "Match patterns are a way to specify groups of URLs: a match pattern matches a specific set of URLs. They are used in WebExtensions APIs in a few places, most notably to specify which documents to load content scripts into, and to specify which URLs to add webRequest listeners to.",
+              "popularity": 0.0044,
+              "title": "Match patterns in extension manifests",
+              "locale": "en-us",
+              "slug": "mozilla/add-ons/webextensions/match_patterns"
+            },
+            "highlight": {
+              "body": [
+                "&#x2F;\nhttps:&#x2F;&#x2F;<mark>mozilla</mark>.org&#x2F;\nhttp:&#x2F;&#x2F;a.<mark>mozilla</mark>.org&#x2F;\nhttp:&#x2F;&#x2F;a.b.<mark>mozilla</mark>.org&#x2F;\nhttps:&#x2F;&#x2F;b.<mark>mozilla</mark>.org&#x2F;path&#x2F;\nws:&#x2F;&#x2F;ws.<mark>mozilla</mark>.org&#x2F;\nwss",
+                ":&#x2F;&#x2F;<mark>mozilla</mark>.org&#x2F;\nhttps:&#x2F;&#x2F;<mark>mozilla</mark>.org&#x2F;\nws:&#x2F;&#x2F;<mark>mozilla</mark>.org&#x2F;\nwss:&#x2F;&#x2F;<mark>mozilla</mark>.org&#x2F;\nftp:&#x2F;&#x2F;<mark>mozilla</mark>.org&#x2F;(unmatched scheme)\nhttp:&#x2F;&#x2F;a.<mark>mozilla</mark>.org",
+                "path and URL\nquery string.\nhttps:&#x2F;&#x2F;<mark>mozilla</mark>.org&#x2F;\nhttps:&#x2F;&#x2F;<mark>mozilla</mark>.org&#x2F;path\nhttps:&#x2F;&#x2F;<mark>mozilla</mark>.org&#x2F;another\nhttps:&#x2F;&#x2F;<mark>mozilla</mark>.org&#x2F;"
+              ]
+            },
+            "sort": [
+              5.34614,
+              0.0044
+            ]
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/HTTP/Headers/User-Agent/Firefox",
+            "_score": 5.3359685,
+            "_source": {
+              "summary": "This document describes the user agent string used in Firefox 4 and later and applications based on Gecko 2.0 and later. For a breakdown of changes to the string in Gecko 2.0, see Final User Agent string for Firefox 4 (blog post). See also this document on user agent sniffing and this Hacks blog post.",
+              "popularity": 0.0073,
+              "title": "Firefox user agent string reference",
+              "locale": "en-us",
+              "slug": "web/http/headers/user-agent/firefox"
+            },
+            "highlight": {
+              "body": [
+                "Firefox&#x2F;firefoxversion\n<mark>Mozilla</mark>&#x2F;5.0 is the general token that says the browser is <mark>Mozilla</mark> compatible, and is common to almost",
+                "For example:\n<mark>Mozilla</mark>&#x2F;5.0 (Android 4.4; Mobile; rv:41.0) Gecko&#x2F;41.0 Firefox&#x2F;41.0\n<mark>Mozilla</mark>&#x2F;5.0 (Android 4.4; Tablet; rv:41.0",
+                "user agent string\nPhone\n<mark>Mozilla</mark>&#x2F;5.0 (Android; Mobile; rv:40.0) Gecko&#x2F;40.0 Firefox&#x2F;40.0\nTablet\n<mark>Mozilla</mark>&#x2F;5.0 (Android; Tablet"
+              ]
+            },
+            "sort": [
+              5.3359685,
+              0.0073
+            ]
+          }
+        ]
+      },
+      "suggest": {
+        "body_suggestions": [
+          {
+            "text": "mozilla",
+            "offset": 0,
+            "length": 7,
+            "options": []
+          }
+        ],
+        "title_suggestions": [
+          {
+            "text": "mozilla",
+            "offset": 0,
+            "length": 7,
+            "options": []
+          }
+        ]
+      }
+    }
+  }
+}

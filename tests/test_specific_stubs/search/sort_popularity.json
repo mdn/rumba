@@ -1,0 +1,364 @@
+{
+  "uuid": "search",
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "url": "/mdn_docs/_search",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "from": 0,
+          "size": 10,
+          "query": {
+            "bool": {
+              "filter": [
+                {
+                  "terms": {
+                    "locale": [
+                      "en-us"
+                    ]
+                  }
+                }
+              ],
+              "must": [
+                {
+                  "bool": {
+                    "should": [
+                      {
+                        "match": {
+                          "title": {
+                            "query": "mozilla",
+                            "boost": 5.0
+                          }
+                        }
+                      },
+                      {
+                        "match": {
+                          "body": {
+                            "query": "mozilla",
+                            "boost": 1.0
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          "_source": {
+            "excludes": [
+              "body"
+            ]
+          },
+          "highlight": {
+            "fields": {
+              "title": {},
+              "body": {}
+            },
+            "pre_tags": [
+              "<mark>"
+            ],
+            "post_tags": [
+              "</mark>"
+            ],
+            "number_of_fragments": 3,
+            "fragment_size": 120,
+            "encoder": "html"
+          },
+          "suggest": {
+            "text": "mozilla",
+            "title_suggestions": {
+              "term": {
+                "field": "title"
+              }
+            },
+            "body_suggestions": {
+              "term": {
+                "field": "body"
+              }
+            }
+          },
+          "sort": [
+            {
+              "popularity": "desc"
+            },
+            {
+              "_score": "desc"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "took": 145,
+      "timed_out": false,
+      "_shards": {
+        "total": 1,
+        "successful": 1,
+        "skipped": 0,
+        "failed": 0
+      },
+      "hits": {
+        "total": {
+          "value": 745,
+          "relation": "eq"
+        },
+        "max_score": null,
+        "hits": [
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/CSS/Specificity",
+            "_score": 4.12622,
+            "_source": {
+              "summary": "Specificity is the means by which browsers decide which CSS property values are the most relevant to an element and, therefore, will be applied. Specificity is based on the matching rules which are composed of different sorts of CSS selectors.",
+              "popularity": 0.438,
+              "title": "Specificity",
+              "locale": "en-us",
+              "slug": "web/css/specificity"
+            },
+            "highlight": {
+              "body": [
+                "&lt;div id=&quot;no-where-support&quot;&gt;\n\u26a0\ufe0f Your browser doesn&#x27;t support the &lt;code&gt;&lt;a href=&quot;https:&#x2F;&#x2F;developer.<mark>mozilla</mark>.org&#x2F;docs&#x2F;Web&#x2F;CSS"
+              ]
+            },
+            "sort": [
+              0.438,
+              4.12622
+            ]
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/HTTP/CORS",
+            "_score": 5.1132708,
+            "_source": {
+              "summary": "Cross-Origin Resource Sharing (CORS) is an HTTP-header based mechanism that allows a server to indicate any origins (domain, scheme, or port) other than its own from which a browser should permit loading resources. CORS also relies on a mechanism by which browsers make a \"preflight\" request to the server hosting the cross-origin resource, in order to check that the server will permit the actual request. In that preflight, the browser sends headers that indicate the HTTP method and headers that will be used in the actual request.",
+              "popularity": 0.186,
+              "title": "Cross-Origin Resource Sharing (CORS)",
+              "locale": "en-us",
+              "slug": "web/http/cors"
+            },
+            "highlight": {
+              "body": [
+                "what the browser will send to the server in this case:\nGET &#x2F;resources&#x2F;public-data&#x2F; HTTP&#x2F;1.1\nHost: bar.other\nUser-Agent: <mark>Mozilla</mark>",
+                "The first exchange is the preflight request&#x2F;response:\nOPTIONS &#x2F;doc HTTP&#x2F;1.1\nHost: bar.other\nUser-Agent: <mark>Mozilla</mark>&#x2F;5.0 (Macintosh",
+                "Once the preflight request is complete, the real request is sent:\nPOST &#x2F;doc HTTP&#x2F;1.1\nHost: bar.other\nUser-Agent: <mark>Mozilla</mark>&#x2F;"
+              ]
+            },
+            "sort": [
+              0.186,
+              5.1132708
+            ]
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Learn",
+            "_score": 4.12622,
+            "_source": {
+              "summary": "Welcome to the MDN learning area. This set of articles aims to guide complete beginners to web development with all that they need to start coding websites.",
+              "popularity": 0.1377,
+              "title": "Learn web development",
+              "locale": "en-us",
+              "slug": "learn"
+            },
+            "highlight": {
+              "body": [
+                "<mark>Mozilla</mark> developer newsletter\nOur newsletter for web developers, which is an excellent resource for all levels of experience"
+              ]
+            },
+            "sort": [
+              0.1377,
+              4.12622
+            ]
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/API/EventTarget/addEventListener",
+            "_score": 4.6667314,
+            "_source": {
+              "summary": "The addEventListener() method of the EventTarget interface\n  sets up a function that will be called whenever the specified event is delivered to the target.",
+              "popularity": 0.1263,
+              "title": "EventTarget.addEventListener()",
+              "locale": "en-us",
+              "slug": "web/api/eventtarget/addeventlistener"
+            },
+            "highlight": {
+              "body": [
+                "once &amp; none-once\n&lt;div class=&quot;middle&quot; target=&quot;_blank&quot;&gt;\nmiddle, capture &amp; none-capture\n&lt;a class=&quot;inner1&quot; href=&quot;https:&#x2F;&#x2F;www.<mark>mozilla</mark>.org",
+                "target=&quot;_blank&quot;&gt;\ninner1, passive &amp; preventDefault(which is not allowed)\n&lt;&#x2F;a&gt;\n&lt;a class=&quot;inner2&quot; href=&quot;https:&#x2F;&#x2F;developer.<mark>mozilla</mark>.org"
+              ]
+            },
+            "sort": [
+              0.1263,
+              4.6667314
+            ]
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/HTTP/Proxy_servers_and_tunneling/Proxy_Auto-Configuration_PAC_file",
+            "_score": 5.316766,
+            "_source": {
+              "summary": "A Proxy Auto-Configuration (PAC) file is a JavaScript function that determines whether web browser requests (HTTP, HTTPS, and FTP) go directly to the destination or are forwarded to a web proxy server. The JavaScript function contained in the PAC file defines the function:",
+              "popularity": 0.1241,
+              "title": "Proxy Auto-Configuration (PAC) file",
+              "locale": "en-us",
+              "slug": "web/http/proxy_servers_and_tunneling/proxy_auto-configuration_pac_file"
+            },
+            "highlight": {
+              "body": [
+                "Examples\ndnsDomainIs(&quot;www.<mark>mozilla</mark>.org&quot;, &quot;.<mark>mozilla</mark>.org&quot;) &#x2F;&#x2F; true\ndnsDomainIs(&quot;www&quot;, &quot;.<mark>mozilla</mark>.org&quot;) &#x2F;&#x2F; false\nSyntax\nlocalHostOrDomainIs",
+                "&quot;) &#x2F;&#x2F; false (domain name mismatch)\nlocalHostOrDomainIs(&quot;home.<mark>mozilla</mark>.org&quot;, &quot;www.<mark>mozilla</mark>.org&quot;) &#x2F;&#x2F; false (hostname mismatch",
+                "exception that hosts www.<mark>mozilla</mark>.org and merchant.<mark>mozilla</mark>.org will go through the proxy."
+              ]
+            },
+            "sort": [
+              0.1241,
+              5.316766
+            ]
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify",
+            "_score": 4.12622,
+            "_source": {
+              "summary": "The JSON.stringify() method converts a JavaScript object\n  or value to a JSON string, optionally replacing values if a replacer function is\n  specified or optionally including only the specified properties if a replacer array is\n  specified.",
+              "popularity": 0.1176,
+              "title": "JSON.stringify()",
+              "locale": "en-us",
+              "slug": "web/javascript/reference/global_objects/json/stringify"
+            },
+            "highlight": {
+              "body": [
+                "Filtering out properties\nif (typeof value === &#x27;string&#x27;) {\nreturn undefined;\n}\nreturn value;\n}\nconst foo = {foundation: &#x27;<mark>Mozilla</mark>"
+              ]
+            },
+            "sort": [
+              0.1176,
+              4.12622
+            ]
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys",
+            "_score": 4.12622,
+            "_source": {
+              "summary": "The Object.keys() method returns\n  an array of a given object's own enumerable property names, iterated\n  in the same order that a normal loop would.",
+              "popularity": 0.1172,
+              "title": "Object.keys()",
+              "locale": "en-us",
+              "slug": "web/javascript/reference/global_objects/object/keys"
+            },
+            "highlight": {
+              "body": [
+                "Object.keys support in older environments that do not\nnatively support it, copy the following snippet:\n&#x2F;&#x2F; From https:&#x2F;&#x2F;developer.<mark>mozilla</mark>.org"
+              ]
+            },
+            "sort": [
+              0.1172,
+              4.12622
+            ]
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions",
+            "_score": 4.12622,
+            "_source": {
+              "summary": "An arrow function expression is a compact alternative to a traditional\n  function expression,\n  but is limited and can't be used in all situations.",
+              "popularity": 0.1081,
+              "title": "Arrow function expressions",
+              "locale": "en-us",
+              "slug": "web/javascript/reference/functions/arrow_functions"
+            },
+            "highlight": {
+              "body": [
+                "setTimeout( () =&gt; {\n&#x2F;&#x2F; deeper code\nconsole.log(&#x27;I happen later&#x27;);\n}, 1);\n}, 1);\n&quot;ES6 In Depth: Arrow functions&quot; on hacks.<mark>mozilla</mark>.org"
+              ]
+            },
+            "sort": [
+              0.1081,
+              4.12622
+            ]
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/JavaScript/Reference/Template_literals",
+            "_score": 4.12622,
+            "_source": {
+              "summary": "Template literals are literals delimited with backtick (`) characters, allowing for multi-line strings, for string interpolation with embedded expressions, and for special constructs called tagged templates.",
+              "popularity": 0.1035,
+              "title": "Template literals (Template strings)",
+              "locale": "en-us",
+              "slug": "web/javascript/reference/template_literals"
+            },
+            "highlight": {
+              "body": [
+                "String\nString.raw()\nLexical grammar\nTemplate-like strings in ES3 compatible syntax\n&quot;ES6 in Depth: Template strings&quot; on hacks.<mark>mozilla</mark>.org"
+              ]
+            },
+            "sort": [
+              0.1035,
+              4.12622
+            ]
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment",
+            "_score": 4.9938116,
+            "_source": {
+              "summary": "The destructuring assignment syntax is a JavaScript expression that makes it possible to unpack values from arrays, or properties from objects, into distinct variables.",
+              "popularity": 0.0987,
+              "title": "Destructuring assignment",
+              "locale": "en-us",
+              "slug": "web/javascript/reference/operators/destructuring_assignment"
+            },
+            "highlight": {
+              "body": [
+                "parsedURL) {\nreturn false;\n}\nconsole.log(parsedURL);\n&#x2F;&#x2F; [&quot;https:&#x2F;&#x2F;developer.<mark>mozilla</mark>.org&#x2F;en-US&#x2F;docs&#x2F;Web&#x2F;JavaScript&quot;,\n&#x2F;&#x2F; &quot;https",
+                "&quot;, &quot;developer.<mark>mozilla</mark>.org&quot;, &quot;en-US&#x2F;docs&#x2F;Web&#x2F;JavaScript&quot;]\nconst [, protocol, fullhost, fullpath] = parsedURL;\nreturn protocol",
+                ";\n}\nconsole.log(parseProtocol(&#x27;https:&#x2F;&#x2F;developer.<mark>mozilla</mark>.org&#x2F;en-US&#x2F;docs&#x2F;Web&#x2F;JavaScript&#x27;));\n&#x2F;&#x2F; &quot;https&quot;\nBasic assignment\nconst"
+              ]
+            },
+            "sort": [
+              0.0987,
+              4.9938116
+            ]
+          }
+        ]
+      },
+      "suggest": {
+        "body_suggestions": [
+          {
+            "text": "mozilla",
+            "offset": 0,
+            "length": 7,
+            "options": []
+          }
+        ],
+        "title_suggestions": [
+          {
+            "text": "mozilla",
+            "offset": 0,
+            "length": 7,
+            "options": []
+          }
+        ]
+      }
+    }
+  }
+}
