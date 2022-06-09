@@ -16,7 +16,7 @@
         "isTranslated": false,
         "isActive": true,
         "flaws": {},
-        "title": "CSS: Cascading Style Sheets",
+        "title": "CSS: Cascading Style Sheets 11",
         "mdn_url": "/en-US/docs/Web/CSS11",
         "locale": "en-US",
         "native": "English (US)",
@@ -29,6 +29,12 @@
               "title": null,
               "isH3": false,
               "content": "<p><strong>Cascading Style Sheets</strong></p>"
+            }
+          },
+          {
+            "type": "browser_compatibility",
+            "value": {
+              "query": "docs.web.css.11"
             }
           }
         ],

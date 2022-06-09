@@ -6,7 +6,8 @@ CREATE TABLE documents
     absolute_uri TEXT      NOT NULL UNIQUE,
     uri          TEXT      NOT NULL UNIQUE,
     metadata     JSONB,
-    title        TEXT NOT NULL
+    title        TEXT NOT NULL,
+    paths        TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]
 );
 
 CREATE TABLE collections
@@ -22,4 +23,4 @@ CREATE TABLE collections
     UNIQUE(document_id, user_id)
 );
 
-CREATE UNIQUE INDEX document_uri on documents (uri)
+CREATE INDEX idx_document_paths ON documents USING GIN(paths);

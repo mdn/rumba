@@ -1,32 +1,25 @@
 use actix_identity::Identity;
-
 use serde::{Deserialize, Serialize};
 
 use crate::api::error::ApiError;
-use crate::db::collections::{create_collection, get_collection, get_collections_paginated};
+use crate::db::collections::{
+    create_collection_item, get_collection_item, get_collection_items_paginated,
+};
 
 use crate::db::Pool;
 
-use actix_web::web::{Data, Query};
+use actix_web::web::Data;
 use actix_web::{web, HttpRequest, HttpResponse};
 
 use chrono::NaiveDateTime;
-use reqwest::{Client, StatusCode};
-use url::Url;
+use reqwest::Client;
 
 use crate::db;
 use crate::db::error::DbError;
-use crate::db::model::{CollectionAndDocumentQuery, DocumentMetadata, UserQuery};
+use crate::db::model::{CollectionAndDocumentQuery, UserQuery};
 use crate::db::users::get_user;
-use crate::settings::SETTINGS;
 
-#[derive(Deserialize)]
-pub enum Sorting {
-    #[serde(rename = "title")]
-    Title,
-    #[serde(rename = "created")]
-    Created,
-}
+use super::common::{get_document_metadata, Sorting};
 
 #[derive(Deserialize)]
 pub struct CollectionsQueryParams {
@@ -154,10 +147,10 @@ pub async fn collections(
 async fn get_single_collection_item(
     pool: web::Data<Pool>,
     user: UserQuery,
-    url: &String,
+    url: &str,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = pool.get()?;
-    let collection = get_collection(user, &mut conn, url).await;
+    let collection = get_collection_item(user, &mut conn, url).await;
     let bookmarked = match collection {
         Ok(val) => Some(val.into()),
         Err(e) => match e {
@@ -179,7 +172,7 @@ async fn get_paginated_collection_items(
     query: &CollectionsQueryParams,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = pool.get()?;
-    let collection = get_collections_paginated(user, &mut conn, query).await;
+    let collection = get_collection_items_paginated(user, &mut conn, query).await;
 
     let items = match collection {
         Ok(val) => val
@@ -199,7 +192,7 @@ async fn get_paginated_collection_items(
     Ok(HttpResponse::Ok().json(result))
 }
 
-pub async fn create_or_update_collections(
+pub async fn create_or_update_collection_item(
     pool: Data<Pool>,
     http_client: Data<Client>,
     id: Identity,
@@ -211,8 +204,8 @@ pub async fn create_or_update_collections(
             Some(id) => {
                 let mut conn_pool = pool.get()?;
                 let user: UserQuery = get_user(&mut conn_pool, id).await?;
-                let metadata = get_document_metadata(http_client, &query).await?;
-                create_collection(
+                let metadata = get_document_metadata(http_client, &query.url).await?;
+                create_collection_item(
                     user,
                     &mut conn_pool,
                     query.url.clone(),
@@ -258,39 +251,4 @@ pub async fn delete_collection_item(
         }
         None => Ok(HttpResponse::Unauthorized().finish()),
     }
-}
-
-#[derive(Deserialize)]
-pub struct DocumentMetadataResponse {
-    doc: DocumentMetadata,
-}
-
-async fn get_document_metadata(
-    http_client: Data<Client>,
-    query: &Query<CollectionCreationParams>,
-) -> Result<DocumentMetadata, ApiError> {
-    let document_url = Url::parse(&format!(
-        "{}{}/index.json",
-        SETTINGS.application.document_base_url, query.url
-    ))
-    .map_err(|_| ApiError::MalformedUrl)?;
-
-    let document = http_client
-        .get(document_url)
-        .send()
-        .await
-        .map_err(|err: reqwest::Error| match err.status() {
-            Some(StatusCode::NOT_FOUND) => ApiError::DocumentNotFound,
-            _ => ApiError::Unknown,
-        })?;
-
-    let res: DocumentMetadataResponse = document
-        .json()
-        .await
-        .map_err(|_| ApiError::DocumentNotFound)?;
-    Ok(DocumentMetadata {
-        title: res.doc.title,
-        parents: res.doc.parents,
-        mdn_url: res.doc.mdn_url,
-    })
 }

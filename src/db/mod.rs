@@ -1,12 +1,14 @@
 pub mod collections;
-mod documents;
+pub mod documents;
 pub mod error;
 pub mod model;
+pub mod notifications;
 #[allow(unused_imports)]
 pub mod schema;
 pub mod settings;
 pub mod types;
 pub mod users;
+pub mod watched_items;
 
 use diesel::pg::PgConnection;
 use diesel::r2d2::ConnectionManager;

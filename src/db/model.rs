@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use super::types::Locale;
+use super::types::NotificationTypeEnum;
 
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = users)]
@@ -70,6 +71,7 @@ pub struct DocumentInsert {
     pub metadata: Option<Value>,
     pub updated_at: NaiveDateTime,
     pub title: String,
+    pub paths: Vec<String>,
 }
 
 #[derive(Queryable, Debug)]
@@ -94,4 +96,68 @@ pub struct DocumentMetadata {
     pub mdn_url: String,
     pub parents: Option<Vec<CollectionParent>>,
     pub title: String,
+    pub paths: Vec<String>,
+}
+
+#[derive(Queryable, Clone)]
+pub struct NotificationsQuery {
+    pub id: i64,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+    pub deleted_at: Option<NaiveDateTime>,
+    pub starred: bool,
+    pub read: bool,
+    pub title: String,
+    pub text: String,
+    pub url: String,
+}
+#[derive(AsChangeset, Insertable)]
+#[diesel(table_name = notifications)]
+pub struct NotificationInsert {
+    pub starred: bool,
+    pub read: bool,
+    pub deleted_at: Option<NaiveDateTime>,
+    pub notification_data_id: i64,
+    pub user_id: i64,
+}
+
+#[derive(Queryable, Clone)]
+pub struct NotificationDataQuery {
+    pub id: i64,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+    pub text: String,
+    pub url: String,
+    pub data: Option<Value>,
+    pub title: String,
+    pub type_: NotificationTypeEnum,
+    pub document_id: i64,
+}
+
+#[derive(AsChangeset, Insertable)]
+#[diesel(table_name = notification_data)]
+pub struct NotificationDataInsert {
+    pub text: String,
+    pub url: String,
+    pub data: Option<Value>,
+    pub title: String,
+    pub type_: NotificationTypeEnum,
+    pub document_id: i64,
+}
+
+#[derive(Queryable, Clone)]
+pub struct WatchedItemsQuery {
+    pub document_id: i64,
+    pub user_id: i64,
+    pub created_at: NaiveDateTime,
+    pub uri: String,
+    pub title: String,
+    pub paths: Vec<Option<String>>,
+}
+
+#[derive(Insertable, AsChangeset, Clone)]
+#[diesel(table_name = watched_items)]
+pub struct WatchedItemInsert {
+    pub document_id: i64,
+    pub user_id: i64,
 }

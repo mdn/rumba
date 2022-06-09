@@ -1,4 +1,5 @@
-use crate::api::collections::{CollectionCreationForm, CollectionsQueryParams, Sorting};
+use crate::api::collections::{CollectionCreationForm, CollectionsQueryParams};
+use crate::api::common::Sorting;
 use crate::db::documents::create_or_update_document;
 use crate::db::error::DbError;
 use crate::db::model::{CollectionAndDocumentQuery, CollectionInsert, DocumentMetadata, UserQuery};
@@ -6,6 +7,7 @@ use crate::db::schema;
 use crate::diesel::BoolExpressionMethods;
 use crate::diesel::NullableExpressionMethods;
 use crate::diesel::PgTextExpressionMethods;
+use crate::util::normalize_uri;
 use diesel::expression_methods::ExpressionMethods;
 use diesel::r2d2::ConnectionManager;
 use diesel::{insert_into, PgConnection};
@@ -13,17 +15,17 @@ use diesel::{update, RunQueryDsl};
 use diesel::{QueryDsl, QueryResult};
 use r2d2::PooledConnection;
 
-pub async fn get_collection(
+pub async fn get_collection_item(
     user: UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
-    url: &String,
+    url: &str,
 ) -> Result<CollectionAndDocumentQuery, DbError> {
     let collection: CollectionAndDocumentQuery = schema::collections::table
         .filter(schema::collections::user_id.eq(user.id))
         .inner_join(schema::documents::table)
         .filter(
             schema::documents::uri
-                .eq(normalize_uri(url.to_string()))
+                .eq(normalize_uri(url))
                 .and(schema::collections::deleted_at.is_null()),
         )
         .select((
@@ -43,7 +45,7 @@ pub async fn get_collection(
     Ok(collection)
 }
 
-pub async fn get_collections_paginated(
+pub async fn get_collection_items_paginated(
     user: UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     query_params: &CollectionsQueryParams,
@@ -121,7 +123,7 @@ pub async fn delete_collection_item(
         .filter(
             schema::collections::document_id.eq_any(
                 schema::documents::table
-                    .filter(schema::documents::uri.eq(normalize_uri(url)))
+                    .filter(schema::documents::uri.eq(normalize_uri(&url)))
                     .select(schema::documents::id),
             ),
         )
@@ -130,11 +132,7 @@ pub async fn delete_collection_item(
         .execute(pool)
 }
 
-fn normalize_uri(input: String) -> String {
-    input.to_lowercase().trim().to_string()
-}
-
-pub async fn create_collection(
+pub async fn create_collection_item(
     user: UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     url: String,
@@ -147,9 +145,9 @@ pub async fn create_collection(
         custom_name = Some(form.name);
     }
 
-    let url_normalized = normalize_uri(url);
+    let url_normalized = normalize_uri(&url);
 
-    let document_id = create_or_update_document(pool, document, url_normalized)?;
+    let document_id = create_or_update_document(pool, document, url_normalized).await?;
 
     let collection_insert = CollectionInsert {
         document_id,

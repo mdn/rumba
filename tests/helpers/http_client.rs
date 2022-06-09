@@ -89,13 +89,17 @@ impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error 
         &mut self,
         uri: &str,
         headers: Option<Vec<(&str, &str)>>,
-        payload: PostPayload,
+        payload: Option<PostPayload>,
     ) -> ServiceResponse<EitherBody<BoxBody>> {
         let mut base = test::TestRequest::post().uri(&*uri);
         match payload {
-            PostPayload::FormData(form) => base = base.set_form(form),
-            PostPayload::Json(val) => base = base.set_json(val),
+            Some(payload) => match payload {
+                PostPayload::FormData(form) => base = base.set_form(form),
+                PostPayload::Json(val) => base = base.set_json(val),
+            },
+            None => (),
         }
+
         base = self.add_cookies_and_headers(headers, base);
         let res = test::call_service(&self.service, base.to_request()).await;
         for cookie in res.response().cookies() {

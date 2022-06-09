@@ -36,7 +36,7 @@ async fn test_create_and_get_collection() -> Result<(), Error> {
         "notes": "Notes notes notes",
     });
     let create_res = logged_in_client
-        .post(base_url, None, PostPayload::FormData(payload))
+        .post(base_url, None, Some(PostPayload::FormData(payload)))
         .await;
     assert_eq!(create_res.status(), 201);
     let collection_res = logged_in_client.get(base_url, None).await;
@@ -82,7 +82,7 @@ async fn test_pagination_default_sort_by_created() -> Result<(), Error> {
             "notes": "Notes notes notes",
         });
         logged_in_client
-            .post(&base_url, None, PostPayload::FormData(payload))
+            .post(&base_url, None, Some(PostPayload::FormData(payload)))
             .await;
         thread::sleep(Duration::from_millis(10));
     }
@@ -188,7 +188,7 @@ async fn test_create_fails_404_no_index_found() -> Result<(), Error> {
         "notes": "Notes notes notes",
     });
     let create_res = logged_in_client
-        .post(base_url, None, PostPayload::FormData(payload))
+        .post(base_url, None, Some(PostPayload::FormData(payload)))
         .await;
     assert_eq!(create_res.status(), 404);
 
@@ -225,7 +225,7 @@ async fn test_filters_by_custom_name_over_title() -> Result<(), Error> {
         .post(
             base_url,
             None,
-            PostPayload::FormData(request_no_custom_name),
+            Some(PostPayload::FormData(request_no_custom_name)),
         )
         .await;
 
@@ -235,7 +235,11 @@ async fn test_filters_by_custom_name_over_title() -> Result<(), Error> {
         "notes": "Notes for CSS2",
     });
     logged_in_client
-        .post(base_url, None, PostPayload::FormData(request_custom_name))
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::FormData(request_custom_name)),
+        )
         .await;
 
     base_url = "/api/v1/plus/collection/?q=Style";
@@ -291,7 +295,7 @@ async fn test_query_finds_strings_in_notes() -> Result<(), Error> {
         .post(
             base_url,
             None,
-            PostPayload::FormData(request_no_custom_name),
+            Some(PostPayload::FormData(request_no_custom_name)),
         )
         .await;
 
@@ -301,7 +305,11 @@ async fn test_query_finds_strings_in_notes() -> Result<(), Error> {
         "notes": "RANDOM",
     });
     logged_in_client
-        .post(base_url, None, PostPayload::FormData(request_custom_name))
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::FormData(request_custom_name)),
+        )
         .await;
 
     let base_url = "/api/v1/plus/collection/?q=RANDOM";
@@ -342,7 +350,7 @@ async fn test_delete_collection() -> Result<(), Error> {
         "notes": "Notes notes notes",
     });
     let create_res = logged_in_client
-        .post(base_url, None, PostPayload::FormData(payload))
+        .post(base_url, None, Some(PostPayload::FormData(payload)))
         .await;
     assert_eq!(create_res.status(), 201);
     let collection_res = logged_in_client.get(base_url, None).await;
@@ -381,7 +389,7 @@ async fn test_delete_collection_via_post() -> Result<(), Error> {
         "notes": "Notes notes notes",
     });
     let create_res = logged_in_client
-        .post(base_url, None, PostPayload::FormData(payload))
+        .post(base_url, None, Some(PostPayload::FormData(payload)))
         .await;
     assert_eq!(create_res.status(), 201);
     let collection_res = logged_in_client.get(base_url, None).await;
@@ -392,7 +400,7 @@ async fn test_delete_collection_via_post() -> Result<(), Error> {
         .post(
             base_url,
             None,
-            PostPayload::FormData(json!({"delete": "true"})),
+            Some(PostPayload::FormData(json!({"delete": "true"}))),
         )
         .await;
     assert_eq!(delete_res.status(), 200);
