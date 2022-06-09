@@ -20,4 +20,4 @@ subscriptions_limit_watched_items = 3
 subscriptions_limit_collections = 5
 
 [search]
-url = "http://elastic:9200"
+url = "ignored"

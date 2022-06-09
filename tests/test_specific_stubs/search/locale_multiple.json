@@ -1,0 +1,367 @@
+{
+  "uuid": "search",
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "url": "/mdn_docs/_search",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "from": 0,
+          "size": 10,
+          "query": {
+            "bool": {
+              "filter": [
+                {
+                  "terms": {
+                    "locale": [
+                      "fr",
+                      "en-us"
+                    ]
+                  }
+                }
+              ],
+              "must": [
+                {
+                  "function_score": {
+                    "query": {
+                      "bool": {
+                        "should": [
+                          {
+                            "match": {
+                              "title": {
+                                "query": "mozilla",
+                                "boost": 5.0
+                              }
+                            }
+                          },
+                          {
+                            "match": {
+                              "body": {
+                                "query": "mozilla",
+                                "boost": 1.0
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "functions": [
+                      {
+                        "field_value_factor": {
+                          "field": "popularity",
+                          "factor": 10,
+                          "missing": 0
+                        }
+                      }
+                    ],
+                    "boost_mode": "sum",
+                    "score_mode": "max"
+                  }
+                }
+              ]
+            }
+          },
+          "_source": {
+            "excludes": [
+              "body"
+            ]
+          },
+          "highlight": {
+            "fields": {
+              "title": {},
+              "body": {}
+            },
+            "pre_tags": [
+              "<mark>"
+            ],
+            "post_tags": [
+              "</mark>"
+            ],
+            "number_of_fragments": 3,
+            "fragment_size": 120,
+            "encoder": "html"
+          },
+          "suggest": {
+            "text": "mozilla",
+            "title_suggestions": {
+              "term": {
+                "field": "title"
+              }
+            },
+            "body_suggestions": {
+              "term": {
+                "field": "body"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "took": 39,
+      "timed_out": false,
+      "_shards": {
+        "total": 1,
+        "successful": 1,
+        "skipped": 0,
+        "failed": 0
+      },
+      "hits": {
+        "total": {
+          "value": 1192,
+          "relation": "eq"
+        },
+        "max_score": 53.950974,
+        "hits": [
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Mozilla",
+            "_score": 53.950974,
+            "_source": {
+              "summary": "The articles below include content about downloading and building Mozilla code. In addition, you'll find helpful articles about how the code works, how to build add-ons for Mozilla applications and the like.",
+              "popularity": 0.007,
+              "title": "Mozilla",
+              "locale": "en-us",
+              "slug": "mozilla"
+            },
+            "highlight": {
+              "title": [
+                "<mark>Mozilla</mark>"
+              ],
+              "body": [
+                "The articles below include content about downloading and building <mark>Mozilla</mark> code.",
+                "In addition, you&#x27;ll find helpful articles about how the code works, how to build add-ons for <mark>Mozilla</mark> applications and the",
+                "written using standard Web technologies - JavaScript, HTML, and CSS - plus some dedicated JavaScript APIs.FirefoxFirefox is <mark>Mozilla</mark>&#x27;s"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/fr/docs/Mozilla",
+            "_score": 53.880974,
+            "_source": {
+              "summary": "Les articles ci-dessous int\u00e9grent des contenus \u00e0 propos du t\u00e9l\u00e9chargement et de la compilation du code de Mozilla. De plus, vous trouverez des articles utiles expliquant le fonctionnement du code et indiquant les modalit\u00e9s de construction d'extensions pour les applications Mozilla et semblables.",
+              "popularity": 0,
+              "title": "Mozilla",
+              "locale": "fr",
+              "slug": "mozilla"
+            },
+            "highlight": {
+              "title": [
+                "<mark>Mozilla</mark>"
+              ],
+              "body": [
+                "Les articles ci-dessous int\u00e9grent des contenus \u00e0 propos du t\u00e9l\u00e9chargement et de la compilation du code de <mark>Mozilla</mark>.",
+                "utiles expliquant le fonctionnement du code et indiquant les modalit\u00e9s de construction d&#x27;extensions pour les applications <mark>Mozilla</mark>",
+                "et semblables.FirefoxFirefox est le navigateur populaire de <mark>Mozilla</mark>, disponible sur de nombreuses plates-formes dont Windows"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Glossary/Mozilla_Firefox",
+            "_score": 47.227905,
+            "_source": {
+              "summary": "Mozilla Firefox is a free open-source browser whose development is overseen by the Mozilla Corporation. Firefox runs on Windows, OS X, Linux, and Android.",
+              "popularity": 0.0012,
+              "title": "Mozilla Firefox",
+              "locale": "en-us",
+              "slug": "glossary/mozilla_firefox"
+            },
+            "highlight": {
+              "title": [
+                "<mark>Mozilla</mark> Firefox"
+              ],
+              "body": [
+                "<mark>Mozilla</mark> Firefox is a free open-source browser whose development is overseen by the <mark>Mozilla</mark> Corporation.",
+                "<mark>Mozilla</mark> Firefox official website\nFirefox developer documentations on MDN"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/fr/docs/Glossary/Mozilla_Firefox",
+            "_score": 47.215904,
+            "_source": {
+              "summary": "Mozilla Firefox est un navigateur open source libre dont le d\u00e9veloppement est supervis\u00e9 par Mozilla Corporation. Firefox fonctionne sur Windows, OS X, Linux, et Android.",
+              "popularity": 0,
+              "title": "Mozilla Firefox",
+              "locale": "fr",
+              "slug": "glossary/mozilla_firefox"
+            },
+            "highlight": {
+              "title": [
+                "<mark>Mozilla</mark> Firefox"
+              ],
+              "body": [
+                "<mark>Mozilla</mark> Firefox est un navigateur open source libre dont le d\u00e9veloppement est supervis\u00e9 par <mark>Mozilla</mark> Corporation.",
+                "Site web officiel de <mark>Mozilla</mark> Firefox\nDocumentation&#x2F;infos d\u00e9veloppeur sur MDN"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Learn/HTML/Multimedia_and_embedding/Mozilla_splash_page",
+            "_score": 42.44654,
+            "_source": {
+              "summary": "In this assessment, we'll test your knowledge of some of the techniques discussed in this module's articles, getting you to add some images and video to a funky splash page all about Mozilla!",
+              "popularity": 0.0031,
+              "title": "Mozilla splash page",
+              "locale": "en-us",
+              "slug": "learn/html/multimedia_and_embedding/mozilla_splash_page"
+            },
+            "highlight": {
+              "title": [
+                "<mark>Mozilla</mark> splash page"
+              ],
+              "body": [
+                "techniques discussed in this module&#x27;s articles, getting you to add some images and video to a funky splash page all about <mark>Mozilla</mark>",
+                "interesting about what <mark>Mozilla</mark> stands for, and provide some links to further resources.",
+                "Your post should include:\nA descriptive title such as &quot;Assessment wanted for <mark>Mozilla</mark> splash page&quot;."
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/CSS/Mozilla_Extensions",
+            "_score": 42.17089,
+            "_source": {
+              "summary": "Mozilla applications such as Firefox support a number of special Mozilla extensions to CSS, including properties, values, pseudo-elements and pseudo-classes, at-rules, and media queries. These extensions are prefixed with -moz-.",
+              "popularity": 0.0024,
+              "title": "Mozilla CSS extensions",
+              "locale": "en-us",
+              "slug": "web/css/mozilla_extensions"
+            },
+            "highlight": {
+              "title": [
+                "<mark>Mozilla</mark> CSS extensions"
+              ],
+              "body": [
+                "<mark>Mozilla</mark> applications such as Firefox support a number of special <mark>Mozilla</mark> extensions to CSS, including properties, values,",
+                "Note: These properties and pseudo-classes will only work in <mark>Mozilla</mark> applications such as Firefox, and are not on a standards"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/fr/docs/Web/CSS/Mozilla_Extensions",
+            "_score": 38.161938,
+            "_source": {
+              "summary": "Les applications Mozilla, telles que Firefox, prennent en charge un certain nombre d'extensions sp\u00e9cifiques \u00e0 CSS : des propri\u00e9t\u00e9s, des valeurs, des pseudo-\u00e9l\u00e9ments, des pseudo-classes, des r\u00e8gles @ et des requ\u00eates m\u00e9dia. Ces extensions utilisent le pr\u00e9fixe -moz.",
+              "popularity": 0,
+              "title": "Extensions CSS de Mozilla",
+              "locale": "fr",
+              "slug": "web/css/mozilla_extensions"
+            },
+            "highlight": {
+              "title": [
+                "Extensions CSS de <mark>Mozilla</mark>"
+              ],
+              "body": [
+                "Les applications <mark>Mozilla</mark>, telles que Firefox, prennent en charge un certain nombre d&#x27;extensions sp\u00e9cifiques \u00e0 CSS : des propri\u00e9t\u00e9s",
+                "Note : Ces propri\u00e9t\u00e9s et pseudo-classes ne fonctionneront que pour les applications <mark>Mozilla</mark> (Firefox par exemple) et ne sont",
+                "-moz-windows-compositor\n-moz-windows-default-theme\n-moz-windows-glass\n-moz-windows-theme\n-moz-alt-content bug\u00a011011\nCSS <mark>Mozilla</mark>"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/API/XSLTProcessor/XSL_Transformations_in_Mozilla_FAQ",
+            "_score": 35.24224,
+            "_source": {
+              "summary": "Make sure the mime type for both source and stylesheet are set to an XML mimetype, namely text/xml or application/xml. The XSLT namespace is http://www.w3.org/1999/XSL/Transform. Use the <?xml-stylesheet ?> processing instruction instead of the non-standard xml:stylesheet. The most common cause is the MIME type handling. To find out which MIME type your server sends, look at Page Info, use extensions like LiveHTTPHeaders or a download manager like wget. Mozilla won't load XSLT stylesheets from a different domain for security reasons.",
+              "popularity": 0,
+              "title": "XSL Transformations in Mozilla FAQ",
+              "locale": "en-us",
+              "slug": "web/api/xsltprocessor/xsl_transformations_in_mozilla_faq"
+            },
+            "highlight": {
+              "title": [
+                "XSL Transformations in <mark>Mozilla</mark> FAQ"
+              ],
+              "body": [
+                "<mark>Mozilla</mark> won&#x27;t load XSLT stylesheets from a different domain for security reasons.",
+                "<mark>Mozilla</mark> in contrast renders exactly the result of your transformation.",
+                "There is transformToDocument and transformToFragment starting with <mark>Mozilla</mark> 1.2 final, see Using the <mark>Mozilla</mark> JavaScript interface"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/fr/docs/Learn/HTML/Multimedia_and_embedding/Mozilla_splash_page",
+            "_score": 35.21553,
+            "_source": {
+              "summary": "Dans cette partie, nous testerons vos connaissances des quelques techniques abord\u00e9es dans les articles de ce module, en vous demandant d'ajouter des images et des vid\u00e9os \u00e0 une super page d'accueil enti\u00e8rement d\u00e9di\u00e9e \u00e0 Mozilla !",
+              "popularity": 0,
+              "title": "\u00c9valuation : page d'accueil Mozilla",
+              "locale": "fr",
+              "slug": "learn/html/multimedia_and_embedding/mozilla_splash_page"
+            },
+            "highlight": {
+              "title": [
+                "\u00c9valuation : page d&#x27;accueil <mark>Mozilla</mark>"
+              ],
+              "body": [
+                "articles de ce module, en vous demandant d&#x27;ajouter des images et des vid\u00e9os \u00e0 une super page d&#x27;accueil enti\u00e8rement d\u00e9di\u00e9e \u00e0 <mark>Mozilla</mark>",
+                "Dans cette \u00e9tude, nous vous pr\u00e9sentons une page d&#x27;accueil <mark>Mozilla</mark> quasiment finie, qui a pour but de d\u00e9finir, en des termes",
+                "agr\u00e9ables et int\u00e9ressants, les objectifs de <mark>Mozilla</mark> et de fournir des liens vers des ressources suppl\u00e9mentaires."
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/API/Touch_events/Mozilla_experimental_events",
+            "_score": 33.28213,
+            "_source": {
+              "summary": "The experimental touch events API described on this page was available from Gecko 2.0 (Firefox 4 / Thunderbird 3.3 / SeaMonkey 2.1) to Gecko/Firefox 17. You should instead use the standard touch events API, supported since Gecko/Firefox 6 with multi-touch support added in Gecko/Firefox 12.",
+              "popularity": 0,
+              "title": "Touch events (Mozilla experimental)",
+              "locale": "en-us",
+              "slug": "web/api/touch_events/mozilla_experimental_events"
+            },
+            "highlight": {
+              "title": [
+                "Touch events (<mark>Mozilla</mark> experimental)"
+              ]
+            }
+          }
+        ]
+      },
+      "suggest": {
+        "body_suggestions": [
+          {
+            "text": "mozilla",
+            "offset": 0,
+            "length": 7,
+            "options": []
+          }
+        ],
+        "title_suggestions": [
+          {
+            "text": "mozilla",
+            "offset": 0,
+            "length": 7,
+            "options": []
+          }
+        ]
+      }
+    }
+  }
+}
