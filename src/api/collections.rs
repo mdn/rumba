@@ -147,7 +147,7 @@ pub async fn collections(
 async fn get_single_collection_item(
     pool: web::Data<Pool>,
     user: UserQuery,
-    url: &String,
+    url: &str,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = pool.get()?;
     let collection = get_collection_item(user, &mut conn, url).await;

@@ -18,14 +18,14 @@ use r2d2::PooledConnection;
 pub async fn get_collection_item(
     user: UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
-    url: &String,
+    url: &str,
 ) -> Result<CollectionAndDocumentQuery, DbError> {
     let collection: CollectionAndDocumentQuery = schema::collections::table
         .filter(schema::collections::user_id.eq(user.id))
         .inner_join(schema::documents::table)
         .filter(
             schema::documents::uri
-                .eq(normalize_uri(url.to_string()))
+                .eq(normalize_uri(url))
                 .and(schema::collections::deleted_at.is_null()),
         )
         .select((
@@ -123,7 +123,7 @@ pub async fn delete_collection_item(
         .filter(
             schema::collections::document_id.eq_any(
                 schema::documents::table
-                    .filter(schema::documents::uri.eq(normalize_uri(url)))
+                    .filter(schema::documents::uri.eq(normalize_uri(&url)))
                     .select(schema::documents::id),
             ),
         )
@@ -145,7 +145,7 @@ pub async fn create_collection_item(
         custom_name = Some(form.name);
     }
 
-    let url_normalized = normalize_uri(url);
+    let url_normalized = normalize_uri(&url);
 
     let document_id = create_or_update_document(pool, document, url_normalized).await?;
 

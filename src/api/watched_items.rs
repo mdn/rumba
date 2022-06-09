@@ -130,10 +130,9 @@ async fn handle_paginated_items_query(
 async fn handle_single_item_query(
     conn_pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     user: &UserQuery,
-    url: &String,
+    url: &str,
 ) -> Result<HttpResponse, ApiError> {
-    let res = watched_items::get_watched_item(conn_pool, user.id, &normalize_uri(url.to_string()))
-        .await?;
+    let res = watched_items::get_watched_item(conn_pool, user.id, &normalize_uri(url)).await?;
 
     if let Some(item) = res {
         Ok(HttpResponse::Ok().json(SingleWatchedItemResponse {
@@ -161,12 +160,9 @@ pub async fn update_watched_item(
             let mut conn_pool = pool.get()?;
             let user: UserQuery = get_user(&mut conn_pool, id).await?;
             let url = query.into_inner().url;
-            let res = watched_items::get_watched_item(
-                &mut conn_pool,
-                user.id,
-                &normalize_uri(url.clone()),
-            )
-            .await?;
+            let res =
+                watched_items::get_watched_item(&mut conn_pool, user.id, &normalize_uri(&url))
+                    .await?;
             //Handle unwatch
             match form_data.unwatch {
                 Some(val) => {
@@ -184,7 +180,7 @@ pub async fn update_watched_item(
             }
             //Handle create.
             let metadata = get_document_metadata(http_client, &url).await?;
-            create_watched_item(&mut conn_pool, user.id, metadata, normalize_uri(url)).await?;
+            create_watched_item(&mut conn_pool, user.id, metadata, normalize_uri(&url)).await?;
             Ok(HttpResponse::Ok().finish())
         }
         None => Ok(HttpResponse::Unauthorized().finish()),
@@ -210,7 +206,7 @@ pub async fn unwatch_many(
                 .into_inner()
                 .unwatch
                 .iter()
-                .map(|v| normalize_uri(v.to_owned()))
+                .map(|v| normalize_uri(v))
                 .collect();
             watched_items::delete_watched_items(&mut conn_pool, user.id, normalized_urls).await?;
         }
