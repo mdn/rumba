@@ -257,7 +257,7 @@ async fn do_search(
         )));
     }
 
-    let subquery = elastic::Query::Bool(elastic::QueryBool {
+    let subquery = elastic::SubQuery::Bool(elastic::QueryBool {
         should: Some(subqueries),
         ..elastic::QueryBool::default()
     });
@@ -280,19 +280,19 @@ async fn do_search(
                 elastic::SortField::Score(elastic::Order::Desc),
                 elastic::SortField::Popularity(elastic::Order::Desc),
             ]),
-            subquery,
+            subquery.into(),
         ),
         Sort::Popularity => (
             Some(vec![
                 elastic::SortField::Popularity(elastic::Order::Desc),
                 elastic::SortField::Score(elastic::Order::Desc),
             ]),
-            subquery,
+            subquery.into(),
         ),
         Sort::Best => (
             None,
             elastic::Query::FunctionScore(elastic::QueryFunctionScore {
-                query: Box::new(subquery),
+                query: subquery,
                 functions: vec![elastic::QueryFunctionScoreFunction::FieldValueFactor(
                     elastic::QueryFunctionScoreFunctionFieldValueFactor {
                         field: elastic::Field::Popularity,

@@ -22,6 +22,28 @@ pub struct Count {
 
 #[derive(Serialize)]
 #[serde(rename_all = "snake_case")]
+pub enum SubQuery {
+    Bool(QueryBool),
+    Terms(QueryTerms),
+    Match(QueryMatch),
+    MatchPhrase(QueryMatch),
+    MultiMatch(QueryMultiMatch),
+}
+
+impl From<SubQuery> for Query {
+    fn from(sub_query: SubQuery) -> Self {
+        match sub_query {
+            SubQuery::Bool(q) => Self::Bool(q),
+            SubQuery::Terms(q) => Self::Terms(q),
+            SubQuery::Match(q) => Self::Match(q),
+            SubQuery::MatchPhrase(q) => Self::MatchPhrase(q),
+            SubQuery::MultiMatch(q) => Self::MultiMatch(q),
+        }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Query {
     Bool(QueryBool),
     Terms(QueryTerms),
@@ -107,7 +129,7 @@ pub struct QueryMatchField {
 
 #[derive(Serialize)]
 pub struct QueryFunctionScore {
-    pub query: Box<Query>,
+    pub query: SubQuery,
     pub functions: Vec<QueryFunctionScoreFunction>,
     pub boost_mode: BoostMode,
     pub score_mode: ScoreMode,
