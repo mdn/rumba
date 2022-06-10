@@ -80,7 +80,7 @@ impl FromStr for Params {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         /*
         FIXME: this horrendous complexity only exists because no mature rust library supports
-        repeated query keys to specify an array value. after we fully migrate away from rumba,
+        repeated query keys to specify an array value. after we fully migrate away from kuma,
         and no longer need to remain api-compatible, we should change this behaviour.
         */
         let mut params: Params = serde_path_to_error::deserialize(
