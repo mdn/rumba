@@ -8,6 +8,7 @@ use crate::diesel::BoolExpressionMethods;
 use crate::diesel::NullableExpressionMethods;
 use crate::diesel::PgTextExpressionMethods;
 use crate::util::normalize_uri;
+use diesel::dsl::count;
 use diesel::expression_methods::ExpressionMethods;
 use diesel::r2d2::ConnectionManager;
 use diesel::{insert_into, PgConnection};
@@ -167,32 +168,13 @@ pub async fn create_collection_item(
         .execute(pool)
 }
 
-pub async fn get_collection_limit_reached(
-    user: UserQuery,
+pub async fn get_collection_item_count(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
-    url: &str,
-) -> Result<CollectionAndDocumentQuery, DbError> {
-    let collection: CollectionAndDocumentQuery = schema::collections::table
-        .filter(schema::collections::user_id.eq(user.id))
-        .inner_join(schema::documents::table)
-        .filter(
-            schema::documents::uri
-                .eq(normalize_uri(url))
-                .and(schema::collections::deleted_at.is_null()),
-        )
-        .select((
-            schema::collections::id,
-            schema::collections::created_at,
-            schema::collections::updated_at,
-            schema::collections::document_id,
-            schema::collections::notes,
-            schema::collections::custom_name,
-            schema::collections::user_id,
-            schema::documents::uri,
-            schema::documents::metadata,
-            schema::documents::title,
-        ))
-        .first::<CollectionAndDocumentQuery>(pool)?;
-
-    Ok(collection)
+    user_id: i64,
+) -> Result<i64, DbError> {
+    let count = schema::collections::table
+        .filter(schema::collections::user_id.eq(user_id))
+        .select(count(schema::collections::id))
+        .first(pool)?;
+    Ok(count)
 }
