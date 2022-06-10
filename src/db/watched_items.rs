@@ -1,3 +1,4 @@
+use diesel::dsl::count;
 use diesel::{delete, insert_into};
 use diesel::{r2d2::ConnectionManager, PgConnection};
 use r2d2::PooledConnection;
@@ -79,6 +80,17 @@ pub async fn get_watched_item(
         .first::<WatchedItemsQuery>(pool)
         .optional()?;
     Ok(item)
+}
+
+pub async fn get_watched_item_count(
+    pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
+    user_id: i64,
+) -> Result<i64, DbError> {
+    let count = schema::watched_items::table
+        .filter(schema::watched_items::user_id.eq(user_id))
+        .select(count(schema::watched_items::document_id))
+        .first(pool)?;
+    Ok(count)
 }
 
 pub async fn create_watched_item(

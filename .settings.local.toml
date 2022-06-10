@@ -11,3 +11,8 @@ scopes = "openid profile email profile:subscriptions"
 auth_cookie_name = "auth-cookie"
 auth_cookie_secure = false
 auth_cookie_key = "DUwIFZuUYzRhHPlhOm6DwTHSDUSyR5SyvZHIeHdx4DIanxm5/GD/4dqXROLvn5vMofOYUq37HhhivjCyMCWP4w=="
+
+[application]
+document_base_url = "https://developer.allizom.org"
+subscriptions_limit_watched_items = 3
+subscriptions_limit_collections = 5

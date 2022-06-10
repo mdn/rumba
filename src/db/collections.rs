@@ -166,3 +166,33 @@ pub async fn create_collection_item(
         .set(&collection_insert)
         .execute(pool)
 }
+
+pub async fn get_collection_limit_reached(
+    user: UserQuery,
+    pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
+    url: &str,
+) -> Result<CollectionAndDocumentQuery, DbError> {
+    let collection: CollectionAndDocumentQuery = schema::collections::table
+        .filter(schema::collections::user_id.eq(user.id))
+        .inner_join(schema::documents::table)
+        .filter(
+            schema::documents::uri
+                .eq(normalize_uri(url))
+                .and(schema::collections::deleted_at.is_null()),
+        )
+        .select((
+            schema::collections::id,
+            schema::collections::created_at,
+            schema::collections::updated_at,
+            schema::collections::document_id,
+            schema::collections::notes,
+            schema::collections::custom_name,
+            schema::collections::user_id,
+            schema::documents::uri,
+            schema::documents::metadata,
+            schema::documents::title,
+        ))
+        .first::<CollectionAndDocumentQuery>(pool)?;
+
+    Ok(collection)
+}
