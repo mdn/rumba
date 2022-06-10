@@ -19,3 +19,4 @@ subscriptions_limit_collections = 5
 
 [search]
 url = "http://elastic:9200"
+cache_max_age = 43200
