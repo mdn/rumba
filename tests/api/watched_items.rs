@@ -239,3 +239,108 @@ async fn create_watched_items(
         thread::sleep(Duration::from_millis(10));
     }
 }
+
+#[actix_rt::test]
+async fn test_watched_item_subscription_limit() -> Result<(), Error> {
+    reset()?;
+
+    let _stubr = Stubr::start_blocking_with(
+        vec![
+            "tests/stubs",
+            "tests/test_specific_stubs/collections",
+            "tests/test_specific_stubs/watched_items",
+        ],
+        Config {
+            port: Some(4321),
+            latency: None,
+            global_delay: None,
+            verbose: Some(true),
+        },
+    );
+
+    let app = test_app_with_login().await?;
+    let service = test::init_service(app).await;
+    let mut logged_in_client = TestHttpClient::new(service).await;
+
+    for i in 1..3 {
+        let base_url = format!("/api/v1/plus/watching/?url=/en-US/docs/Web/CSS{}", i);
+        let payload = json!({
+            "title": format!("CSS: Cascading Style Sheets{}", i),
+            "path": "this.gets.ignored",
+        });
+        let res = logged_in_client
+            .post(&base_url, None, Some(PostPayload::Json(payload)))
+            .await;
+        assert_eq!(res.response().status(), 200);
+        thread::sleep(Duration::from_millis(10));
+    }
+
+    let mut res = logged_in_client
+        .get("/api/v1/plus/watching/?offset=0&limit=10", None)
+        .await;
+
+    assert_eq!(res.response().status(), 200);
+    let mut res_json = read_json(res).await;
+    assert_eq!(res_json["items"].as_array().unwrap().len(), 2);
+    assert_eq!(
+        res_json["subscription_limit_reached"].as_bool().unwrap(),
+        false
+    );
+
+    //Create one more putting it on the limit
+
+    let payload = json!({
+        "title": format!("CSS: Cascading Style Sheets{}", 3),
+        "path": "this.gets.ignored",
+    });
+    let mut base_url = format!("/api/v1/plus/watching/?url=/en-US/docs/Web/CSS{}", 3);
+    res = logged_in_client
+        .post(&base_url, None, Some(PostPayload::Json(payload.clone())))
+        .await;
+    assert_eq!(res.response().status(), 200);
+    res_json = read_json(res).await;
+    //Check limit flag in POST response
+
+    assert_eq!(
+        res_json["subscription_limit_reached"].as_bool().unwrap(),
+        true
+    );
+    //Check limit flag in GET 
+    res = logged_in_client
+        .get("/api/v1/plus/watching/?offset=0&limit=10", None)
+        .await;
+
+    assert_eq!(res.response().status(), 200);
+    res_json = read_json(res).await;
+    assert_eq!(res_json["items"].as_array().unwrap().len(), 3);
+    assert_eq!(
+        res_json["subscription_limit_reached"].as_bool().unwrap(),
+        true
+    );
+    
+    // Check for 400 if creating new item at the limit
+    
+    base_url = format!("/api/v1/plus/watching/?url=/en-US/docs/Web/CSS{}", 4);
+    res = logged_in_client
+        .post(&base_url, None, Some(PostPayload::Json(payload)))
+        .await;
+    assert_eq!(res.response().status(), 400);
+    res_json = read_json(res).await;
+    assert_eq!(res_json["error"].as_str().unwrap(), "max_subscriptions");
+
+     // Check for limit 'false' after deletion of 1
+
+    base_url = format!("/api/v1/plus/watching/?url=/en-US/docs/Web/CSS{}", 3);
+    res = logged_in_client
+    .post(&base_url, None, Some(PostPayload::Json(json!({"unwatch": true}))))
+    .await;
+
+    assert_eq!(res.response().status(), 200);
+    res_json = read_json(res).await;
+    assert_eq!(
+        res_json["subscription_limit_reached"].as_bool().unwrap(),
+        false
+    );
+    
+    Ok(())
+}

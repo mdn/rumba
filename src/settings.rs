@@ -33,6 +33,8 @@ pub struct Auth {
 #[derive(Deserialize)]
 pub struct Application {
     pub document_base_url: String,
+    pub subscriptions_limit_watched_items: i64,
+    pub subscriptions_limit_collections: u32,
 }
 
 #[derive(Deserialize)]
