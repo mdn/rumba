@@ -14,3 +14,4 @@ auth_cookie_key = "DUwIFZuUYzRhHPlhOm6DwTHSDUSyR5SyvZHIeHdx4DIanxm5/GD/4dqXROLvn
 
 [search]
 url = "http://elastic:9200"
+cache_max_age = 43200

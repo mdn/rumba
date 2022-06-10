@@ -19,3 +19,4 @@ document_base_url = "http://localhost:4321"
 
 [search]
 url = "ignored"
+cache_max_age = 43200
