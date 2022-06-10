@@ -1,5 +1,7 @@
 use crate::api::elastic;
 use crate::api::error::{ApiError, SearchError};
+use crate::settings::SETTINGS;
+use actix_web::http::header::{CacheControl, CacheDirective};
 use actix_web::{web, HttpRequest, HttpResponse};
 use elasticsearch::http::response::Response as ElasticResponse;
 use elasticsearch::{CountParts, Elasticsearch, SearchParts};
@@ -9,7 +11,6 @@ use serde_json::json;
 use std::cmp::Ordering;
 use std::str::FromStr;
 
-// TODO: add caching headers from kuma
 // TODO: add retry logic from kuma
 // TODO: tests
 
@@ -182,7 +183,11 @@ pub async fn search(
             None => vec![],
         },
     };
-    Ok(HttpResponse::Ok().json(response))
+    Ok(HttpResponse::Ok()
+        .insert_header(CacheControl(vec![CacheDirective::MaxAge(
+            SETTINGS.search.cache_max_age,
+        )]))
+        .json(response))
 }
 
 async fn do_search(
