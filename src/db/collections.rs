@@ -6,6 +6,7 @@ use crate::db::model::{CollectionAndDocumentQuery, CollectionInsert, DocumentMet
 use crate::db::schema;
 use crate::diesel::BoolExpressionMethods;
 use crate::diesel::NullableExpressionMethods;
+use crate::diesel::OptionalExtension;
 use crate::diesel::PgTextExpressionMethods;
 use crate::util::normalize_uri;
 use diesel::dsl::count;
@@ -16,8 +17,10 @@ use diesel::{update, RunQueryDsl};
 use diesel::{QueryDsl, QueryResult};
 use r2d2::PooledConnection;
 
+use super::model::IdQuery;
+
 pub async fn get_collection_item(
-    user: UserQuery,
+    user: &UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     url: &str,
 ) -> Result<CollectionAndDocumentQuery, DbError> {
@@ -47,7 +50,7 @@ pub async fn get_collection_item(
 }
 
 pub async fn get_collection_items_paginated(
-    user: UserQuery,
+    user: &UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     query_params: &CollectionsQueryParams,
 ) -> Result<Vec<CollectionAndDocumentQuery>, DbError> {
@@ -116,7 +119,7 @@ pub async fn get_collection_items_paginated(
 }
 
 pub async fn delete_collection_item(
-    user: UserQuery,
+    user: &UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     url: String,
 ) -> QueryResult<usize> {
@@ -134,7 +137,7 @@ pub async fn delete_collection_item(
 }
 
 pub async fn create_collection_item(
-    user: UserQuery,
+    user: &UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     url: String,
     document: DocumentMetadata,
@@ -177,4 +180,24 @@ pub async fn get_collection_item_count(
         .select(count(schema::collections::id))
         .first(pool)?;
     Ok(count)
+}
+
+pub async fn collection_item_exists_for_user(
+    user: &UserQuery,
+    pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
+    url: &str,
+) -> Result<bool, DbError> {
+    let collection = schema::collections::table
+        .filter(schema::collections::user_id.eq(user.id))
+        .inner_join(schema::documents::table)
+        .filter(
+            schema::documents::uri
+                .eq(normalize_uri(url))
+                .and(schema::collections::deleted_at.is_null()),
+        )
+        .select((schema::collections::id,))
+        .first::<IdQuery>(pool)
+        .optional()?;
+
+    Ok(collection.is_some())
 }

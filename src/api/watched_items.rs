@@ -133,7 +133,7 @@ async fn handle_paginated_items_query(
         .iter()
         .map(|watched_item| Into::<WatchedItem>::into(watched_item.clone()))
         .collect();
-    let subscription_limit_reached = subscription_info_for_user(&user, conn_pool)
+    let subscription_limit_reached = watched_items_subscription_info_for_user(&user, conn_pool)
         .await?
         .limit_reached;
     Ok(HttpResponse::Ok().json(WatchedItemsResponse {
@@ -150,7 +150,7 @@ async fn handle_single_item_query(
 ) -> Result<HttpResponse, ApiError> {
     let res = watched_items::get_watched_item(conn_pool, user.id, &normalize_uri(url)).await?;
 
-    let subscription_limit_reached = subscription_info_for_user(user, conn_pool)
+    let subscription_limit_reached = watched_items_subscription_info_for_user(user, conn_pool)
         .await?
         .limit_reached;
 
@@ -169,47 +169,43 @@ async fn handle_single_item_query(
     }
 }
 
-struct SubscriptionInfo {
+struct WatchedItemsSubscriptionInfo {
     pub limit_reached: bool,
     pub watched_items_remaining: Option<i64>,
 }
 
-async fn subscription_info_for_user(
+async fn watched_items_subscription_info_for_user(
     user: &UserQuery,
     conn_pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
-) -> Result<SubscriptionInfo, ApiError> {
+) -> Result<WatchedItemsSubscriptionInfo, ApiError> {
     return match user.subscription_type {
         Some(_type) => {
             if matches!(_type, db::types::Subscription::Core) {
                 {
                     let count = get_watched_item_count(conn_pool, user.id).await?;
-                    let limit_reached = count
-                        >= SETTINGS
-                        .application
-                        .subscriptions_limit_watched_items;                
+                    let limit_reached =
+                        count >= SETTINGS.application.subscriptions_limit_watched_items;
 
                     let watched_items_remaining =
                         SETTINGS.application.subscriptions_limit_watched_items - count;
 
-                    Ok(SubscriptionInfo {
-                        limit_reached,                        
+                    Ok(WatchedItemsSubscriptionInfo {
+                        limit_reached,
                         watched_items_remaining: Some(watched_items_remaining),
                     })
                 }
             } else {
-                 Ok(SubscriptionInfo {
-                    limit_reached: false,                    
+                Ok(WatchedItemsSubscriptionInfo {
+                    limit_reached: false,
                     watched_items_remaining: None,
                 })
             }
         }
         //Strange and impossible 'no subscription' case
-        None => {
-            Ok(SubscriptionInfo {
-                limit_reached: true,
-                watched_items_remaining: Some(0),
-            })
-        }
+        None => Ok(WatchedItemsSubscriptionInfo {
+            limit_reached: true,
+            watched_items_remaining: Some(0),
+        }),
     };
 }
 
@@ -240,7 +236,8 @@ pub async fn update_watched_item(
                 None => (),
             }
 
-            let subscription_info = subscription_info_for_user(&user, &mut conn_pool).await?;
+            let subscription_info =
+                watched_items_subscription_info_for_user(&user, &mut conn_pool).await?;
 
             if subscription_info.limit_reached {
                 return Ok(HttpResponse::BadRequest().json(WatchedItemUpdateResponse {
@@ -279,7 +276,7 @@ async fn handle_unwatch(
 ) -> Result<HttpResponse, ApiError> {
     return if let Some(item) = res {
         delete_watched_item(conn_pool, item.user_id, item.document_id).await?;
-        let subscription_limit_reached = subscription_info_for_user(user, conn_pool)
+        let subscription_limit_reached = watched_items_subscription_info_for_user(user, conn_pool)
             .await?
             .limit_reached;
         Ok(HttpResponse::Ok().json(WatchedItemUpdateResponse {
