@@ -161,3 +161,9 @@ pub struct WatchedItemInsert {
     pub document_id: i64,
     pub user_id: i64,
 }
+
+#[allow(dead_code)]
+#[derive(Queryable)]
+pub struct IdQuery {
+    id: i64,
+}

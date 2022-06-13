@@ -409,3 +409,109 @@ async fn test_delete_collection_via_post() -> Result<(), Error> {
     assert!(collection_json["bookmarked"].is_null());
     Ok(())
 }
+
+#[actix_rt::test]
+async fn test_collection_subscription_limits() -> Result<(), Error> {
+    reset()?;
+
+    let _stubr = Stubr::start_blocking_with(
+        vec![
+            "tests/stubs",
+            "tests/test_specific_stubs/collections",
+            "tests/test_specific_stubs/collections_core_user",
+        ],
+        Config {
+            port: Some(4321),
+            latency: None,
+            global_delay: None,
+            verbose: Some(true),
+        },
+    );
+
+    let app = test_app_with_login().await?;
+    let service = test::init_service(app).await;
+
+    let mut logged_in_client = TestHttpClient::new(service).await;
+
+    for i in 1..5 {
+        let base_url = format!("/api/v1/plus/collection/?url=/en-US/docs/Web/CSS{}", i);
+        let payload = json!({
+            "name": format!("CSS: Cascading Style Sheets{}", i),
+            "notes": "Notes notes notes",
+        });
+        logged_in_client
+            .post(&base_url, None, Some(PostPayload::FormData(payload)))
+            .await;
+        thread::sleep(Duration::from_millis(10));
+    }
+
+    let mut base_url = "/api/v1/plus/collection/?limit=5";
+    let mut res = logged_in_client.get(base_url, None).await;
+    let mut collection_json = read_json(res).await;
+
+    assert_eq!(collection_json["items"].as_array().unwrap().len(), 4);
+    assert!(!collection_json["subscription_limit_reached"]
+        .as_bool()
+        .unwrap());
+
+    //Assert that on creating one more limit is reached
+    base_url = "/api/v1/plus/collection/?url=/en-US/docs/Web/CSS5";
+    let payload = json!({
+        "name": format!("CSS: Cascading Style Sheets{}", 5),
+        "notes": "Notes notes notes",
+    });
+    res = logged_in_client
+        .post(base_url, None, Some(PostPayload::FormData(payload)))
+        .await;
+    assert_eq!(res.status(), 201);
+    collection_json = read_json(res).await;
+    assert!(collection_json["subscription_limit_reached"]
+        .as_bool()
+        .unwrap());
+
+    //Assert creating new one is 400
+    base_url = "/api/v1/plus/collection/?url=/en-US/docs/Web/CSS6";
+    let payload = json!({
+        "name": format!("CSS: Cascading Style Sheets{}", 6),
+        "notes": "Notes notes notes",
+    });
+    res = logged_in_client
+        .post(base_url, None, Some(PostPayload::FormData(payload)))
+        .await;
+    assert_eq!(res.status(), 400);
+    collection_json = read_json(res).await;
+    assert_eq!(
+        collection_json["error"].as_str().unwrap(),
+        "max_subscriptions"
+    );
+
+    //Assert updating existing is success and limit still reached
+    base_url = "/api/v1/plus/collection/?url=/en-US/docs/Web/CSS5";
+    let payload = json!({
+        "name": format!("Updated CSS: Cascading Style Sheets{}", 5),
+        "notes": "New notes",
+    });
+    res = logged_in_client
+        .post(base_url, None, Some(PostPayload::FormData(payload)))
+        .await;
+    assert_eq!(res.status(), 201);
+    collection_json = read_json(res).await;
+    assert!(collection_json["subscription_limit_reached"]
+        .as_bool()
+        .unwrap());
+
+    // Assert deleting one is success and subscription limit no more reached
+    res = logged_in_client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::FormData(json!({"delete": true}))),
+        )
+        .await;
+    assert_eq!(res.status(), 200);
+    collection_json = read_json(res).await;
+    assert!(!collection_json["subscription_limit_reached"]
+        .as_bool()
+        .unwrap());
+    Ok(())
+}

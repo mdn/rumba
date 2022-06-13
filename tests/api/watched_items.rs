@@ -282,10 +282,7 @@ async fn test_watched_item_subscription_limit() -> Result<(), Error> {
     assert_eq!(res.response().status(), 200);
     let mut res_json = read_json(res).await;
     assert_eq!(res_json["items"].as_array().unwrap().len(), 2);
-    assert_eq!(
-        res_json["subscription_limit_reached"].as_bool().unwrap(),
-        false
-    );
+    assert!(!res_json["subscription_limit_reached"].as_bool().unwrap());
 
     //Create one more putting it on the limit
 
@@ -301,11 +298,8 @@ async fn test_watched_item_subscription_limit() -> Result<(), Error> {
     res_json = read_json(res).await;
     //Check limit flag in POST response
 
-    assert_eq!(
-        res_json["subscription_limit_reached"].as_bool().unwrap(),
-        true
-    );
-    //Check limit flag in GET 
+    assert!(res_json["subscription_limit_reached"].as_bool().unwrap());
+    //Check limit flag in GET
     res = logged_in_client
         .get("/api/v1/plus/watching/?offset=0&limit=10", None)
         .await;
@@ -313,13 +307,10 @@ async fn test_watched_item_subscription_limit() -> Result<(), Error> {
     assert_eq!(res.response().status(), 200);
     res_json = read_json(res).await;
     assert_eq!(res_json["items"].as_array().unwrap().len(), 3);
-    assert_eq!(
-        res_json["subscription_limit_reached"].as_bool().unwrap(),
-        true
-    );
-    
+    assert!(res_json["subscription_limit_reached"].as_bool().unwrap());
+
     // Check for 400 if creating new item at the limit
-    
+
     base_url = format!("/api/v1/plus/watching/?url=/en-US/docs/Web/CSS{}", 4);
     res = logged_in_client
         .post(&base_url, None, Some(PostPayload::Json(payload)))
@@ -328,19 +319,20 @@ async fn test_watched_item_subscription_limit() -> Result<(), Error> {
     res_json = read_json(res).await;
     assert_eq!(res_json["error"].as_str().unwrap(), "max_subscriptions");
 
-     // Check for limit 'false' after deletion of 1
+    // Check for limit 'false' after deletion of 1
 
     base_url = format!("/api/v1/plus/watching/?url=/en-US/docs/Web/CSS{}", 3);
     res = logged_in_client
-    .post(&base_url, None, Some(PostPayload::Json(json!({"unwatch": true}))))
-    .await;
+        .post(
+            &base_url,
+            None,
+            Some(PostPayload::Json(json!({"unwatch": true}))),
+        )
+        .await;
 
     assert_eq!(res.response().status(), 200);
     res_json = read_json(res).await;
-    assert_eq!(
-        res_json["subscription_limit_reached"].as_bool().unwrap(),
-        false
-    );
-    
+    assert!(!res_json["subscription_limit_reached"].as_bool().unwrap(),);
+
     Ok(())
 }

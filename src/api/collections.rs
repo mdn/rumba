@@ -1,12 +1,18 @@
 use actix_identity::Identity;
+use diesel::r2d2::ConnectionManager;
+use diesel::PgConnection;
+use r2d2::PooledConnection;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 use crate::api::error::ApiError;
 use crate::db::collections::{
-    create_collection_item, get_collection_item, get_collection_items_paginated,
+    collection_item_exists_for_user, create_collection_item, get_collection_item,
+    get_collection_item_count, get_collection_items_paginated,
 };
 
 use crate::db::Pool;
+use crate::settings::SETTINGS;
 
 use actix_web::web::Data;
 use actix_web::{web, HttpRequest, HttpResponse};
@@ -137,7 +143,7 @@ pub async fn collections(
             let user: UserQuery = get_user(&mut conn_pool, id).await?;
             match &query.url {
                 Some(url) => get_single_collection_item(pool, user, url).await,
-                None => get_paginated_collection_items(pool, user, &query).await,
+                None => get_paginated_collection_items(pool, &user, &query).await,
             }
         }
         None => Ok(HttpResponse::Unauthorized().finish()),
@@ -149,8 +155,8 @@ async fn get_single_collection_item(
     user: UserQuery,
     url: &str,
 ) -> Result<HttpResponse, ApiError> {
-    let mut conn = pool.get()?;
-    let collection = get_collection_item(user, &mut conn, url).await;
+    let mut conn_pool = pool.get()?;
+    let collection = get_collection_item(&user, &mut conn_pool, url).await;
     let bookmarked = match collection {
         Ok(val) => Some(val.into()),
         Err(e) => match e {
@@ -158,21 +164,24 @@ async fn get_single_collection_item(
             _ => return Err(ApiError::Unknown),
         },
     };
+
+    let sub_info = collections_subscription_info_for_user(&user, &mut conn_pool).await?;
+
     let result = CollectionResponse {
         bookmarked,
         csrfmiddlewaretoken: "abc".to_string(),
-        subscription_limit_reached: false,
+        subscription_limit_reached: sub_info.limit_reached,
     };
     Ok(HttpResponse::Ok().json(result))
 }
 
 async fn get_paginated_collection_items(
     pool: Data<Pool>,
-    user: UserQuery,
+    user: &UserQuery,
     query: &CollectionsQueryParams,
 ) -> Result<HttpResponse, ApiError> {
-    let mut conn = pool.get()?;
-    let collection = get_collection_items_paginated(user, &mut conn, query).await;
+    let mut conn_pool = pool.get()?;
+    let collection = get_collection_items_paginated(user, &mut conn_pool, query).await;
 
     let items = match collection {
         Ok(val) => val
@@ -182,12 +191,12 @@ async fn get_paginated_collection_items(
         Err(e) => return Err(e.into()),
     };
 
-    //##TODO Handle subscription limits
+    let sub_info = collections_subscription_info_for_user(user, &mut conn_pool).await?;
 
     let result = CollectionsResponse {
         items,
         csrfmiddlewaretoken: "abc".to_string(),
-        subscription_limit_reached: false,
+        subscription_limit_reached: sub_info.limit_reached,
     };
     Ok(HttpResponse::Ok().json(result))
 }
@@ -201,28 +210,13 @@ pub async fn create_or_update_collection_item(
 ) -> Result<HttpResponse, ApiError> {
     match collection_form.into_inner() {
         CollectionCreationOrDeletionForm::Creation(collection_form) => match id.identity() {
-            Some(id) => {
-                let mut conn_pool = pool.get()?;
-                let user: UserQuery = get_user(&mut conn_pool, id).await?;
-                let metadata = get_document_metadata(http_client, &query.url).await?;
-                create_collection_item(
-                    user,
-                    &mut conn_pool,
-                    query.url.clone(),
-                    metadata,
-                    collection_form,
-                )
-                .await
-                .map_err(DbError::from)?;
-
-                Ok(HttpResponse::Created().finish())
-            }
+            Some(id) => handle_create_update(&pool, id, query, http_client, collection_form).await,
             None => Ok(HttpResponse::Unauthorized().finish()),
         },
         CollectionCreationOrDeletionForm::Deletion(collection_form)
             if collection_form.delete.to_lowercase() == "true" =>
         {
-            delete_collection_item(
+            return delete_collection_item(
                 pool,
                 id,
                 web::Query(CollectionDeletionParams {
@@ -235,6 +229,42 @@ pub async fn create_or_update_collection_item(
     }
 }
 
+async fn handle_create_update(
+    pool: &Data<r2d2::Pool<ConnectionManager<PgConnection>>>,
+    id: String,
+    query: web::Query<CollectionCreationParams>,
+    http_client: Data<Client>,
+    collection_form: CollectionCreationForm,
+) -> Result<HttpResponse, ApiError> {
+    let mut conn_pool = pool.get()?;
+    let user: UserQuery = get_user(&mut conn_pool, id).await?;
+    let url = &query.into_inner().url;
+    let info = collections_subscription_info_for_user(&user, &mut conn_pool).await?;
+    let collection_item_exists =
+        collection_item_exists_for_user(&user, &mut conn_pool, url).await?;
+    if !collection_item_exists //Create or Update? 
+        && info.collection_items_remaining.map_or(false, |val| val == 0)
+    {
+        return Ok(HttpResponse::BadRequest().json(json!({"error": "max_subscriptions", "info": { "max_allowed" : SETTINGS.application.subscriptions_limit_collections}})));
+    }
+    let metadata = get_document_metadata(http_client, url).await?;
+    create_collection_item(
+        &user,
+        &mut conn_pool,
+        url.clone(),
+        metadata,
+        collection_form,
+    )
+    .await
+    .map_err(DbError::from)?;
+    let subscription_limit_reached = info.collection_items_remaining.map_or(false, |val| {
+        val - 1 <= SETTINGS.application.subscriptions_limit_collections
+    });
+    Ok(HttpResponse::Created().json(json!({
+        "subscription_limit_reached": subscription_limit_reached
+    })))
+}
+
 pub async fn delete_collection_item(
     pool: Data<Pool>,
     id: Identity,
@@ -244,11 +274,63 @@ pub async fn delete_collection_item(
         Some(id) => {
             let mut conn_pool = pool.get()?;
             let user: UserQuery = get_user(&mut conn_pool, id).await?;
-            crate::db::collections::delete_collection_item(user, &mut conn_pool, query.url.clone())
-                .await
-                .map_err(DbError::from)?;
-            Ok(HttpResponse::Ok().finish())
+
+            let sub_info = collections_subscription_info_for_user(&user, &mut conn_pool).await?;
+            crate::db::collections::delete_collection_item(
+                &user,
+                &mut conn_pool,
+                query.url.clone(),
+            )
+            .await
+            .map_err(DbError::from)?;
+
+            let subscription_limit_reached = sub_info
+                .collection_items_remaining
+                .map_or(false, |number| number < 0);
+            Ok(HttpResponse::Ok().json(json!({
+                "subscription_limit_reached": subscription_limit_reached
+            })))
         }
         None => Ok(HttpResponse::Unauthorized().finish()),
     }
+}
+
+struct CollectionsSubscriptionInfo {
+    pub limit_reached: bool,
+    pub collection_items_remaining: Option<i64>,
+}
+
+async fn collections_subscription_info_for_user(
+    user: &UserQuery,
+    conn_pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
+) -> Result<CollectionsSubscriptionInfo, ApiError> {
+    return match user.subscription_type {
+        Some(_type) => {
+            if matches!(_type, db::types::Subscription::Core) {
+                {
+                    let count = get_collection_item_count(conn_pool, user.id).await?;
+                    let limit_reached =
+                        count >= SETTINGS.application.subscriptions_limit_collections;
+
+                    let watched_items_remaining =
+                        SETTINGS.application.subscriptions_limit_collections - count;
+
+                    Ok(CollectionsSubscriptionInfo {
+                        limit_reached,
+                        collection_items_remaining: Some(watched_items_remaining),
+                    })
+                }
+            } else {
+                Ok(CollectionsSubscriptionInfo {
+                    limit_reached: false,
+                    collection_items_remaining: None,
+                })
+            }
+        }
+        //Strange and impossible 'no subscription' case
+        None => Ok(CollectionsSubscriptionInfo {
+            limit_reached: true,
+            collection_items_remaining: Some(0),
+        }),
+    };
 }
