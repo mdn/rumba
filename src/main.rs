@@ -2,7 +2,7 @@
 
 use actix_identity::{CookieIdentityPolicy, IdentityService};
 use actix_rt::Arbiter;
-use actix_web::{middleware::Logger, web::Data, App, HttpServer};
+use actix_web::{cookie::SameSite, middleware::Logger, web::Data, App, HttpServer};
 use diesel_migrations::MigrationHarness;
 use elasticsearch::http::transport::Transport;
 use elasticsearch::Elasticsearch;
@@ -36,9 +36,10 @@ async fn main() -> anyhow::Result<()> {
     let elastic_client = Data::new(Elasticsearch::new(elastic_transport));
 
     HttpServer::new(move || {
-        let policy = CookieIdentityPolicy::new(&[0; 32])
+        let policy = CookieIdentityPolicy::new(&SETTINGS.auth.auth_cookie_key)
             .name(&SETTINGS.auth.auth_cookie_name)
-            .secure(SETTINGS.auth.auth_cookie_secure);
+            .secure(SETTINGS.auth.auth_cookie_secure)
+            .same_site(SameSite::Strict);
         let app = App::new()
             .wrap(Logger::default().exclude("/healthz"))
             .wrap(IdentityService::new(policy))
