@@ -1,6 +1,6 @@
 use crate::helpers::app::test_app_only_search;
 use crate::helpers::read_json;
-use actix_web::test;
+use actix_web::{http::header, test};
 use anyhow::Error;
 use stubr::{Config, Stubr};
 
@@ -27,6 +27,10 @@ async fn test_basic() -> Result<(), Error> {
     let search = do_request("/api/v1/search?q=mozilla&locale=en-US").await;
 
     assert!(search.status().is_success());
+    assert_eq!(
+        search.headers().get(header::CACHE_CONTROL).unwrap(),
+        "max-age=43200"
+    );
 
     let json = read_json(search).await;
     assert_eq!(json["metadata"]["took_ms"], 52_i64);
@@ -70,6 +74,10 @@ async fn test_sort_relevance() -> Result<(), Error> {
     let search = do_request("/api/v1/search?q=mozilla&sort=relevance&locale=en-US").await;
 
     assert!(search.status().is_success());
+    assert_eq!(
+        search.headers().get(header::CACHE_CONTROL).unwrap(),
+        "max-age=43200"
+    );
 
     let json = read_json(search).await;
     assert_eq!(json["metadata"]["took_ms"], 87_i64);
@@ -82,6 +90,10 @@ async fn test_sort_popularity() -> Result<(), Error> {
     let search = do_request("/api/v1/search?q=mozilla&sort=popularity&locale=en-US").await;
 
     assert!(search.status().is_success());
+    assert_eq!(
+        search.headers().get(header::CACHE_CONTROL).unwrap(),
+        "max-age=43200"
+    );
 
     let json = read_json(search).await;
     assert_eq!(json["metadata"]["took_ms"], 145_i64);
@@ -94,6 +106,7 @@ async fn test_sort_invalid() -> Result<(), Error> {
     let search = do_request("/api/v1/search?q=mozilla&sort=foobar&locale=en-US").await;
 
     assert!(search.status().is_client_error());
+    assert!(!search.headers().contains_key(header::CACHE_CONTROL));
 
     let json = read_json(search).await;
     assert!(json["errors"]["sort"][0]["message"].is_string());
@@ -106,6 +119,10 @@ async fn test_locale_multiple() -> Result<(), Error> {
     let search = do_request("/api/v1/search?q=mozilla&locale=fr&locale=en-US").await;
 
     assert!(search.status().is_success());
+    assert_eq!(
+        search.headers().get(header::CACHE_CONTROL).unwrap(),
+        "max-age=43200"
+    );
 
     let json = read_json(search).await;
     assert_eq!(json["metadata"]["took_ms"], 39_i64);
@@ -119,6 +136,7 @@ async fn test_locale_invalid() -> Result<(), Error> {
     let search = do_request("/api/v1/search?q=mozilla&locale=foobar").await;
 
     assert!(search.status().is_client_error());
+    assert!(!search.headers().contains_key(header::CACHE_CONTROL));
 
     let json = read_json(search).await;
     assert!(json["errors"]["locale"][0]["message"].is_string());
@@ -131,6 +149,10 @@ async fn test_locale_none() -> Result<(), Error> {
     let search = do_request("/api/v1/search?q=mozilla").await;
 
     assert!(search.status().is_success());
+    assert_eq!(
+        search.headers().get(header::CACHE_CONTROL).unwrap(),
+        "max-age=43200"
+    );
 
     let json = read_json(search).await;
     assert_eq!(json["metadata"]["took_ms"], 52_i64);
@@ -143,6 +165,10 @@ async fn test_page_2() -> Result<(), Error> {
     let search = do_request("/api/v1/search?q=mozilla&page=2&locale=en-US").await;
 
     assert!(search.status().is_success());
+    assert_eq!(
+        search.headers().get(header::CACHE_CONTROL).unwrap(),
+        "max-age=43200"
+    );
 
     let json = read_json(search).await;
     assert_eq!(json["metadata"]["took_ms"], 119_i64);
@@ -161,6 +187,7 @@ async fn test_page_invalid() -> Result<(), Error> {
     let search = do_request("/api/v1/search?q=mozilla&page=foobar&locale=en-US").await;
 
     assert!(search.status().is_client_error());
+    assert!(!search.headers().contains_key(header::CACHE_CONTROL));
 
     let json = read_json(search).await;
     assert!(json["errors"]["page"][0]["message"].is_string());
@@ -173,6 +200,7 @@ async fn test_page_too_small() -> Result<(), Error> {
     let search = do_request("/api/v1/search?q=mozilla&page=0&locale=en-US").await;
 
     assert!(search.status().is_client_error());
+    assert!(!search.headers().contains_key(header::CACHE_CONTROL));
 
     let json = read_json(search).await;
     assert!(json["errors"]["page"][0]["message"].is_string());
@@ -185,6 +213,7 @@ async fn test_page_too_big() -> Result<(), Error> {
     let search = do_request("/api/v1/search?q=mozilla&page=11&locale=en-US").await;
 
     assert!(search.status().is_client_error());
+    assert!(!search.headers().contains_key(header::CACHE_CONTROL));
 
     let json = read_json(search).await;
     assert!(json["errors"]["page"][0]["message"].is_string());
@@ -197,6 +226,10 @@ async fn test_suggestion() -> Result<(), Error> {
     let search = do_request("/api/v1/search?q=foobar&locale=en-US").await;
 
     assert!(search.status().is_success());
+    assert_eq!(
+        search.headers().get(header::CACHE_CONTROL).unwrap(),
+        "max-age=43200"
+    );
 
     let json = read_json(search).await;
     assert_eq!(json["metadata"]["took_ms"], 64_i64);
