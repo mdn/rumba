@@ -1,0 +1,143 @@
+{
+  "uuid": "search",
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "url": "/mdn_docs/_search",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "from": 0,
+          "size": 10,
+          "query": {
+            "bool": {
+              "filter": [
+                {
+                  "terms": {
+                    "locale": [
+                      "en-us"
+                    ]
+                  }
+                }
+              ],
+              "must": [
+                {
+                  "function_score": {
+                    "query": {
+                      "bool": {
+                        "should": [
+                          {
+                            "match": {
+                              "title": {
+                                "query": "veryspecificquery",
+                                "boost": 5.0
+                              }
+                            }
+                          },
+                          {
+                            "match": {
+                              "body": {
+                                "query": "veryspecificquery",
+                                "boost": 1.0
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "functions": [
+                      {
+                        "field_value_factor": {
+                          "field": "popularity",
+                          "factor": 10,
+                          "missing": 0
+                        }
+                      }
+                    ],
+                    "boost_mode": "sum",
+                    "score_mode": "max"
+                  }
+                }
+              ]
+            }
+          },
+          "_source": {
+            "excludes": [
+              "body"
+            ]
+          },
+          "highlight": {
+            "fields": {
+              "title": {},
+              "body": {}
+            },
+            "pre_tags": [
+              "<mark>"
+            ],
+            "post_tags": [
+              "</mark>"
+            ],
+            "number_of_fragments": 3,
+            "fragment_size": 120,
+            "encoder": "html"
+          },
+          "suggest": {
+            "text": "veryspecificquery",
+            "title_suggestions": {
+              "term": {
+                "field": "title"
+              }
+            },
+            "body_suggestions": {
+              "term": {
+                "field": "body"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "took": 98,
+      "timed_out": false,
+      "_shards": {
+        "total": 1,
+        "successful": 1,
+        "skipped": 0,
+        "failed": 0
+      },
+      "hits": {
+        "total": {
+          "value": 0,
+          "relation": "eq"
+        },
+        "max_score": null,
+        "hits": []
+      },
+      "suggest": {
+        "body_suggestions": [
+          {
+            "text": "veryspecificquery",
+            "offset": 0,
+            "length": 17,
+            "options": []
+          }
+        ],
+        "title_suggestions": [
+          {
+            "text": "veryspecificquery",
+            "offset": 0,
+            "length": 17,
+            "options": []
+          }
+        ]
+      }
+    }
+  }
+}
