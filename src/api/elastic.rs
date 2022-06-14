@@ -5,10 +5,10 @@ use serde_json::Value;
 
 #[serde_with::skip_serializing_none]
 #[derive(Serialize)]
-pub struct Search {
+pub struct Search<'a> {
     pub from: u64,
     pub size: u64,
-    pub query: Query,
+    pub query: Query<'a>,
     pub _source: Source,
     pub highlight: Highlight,
     pub suggest: Option<Suggest>,
@@ -16,27 +16,27 @@ pub struct Search {
 }
 
 #[derive(Serialize)]
-pub struct Count {
-    pub query: Query,
+pub struct Count<'a> {
+    pub query: Query<'a>,
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Query {
-    Bool(QueryBool),
+pub enum Query<'a> {
+    Bool(QueryBool<'a>),
     Terms(QueryTerms),
     Match(QueryMatch),
     MatchPhrase(QueryMatch),
     MultiMatch(QueryMultiMatch),
-    FunctionScore(QueryFunctionScore),
+    FunctionScore(QueryFunctionScore<'a>),
 }
 
 #[serde_with::skip_serializing_none]
 #[derive(Default, Serialize)]
-pub struct QueryBool {
-    pub filter: Option<Vec<Query>>,
-    pub must: Option<Vec<Query>>,
-    pub should: Option<Vec<Query>>,
+pub struct QueryBool<'a> {
+    pub filter: Option<Vec<Query<'a>>>,
+    pub must: Option<Vec<Query<'a>>>,
+    pub should: Option<Vec<Query<'a>>>,
 }
 
 #[derive(Serialize)]
@@ -106,8 +106,8 @@ pub struct QueryMatchField {
 }
 
 #[derive(Serialize)]
-pub struct QueryFunctionScore {
-    pub query: Box<Query>,
+pub struct QueryFunctionScore<'a> {
+    pub query: &'a Query<'a>,
     pub functions: Vec<QueryFunctionScoreFunction>,
     pub boost_mode: BoostMode,
     pub score_mode: ScoreMode,
