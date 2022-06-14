@@ -41,6 +41,7 @@ pub struct Application {
 pub struct Search {
     pub url: String,
     pub cache_max_age: u32,
+    pub query_max_length: usize,
 }
 
 #[derive(Deserialize)]

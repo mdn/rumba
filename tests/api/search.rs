@@ -267,4 +267,19 @@ async fn test_elastic_error() -> Result<(), Error> {
     Ok(())
 }
 
-// query_too_big
+#[actix_rt::test]
+async fn test_query_too_big() -> Result<(), Error> {
+    let search = do_request(&format!(
+        "/api/v1/search?q={}&locale=en-US",
+        str::repeat("a", 201)
+    ))
+    .await;
+
+    assert!(search.status().is_client_error());
+    assert!(!search.headers().contains_key(header::CACHE_CONTROL));
+
+    let json = read_json(search).await;
+    assert!(json["errors"]["q"][0]["message"].is_string());
+    assert_eq!(json["errors"]["q"][0]["code"], "invalid");
+    Ok(())
+}

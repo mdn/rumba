@@ -12,7 +12,6 @@ use std::cmp::Ordering;
 use std::str::FromStr;
 
 // TODO: add retry logic from kuma
-// TODO: tests
 
 #[derive(Serialize)]
 struct SearchResponse {
@@ -91,6 +90,16 @@ impl FromStr for Params {
             key: e.path().to_string(),
             message: e.inner().to_string(),
         })?;
+
+        if params.q.len() > SETTINGS.search.query_max_length {
+            return Err(SearchError::Query {
+                key: "q".to_string(),
+                message: format!(
+                    "Ensure this value is less than or equal to {}.",
+                    SETTINGS.search.query_max_length
+                ),
+            });
+        }
 
         match params.page {
             x if x < 1 => {

@@ -22,3 +22,4 @@ subscriptions_limit_collections = 5
 [search]
 url = "ignored"
 cache_max_age = 43200
+query_max_length = 200
