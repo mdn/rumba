@@ -21,6 +21,8 @@ pub enum ApiError {
     MalformedUrl,
     #[error("Json error")]
     JsonProcessingError,
+    #[error("Invalid Bearer")]
+    InvalidBearer,
 }
 
 impl ApiError {
@@ -30,6 +32,7 @@ impl ApiError {
             Self::InvalidSession => "Invalid Session",
             Self::ServerError => "Server error",
             Self::DocumentNotFound => "Document not found",
+            Self::InvalidBearer => "Invalid bearer info",
             Self::MalformedUrl => "Malformed URL",
             Self::NotificationNotFound => "Notification not found",
             Self::JsonProcessingError => "Error processing JSON document",
@@ -51,6 +54,7 @@ impl ResponseError for ApiError {
             Self::InvalidSession => StatusCode::BAD_REQUEST,
             Self::ServerError => StatusCode::INTERNAL_SERVER_ERROR,
             Self::DocumentNotFound => StatusCode::NOT_FOUND,
+            Self::InvalidBearer => StatusCode::FORBIDDEN,
             Self::NotificationNotFound => StatusCode::NOT_FOUND,
             Self::MalformedUrl => StatusCode::BAD_REQUEST,
             Self::JsonProcessingError => StatusCode::INTERNAL_SERVER_ERROR,

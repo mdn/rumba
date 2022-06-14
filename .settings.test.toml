@@ -16,5 +16,6 @@ auth_cookie_key = "DUwIFZuUYzRhHPlhOm6DwTHSDUSyR5SyvZHIeHdx4DIanxm5/GD/4dqXROLvn
 
 [application]
 document_base_url = "http://localhost:4321"
+notifications_update_base_url = "http://localhost:4321/notifications/"
 subscriptions_limit_watched_items = 3
 subscriptions_limit_collections = 5
