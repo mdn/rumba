@@ -239,6 +239,32 @@ async fn test_suggestion() -> Result<(), Error> {
     Ok(())
 }
 
-// no results
-// elastic error
-// missing tests from django
+#[actix_rt::test]
+async fn test_no_results() -> Result<(), Error> {
+    let search = do_request("/api/v1/search?q=veryspecificquery&locale=en-US").await;
+
+    assert!(search.status().is_success());
+    assert_eq!(
+        search.headers().get(header::CACHE_CONTROL).unwrap(),
+        "max-age=43200"
+    );
+
+    let json = read_json(search).await;
+    assert_eq!(json["metadata"]["took_ms"], 98_i64);
+    assert_eq!(json["metadata"]["total"]["value"], 0_i64);
+    assert_eq!(json["metadata"]["total"]["relation"], "eq");
+    assert_eq!(json["documents"].as_array().unwrap().len(), 0);
+    Ok(())
+}
+
+#[actix_rt::test]
+async fn test_elastic_error() -> Result<(), Error> {
+    let search = do_request("/api/v1/search?q=closedindex&locale=en-US").await;
+
+    assert!(search.status().is_server_error());
+    assert!(!search.headers().contains_key(header::CACHE_CONTROL));
+
+    Ok(())
+}
+
+// query_too_big
