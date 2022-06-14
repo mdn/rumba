@@ -15,15 +15,3 @@ pub fn normalize_uri(input: &str) -> String {
     input.to_lowercase().trim().to_string()
 }
 
-pub static BROWSERS: Lazy<HashMap<String, BrowserEntry>> = Lazy::new(|| {
-    //Panic of not avaialble.
-    let file = File::open("static/browsers.json").unwrap();
-    let reader = BufReader::new(file);
-    let map = serde_json::from_reader(reader);
-    match map {
-        Ok(browsers) => browsers,
-        Err(err) => {
-            panic!("{:?}", err);
-        }
-    }
-});
