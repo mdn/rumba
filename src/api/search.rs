@@ -301,7 +301,7 @@ async fn do_search(
         Sort::Best => (
             None,
             elastic::Query::FunctionScore(elastic::QueryFunctionScore {
-                query: Box::new(subquery),
+                query: &subquery,
                 functions: vec![elastic::QueryFunctionScoreFunction::FieldValueFactor(
                     elastic::QueryFunctionScoreFunctionFieldValueFactor {
                         field: elastic::Field::Popularity,
