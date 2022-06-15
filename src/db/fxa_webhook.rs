@@ -5,11 +5,13 @@ use crate::db::types::FxaEvent;
 use crate::db::users::get_user_opt;
 use crate::db::{schema, Pool};
 use crate::fxa::LoginManager;
+use actix_rt::ArbiterHandle;
 use actix_web::web;
 use chrono::{DateTime, Utc};
 use diesel::insert_into;
 use diesel::prelude::*;
 use diesel::ExpressionMethods;
+use log::error;
 use serde_json::json;
 
 use super::types::{FxaEventStatus, Subscription};
@@ -50,8 +52,47 @@ pub async fn delete_profile_from_webhook(
     }
 }
 
+pub async fn update_profile(
+    pool: web::Data<Pool>,
+    id: i64,
+    user: UserQuery,
+    login_manager: web::Data<LoginManager>,
+) -> Result<(), DbError> {
+    let mut conn = pool.get()?;
+
+    match login_manager
+        .get_and_update_user_info_with_refresh_token(&pool, user.fxa_refresh_token.clone())
+        .await
+    {
+        Ok(_) => {
+            diesel::update(schema::webhook_events::table.filter(schema::webhook_events::id.eq(id)))
+                .set(schema::webhook_events::status.eq(FxaEventStatus::Processed))
+                .execute(&mut conn)?;
+            Ok(())
+        }
+        Err(e) => {
+            diesel::update(schema::webhook_events::table.filter(schema::webhook_events::id.eq(id)))
+                .set(schema::webhook_events::status.eq(FxaEventStatus::Failed))
+                .execute(&mut conn)?;
+            Err(e.into())
+        }
+    }
+}
+
+pub async fn run_update_profile(
+    pool: web::Data<Pool>,
+    id: i64,
+    user: UserQuery,
+    login_manager: web::Data<LoginManager>,
+) {
+    if let Err(e) = update_profile(pool, id, user, login_manager).await {
+        error!("Error updating profile from fxa webhook event: {}", e);
+    }
+}
+
 pub async fn update_profile_from_webhook(
     pool: web::Data<Pool>,
+    arbiter: web::Data<ArbiterHandle>,
     fxa_uid: String,
     login_manager: web::Data<LoginManager>,
     update: ProfileChange,
@@ -65,34 +106,20 @@ pub async fn update_profile_from_webhook(
         issue_time: issue_time.naive_utc(),
         typ: FxaEvent::ProfileChange,
         status: FxaEventStatus::Pending,
-        payload: serde_json::value::to_value(&update).unwrap(),
+        payload: serde_json::value::to_value(&update).unwrap_or_default(),
     };
     if let Some(user) = user {
         let id = insert_into(schema::webhook_events::table)
             .values(fxa_event)
             .returning(schema::webhook_events::id)
             .get_result::<i64>(&mut conn)?;
-        match login_manager
-            .get_and_update_user_info_with_refresh_token(&pool, user.fxa_refresh_token.clone())
-            .await
-        {
-            Ok(_) => {
-                diesel::update(
-                    schema::webhook_events::table.filter(schema::webhook_events::id.eq(id)),
-                )
-                .set(schema::webhook_events::status.eq(FxaEventStatus::Processed))
-                .execute(&mut conn)?;
-                Ok(())
-            }
-            Err(e) => {
-                diesel::update(
-                    schema::webhook_events::table.filter(schema::webhook_events::id.eq(id)),
-                )
+        if !arbiter.spawn(run_update_profile(pool, id, user, login_manager)) {
+            error!("Arbiter did trying to update profile");
+            diesel::update(schema::webhook_events::table.filter(schema::webhook_events::id.eq(id)))
                 .set(schema::webhook_events::status.eq(FxaEventStatus::Failed))
                 .execute(&mut conn)?;
-                Err(e.into())
-            }
         }
+        Ok(())
     } else {
         fxa_event.status = FxaEventStatus::Ignored;
         insert_into(schema::webhook_events::table)

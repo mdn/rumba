@@ -16,7 +16,10 @@ use uuid::Uuid;
 
 use crate::{
     api::error::FxaWebhookError,
-    db::fxa_webhook::{delete_profile_from_webhook, update_profile_from_webhook},
+    db::{
+        error::DbError,
+        fxa_webhook::{delete_profile_from_webhook, update_profile_from_webhook},
+    },
     helpers::{deserialize_string_or_vec, serde_utc_milliseconds, serde_utc_seconds_f},
 };
 use crate::{
@@ -116,61 +119,40 @@ async fn process_event(
     conn_pool: web::Data<Pool>,
     payload: FxASetTokenPayload,
     login_manager: web::Data<LoginManager>,
-) {
+    arbiter: web::Data<ArbiterHandle>,
+) -> Result<(), DbError> {
     if let Some(profile_change) = payload.events.profile_change {
-        match update_profile_from_webhook(
+        update_profile_from_webhook(
             conn_pool.clone(),
+            arbiter,
             payload.fxa_uid.clone(),
             login_manager,
             profile_change,
             payload.issue_time,
         )
-        .await
-        {
-            Ok(_) => debug!("processed profile change event for: {}", &payload.fxa_uid),
-            Err(_) => error!(
-                "error processing profile change event for: {}",
-                &payload.fxa_uid
-            ),
-        }
+        .await?;
     }
     if let Some(subscription_state_change) = payload.events.subscription_state_change {
-        match update_subscription_state_from_webhook(
+        update_subscription_state_from_webhook(
             conn_pool.clone(),
             payload.fxa_uid.clone(),
             subscription_state_change,
             payload.issue_time,
         )
-        .await
-        {
-            Ok(_) => debug!(
-                "processed subscription state change event for: {}",
-                &payload.fxa_uid
-            ),
-            Err(_) => error!(
-                "error processing subscription state change event for: {}",
-                &payload.fxa_uid
-            ),
-        }
+        .await?;
     }
     if payload.events.delete_user.is_some() {
-        match delete_profile_from_webhook(
+        delete_profile_from_webhook(
             conn_pool.clone(),
             payload.fxa_uid.clone(),
             payload.issue_time,
         )
-        .await
-        {
-            Ok(_) => debug!("processed delete user event for: {}", &payload.fxa_uid),
-            Err(_) => error!(
-                "error processing delete user event for: {}",
-                &payload.fxa_uid
-            ),
-        }
+        .await?;
     }
     if payload.events.password_change.is_some() {
-        debug!("skipped password change event for {}", payload.fxa_uid)
+        debug!("skipped password change event for {}", payload.fxa_uid);
     }
+    Ok(())
 }
 
 async fn set_token(
@@ -184,10 +166,13 @@ async fn set_token(
         match verify(auth.token(), key) {
             Ok(payload) => {
                 debug!("spawning processing job");
-                if !arbiter.spawn(process_event(pool, payload, login_manager)) {
-                    warn!("Unable two spwan event processor.")
-                }
-                return HttpResponse::Ok().finish();
+                return match process_event(pool, payload, login_manager, arbiter).await {
+                    Ok(_) => HttpResponse::Ok().finish(),
+                    Err(e) => {
+                        error!("Error processing webhook event: {}", e);
+                        HttpResponse::BadRequest().finish()
+                    }
+                };
             }
             Err(e) => warn!("Error validating SET: {}", e),
         }
