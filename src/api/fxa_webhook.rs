@@ -3,7 +3,6 @@ use std::collections::BTreeMap;
 use actix_rt::ArbiterHandle;
 use actix_web::{dev::HttpServiceFactory, web, HttpRequest, HttpResponse};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
-use anyhow::anyhow;
 use base64;
 use chrono::{DateTime, Utc};
 use log::{debug, error, warn};
@@ -16,6 +15,7 @@ use serde_json::Value;
 use uuid::Uuid;
 
 use crate::{
+    api::error::FxaWebhookError,
     db::fxa_webhook::{delete_profile_from_webhook, update_profile_from_webhook},
     helpers::{deserialize_string_or_vec, serde_utc_milliseconds, serde_utc_seconds_f},
 };
@@ -87,11 +87,11 @@ pub struct FxASetTokenHeader {
     pub alogrithm: CoreJwsSigningAlgorithm,
 }
 
-fn verify(raw_token: &str, key: &CoreJsonWebKey) -> Result<FxASetTokenPayload, anyhow::Error> {
+fn verify(raw_token: &str, key: &CoreJsonWebKey) -> Result<FxASetTokenPayload, FxaWebhookError> {
     let parts = raw_token.split('.').collect::<Vec<_>>();
 
     if parts.len() != 3 {
-        return Err(anyhow!("doom"));
+        return Err(FxaWebhookError::InvalidSET);
     }
 
     let header_json = base64::decode_config(parts[0], base64::URL_SAFE_NO_PAD)?;
@@ -180,19 +180,21 @@ async fn set_token(
     arbiter: web::Data<ArbiterHandle>,
     pool: web::Data<Pool>,
 ) -> HttpResponse {
-    let key = login_manager.metadata.jwks().keys().get(0).unwrap();
-    match verify(auth.token(), key) {
-        Ok(payload) => {
-            debug!("spawning processing job");
-            if !arbiter.spawn(process_event(pool, payload, login_manager)) {
-                warn!("Unable two spwan event processor.")
+    for key in login_manager.metadata.jwks().keys() {
+        match verify(auth.token(), key) {
+            Ok(payload) => {
+                debug!("spawning processing job");
+                if !arbiter.spawn(process_event(pool, payload, login_manager)) {
+                    warn!("Unable two spwan event processor.")
+                }
+                return HttpResponse::Ok().finish();
             }
+            Err(e) => warn!("Error validating SET: {}", e),
         }
-        Err(e) => warn!("Error processing event: {}", e),
     }
-    HttpResponse::Ok().finish()
+    HttpResponse::BadRequest().finish()
 }
 
-pub fn healthz_app() -> impl HttpServiceFactory {
+pub fn fxa_webhook_app() -> impl HttpServiceFactory {
     web::scope("/events").service(web::resource("/fxa").to(set_token))
 }

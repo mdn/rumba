@@ -5,6 +5,7 @@ use crate::helpers::app::test_app_with_login;
 use crate::helpers::db::reset;
 use crate::helpers::http_client::TestHttpClient;
 use crate::helpers::read_json;
+use actix_http::StatusCode;
 use actix_web::test;
 use anyhow::anyhow;
 use anyhow::Error;
@@ -33,7 +34,8 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
         "Subscription type wrong"
     );
 
-    logged_in_client.trigger_webhook(set_token).await;
+    let res = logged_in_client.trigger_webhook(set_token).await;
+    assert!(res.response().status().is_success());
 
     let mut tries = 10;
     while tries > 0 {
@@ -80,7 +82,8 @@ async fn subscription_state_change_to_core_test() -> Result<(), Error> {
         "Subscription type wrong"
     );
 
-    logged_in_client.trigger_webhook(set_token).await;
+    let res = logged_in_client.trigger_webhook(set_token).await;
+    assert!(res.response().status().is_success());
 
     let mut tries = 10;
     while tries > 0 {
@@ -124,7 +127,8 @@ async fn delete_user_test() -> Result<(), Error> {
     assert_eq!(json["geo"]["country"], "Iceland");
     assert_eq!(json["is_authenticated"], true);
 
-    logged_in_client.trigger_webhook(set_token).await;
+    let res = logged_in_client.trigger_webhook(set_token).await;
+    assert!(res.response().status().is_success());
 
     let mut tries = 10;
     while tries > 0 {
@@ -143,6 +147,31 @@ async fn delete_user_test() -> Result<(), Error> {
         tries -= 1;
     }
     Err(anyhow!("Changes not applied after 10ms"))
+}
+
+#[actix_rt::test]
+#[stubr::mock(port = 4321)]
+async fn invalid_set_test() -> Result<(), Error> {
+    let set_token = include_str!("../data/set_tokens/set_token_delete_user_invalid.txt");
+    reset()?;
+    let app = test_app_with_login().await?;
+    let service = test::init_service(app).await;
+    let mut logged_in_client = TestHttpClient::new(service).await;
+    let whoami = logged_in_client
+        .get(
+            "/api/v1/whoami",
+            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+        )
+        .await;
+    assert!(whoami.response().status().is_success());
+    let json = read_json(whoami).await;
+    assert_eq!(json["geo"]["country"], "Iceland");
+    assert_eq!(json["is_authenticated"], true);
+
+    let res = logged_in_client.trigger_webhook(set_token).await;
+
+    assert_eq!(res.response().status(), StatusCode::BAD_REQUEST);
+    Ok(())
 }
 
 #[actix_rt::test]
@@ -185,7 +214,8 @@ async fn change_profile_test() -> Result<(), Error> {
         },
     );
 
-    logged_in_client.trigger_webhook(set_token).await;
+    let res = logged_in_client.trigger_webhook(set_token).await;
+    assert!(res.response().status().is_success());
 
     let mut tries = 10;
     while tries > 0 {
