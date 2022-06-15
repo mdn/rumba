@@ -44,14 +44,11 @@ pub enum Locale {
     Serialize,
 )]
 #[DieselExistingType = "FxaEventStatusType"]
+#[serde(rename_all = "snake_case")]
 pub enum FxaEventStatus {
-    #[serde(rename = "processed")]
     Processed,
-    #[serde(rename = "ignored")]
     Ignored,
-    #[serde(rename = "pending")]
     Pending,
-    #[serde(rename = "failed")]
     Failed,
 }
 
@@ -68,16 +65,12 @@ pub enum FxaEventStatus {
     Serialize,
 )]
 #[DieselExistingType = "FxaEventType"]
+#[serde(rename_all = "snake_case")]
 pub enum FxaEvent {
-    #[serde(rename = "delete_user")]
     DeleteUser,
-    #[serde(rename = "password_change")]
     PasswordChange,
-    #[serde(rename = "profile_change")]
     ProfileChange,
-    #[serde(rename = "subscription_state_change")]
     SubscriptionStateChange,
-    #[serde(rename = "unknown")]
     Unknown,
 }
 

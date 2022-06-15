@@ -84,7 +84,7 @@ pub struct FxASetTokenPayload {
 #[derive(Deserialize, Debug, Clone)]
 pub struct FxASetTokenHeader {
     #[serde(rename = "alg")]
-    pub alogrithm: CoreJwsSigningAlgorithm,
+    pub algorithm: CoreJwsSigningAlgorithm,
 }
 
 fn verify(raw_token: &str, key: &CoreJsonWebKey) -> Result<FxASetTokenPayload, FxaWebhookError> {
@@ -103,7 +103,7 @@ fn verify(raw_token: &str, key: &CoreJsonWebKey) -> Result<FxASetTokenPayload, F
     let signature = base64::decode_config(parts[2], base64::URL_SAFE_NO_PAD)?;
 
     let signing_input = format!("{}.{}", parts[0], parts[1]);
-    key.verify_signature(&header.alogrithm, signing_input.as_bytes(), &signature)?;
+    key.verify_signature(&header.algorithm, signing_input.as_bytes(), &signature)?;
     Ok(payload)
 }
 

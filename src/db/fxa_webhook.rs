@@ -49,6 +49,7 @@ pub async fn delete_profile_from_webhook(
         }
     }
 }
+
 pub async fn update_profile_from_webhook(
     pool: web::Data<Pool>,
     fxa_uid: String,
@@ -100,6 +101,7 @@ pub async fn update_profile_from_webhook(
         Ok(())
     }
 }
+
 pub async fn update_subscription_state_from_webhook(
     pool: web::Data<Pool>,
     fxa_uid: String,
@@ -134,9 +136,10 @@ pub async fn update_subscription_state_from_webhook(
                 .values(fxa_event)
                 .returning(schema::webhook_events::id)
                 .get_result::<i64>(&mut conn)?;
-            let subscription: Subscription = match update.capabilities.first() {
-                Some(c) => Subscription::from(*c),
-                None => Subscription::Core,
+            let subscription: Subscription = match (update.is_active, update.capabilities.first()) {
+                (false, _) => Subscription::Core,
+                (true, Some(c)) => Subscription::from(*c),
+                (true, None) => Subscription::Core,
             };
             match diesel::update(schema::users::table.filter(schema::users::id.eq(user.id)))
                 .set(schema::users::subscription_type.eq(subscription))

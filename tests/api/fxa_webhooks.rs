@@ -100,9 +100,23 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
 
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
-async fn subscription_state_change_to_core_test() -> Result<(), Error> {
+async fn subscription_state_change_to_core_test_empty_subscription() -> Result<(), Error> {
     let set_token =
         include_str!("../data/set_tokens/set_token_subscription_state_change_to_core.txt");
+    subscription_state_change_to_core_test(set_token).await
+
+}
+
+#[actix_rt::test]
+#[stubr::mock(port = 4321)]
+async fn subscription_state_change_to_core_test_inactive() -> Result<(), Error> {
+    let set_token =
+        include_str!("../data/set_tokens/set_token_subscription_state_change_to_core_inactive.txt");
+    subscription_state_change_to_core_test(set_token).await
+
+}
+
+async fn subscription_state_change_to_core_test(set_token: &str) -> Result<(), Error> {
     reset()?;
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
