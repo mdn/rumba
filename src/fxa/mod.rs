@@ -201,6 +201,7 @@ impl LoginManager {
         let res = self
             .login_client
             .exchange_refresh_token(&RefreshToken::new(refresh_token.to_string()))
+            .add_extra_param("ttl", "300")
             .add_scope(Scope::new(SETTINGS.auth.scopes.clone()))
             .request_async(async_http_client)
             .await
