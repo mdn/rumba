@@ -174,9 +174,21 @@ pub struct IdQuery {
     id: i64,
 }
 
-#[derive(Insertable, Queryable, AsChangeset)]
+#[derive(Insertable)]
 #[diesel(table_name = webhook_events)]
-pub struct WebHooksEvent {
+pub struct WebHooksEventInsert {
+    pub fxa_uid: String,
+    pub change_time: Option<NaiveDateTime>,
+    pub issue_time: NaiveDateTime,
+    pub typ: FxaEvent,
+    pub status: FxaEventStatus,
+    pub payload: Value,
+}
+
+#[derive(Queryable, AsChangeset)]
+#[diesel(table_name = webhook_events)]
+pub struct WebHooksEventQuery {
+    pub id: i64,
     pub fxa_uid: String,
     pub change_time: Option<NaiveDateTime>,
     pub issue_time: NaiveDateTime,

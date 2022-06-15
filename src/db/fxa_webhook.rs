@@ -1,15 +1,15 @@
 use crate::api::fxa_webhook::{ProfileChange, SubscriptionStateChange};
 use crate::db::error::DbError;
-use crate::db::model::{UserQuery, WebHooksEvent};
+use crate::db::model::{UserQuery, WebHooksEventInsert};
 use crate::db::types::FxaEvent;
 use crate::db::users::get_user_opt;
 use crate::db::{schema, Pool};
-use crate::diesel::ExpressionMethods;
 use crate::fxa::LoginManager;
 use actix_web::web;
 use chrono::{DateTime, Utc};
 use diesel::insert_into;
 use diesel::prelude::*;
+use diesel::ExpressionMethods;
 use serde_json::json;
 
 use super::types::{FxaEventStatus, Subscription};
@@ -19,7 +19,7 @@ pub async fn delete_profile_from_webhook(
     fxa_uid: String,
     issue_time: DateTime<Utc>,
 ) -> Result<(), DbError> {
-    let fxa_event = WebHooksEvent {
+    let fxa_event = WebHooksEventInsert {
         fxa_uid: fxa_uid.clone(),
         change_time: None,
         issue_time: issue_time.naive_utc(),
@@ -58,7 +58,7 @@ pub async fn update_profile_from_webhook(
 ) -> Result<(), DbError> {
     let mut conn = pool.get()?;
     let user: Option<UserQuery> = get_user_opt(&mut conn, &fxa_uid).await?;
-    let mut fxa_event = WebHooksEvent {
+    let mut fxa_event = WebHooksEventInsert {
         fxa_uid,
         change_time: None,
         issue_time: issue_time.naive_utc(),
@@ -108,7 +108,7 @@ pub async fn update_subscription_state_from_webhook(
 ) -> Result<(), DbError> {
     let mut conn = pool.get()?;
     let user: Option<UserQuery> = get_user_opt(&mut conn, &fxa_uid).await?;
-    let mut fxa_event = WebHooksEvent {
+    let mut fxa_event = WebHooksEventInsert {
         fxa_uid,
         change_time: Some(update.change_time.naive_utc()),
         issue_time: issue_time.naive_utc(),

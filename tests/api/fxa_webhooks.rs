@@ -2,6 +2,7 @@ use std::thread;
 use std::time::Duration;
 
 use crate::helpers::app::test_app_with_login;
+use crate::helpers::db::get_pool;
 use crate::helpers::db::reset;
 use crate::helpers::http_client::TestHttpClient;
 use crate::helpers::read_json;
@@ -9,7 +10,39 @@ use actix_http::StatusCode;
 use actix_web::test;
 use anyhow::anyhow;
 use anyhow::Error;
+use diesel::prelude::*;
+use rumba::db::model::WebHooksEventQuery;
+use rumba::db::schema;
+use rumba::db::types::FxaEvent;
+use rumba::db::types::FxaEventStatus;
 use stubr::{Config, Stubr};
+
+const ONE_MS: std::time::Duration = Duration::from_millis(1);
+
+fn assert_last_fxa_webhook_with_retry(
+    fxa_uid: &str,
+    typ: FxaEvent,
+    status: FxaEventStatus,
+) -> Result<(), Error> {
+    let pool = get_pool();
+    let mut conn = pool.get()?;
+
+    let mut tries = 10;
+    while tries > 0 {
+        thread::sleep(ONE_MS);
+        if let Some(row) = schema::webhook_events::table
+            .first::<WebHooksEventQuery>(&mut conn)
+            .optional()?
+        {
+            if fxa_uid == row.fxa_uid && typ == row.typ && status == row.status {
+                return Ok(());
+            }
+        }
+        tries -= 1;
+        thread::sleep(ONE_MS);
+    }
+    Err(anyhow!("Timed out check fxa webhook row"))
+}
 
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
@@ -39,8 +72,7 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
 
     let mut tries = 10;
     while tries > 0 {
-        let one_ms = Duration::from_millis(1);
-        thread::sleep(one_ms);
+        thread::sleep(ONE_MS);
 
         let whoami = logged_in_client
             .get(
@@ -56,6 +88,13 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
         }
         tries -= 1;
     }
+
+    assert_last_fxa_webhook_with_retry(
+        "TEST_SUB",
+        FxaEvent::SubscriptionStateChange,
+        FxaEventStatus::Processed,
+    )?;
+
     Err(anyhow!("Changes not applied after 10ms"))
 }
 
@@ -87,8 +126,7 @@ async fn subscription_state_change_to_core_test() -> Result<(), Error> {
 
     let mut tries = 10;
     while tries > 0 {
-        let one_ms = Duration::from_millis(1);
-        thread::sleep(one_ms);
+        thread::sleep(ONE_MS);
 
         let whoami = logged_in_client
             .get(
@@ -105,6 +143,13 @@ async fn subscription_state_change_to_core_test() -> Result<(), Error> {
         }
         tries -= 1;
     }
+
+    assert_last_fxa_webhook_with_retry(
+        "TEST_SUB",
+        FxaEvent::SubscriptionStateChange,
+        FxaEventStatus::Processed,
+    )?;
+
     Err(anyhow!("Changes not applied after 10ms"))
 }
 
@@ -132,8 +177,7 @@ async fn delete_user_test() -> Result<(), Error> {
 
     let mut tries = 10;
     while tries > 0 {
-        let one_ms = Duration::from_millis(1);
-        thread::sleep(one_ms);
+        thread::sleep(ONE_MS);
 
         let whoami = logged_in_client
             .get(
@@ -146,6 +190,13 @@ async fn delete_user_test() -> Result<(), Error> {
         }
         tries -= 1;
     }
+
+    assert_last_fxa_webhook_with_retry(
+        "TEST_SUB",
+        FxaEvent::DeleteUser,
+        FxaEventStatus::Processed,
+    )?;
+
     Err(anyhow!("Changes not applied after 10ms"))
 }
 
@@ -171,6 +222,7 @@ async fn invalid_set_test() -> Result<(), Error> {
     let res = logged_in_client.trigger_webhook(set_token).await;
 
     assert_eq!(res.response().status(), StatusCode::BAD_REQUEST);
+
     Ok(())
 }
 
@@ -219,9 +271,6 @@ async fn change_profile_test() -> Result<(), Error> {
 
     let mut tries = 10;
     while tries > 0 {
-        let one_ms = Duration::from_millis(1);
-        thread::sleep(one_ms);
-
         let whoami = logged_in_client
             .get(
                 "/api/v1/whoami",
@@ -236,5 +285,22 @@ async fn change_profile_test() -> Result<(), Error> {
         }
         tries -= 1;
     }
+
+    assert_last_fxa_webhook_with_retry(
+        "TEST_SUB",
+        FxaEvent::ProfileChange,
+        FxaEventStatus::Processed,
+    )?;
+
+    let res = logged_in_client.trigger_webhook(set_token).await;
+    assert!(res.response().status().is_success());
+
+    // The second event must be ignored.
+    assert_last_fxa_webhook_with_retry(
+        "TEST_SUB",
+        FxaEvent::ProfileChange,
+        FxaEventStatus::Ignored,
+    )?;
+
     Err(anyhow!("Changes not applied after 10ms"))
 }

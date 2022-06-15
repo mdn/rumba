@@ -136,12 +136,12 @@ diesel::table! {
 
     webhook_events (id) {
         id -> Int8,
-        fxa_uid -> Nullable<Varchar>,
+        fxa_uid -> Varchar,
         change_time -> Nullable<Timestamp>,
         issue_time -> Timestamp,
         typ -> FxaEventType,
         status -> FxaEventStatusType,
-        payload -> Nullable<Jsonb>,
+        payload -> Jsonb,
     }
 }
 
