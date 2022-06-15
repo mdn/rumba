@@ -1,7 +1,6 @@
 pub mod error;
 pub mod types;
 use actix_web::web;
-use anyhow::anyhow;
 use openidconnect::core::CoreTokenResponse;
 use openidconnect::core::{
     CoreAuthenticationFlow, CoreClient, CoreGenderClaim, CoreProviderMetadata,
@@ -12,7 +11,7 @@ use openidconnect::http::StatusCode;
 use openidconnect::reqwest::async_http_client;
 use openidconnect::{
     AdditionalClaims, AuthorizationCode, ClientId, ClientSecret, CsrfToken, HttpRequest, IssuerUrl,
-    Nonce, RedirectUrl, Scope, UserInfoError,
+    Nonce, RedirectUrl, Scope,
 };
 use openidconnect::{OAuth2TokenResponse, RefreshToken, UserInfoClaims};
 use serde::{Deserialize, Serialize};
@@ -22,7 +21,6 @@ use url::Url;
 use crate::db::users::create_or_update_user;
 use crate::db::Pool;
 use crate::fxa::error::FxaError;
-use anyhow::Error;
 
 use crate::settings::SETTINGS;
 
@@ -132,7 +130,7 @@ impl LoginManager {
         let _id_token = token_response
             .extra_fields()
             .id_token()
-            .ok_or_else(|| anyhow!("Server did not return an ID token"))?;
+            .ok_or(FxaError::IdTokenMissing)?;
         // let claims = id_token.claims(&self.login_client.id_token_verifier(), &nonce)?;
 
         let refresh_token = token_response
@@ -149,7 +147,10 @@ impl LoginManager {
         Ok(uid)
     }
 
-    pub async fn get_fxa_user(&self, token_response: CoreTokenResponse) -> Result<FxAUser, Error> {
+    pub async fn get_fxa_user(
+        &self,
+        token_response: CoreTokenResponse,
+    ) -> Result<FxAUser, FxaError> {
         let (auth_header, auth_value) = (
             AUTHORIZATION,
             HeaderValue::from_str(&format!(
@@ -169,15 +170,9 @@ impl LoginManager {
             .collect(),
             body: Vec::new(),
         };
-        let http_response = async_http_client(req)
-            .await
-            .map_err(UserInfoError::Request)?;
+        let http_response = async_http_client(req).await?;
         if http_response.status_code != StatusCode::OK {
-            return Err(anyhow!(
-                "{}, {}",
-                http_response.status_code,
-                "unexpected HTTP status code".to_string(),
-            ));
+            return Err(FxaError::UserInfoBadStatus(http_response.status_code));
         }
         Ok(serde_json::from_slice(&http_response.body)?)
 
