@@ -32,14 +32,6 @@ pub struct UserQuery {
     pub subscription_type: Option<Subscription>,
 }
 
-#[derive(Queryable, AsChangeset)]
-#[diesel(table_name = users)]
-pub struct UserUpdateFromWebhook {
-    pub fxa_uid: String,
-    pub email: Option<String>,
-    pub subscription_type: Option<Option<Subscription>>,
-}
-
 #[derive(Queryable, Clone)]
 pub struct CollectionAndDocumentQuery {
     pub id: i64,
