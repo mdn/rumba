@@ -104,7 +104,6 @@ async fn subscription_state_change_to_core_test_empty_subscription() -> Result<(
     let set_token =
         include_str!("../data/set_tokens/set_token_subscription_state_change_to_core.txt");
     subscription_state_change_to_core_test(set_token).await
-
 }
 
 #[actix_rt::test]
@@ -113,7 +112,6 @@ async fn subscription_state_change_to_core_test_inactive() -> Result<(), Error> 
     let set_token =
         include_str!("../data/set_tokens/set_token_subscription_state_change_to_core_inactive.txt");
     subscription_state_change_to_core_test(set_token).await
-
 }
 
 async fn subscription_state_change_to_core_test(set_token: &str) -> Result<(), Error> {
