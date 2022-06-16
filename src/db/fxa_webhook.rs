@@ -40,7 +40,7 @@ pub async fn delete_profile_from_webhook(
         fxa_uid: fxa_uid.clone(),
         change_time: None,
         issue_time: issue_time.naive_utc(),
-        typ: FxaEvent::SubscriptionStateChange,
+        typ: FxaEvent::DeleteUser,
         status: FxaEventStatus::Pending,
         payload: json!({}),
     };

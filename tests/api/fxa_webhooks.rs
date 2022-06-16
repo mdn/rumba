@@ -29,11 +29,8 @@ fn assert_last_fxa_webhook_with_retry(
 
     let mut tries = 10;
     while tries > 0 {
-        thread::sleep(ONE_MS);
-        if let Some(row) = schema::webhook_events::table
-            .first::<WebHookEventQuery>(&mut conn)
-            .optional()?
-        {
+        let rows = schema::webhook_events::table.get_results::<WebHookEventQuery>(&mut conn)?;
+        if let Some(row) = rows.last() {
             if fxa_uid == row.fxa_uid && typ == row.typ && status == row.status {
                 return Ok(());
             }
@@ -70,24 +67,16 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
     let res = logged_in_client.trigger_webhook(set_token).await;
     assert!(res.response().status().is_success());
 
-    let mut tries = 10;
-    while tries > 0 {
-        thread::sleep(ONE_MS);
-
-        let whoami = logged_in_client
-            .get(
-                "/api/v1/whoami",
-                Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-            )
-            .await;
-        assert!(whoami.response().status().is_success());
-        let json = read_json(whoami).await;
-        assert_eq!(json["username"], "TEST_SUB");
-        if json["subscription_type"] == "mdn_plus_10m" {
-            return Ok(());
-        }
-        tries -= 1;
-    }
+    let whoami = logged_in_client
+        .get(
+            "/api/v1/whoami",
+            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+        )
+        .await;
+    assert!(whoami.response().status().is_success());
+    let json = read_json(whoami).await;
+    assert_eq!(json["username"], "TEST_SUB");
+    assert_eq!(json["subscription_type"], "mdn_plus_10m");
 
     assert_last_fxa_webhook_with_retry(
         "TEST_SUB",
@@ -95,7 +84,17 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
         FxaEventStatus::Processed,
     )?;
 
-    Err(anyhow!("Changes not applied after 10ms"))
+    let res = logged_in_client.trigger_webhook(set_token).await;
+    assert!(res.response().status().is_success());
+
+    // The second event must be ignored.
+    assert_last_fxa_webhook_with_retry(
+        "TEST_SUB",
+        FxaEvent::SubscriptionStateChange,
+        FxaEventStatus::Ignored,
+    )?;
+
+    Ok(())
 }
 
 #[actix_rt::test]
@@ -136,25 +135,17 @@ async fn subscription_state_change_to_core_test(set_token: &str) -> Result<(), E
     let res = logged_in_client.trigger_webhook(set_token).await;
     assert!(res.response().status().is_success());
 
-    let mut tries = 10;
-    while tries > 0 {
-        thread::sleep(ONE_MS);
-
-        let whoami = logged_in_client
-            .get(
-                "/api/v1/whoami",
-                Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-            )
-            .await;
-        assert!(whoami.response().status().is_success());
-        let json = read_json(whoami).await;
-        assert_eq!(json["username"], "TEST_SUB");
-        if json["subscription_type"] == "core" {
-            assert_eq!(json["is_subscriber"], false);
-            return Ok(());
-        }
-        tries -= 1;
-    }
+    let whoami = logged_in_client
+        .get(
+            "/api/v1/whoami",
+            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+        )
+        .await;
+    assert!(whoami.response().status().is_success());
+    let json = read_json(whoami).await;
+    assert_eq!(json["username"], "TEST_SUB");
+    assert_eq!(json["subscription_type"], "core");
+    assert_eq!(json["is_subscriber"], false);
 
     assert_last_fxa_webhook_with_retry(
         "TEST_SUB",
@@ -162,7 +153,7 @@ async fn subscription_state_change_to_core_test(set_token: &str) -> Result<(), E
         FxaEventStatus::Processed,
     )?;
 
-    Err(anyhow!("Changes not applied after 10ms"))
+    Ok(())
 }
 
 #[actix_rt::test]
@@ -187,21 +178,13 @@ async fn delete_user_test() -> Result<(), Error> {
     let res = logged_in_client.trigger_webhook(set_token).await;
     assert!(res.response().status().is_success());
 
-    let mut tries = 10;
-    while tries > 0 {
-        thread::sleep(ONE_MS);
-
-        let whoami = logged_in_client
-            .get(
-                "/api/v1/whoami",
-                Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-            )
-            .await;
-        if !whoami.response().status().is_success() {
-            return Ok(());
-        }
-        tries -= 1;
-    }
+    let whoami = logged_in_client
+        .get(
+            "/api/v1/whoami",
+            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+        )
+        .await;
+    assert!(!whoami.response().status().is_success());
 
     assert_last_fxa_webhook_with_retry(
         "TEST_SUB",
@@ -209,7 +192,7 @@ async fn delete_user_test() -> Result<(), Error> {
         FxaEventStatus::Processed,
     )?;
 
-    Err(anyhow!("Changes not applied after 10ms"))
+    Ok(())
 }
 
 #[actix_rt::test]
@@ -299,9 +282,14 @@ async fn change_profile_test() -> Result<(), Error> {
         let json = read_json(whoami).await;
         assert_eq!(json["username"], "TEST_SUB");
         if json["email"] == "foo@bar.com" {
-            return Ok(());
+            break;
         }
+        thread::sleep(ONE_MS);
         tries -= 1;
+    }
+
+    if tries == 0 {
+        return Err(anyhow!("Changes not applied after 10ms"));
     }
 
     assert_last_fxa_webhook_with_retry(
@@ -310,15 +298,5 @@ async fn change_profile_test() -> Result<(), Error> {
         FxaEventStatus::Processed,
     )?;
 
-    let res = logged_in_client.trigger_webhook(set_token).await;
-    assert!(res.response().status().is_success());
-
-    // The second event must be ignored.
-    assert_last_fxa_webhook_with_retry(
-        "TEST_SUB",
-        FxaEvent::ProfileChange,
-        FxaEventStatus::Ignored,
-    )?;
-
-    Err(anyhow!("Changes not applied after 10ms"))
+    Ok(())
 }

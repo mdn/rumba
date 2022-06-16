@@ -177,7 +177,7 @@ pub struct WebHookEventInsert {
     pub payload: Value,
 }
 
-#[derive(Queryable, AsChangeset)]
+#[derive(Queryable, AsChangeset, Debug)]
 #[diesel(table_name = webhook_events)]
 pub struct WebHookEventQuery {
     pub id: i64,
