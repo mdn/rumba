@@ -17,7 +17,7 @@ use rumba::db::types::FxaEvent;
 use rumba::db::types::FxaEventStatus;
 use stubr::{Config, Stubr};
 
-const ONE_MS: std::time::Duration = Duration::from_millis(1);
+const TEN_MS: std::time::Duration = Duration::from_millis(10);
 
 fn assert_last_fxa_webhook_with_retry(
     fxa_uid: &str,
@@ -36,7 +36,7 @@ fn assert_last_fxa_webhook_with_retry(
             }
         }
         tries -= 1;
-        thread::sleep(ONE_MS);
+        thread::sleep(TEN_MS);
     }
     Err(anyhow!("Timed out check fxa webhook row"))
 }
@@ -284,12 +284,12 @@ async fn change_profile_test() -> Result<(), Error> {
         if json["email"] == "foo@bar.com" {
             break;
         }
-        thread::sleep(ONE_MS);
+        thread::sleep(TEN_MS);
         tries -= 1;
     }
 
     if tries == 0 {
-        return Err(anyhow!("Changes not applied after 10ms"));
+        return Err(anyhow!("Changes not applied after 100ms"));
     }
 
     assert_last_fxa_webhook_with_retry(
