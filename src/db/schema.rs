@@ -90,6 +90,18 @@ diesel::table! {
 diesel::table! {
     use diesel::sql_types::*;
     use crate::db::types::*;
+
+    raw_webhook_events_tokens (id) {
+        id -> Int8,
+        received_at -> Timestamp,
+        token -> Text,
+        error -> Text,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
     use super::sql_types::Locale;
 
     settings (id) {
@@ -159,6 +171,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     documents,
     notification_data,
     notifications,
+    raw_webhook_events_tokens,
     settings,
     users,
     watched_items,

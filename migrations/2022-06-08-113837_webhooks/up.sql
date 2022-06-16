@@ -12,3 +12,10 @@ CREATE TABLE webhook_events (
     status      fxa_event_status_type NOT NULL,
     payload     JSONB NOT NULL
 );
+
+CREATE TABLE raw_webhook_events_tokens (
+    id          BIGSERIAL PRIMARY KEY,
+    received_at TIMESTAMP NOT NULL DEFAULT now(),
+    token       TEXT NOT NULL,
+    error       TEXT NOT NULL
+);

@@ -18,7 +18,9 @@ use crate::{
     api::error::FxaWebhookError,
     db::{
         error::DbError,
-        fxa_webhook::{delete_profile_from_webhook, update_profile_from_webhook},
+        fxa_webhook::{
+            delete_profile_from_webhook, log_failed_webhook_event, update_profile_from_webhook,
+        },
     },
     helpers::{deserialize_string_or_vec, serde_utc_milliseconds, serde_utc_seconds_f},
 };
@@ -162,26 +164,43 @@ async fn set_token(
     arbiter: web::Data<ArbiterHandle>,
     pool: web::Data<Pool>,
 ) -> HttpResponse {
+    let mut error = None;
+    let mut fail = false;
     for key in login_manager.metadata.jwks().keys() {
         match verify(auth.token(), key) {
             Ok(payload) => {
                 let fxa_uid = payload.fxa_uid.clone();
                 debug!("spawning processing job");
-                return match process_event(pool, payload, login_manager, arbiter).await {
+                return match process_event(pool.clone(), payload, login_manager, arbiter).await {
                     Ok(_) => HttpResponse::Ok().finish(),
                     Err(e) => {
                         // This means either our db connections has issues or our worker thread.
                         // Sending a non 200 to trigger a retry.
-                        error!("Error processing webhook event for {}: {}", fxa_uid, e);
-                        HttpResponse::ServiceUnavailable().finish()
+                        fail = true;
+                        error = Some(format!(
+                            "Error processing webhook event for {}: {}",
+                            fxa_uid, e
+                        ));
+                        break;
                     }
                 };
             }
             Err(e) => warn!("Error validating SET: {}", e),
         }
     }
-    error!("Error processing webhook event: no matching key");
-    HttpResponse::Ok().finish()
+
+    // if we didn't set an error but end up here we failed to validate.
+    let error = error.unwrap_or_else(|| "Unable to validate SET".to_string());
+    error!("{}", error);
+    if let Err(e) = log_failed_webhook_event(pool, auth.token(), &error) {
+        error!("Unable to log failed_webhook_event: {}", e);
+    }
+
+    if fail {
+        HttpResponse::ServiceUnavailable().finish()
+    } else {
+        HttpResponse::Ok().finish()
+    }
 }
 
 pub fn fxa_webhook_app() -> impl HttpServiceFactory {

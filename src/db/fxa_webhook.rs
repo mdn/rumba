@@ -1,6 +1,6 @@
 use crate::api::fxa_webhook::{ProfileChange, SubscriptionStateChange};
 use crate::db::error::DbError;
-use crate::db::model::{UserQuery, WebHooksEventInsert};
+use crate::db::model::{RawWebHookEventsTokenInsert, UserQuery, WebHookEventInsert};
 use crate::db::types::FxaEvent;
 use crate::db::users::get_user_opt;
 use crate::db::{schema, Pool};
@@ -16,12 +16,27 @@ use serde_json::json;
 
 use super::types::{FxaEventStatus, Subscription};
 
+pub fn log_failed_webhook_event(
+    pool: web::Data<Pool>,
+    token: &str,
+    error: &str,
+) -> Result<(), DbError> {
+    let mut conn = pool.get()?;
+    insert_into(schema::raw_webhook_events_tokens::table)
+        .values(RawWebHookEventsTokenInsert {
+            token: token.to_string(),
+            error: error.to_string(),
+        })
+        .execute(&mut conn)?;
+    Ok(())
+}
+
 pub async fn delete_profile_from_webhook(
     pool: web::Data<Pool>,
     fxa_uid: String,
     issue_time: DateTime<Utc>,
 ) -> Result<(), DbError> {
-    let fxa_event = WebHooksEventInsert {
+    let fxa_event = WebHookEventInsert {
         fxa_uid: fxa_uid.clone(),
         change_time: None,
         issue_time: issue_time.naive_utc(),
@@ -100,7 +115,7 @@ pub async fn update_profile_from_webhook(
 ) -> Result<(), DbError> {
     let mut conn = pool.get()?;
     let user: Option<UserQuery> = get_user_opt(&mut conn, &fxa_uid).await?;
-    let mut fxa_event = WebHooksEventInsert {
+    let mut fxa_event = WebHookEventInsert {
         fxa_uid,
         change_time: None,
         issue_time: issue_time.naive_utc(),
@@ -114,7 +129,7 @@ pub async fn update_profile_from_webhook(
             .returning(schema::webhook_events::id)
             .get_result::<i64>(&mut conn)?;
         if !arbiter.spawn(run_update_profile(pool, id, user, login_manager)) {
-            error!("Arbiter did trying to update profile");
+            error!("Arbiter did fail trying to update profile");
             diesel::update(schema::webhook_events::table.filter(schema::webhook_events::id.eq(id)))
                 .set(schema::webhook_events::status.eq(FxaEventStatus::Failed))
                 .execute(&mut conn)?;
@@ -137,7 +152,7 @@ pub async fn update_subscription_state_from_webhook(
 ) -> Result<(), DbError> {
     let mut conn = pool.get()?;
     let user: Option<UserQuery> = get_user_opt(&mut conn, &fxa_uid).await?;
-    let mut fxa_event = WebHooksEventInsert {
+    let mut fxa_event = WebHookEventInsert {
         fxa_uid,
         change_time: Some(update.change_time.naive_utc()),
         issue_time: issue_time.naive_utc(),

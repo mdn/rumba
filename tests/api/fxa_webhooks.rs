@@ -11,7 +11,7 @@ use actix_web::test;
 use anyhow::anyhow;
 use anyhow::Error;
 use diesel::prelude::*;
-use rumba::db::model::WebHooksEventQuery;
+use rumba::db::model::WebHookEventQuery;
 use rumba::db::schema;
 use rumba::db::types::FxaEvent;
 use rumba::db::types::FxaEventStatus;
@@ -31,7 +31,7 @@ fn assert_last_fxa_webhook_with_retry(
     while tries > 0 {
         thread::sleep(ONE_MS);
         if let Some(row) = schema::webhook_events::table
-            .first::<WebHooksEventQuery>(&mut conn)
+            .first::<WebHookEventQuery>(&mut conn)
             .optional()?
         {
             if fxa_uid == row.fxa_uid && typ == row.typ && status == row.status {
@@ -233,8 +233,14 @@ async fn invalid_set_test() -> Result<(), Error> {
 
     let res = logged_in_client.trigger_webhook(set_token).await;
 
-    assert_eq!(res.response().status(), StatusCode::BAD_REQUEST);
+    assert_eq!(res.response().status(), StatusCode::OK);
 
+    let pool = get_pool();
+    let mut conn = pool.get()?;
+    let failed_token = schema::raw_webhook_events_tokens::table
+        .select(schema::raw_webhook_events_tokens::token)
+        .first::<String>(&mut conn)?;
+    assert_eq!(failed_token, set_token);
     Ok(())
 }
 

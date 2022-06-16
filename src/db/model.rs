@@ -168,7 +168,7 @@ pub struct IdQuery {
 
 #[derive(Insertable)]
 #[diesel(table_name = webhook_events)]
-pub struct WebHooksEventInsert {
+pub struct WebHookEventInsert {
     pub fxa_uid: String,
     pub change_time: Option<NaiveDateTime>,
     pub issue_time: NaiveDateTime,
@@ -179,7 +179,7 @@ pub struct WebHooksEventInsert {
 
 #[derive(Queryable, AsChangeset)]
 #[diesel(table_name = webhook_events)]
-pub struct WebHooksEventQuery {
+pub struct WebHookEventQuery {
     pub id: i64,
     pub fxa_uid: String,
     pub change_time: Option<NaiveDateTime>,
@@ -187,4 +187,11 @@ pub struct WebHooksEventQuery {
     pub typ: FxaEvent,
     pub status: FxaEventStatus,
     pub payload: Value,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = raw_webhook_events_tokens)]
+pub struct RawWebHookEventsTokenInsert {
+    pub token: String,
+    pub error: String,
 }
