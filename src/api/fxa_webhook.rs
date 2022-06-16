@@ -165,19 +165,23 @@ async fn set_token(
     for key in login_manager.metadata.jwks().keys() {
         match verify(auth.token(), key) {
             Ok(payload) => {
+                let fxa_uid = payload.fxa_uid.clone();
                 debug!("spawning processing job");
                 return match process_event(pool, payload, login_manager, arbiter).await {
                     Ok(_) => HttpResponse::Ok().finish(),
                     Err(e) => {
-                        error!("Error processing webhook event: {}", e);
-                        HttpResponse::BadRequest().finish()
+                        // This means either our db connections has issues or our worker thread.
+                        // Sending a non 200 to trigger a retry.
+                        error!("Error processing webhook event for {}: {}", fxa_uid, e);
+                        HttpResponse::ServiceUnavailable().finish()
                     }
                 };
             }
             Err(e) => warn!("Error validating SET: {}", e),
         }
     }
-    HttpResponse::BadRequest().finish()
+    error!("Error processing webhook event: no matching key");
+    HttpResponse::Ok().finish()
 }
 
 pub fn fxa_webhook_app() -> impl HttpServiceFactory {
