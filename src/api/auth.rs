@@ -1,8 +1,8 @@
 use actix_identity::Identity;
 use actix_session::SessionLength;
 use actix_session::{storage::CookieSessionStore, Session, SessionMiddleware};
-use actix_web::cookie::SameSite;
 use actix_web::cookie::time::Duration;
+use actix_web::cookie::SameSite;
 use actix_web::{
     cookie::Key, dev::HttpServiceFactory, http, web, Error, HttpRequest, HttpResponse,
 };
