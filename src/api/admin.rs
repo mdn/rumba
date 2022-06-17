@@ -13,7 +13,7 @@ use db::notifications::{create_notification_data, create_notifications_for_users
 use regex::Regex;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::{json};
+use serde_json::json;
 use std::collections::HashMap;
 use url::Url;
 
@@ -273,7 +273,7 @@ pub async fn process_notification_update(
                 };
                 bcd_notifications.push(BcdNotification {
                     path: &change.path,
-                    text: format!("compatibility subfeature{} added", plural),
+                    text: format!("Compatibility subfeature{} added", plural),
                     data: event,
                 })
             }
@@ -324,6 +324,7 @@ pub async fn process_notification_update(
 
             if let Ok(document) = doc {
                 suffix.reverse();
+                println!("Sufix is {:?}", suffix);
                 let title = suffix.join(".");
                 let notification_data_id = create_notification_data(
                     &mut conn_pool,
@@ -409,9 +410,9 @@ fn group_by_browsers<'a>(
     val.iter().for_each(|item| {
         //Normalize browser name
         let browser_name = if is_preview_feature {
-            item.browser.display_name()
-        } else {
             item.browser.preview_name()
+        } else {
+            item.browser.display_name()
         };
         let update_string = format!("{} {}", browser_name, item.version);
         // Group by 'browser group' and update string.

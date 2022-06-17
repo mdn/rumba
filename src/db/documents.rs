@@ -46,7 +46,7 @@ pub async fn get_document_by_path(
     path: String,
 ) -> Result<DocumentQuery, DbError> {
     let doc = schema::documents::table
-        .filter(schema::documents::paths.nullable().contains(vec![path]))
+        .filter(schema::documents::paths.nullable().eq(vec![path]))
         .select((
             schema::documents::id,
             schema::documents::created_at,
