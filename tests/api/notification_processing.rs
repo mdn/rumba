@@ -37,7 +37,7 @@ async fn test_receive_notification_subscribed_top_level() -> Result<(), Error> {
         "path": "this.gets.ignored",
     });
     let mut res = logged_in_client
-        .post(&base_url, None, Some(PostPayload::Json(payload)))
+        .post(base_url, None, Some(PostPayload::Json(payload)))
         .await;
     assert_eq!(res.response().status(), 200);
 
@@ -46,7 +46,7 @@ async fn test_receive_notification_subscribed_top_level() -> Result<(), Error> {
     payload = json!({"filename" : "bcd-changes-test.json"});
     res = logged_in_client
         .post(
-            &base_url,
+            base_url,
             Some(vec![("Authorization", "Bearer TEST_TOKEN")]),
             Some(PostPayload::Json(payload)),
         )
@@ -55,10 +55,10 @@ async fn test_receive_notification_subscribed_top_level() -> Result<(), Error> {
 
     //Then they should receive them as API/Navigator is the parent
     base_url = "/api/v1/plus/notifications/";
-    res = logged_in_client.get(&base_url, None).await;
+    res = logged_in_client.get(base_url, None).await;
     assert_eq!(res.response().status(), 200);
 
-    let mut notifications_json = read_json(res).await;
+    let notifications_json = read_json(res).await;
     let notifications = notifications_json["items"].as_array().unwrap();
     assert_eq!(notifications.len(), 4);
     //Should all be 'Compat'
@@ -72,7 +72,7 @@ async fn test_receive_notification_subscribed_top_level() -> Result<(), Error> {
 
     let mut sorted: Vec<Value> = notifications
         .iter()
-        .map(|val| val.clone())
+        .map(|val| val.to_owned())
         .collect::<Vec<Value>>();
     sorted.sort_by(|a, b| {
         a["text"]
@@ -123,7 +123,7 @@ async fn test_receive_notification_subscribed_top_level() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_receive_notification_subscribed_specific_path() -> Result<(), Error> {
-    reset();
+    reset()?;
     let _stubr = Stubr::start_blocking_with(
         vec![
             "tests/stubs",
@@ -148,7 +148,7 @@ async fn test_receive_notification_subscribed_specific_path() -> Result<(), Erro
         "path": "this.gets.ignored",
     });
     let mut res = logged_in_client
-        .post(&base_url, None, Some(PostPayload::Json(payload)))
+        .post(base_url, None, Some(PostPayload::Json(payload)))
         .await;
     assert_eq!(res.response().status(), 200);
 
@@ -157,7 +157,7 @@ async fn test_receive_notification_subscribed_specific_path() -> Result<(), Erro
     payload = json!({"filename" : "bcd-changes-test.json"});
     res = logged_in_client
         .post(
-            &base_url,
+            base_url,
             Some(vec![("Authorization", "Bearer TEST_TOKEN")]),
             Some(PostPayload::Json(payload)),
         )
@@ -166,7 +166,7 @@ async fn test_receive_notification_subscribed_specific_path() -> Result<(), Erro
 
     //Then they should receive a stable added and a content notification
     base_url = "/api/v1/plus/notifications/";
-    res = logged_in_client.get(&base_url, None).await;
+    res = logged_in_client.get(base_url, None).await;
     assert_eq!(res.response().status(), 200);
 
     let notifications_json = read_json(res).await;
@@ -175,7 +175,7 @@ async fn test_receive_notification_subscribed_specific_path() -> Result<(), Erro
 
     let mut sorted: Vec<Value> = notifications
         .iter()
-        .map(|val| val.clone())
+        .map(|val| val.to_owned())
         .collect::<Vec<Value>>();
     sorted.sort_by(|a, b| {
         a["text"]
@@ -184,7 +184,10 @@ async fn test_receive_notification_subscribed_specific_path() -> Result<(), Erro
             .to_lowercase()
             .cmp(&b["text"].as_str().unwrap().to_lowercase())
     });
-    assert_eq!(sorted[0]["text"].as_str().unwrap(), "Page updated (see PR!https://github.com/mdn/content/pull/1337!mdn/content!!)");
+    assert_eq!(
+        sorted[0]["text"].as_str().unwrap(),
+        "Page updated (see PR!https://github.com/mdn/content/pull/1337!mdn/content!!)"
+    );
     assert_eq!(sorted[0]["title"].as_str().unwrap(), "Navigator.vibrate()");
     // Content added
     assert_eq!(
@@ -193,11 +196,10 @@ async fn test_receive_notification_subscribed_specific_path() -> Result<(), Erro
     );
     assert_eq!(sorted[1]["title"].as_str().unwrap(), "vibrate");
     // Stable added
-      assert_eq!(
+    assert_eq!(
         sorted[1]["text"].as_str().unwrap(),
         "Supported in Chrome 102, Chrome Android 102 and WebView Android 102"
     );
-
 
     Ok(())
 }

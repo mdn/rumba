@@ -3,12 +3,11 @@ use crate::db::schema;
 
 use crate::diesel::NullableExpressionMethods;
 use diesel::expression_methods::ExpressionMethods;
-use diesel::expression_methods::PgArrayExpressionMethods;
 
 use crate::db::error::DbError;
 use diesel::r2d2::ConnectionManager;
+use diesel::RunQueryDsl;
 use diesel::{insert_into, PgConnection};
-use diesel::{update, RunQueryDsl};
 use diesel::{QueryDsl, QueryResult};
 use r2d2::PooledConnection;
 

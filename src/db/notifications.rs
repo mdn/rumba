@@ -202,7 +202,7 @@ pub async fn create_notifications_for_users(
         ))
         .filter(schema::watched_items::document_id.eq(document_id));
 
-    let res = insert_into(schema::notifications::table)
+    let _res = insert_into(schema::notifications::table)
         .values(select)
         .into_columns((
             schema::notifications::user_id,
