@@ -50,7 +50,7 @@ async fn main() -> anyhow::Result<()> {
             .app_data(Data::clone(&elastic_client));
         add_services(app)
     })
-    .bind(("0.0.0.0", SETTINGS.server.port))?
+    .bind((SETTINGS.server.host.as_str(), SETTINGS.server.port))?
     .run()
     .await?;
     Ok(())

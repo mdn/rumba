@@ -2,6 +2,7 @@
 uri = "postgres://postgres:mdn@127.0.0.1/mdn "
 
 [server]
+host = "localhost"
 port = 8000
 
 [auth]

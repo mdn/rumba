@@ -83,6 +83,6 @@ pub fn auth_service() -> impl HttpServiceFactory {
             .build(),
         )
         .service(web::resource("/authenticate").route(web::get().to(login)))
-        .service(web::resource("/logout").route(web::post().to(logout)))
+        .service(web::resource("/logout/").route(web::post().to(logout)))
         .service(web::resource("/callback/").route(web::get().to(callback)))
 }
