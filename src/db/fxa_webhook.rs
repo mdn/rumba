@@ -11,7 +11,7 @@ use chrono::{DateTime, Utc};
 use diesel::insert_into;
 use diesel::prelude::*;
 use diesel::ExpressionMethods;
-use log::error;
+use log::{debug, error};
 use serde_json::json;
 
 use super::types::{FxaEventStatus, Subscription};
@@ -128,6 +128,7 @@ pub async fn update_profile_from_webhook(
             .values(fxa_event)
             .returning(schema::webhook_events::id)
             .get_result::<i64>(&mut conn)?;
+        debug!("spawning processing job");
         if !arbiter.spawn(run_update_profile(pool, id, user, login_manager)) {
             error!("Arbiter did fail trying to update profile");
             diesel::update(schema::webhook_events::table.filter(schema::webhook_events::id.eq(id)))
@@ -172,8 +173,8 @@ pub async fn update_subscription_state_from_webhook(
             )
             .count()
             .first::<i64>(&mut conn)?
-            == 0;
-        if ignore {
+            != 0;
+        if !ignore {
             let id = insert_into(schema::webhook_events::table)
                 .values(fxa_event)
                 .returning(schema::webhook_events::id)

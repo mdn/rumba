@@ -170,7 +170,6 @@ async fn set_token(
         match verify(auth.token(), key) {
             Ok(payload) => {
                 let fxa_uid = payload.fxa_uid.clone();
-                debug!("spawning processing job");
                 return match process_event(pool.clone(), payload, login_manager, arbiter).await {
                     Ok(_) => HttpResponse::Ok().finish(),
                     Err(e) => {

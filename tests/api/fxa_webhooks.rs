@@ -19,7 +19,7 @@ use stubr::{Config, Stubr};
 
 const TEN_MS: std::time::Duration = Duration::from_millis(10);
 
-fn assert_last_fxa_webhook_with_retry(
+fn assert_last_fxa_webhook(
     fxa_uid: &str,
     typ: FxaEvent,
     status: FxaEventStatus,
@@ -27,13 +27,30 @@ fn assert_last_fxa_webhook_with_retry(
     let pool = get_pool();
     let mut conn = pool.get()?;
 
+    let rows = schema::webhook_events::table.get_results::<WebHookEventQuery>(&mut conn)?;
+    if let Some(row) = rows.last() {
+        if fxa_uid == row.fxa_uid && typ == row.typ && status == row.status {
+            return Ok(());
+        }
+    }
+
+    Err(anyhow!(
+        "no row matching: {}, {:?}, {:?}",
+        fxa_uid,
+        typ,
+        status
+    ))
+}
+
+fn assert_last_fxa_webhook_with_retry(
+    fxa_uid: &str,
+    typ: FxaEvent,
+    status: FxaEventStatus,
+) -> Result<(), Error> {
     let mut tries = 10;
     while tries > 0 {
-        let rows = schema::webhook_events::table.get_results::<WebHookEventQuery>(&mut conn)?;
-        if let Some(row) = rows.last() {
-            if fxa_uid == row.fxa_uid && typ == row.typ && status == row.status {
-                return Ok(());
-            }
+        if assert_last_fxa_webhook(fxa_uid, typ, status).is_ok() {
+            return Ok(());
         }
         tries -= 1;
         thread::sleep(TEN_MS);
@@ -78,7 +95,7 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
     assert_eq!(json["username"], "TEST_SUB");
     assert_eq!(json["subscription_type"], "mdn_plus_10m");
 
-    assert_last_fxa_webhook_with_retry(
+    assert_last_fxa_webhook(
         "TEST_SUB",
         FxaEvent::SubscriptionStateChange,
         FxaEventStatus::Processed,
@@ -88,7 +105,7 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
     assert!(res.response().status().is_success());
 
     // The second event must be ignored.
-    assert_last_fxa_webhook_with_retry(
+    assert_last_fxa_webhook(
         "TEST_SUB",
         FxaEvent::SubscriptionStateChange,
         FxaEventStatus::Ignored,
@@ -147,7 +164,7 @@ async fn subscription_state_change_to_core_test(set_token: &str) -> Result<(), E
     assert_eq!(json["subscription_type"], "core");
     assert_eq!(json["is_subscriber"], false);
 
-    assert_last_fxa_webhook_with_retry(
+    assert_last_fxa_webhook(
         "TEST_SUB",
         FxaEvent::SubscriptionStateChange,
         FxaEventStatus::Processed,
@@ -186,11 +203,7 @@ async fn delete_user_test() -> Result<(), Error> {
         .await;
     assert!(!whoami.response().status().is_success());
 
-    assert_last_fxa_webhook_with_retry(
-        "TEST_SUB",
-        FxaEvent::DeleteUser,
-        FxaEventStatus::Processed,
-    )?;
+    assert_last_fxa_webhook("TEST_SUB", FxaEvent::DeleteUser, FxaEventStatus::Processed)?;
 
     Ok(())
 }
