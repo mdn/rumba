@@ -26,6 +26,7 @@ pub struct NotificationQueryParams {
     pub limit: Option<u32>,
     pub offset: Option<u32>,
     pub starred: Option<bool>,
+    pub unread: Option<bool>,
     pub q: Option<String>,
     pub sort: Option<Sorting>,
     pub filter_type: Option<NotificationType>,

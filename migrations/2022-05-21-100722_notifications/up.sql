@@ -6,7 +6,7 @@ CREATE TABLE notification_data
     created_at   TIMESTAMP NOT NULL DEFAULT now(),
     updated_at   TIMESTAMP NOT NULL DEFAULT now(),
     text         TEXT      NOT NULL,
-    url          TEXT      NOT NULL UNIQUE,
+    url          TEXT      NOT NULL,
     data         JSONB,
     title        TEXT NOT NULL,
     type         notification_type NOT NULL,

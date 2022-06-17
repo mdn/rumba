@@ -1,17 +1,19 @@
+use crate::db;
+use crate::db::model::NotificationDataInsert;
 use crate::db::Pool;
 use crate::settings::SETTINGS;
-use crate::util::BROWSERS;
+use crate::util::normalize_uri;
 use actix_web::dev::{HttpServiceFactory, ServiceRequest};
 use actix_web::http::StatusCode;
 use actix_web::web::{Data, Json};
-use actix_web::{dev::Service as _, web, Error, HttpRequest, HttpResponse};
-use actix_web_httpauth::extractors::basic::BasicAuth;
+use actix_web::{web, Error, HttpRequest, HttpResponse};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
-use actix_web_httpauth::extractors::AuthenticationError;
 use actix_web_httpauth::middleware::HttpAuthentication;
-use once_cell::sync::Lazy;
+use db::notifications::{create_notification_data, create_notifications_for_users};
+use regex::Regex;
 use reqwest::Client;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use serde_json::{json};
 use std::collections::HashMap;
 use url::Url;
 
@@ -22,7 +24,7 @@ pub struct UpdateNotificationsRequest {
     pub filename: String,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum Browser {
     #[serde(rename = "chrome")]
     Chrome,
@@ -51,7 +53,7 @@ pub enum Browser {
     #[serde(rename = "samsunginternet_android")]
     SamsungInternetAndroid,
     #[serde(rename = "webview_android")]
-    WebviewAnroid,
+    WebviewAndroid,
 }
 
 impl Browser {
@@ -70,7 +72,7 @@ impl Browser {
             Browser::Safari => "Safari",
             Browser::SafariIos => "Safari on iOS",
             Browser::SamsungInternetAndroid => "Samsung Internet",
-            Browser::WebviewAnroid => "WebView Android",
+            Browser::WebviewAndroid => "WebView Android",
         }
     }
     pub fn preview_name(&self) -> &str {
@@ -88,7 +90,7 @@ impl Browser {
             Browser::Safari => "TP",
             Browser::SafariIos => "Safari on iOS",
             Browser::SamsungInternetAndroid => "Samsung Internet",
-            Browser::WebviewAnroid => "WebView Android",
+            Browser::WebviewAndroid => "WebView Android",
         }
     }
 
@@ -107,12 +109,12 @@ impl Browser {
             Browser::Safari => "safari",
             Browser::SafariIos => "safari",
             Browser::SamsungInternetAndroid => "samsunginternet_android",
-            Browser::WebviewAnroid => "chrome",
+            Browser::WebviewAndroid => "chrome",
         }
     }
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "event")]
 pub enum DocumentChangeEvent {
     #[serde(rename = "added_stable")]
@@ -124,7 +126,7 @@ pub enum DocumentChangeEvent {
     #[serde(rename = "added_nonnull")]
     AddedNonNull(AddedNonNullEvent),
     #[serde(rename = "content_updated")]
-    ContentUpdated,
+    ContentUpdated(ContentUpdatedEvent),
     #[serde(rename = "removed_stable")]
     RemovedStable(AddRemoveStableEvent),
     #[serde(other)]
@@ -137,45 +139,51 @@ impl DocumentChangeEvent {
             DocumentChangeEvent::AddedStable(_) => "Supported in",
             DocumentChangeEvent::AddedPreview(_) => "In development in",
             DocumentChangeEvent::AddedSubFeatures(_) => "",
-            DocumentChangeEvent::AddedNonNull(_) => "",
-            DocumentChangeEvent::ContentUpdated => "",
+            DocumentChangeEvent::AddedNonNull(_) => "More complete compatibility data added for",
+            DocumentChangeEvent::ContentUpdated(_) => "",
             DocumentChangeEvent::RemovedStable(_) => "Removed from",
             DocumentChangeEvent::Unknown => "",
         }
     }
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct AddedNonNullEvent {
-    path: String,
-    support_changes: Vec<SupportChange>,
+    pub path: String,
+    pub support_changes: Vec<SupportChange>,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct ContentUpdatedEvent {
+    pub page_url: String,
+    pub pr_url: String,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct SupportChange {
-    browser: String,
-    support: Vec<Support>,
+    pub browser: BrowserItem,
+    pub support: Vec<Support>,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Support {
     version_added: Option<String>,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct AddedSubFeaturesEvent {
     path: String,
     subfeatures: Vec<String>,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct AddedPreviewEvent {
     path: String,
     description: Option<String>,
     browsers: Vec<BrowserItem>,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct AddRemoveStableEvent {
     path: String,
     description: Option<String>,
@@ -185,23 +193,18 @@ pub struct AddRemoveStableEvent {
     status: Option<FeatureStatus>,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct FeatureStatus {
     experimental: bool,
     standard_track: bool,
     deprecated: bool,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct BrowserItem {
     browser: Browser,
     version: String,
     notes: Option<Vec<String>>,
-}
-
-#[derive(Deserialize, Debug, Clone)]
-pub struct Changes {
-    changes: Vec<DocumentChangeEvent>,
 }
 
 pub async fn validator(
@@ -215,58 +218,174 @@ pub async fn validator(
     }
 }
 #[derive(Debug)]
-pub struct BcdNotification {
-    path: String,
+pub struct BcdNotification<'a> {
+    path: &'a str,
     text: String,
-    data: DocumentChangeEvent,
+    data: &'a DocumentChangeEvent,
+}
+
+#[derive(Debug)]
+pub struct ContentNotification<'a> {
+    pub url: String,
+    pub text: String,
+    pub data: &'a DocumentChangeEvent,
 }
 
 pub async fn process_notification_update(
-    req: HttpRequest,
+    _req: HttpRequest,
     pool: web::Data<Pool>,
     client: web::Data<Client>,
     body: web::Json<UpdateNotificationsRequest>,
 ) -> Result<HttpResponse, ApiError> {
     let changes_json = get_update_json(client, &body).await?;
     let mut bcd_notifications: Vec<BcdNotification> = vec![];
+    let mut content_notifications: Vec<ContentNotification> = vec![];
+
     changes_json.iter().for_each(|event| {
-        match (event) {
-            DocumentChangeEvent::RemovedStable(val) | DocumentChangeEvent::AddedStable(val) => {
+        match event {
+            DocumentChangeEvent::RemovedStable(change)
+            | DocumentChangeEvent::AddedStable(change) => {
                 let mut browsers_grouped_by_type: HashMap<&str, Vec<String>> = HashMap::new();
-                group_by_browsers(&val.browsers, &mut browsers_grouped_by_type, false);
-                let mut notifications = generate_bcd_notifications(event, &val.path, browsers_grouped_by_type);
+                group_by_browsers(&change.browsers, &mut browsers_grouped_by_type, false);
+                let mut notifications = generate_bcd_notifications_for_event(
+                    event,
+                    &change.path,
+                    browsers_grouped_by_type,
+                );
                 bcd_notifications.append(&mut notifications);
             }
-            DocumentChangeEvent::AddedPreview(val) => {
+            DocumentChangeEvent::AddedPreview(change) => {
                 let mut browsers_grouped_by_type: HashMap<&str, Vec<String>> = HashMap::new();
-                group_by_browsers(&val.browsers, &mut browsers_grouped_by_type, true);
+                group_by_browsers(&change.browsers, &mut browsers_grouped_by_type, true);
                 //Create one BCD update per browser group
-                let mut new_notifications = &mut generate_bcd_notifications(event, &val.path, browsers_grouped_by_type);
-                bcd_notifications.append(new_notifications);
+                let mut new_notifications = generate_bcd_notifications_for_event(
+                    event,
+                    &change.path,
+                    browsers_grouped_by_type,
+                );
+                bcd_notifications.append(&mut new_notifications);
             }
-            DocumentChangeEvent::AddedSubFeatures(_) => {}
-            DocumentChangeEvent::AddedNonNull(_) => {}
-            DocumentChangeEvent::ContentUpdated => {}
-            (_) => {}
-            DocumentChangeEvent::Unknown => {}
+            DocumentChangeEvent::AddedSubFeatures(change) => {
+                let plural = if change.subfeatures.len() > 1 {
+                    "'s"
+                } else {
+                    ""
+                };
+                bcd_notifications.push(BcdNotification {
+                    path: &change.path,
+                    text: format!("compatibility subfeature{} added", plural),
+                    data: event,
+                })
+            }
+            DocumentChangeEvent::AddedNonNull(change) => {
+                let mut grouped_browsers = HashMap::new();
+                let browsers: Vec<BrowserItem> = change
+                    .support_changes
+                    .iter()
+                    .map(|val| val.browser.to_owned())
+                    .collect();
+                group_by_browsers(&browsers[..], &mut grouped_browsers, true);
+                let mut new_notifications =
+                    generate_bcd_notifications_for_event(event, &change.path, grouped_browsers);
+                bcd_notifications.append(&mut new_notifications);
+            }
+            DocumentChangeEvent::ContentUpdated(change) => {
+                let re = Regex::new(r"^https://github.com/(.+)/pull/(\d+)$").unwrap();
+                let regex = re.captures(change.pr_url.as_str());
+                let text = match regex {
+                    Some(capture_groups) if capture_groups.len() > 1 => format!(
+                        "Page updated (see PR!{}!{}!!)",
+                        &capture_groups[0], &capture_groups[1]
+                    ),
+                    _ => "Page updated".to_string(),
+                };
+                content_notifications.push(ContentNotification {
+                    url: normalize_uri(change.page_url.as_str()),
+                    text,
+                    data: event,
+                });
+            }
+            DocumentChangeEvent::Unknown => {
+                //Probably log an error here
+                log::error!("Unknown event type received {:?}", event)
+            }
         }
     });
-    println!("{:?}", bcd_notifications);
-    println!("{:?}", changes_json);
+    let mut conn_pool = pool.get()?;
+    for notification in bcd_notifications.iter() {
+        let mut parts: Vec<&str> = notification.path.split('.').collect();
+        let mut suffix: Vec<&str> = Vec::with_capacity(parts.len());
+
+        while !parts.is_empty() {
+            let subpath = parts.join(".");
+            println!("Subpath is {}", subpath);
+            let doc = db::documents::get_document_by_path(&mut conn_pool, subpath).await;
+            suffix.push(parts.pop().unwrap());
+
+            if let Ok(document) = doc {
+                suffix.reverse();
+                let title = suffix.join(".");
+                let notification_data_id = create_notification_data(
+                    &mut conn_pool,
+                    NotificationDataInsert {
+                        text: notification.text.to_owned(),
+                        url: document.uri,
+                        data: Some(json!(notification.data)),
+                        title,
+                        type_: db::types::NotificationTypeEnum::Compat,
+                        document_id: document.id,
+                    },
+                )
+                .await?;
+                create_notifications_for_users(&mut conn_pool, document.id, notification_data_id)
+                    .await?;
+            } else {
+                continue;
+            }
+        }
+    }
+
+    for notification in content_notifications.iter() {
+        let doc =
+            db::documents::get_document_by_url(&mut conn_pool, notification.url.as_str()).await;
+
+        if let Ok(document) = doc {
+            let notification_data_id = create_notification_data(
+                &mut conn_pool,
+                NotificationDataInsert {
+                    text: notification.text.to_owned(),
+                    url: document.uri,
+                    data: Some(json!(notification.data)),
+                    title: document.title,
+                    type_: db::types::NotificationTypeEnum::Content,
+                    document_id: document.id,
+                },
+            )
+            .await?;
+            create_notifications_for_users(&mut conn_pool, document.id, notification_data_id)
+                .await?;
+        } else {
+            continue;
+        }
+    }
+
     Ok(HttpResponse::Ok().finish())
 }
 
-fn generate_bcd_notifications(event: &DocumentChangeEvent, path: &String, mut browsers_grouped_by_type: HashMap<&str, Vec<String>>) -> Vec<BcdNotification> {
-    let mut bcd_notifications = vec!();
+fn generate_bcd_notifications_for_event<'a>(
+    event: &'a DocumentChangeEvent,
+    path: &'a str,
+    mut browsers_grouped_by_type: HashMap<&str, Vec<String>>,
+) -> Vec<BcdNotification<'a>> {
+    let mut bcd_notifications = vec![];
     //Create one BCD update per browser group
     for (_, browser_strings) in browsers_grouped_by_type.iter_mut() {
         let browser_string = get_pluralized_string(browser_strings);
-        let update_string: String =
-            format!("{} {}", event.get_event_copy(), browser_string);
+        let update_string: String = format!("{} {}", event.get_event_copy(), browser_string);
         bcd_notifications.push(BcdNotification {
-            path: path.to_owned(),
-            text: update_string.to_owned(),
-            data: event.to_owned(),
+            path,
+            text: update_string,
+            data: event,
         });
     }
     bcd_notifications
@@ -283,8 +402,8 @@ fn get_pluralized_string(browser_strings: &mut Vec<String>) -> String {
 }
 
 fn group_by_browsers<'a>(
-    val: &'a Vec<BrowserItem>,
-    mut browser_groups: &mut HashMap<&'a str, Vec<String>>,
+    val: &'a [BrowserItem],
+    browser_groups: &mut HashMap<&'a str, Vec<String>>,
     is_preview_feature: bool,
 ) {
     val.iter().for_each(|item| {

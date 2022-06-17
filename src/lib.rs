@@ -11,6 +11,7 @@ pub mod util;
 
 #[macro_use]
 extern crate diesel;
+extern crate core;
 
 pub fn add_services<T>(app: App<T>) -> App<T>
 where

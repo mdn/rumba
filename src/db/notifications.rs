@@ -2,6 +2,7 @@ use chrono::NaiveDateTime;
 use diesel::dsl::not;
 use diesel::r2d2::ConnectionManager;
 
+use diesel::sql_types::{BigSerial, Bool};
 use r2d2::PooledConnection;
 
 use super::error::DbError;
@@ -41,6 +42,13 @@ pub async fn get_notifications(
         notifications_query = notifications_query
             .filter(schema::notification_data::text.ilike(format!("%{}%", query)))
             .or_filter(schema::notification_data::title.ilike(format!("%{}%", query)))
+    }
+
+    if let Some(unread) = query.unread {
+        notifications_query = notifications_query.filter(schema::notifications::read.eq(!unread))
+    }
+    if let Some(starred) = query.starred {
+        notifications_query = notifications_query.filter(schema::notifications::starred.eq(starred))
     }
 
     notifications_query = match query.sort {
@@ -178,6 +186,33 @@ pub async fn create_notification(
         .values(&to_create)
         .returning(schema::notifications::id)
         .get_result(pool)
+}
+
+pub async fn create_notifications_for_users(
+    pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
+    document_id: i64,
+    notification_data_id: i64,
+) -> QueryResult<i64> {
+    let select = schema::watched_items::table
+        .select((
+            schema::watched_items::user_id,
+            false.into_sql::<Bool>(),
+            false.into_sql::<Bool>(),
+            notification_data_id.into_sql::<BigSerial>(),
+        ))
+        .filter(schema::watched_items::document_id.eq(document_id));
+
+    let res = insert_into(schema::notifications::table)
+        .values(select)
+        .into_columns((
+            schema::notifications::user_id,
+            schema::notifications::starred,
+            schema::notifications::read,
+            schema::notifications::notification_data_id,
+        ))
+        .execute(pool);
+
+    Ok(1)
 }
 
 pub async fn create_notification_data(

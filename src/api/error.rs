@@ -74,6 +74,7 @@ impl ResponseError for ApiError {
 
 impl From<DbError> for ApiError {
     fn from(err: DbError) -> Self {
+        println!("{:?}", err);
         match err {
             DbError::DieselResult(_) => ApiError::Unknown,
             DbError::R2D2Error(_) => ApiError::Unknown,
