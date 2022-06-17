@@ -280,6 +280,8 @@ async fn change_profile_test() -> Result<(), Error> {
         },
     );
 
+    thread::sleep(TEN_MS);
+
     let res = logged_in_client.trigger_webhook(set_token).await;
     assert!(res.response().status().is_success());
 
