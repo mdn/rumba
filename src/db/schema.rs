@@ -2,6 +2,14 @@
 
 pub mod sql_types {
     #[derive(diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "fxa_event_status_type"))]
+    pub struct FxaEventStatusType;
+
+    #[derive(diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "fxa_event_type"))]
+    pub struct FxaEventType;
+
+    #[derive(diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "locale"))]
     pub struct Locale;
 
@@ -82,6 +90,18 @@ diesel::table! {
 diesel::table! {
     use diesel::sql_types::*;
     use crate::db::types::*;
+
+    raw_webhook_events_tokens (id) {
+        id -> Int8,
+        received_at -> Timestamp,
+        token -> Text,
+        error -> Text,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
     use super::sql_types::Locale;
 
     settings (id) {
@@ -105,7 +125,6 @@ diesel::table! {
         fxa_uid -> Varchar,
         fxa_refresh_token -> Varchar,
         avatar_url -> Nullable<Text>,
-        is_subscriber -> Bool,
         subscription_type -> Nullable<SubscriptionType>,
     }
 }
@@ -118,6 +137,23 @@ diesel::table! {
         user_id -> Int8,
         document_id -> Int8,
         created_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+    use super::sql_types::FxaEventType;
+    use super::sql_types::FxaEventStatusType;
+
+    webhook_events (id) {
+        id -> Int8,
+        fxa_uid -> Varchar,
+        change_time -> Nullable<Timestamp>,
+        issue_time -> Timestamp,
+        typ -> FxaEventType,
+        status -> FxaEventStatusType,
+        payload -> Jsonb,
     }
 }
 
@@ -135,7 +171,9 @@ diesel::allow_tables_to_appear_in_same_query!(
     documents,
     notification_data,
     notifications,
+    raw_webhook_events_tokens,
     settings,
     users,
     watched_items,
+    webhook_events,
 );

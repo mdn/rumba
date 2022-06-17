@@ -3,9 +3,7 @@ use crate::db::model::{User, UserQuery};
 use crate::db::schema;
 use crate::diesel::ExpressionMethods;
 use crate::fxa::FxAUser;
-use diesel::r2d2::ConnectionManager;
-use diesel::{insert_into, PgConnection, QueryDsl, QueryResult, RunQueryDsl};
-use r2d2::PooledConnection;
+use diesel::{insert_into, OptionalExtension, PgConnection, QueryDsl, QueryResult, RunQueryDsl};
 use schema::users::dsl::*;
 
 use super::types::Subscription;
@@ -31,7 +29,6 @@ pub fn create_or_update_user(
         fxa_uid: fxa_user.uid,
         fxa_refresh_token: String::from(refresh_token),
         avatar_url: fxa_user.avatar,
-        is_subscriber: !fxa_user.subscriptions.is_empty(),
         email: fxa_user.email,
         subscription_type: sub,
     };
@@ -45,11 +42,22 @@ pub fn create_or_update_user(
 }
 
 pub async fn get_user(
-    conn_pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
-    user: String,
+    conn_pool: &mut PgConnection,
+    user: impl AsRef<str>,
 ) -> Result<UserQuery, DbError> {
     schema::users::table
-        .filter(schema::users::fxa_uid.eq(&user))
+        .filter(schema::users::fxa_uid.eq(user.as_ref()))
         .first::<UserQuery>(conn_pool)
+        .map_err(Into::into)
+}
+
+pub async fn get_user_opt(
+    conn_pool: &mut PgConnection,
+    user: impl AsRef<str>,
+) -> Result<Option<UserQuery>, DbError> {
+    schema::users::table
+        .filter(schema::users::fxa_uid.eq(user.as_ref()))
+        .first::<UserQuery>(conn_pool)
+        .optional()
         .map_err(Into::into)
 }

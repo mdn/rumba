@@ -1,5 +1,6 @@
 use actix_http::body::{BoxBody, EitherBody};
 use actix_identity::{CookieIdentityPolicy, IdentityService};
+use actix_rt::Arbiter;
 use actix_web::web::Data;
 use actix_web::{
     dev::{ServiceFactory, ServiceRequest, ServiceResponse},
@@ -11,7 +12,6 @@ use reqwest::Client;
 use rumba::add_services;
 use rumba::fxa::LoginManager;
 use rumba::settings::SETTINGS;
-use std::sync::Arc;
 
 use super::{db::get_pool, identity::TestIdentityPolicy};
 
@@ -42,18 +42,22 @@ pub async fn test_app_with_login() -> anyhow::Result<
         >,
     >,
 > {
-    let pool = get_pool();
-    let login_manager = Arc::new(LoginManager::init(Client::new()).await?);
+    let pool = Data::new(get_pool().clone());
+    let login_manager = Data::new(LoginManager::init().await?);
+    let client = Data::new(Client::new());
     let _result = env_logger::try_init();
     let policy = CookieIdentityPolicy::new(&[0; 32])
         .name(&SETTINGS.auth.auth_cookie_name)
         .secure(SETTINGS.auth.auth_cookie_secure);
+    let arbiter = Arbiter::new();
+    let arbiter_handle = Data::new(arbiter.handle());
 
     let app = App::new()
         .wrap(IdentityService::new(policy))
-        .app_data(Data::new(pool.clone()))
-        .app_data(Data::new(Client::new()))
-        .app_data(Data::new(login_manager));
+        .app_data(Data::clone(&arbiter_handle))
+        .app_data(Data::clone(&pool))
+        .app_data(Data::clone(&client))
+        .app_data(Data::clone(&login_manager));
     Ok(add_services(app))
 }
 

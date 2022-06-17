@@ -10,7 +10,6 @@ CREATE TABLE users
     fxa_uid           VARCHAR(255) NOT NULL UNIQUE,
     fxa_refresh_token VARCHAR(255) NOT NULL,
     avatar_url        TEXT,
-    is_subscriber     boolean      NOT NULL,
     subscription_type subscription_type
 );
 

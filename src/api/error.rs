@@ -22,6 +22,17 @@ pub enum SearchError {
 }
 
 #[derive(Error, Debug)]
+pub enum FxaWebhookError {
+    #[error("Json error: {0}")]
+    JsonProcessing(#[from] serde_json::Error),
+    #[error("Base64 error: {0}")]
+    Base64(#[from] base64::DecodeError),
+    #[error("Invalid SET")]
+    InvalidSET,
+    #[error("Invalid signature")]
+    InvalidSignature(#[from] openidconnect::SignatureVerificationError),
+}
+#[derive(Error, Debug)]
 pub enum ApiError {
     #[error("unknown error")]
     Unknown,
@@ -41,6 +52,8 @@ pub enum ApiError {
     Query(#[from] actix_web::error::QueryPayloadError),
     #[error("Search error")]
     Search(#[from] SearchError),
+    #[error("FxaWebhookError: {0}")]
+    FxaWebhook(FxaWebhookError),
 }
 
 impl ApiError {
@@ -55,6 +68,7 @@ impl ApiError {
             Self::JsonProcessingError => "Error processing JSON document",
             Self::Query(_) => "Query error",
             Self::Search(_) => "Search error",
+            Self::FxaWebhook(_) => "FxaWebhookError",
         }
     }
 }
@@ -107,6 +121,7 @@ impl From<DbError> for ApiError {
         match err {
             DbError::DieselResult(_) => ApiError::Unknown,
             DbError::R2D2Error(_) => ApiError::Unknown,
+            DbError::FxAError(_) => ApiError::Unknown,
         }
     }
 }
