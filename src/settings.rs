@@ -13,6 +13,7 @@ pub struct DB {
 
 #[derive(Deserialize)]
 pub struct Server {
+    pub host: String,
     pub port: u16,
 }
 
