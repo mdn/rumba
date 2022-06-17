@@ -4,10 +4,6 @@ use crate::api::collections::{
 use crate::api::search::search;
 use crate::api::settings::update_settings;
 use crate::api::whoami::whoami;
-use crate::settings::SETTINGS;
-use actix_session::storage::CookieSessionStore;
-use actix_session::SessionMiddleware;
-use actix_web::cookie::Key;
 use actix_web::dev::HttpServiceFactory;
 use actix_web::web;
 
@@ -19,10 +15,6 @@ use super::watched_items::{get_watched_items, unwatch_many, update_watched_item}
 
 pub fn api_v1_service() -> impl HttpServiceFactory {
     web::scope("/api/v1")
-        .wrap(SessionMiddleware::new(
-            CookieSessionStore::default(),
-            Key::from(&SETTINGS.auth.auth_cookie_key),
-        ))
         .service(
             web::scope("/plus")
                 .service(

@@ -1,5 +1,8 @@
 use actix_identity::Identity;
+use actix_session::SessionLength;
 use actix_session::{storage::CookieSessionStore, Session, SessionMiddleware};
+use actix_web::cookie::time::Duration;
+use actix_web::cookie::SameSite;
 use actix_web::{
     cookie::Key, dev::HttpServiceFactory, http, web, Error, HttpRequest, HttpResponse,
 };
@@ -67,10 +70,18 @@ async fn callback(
 
 pub fn auth_service() -> impl HttpServiceFactory {
     web::scope("/users/fxa/login")
-        .wrap(SessionMiddleware::new(
-            CookieSessionStore::default(),
-            Key::from(&SETTINGS.auth.auth_cookie_key),
-        ))
+        .wrap(
+            SessionMiddleware::builder(
+                CookieSessionStore::default(),
+                Key::from(&SETTINGS.auth.auth_cookie_key),
+            )
+            .cookie_same_site(SameSite::Lax)
+            .cookie_secure(SETTINGS.auth.auth_cookie_secure)
+            .session_length(SessionLength::Predetermined {
+                max_session_length: Some(Duration::minutes(15)),
+            })
+            .build(),
+        )
         .service(web::resource("/authenticate").route(web::get().to(login)))
         .service(web::resource("/logout").route(web::post().to(logout)))
         .service(web::resource("/callback/").route(web::get().to(callback)))
