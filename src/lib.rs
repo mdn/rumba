@@ -6,6 +6,7 @@ use actix_web::{
 pub mod api;
 pub mod db;
 pub mod fxa;
+mod helpers;
 pub mod settings;
 pub mod util;
 
@@ -18,6 +19,7 @@ where
     T: ServiceFactory<ServiceRequest, Config = (), Error = Error, InitError = ()>,
 {
     app.service(api::healthz::healthz_app())
+        .service(api::fxa_webhook::fxa_webhook_app())
         .service(api::auth::auth_service())
         .service(api::admin::admin_service())
         .service(api::api_v1::api_v1_service())

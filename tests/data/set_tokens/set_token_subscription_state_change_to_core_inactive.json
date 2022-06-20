@@ -1,0 +1,14 @@
+{
+  "aud": "ed18cbc69ec23491",
+  "events": {
+    "https://schemas.accounts.firefox.com/event/subscription-state-change": {
+      "capabilities": ["mdn_plus_5m"],
+      "changeTime": 1654425317000,
+      "isActive": false
+    }
+  },
+  "iat": 1654425318.762,
+  "iss": "http://localhost:4321",
+  "jti": "eeb9d9ae-90d5-499f-8056-94eaf635e09b",
+  "sub": "TEST_SUB"
+}

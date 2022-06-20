@@ -53,7 +53,7 @@ pub async fn whoami(
                             found.subscription_type.unwrap_or_default().into(),
                         ),
                         avatar_url: found.avatar_url,
-                        is_subscriber: Option::Some(found.is_subscriber),
+                        is_subscriber: found.subscription_type.map(|s| s.is_subscriber()),
                         is_authenticated: Option::Some(true),
                         email: Option::Some(found.email),
                         settings: settings.map(Into::into),

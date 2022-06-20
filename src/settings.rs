@@ -13,6 +13,7 @@ pub struct DB {
 
 #[derive(Deserialize)]
 pub struct Server {
+    pub host: String,
     pub port: u16,
 }
 
@@ -39,11 +40,19 @@ pub struct Application {
 }
 
 #[derive(Deserialize)]
+pub struct Search {
+    pub url: String,
+    pub cache_max_age: u32,
+    pub query_max_length: usize,
+}
+
+#[derive(Deserialize)]
 pub struct Settings {
     pub db: DB,
     pub server: Server,
     pub auth: Auth,
     pub application: Application,
+    pub search: Search,
 }
 
 impl Settings {

@@ -1,10 +1,11 @@
 #![warn(clippy::all)]
 
-use std::sync::Arc;
-
 use actix_identity::{CookieIdentityPolicy, IdentityService};
-use actix_web::{middleware::Logger, web::Data, App, HttpServer};
+use actix_rt::Arbiter;
+use actix_web::{cookie::SameSite, middleware::Logger, web::Data, App, HttpServer};
 use diesel_migrations::MigrationHarness;
+use elasticsearch::http::transport::Transport;
+use elasticsearch::Elasticsearch;
 use log::{debug, info};
 use reqwest::Client as HttpClient;
 use rumba::{add_services, db, fxa::LoginManager, settings::SETTINGS};
@@ -24,23 +25,32 @@ async fn main() -> anyhow::Result<()> {
     pool.get()?
         .run_pending_migrations(MIGRATIONS)
         .expect("failed to run migrations");
+    let pool = Data::new(pool);
 
-    let http_client = HttpClient::new();
-    let login_manager = Arc::new(LoginManager::init(http_client.clone()).await?);
+    let http_client = Data::new(HttpClient::new());
+    let login_manager = Data::new(LoginManager::init().await?);
+    let arbiter = Arbiter::new();
+    let arbiter_handle = Data::new(arbiter.handle());
+
+    let elastic_transport = Transport::single_node(&SETTINGS.search.url)?;
+    let elastic_client = Data::new(Elasticsearch::new(elastic_transport));
 
     HttpServer::new(move || {
-        let policy = CookieIdentityPolicy::new(&[0; 32])
+        let policy = CookieIdentityPolicy::new(&SETTINGS.auth.auth_cookie_key)
             .name(&SETTINGS.auth.auth_cookie_name)
-            .secure(SETTINGS.auth.auth_cookie_secure);
+            .secure(SETTINGS.auth.auth_cookie_secure)
+            .same_site(SameSite::Strict);
         let app = App::new()
             .wrap(Logger::default().exclude("/healthz"))
             .wrap(IdentityService::new(policy))
-            .app_data(Data::new(pool.clone()))
-            .app_data(Data::new(http_client.clone()))
-            .app_data(Data::new(login_manager.clone()));
+            .app_data(Data::clone(&pool))
+            .app_data(Data::clone(&arbiter_handle))
+            .app_data(Data::clone(&http_client))
+            .app_data(Data::clone(&login_manager))
+            .app_data(Data::clone(&elastic_client));
         add_services(app)
     })
-    .bind(("0.0.0.0", SETTINGS.server.port))?
+    .bind((SETTINGS.server.host.as_str(), SETTINGS.server.port))?
     .run()
     .await?;
     Ok(())

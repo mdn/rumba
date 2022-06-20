@@ -1,0 +1,342 @@
+{
+  "uuid": "search",
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "url": "/mdn_docs/_search",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "from": 10,
+          "size": 10,
+          "query": {
+            "bool": {
+              "filter": [
+                {
+                  "terms": {
+                    "locale": [
+                      "en-us"
+                    ]
+                  }
+                }
+              ],
+              "must": [
+                {
+                  "function_score": {
+                    "query": {
+                      "bool": {
+                        "should": [
+                          {
+                            "match": {
+                              "title": {
+                                "query": "mozilla",
+                                "boost": 5.0
+                              }
+                            }
+                          },
+                          {
+                            "match": {
+                              "body": {
+                                "query": "mozilla",
+                                "boost": 1.0
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "functions": [
+                      {
+                        "field_value_factor": {
+                          "field": "popularity",
+                          "factor": 10,
+                          "missing": 0
+                        }
+                      }
+                    ],
+                    "boost_mode": "sum",
+                    "score_mode": "max"
+                  }
+                }
+              ]
+            }
+          },
+          "_source": {
+            "excludes": [
+              "body"
+            ]
+          },
+          "highlight": {
+            "fields": {
+              "title": {},
+              "body": {}
+            },
+            "pre_tags": [
+              "<mark>"
+            ],
+            "post_tags": [
+              "</mark>"
+            ],
+            "number_of_fragments": 3,
+            "fragment_size": 120,
+            "encoder": "html"
+          },
+          "suggest": {
+            "text": "mozilla",
+            "title_suggestions": {
+              "term": {
+                "field": "title"
+              }
+            },
+            "body_suggestions": {
+              "term": {
+                "field": "body"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "took": 119,
+      "timed_out": false,
+      "_shards": {
+        "total": 1,
+        "successful": 1,
+        "skipped": 0,
+        "failed": 0
+      },
+      "hits": {
+        "total": {
+          "value": 745,
+          "relation": "eq"
+        },
+        "max_score": 53.950974,
+        "hits": [
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/HTTP/Proxy_servers_and_tunneling/Proxy_Auto-Configuration_PAC_file",
+            "_score": 6.557766,
+            "_source": {
+              "summary": "A Proxy Auto-Configuration (PAC) file is a JavaScript function that determines whether web browser requests (HTTP, HTTPS, and FTP) go directly to the destination or are forwarded to a web proxy server. The JavaScript function contained in the PAC file defines the function:",
+              "popularity": 0.1241,
+              "title": "Proxy Auto-Configuration (PAC) file",
+              "locale": "en-us",
+              "slug": "web/http/proxy_servers_and_tunneling/proxy_auto-configuration_pac_file"
+            },
+            "highlight": {
+              "body": [
+                "Examples\ndnsDomainIs(&quot;www.<mark>mozilla</mark>.org&quot;, &quot;.<mark>mozilla</mark>.org&quot;) &#x2F;&#x2F; true\ndnsDomainIs(&quot;www&quot;, &quot;.<mark>mozilla</mark>.org&quot;) &#x2F;&#x2F; false\nSyntax\nlocalHostOrDomainIs",
+                "&quot;) &#x2F;&#x2F; false (domain name mismatch)\nlocalHostOrDomainIs(&quot;home.<mark>mozilla</mark>.org&quot;, &quot;www.<mark>mozilla</mark>.org&quot;) &#x2F;&#x2F; false (hostname mismatch",
+                "exception that hosts www.<mark>mozilla</mark>.org and merchant.<mark>mozilla</mark>.org will go through the proxy."
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment",
+            "_score": 5.9808116,
+            "_source": {
+              "summary": "The destructuring assignment syntax is a JavaScript expression that makes it possible to unpack values from arrays, or properties from objects, into distinct variables.",
+              "popularity": 0.0987,
+              "title": "Destructuring assignment",
+              "locale": "en-us",
+              "slug": "web/javascript/reference/operators/destructuring_assignment"
+            },
+            "highlight": {
+              "body": [
+                "parsedURL) {\nreturn false;\n}\nconsole.log(parsedURL);\n&#x2F;&#x2F; [&quot;https:&#x2F;&#x2F;developer.<mark>mozilla</mark>.org&#x2F;en-US&#x2F;docs&#x2F;Web&#x2F;JavaScript&quot;,\n&#x2F;&#x2F; &quot;https",
+                "&quot;, &quot;developer.<mark>mozilla</mark>.org&quot;, &quot;en-US&#x2F;docs&#x2F;Web&#x2F;JavaScript&quot;]\nconst [, protocol, fullhost, fullpath] = parsedURL;\nreturn protocol",
+                ";\n}\nconsole.log(parseProtocol(&#x27;https:&#x2F;&#x2F;developer.<mark>mozilla</mark>.org&#x2F;en-US&#x2F;docs&#x2F;Web&#x2F;JavaScript&#x27;));\n&#x2F;&#x2F; &quot;https&quot;\nBasic assignment\nconst"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/API/EventTarget/addEventListener",
+            "_score": 5.9297314,
+            "_source": {
+              "summary": "The addEventListener() method of the EventTarget interface\n  sets up a function that will be called whenever the specified event is delivered to the target.",
+              "popularity": 0.1263,
+              "title": "EventTarget.addEventListener()",
+              "locale": "en-us",
+              "slug": "web/api/eventtarget/addeventlistener"
+            },
+            "highlight": {
+              "body": [
+                "once &amp; none-once\n&lt;div class=&quot;middle&quot; target=&quot;_blank&quot;&gt;\nmiddle, capture &amp; none-capture\n&lt;a class=&quot;inner1&quot; href=&quot;https:&#x2F;&#x2F;www.<mark>mozilla</mark>.org",
+                "target=&quot;_blank&quot;&gt;\ninner1, passive &amp; preventDefault(which is not allowed)\n&lt;&#x2F;a&gt;\n&lt;a class=&quot;inner2&quot; href=&quot;https:&#x2F;&#x2F;developer.<mark>mozilla</mark>.org"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Learn/Getting_started_with_the_web/HTML_basics",
+            "_score": 5.8804584,
+            "_source": {
+              "summary": "HTML (HyperText Markup Language) is the code that is used to structure a web page and its content. For example, content could be structured within a set of paragraphs, a list of bulleted points, or using images and data tables. As the title suggests, this article will give you a basic understanding of HTML and its functions.",
+              "popularity": 0.0732,
+              "title": "HTML basics",
+              "locale": "en-us",
+              "slug": "learn/getting_started_with_the_web/html_basics"
+            },
+            "highlight": {
+              "body": [
+                "For example, if we wanted to turn the part of the following paragraph fragment into a list\n&lt;p&gt;At <mark>Mozilla</mark>, we&#x27;re a global",
+                "We chose the text &quot;<mark>Mozilla</mark> Manifesto&quot;.",
+                "to:\n&lt;a href=&quot;https:&#x2F;&#x2F;www.<mark>mozilla</mark>.org&#x2F;en-US&#x2F;about&#x2F;manifesto&#x2F;&quot;&gt;<mark>Mozilla</mark> Manifesto&lt;&#x2F;a&gt;\nYou might get unexpected results if you"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Learn/Getting_started_with_the_web/JavaScript_basics",
+            "_score": 5.817169,
+            "_source": {
+              "summary": "JavaScript is a programming language that adds interactivity to your website. This happens in games, in the behavior of responses when buttons are pressed or with data entry on forms; with dynamic styling; with animation, etc.\n  This article helps you get started with JavaScript and furthers your understanding of what is possible.",
+              "popularity": 0.0642,
+              "title": "JavaScript basics",
+              "locale": "en-us",
+              "slug": "learn/getting_started_with_the_web/javascript_basics"
+            },
+            "highlight": {
+              "body": [
+                "It was invented by Brendan Eich (co-founder of the <mark>Mozilla</mark> project, the <mark>Mozilla</mark> Foundation, and the <mark>Mozilla</mark> Corporation).",
+                "You should end up with a title that reads <mark>Mozilla</mark> is cool, null.",
+                "You should end up with a title that reads <mark>Mozilla</mark> is cool, for fairly obvious reasons."
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/substring",
+            "_score": 5.8114586,
+            "_source": {
+              "summary": "The substring() method returns the part of the\n  string between the start and end indexes, or to the end of the string.",
+              "popularity": 0.0663,
+              "title": "String.prototype.substring()",
+              "locale": "en-us",
+              "slug": "web/javascript/reference/global_objects/string/substring"
+            },
+            "highlight": {
+              "body": [
+                "The following example uses substring() to display characters from the\nstring &#x27;<mark>Mozilla</mark>&#x27;:\nlet anyString = &#x27;<mark>Mozilla</mark>&#x27;\n&#x2F;&#x2F; Displays",
+                "starting and ending indices as you would in the above examples.\n&#x2F;&#x2F; Displays &#x27;illa&#x27; the last 4 characters\nlet anyString = &#x27;<mark>Mozilla</mark>",
+                "The slice()\nmethod returns an empty string if this is the case.\nlet text = &#x27;<mark>Mozilla</mark>&#x27;\nconsole.log(text.substring(5, 2))  &#x2F;"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Learn/Common_questions/What_is_a_URL",
+            "_score": 5.6711364,
+            "_source": {
+              "summary": "With Hypertext and HTTP, URL is one of the key concepts of the Web. It is the mechanism used by browsers to retrieve any published resource on the web.",
+              "popularity": 0.0475,
+              "title": "What is a URL?",
+              "locale": "en-us",
+              "slug": "learn/common_questions/what_is_a_url"
+            },
+            "highlight": {
+              "body": [
+                "Here are some examples of URLs:\nhttps:&#x2F;&#x2F;developer.<mark>mozilla</mark>.org\nhttps:&#x2F;&#x2F;developer.<mark>mozilla</mark>.org&#x2F;en-US&#x2F;docs&#x2F;Learn&#x2F;\nhttps:&#x2F;&#x2F;developer.<mark>mozilla</mark>.org",
+                "Full URL (the same as the one we used before)\nhttps:&#x2F;&#x2F;developer.<mark>mozilla</mark>.org&#x2F;en-US&#x2F;docs&#x2F;Learn\nImplicit protocol\n&#x2F;&#x2F;developer.<mark>mozilla</mark>.org",
+                "Here we want to reach this URL:\nhttps:&#x2F;&#x2F;developer.<mark>mozilla</mark>.org&#x2F;en-US&#x2F;docs&#x2F;Learn&#x2F;.."
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/HTML/Element/a",
+            "_score": 5.646807,
+            "_source": {
+              "summary": "The <a> HTML element (or anchor element), with its href attribute, creates a hyperlink to web pages, files, email addresses, locations in the same page, or anything else a URL can address.",
+              "popularity": 0.0767,
+              "title": "<a>: The Anchor element",
+              "locale": "en-us",
+              "slug": "web/html/element/a"
+            },
+            "highlight": {
+              "body": [
+                "radio\nswitch\ntab\ntreeitem\nWhen href attribute is not present:\nany\nDOM interface\nHTMLAnchorElement\nHTML\n&lt;a href=&quot;https:&#x2F;&#x2F;www.<mark>mozilla</mark>.com",
+                "&quot;&gt;\n<mark>Mozilla</mark>\n&lt;&#x2F;a&gt;\nResult\nHTML\n&lt;a href=&quot;&#x2F;&#x2F;example.com&quot;&gt;Scheme-relative URL&lt;&#x2F;a&gt;\n&lt;a href=&quot;&#x2F;en-US&#x2F;docs&#x2F;Web&#x2F;HTML&quot;&gt;Origin-relative",
+                "links that open in the user&#x27;s email program to let them send a new message, use the mailto: scheme:\n&lt;a href=&quot;mailto:nowhere@<mark>mozilla</mark>.org"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/HTTP",
+            "_score": 5.6467314,
+            "_source": {
+              "summary": "Hypertext Transfer Protocol (HTTP) is an application-layer protocol for transmitting hypermedia documents, such as HTML. It was designed for communication between web browsers and web servers, but it can also be used for other purposes. HTTP follows a classical client-server model, with a client opening a connection to make a request, then waiting until it receives a response. HTTP is a stateless protocol, meaning that the server does not keep any data (state) between two requests.",
+              "popularity": 0.098,
+              "title": "HTTP",
+              "locale": "en-us",
+              "slug": "web/http"
+            },
+            "highlight": {
+              "body": [
+                "<mark>Mozilla</mark> web security guidelines\nA collection of tips to help operational teams with creating secure web applications.",
+                "Firefox Developer Tools\nNetwork monitor\n<mark>Mozilla</mark> Observatory\nA project designed to help developers, system administrators,"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/API/Window/open",
+            "_score": 5.6404796,
+            "_source": {
+              "summary": "The open() method of the Window interface loads a specified resource into a new or existing browsing context (that is, tab, window, or <iframe>) under a specified name.",
+              "popularity": 0.0392,
+              "title": "Window.open()",
+              "locale": "en-us",
+              "slug": "web/api/window/open"
+            },
+            "highlight": {
+              "body": [
+                ";\nfunction openRequestedPopup() {\nwindowObjectReference = window.open(&quot;http:&#x2F;&#x2F;www.<mark>mozilla</mark>.org&#x2F;&quot;, &quot;<mark>mozilla</mark>Tab&quot;);\n}\n&lt;script",
+                "Users with <mark>Mozilla</mark>-based browsers have absolute control over\nwindow functionalities like resizability, scrollability and",
+                "This is by default in all <mark>Mozilla</mark>-based browser\nreleases."
+              ]
+            }
+          }
+        ]
+      },
+      "suggest": {
+        "body_suggestions": [
+          {
+            "text": "mozilla",
+            "offset": 0,
+            "length": 7,
+            "options": []
+          }
+        ],
+        "title_suggestions": [
+          {
+            "text": "mozilla",
+            "offset": 0,
+            "length": 7,
+            "options": []
+          }
+        ]
+      }
+    }
+  }
+}

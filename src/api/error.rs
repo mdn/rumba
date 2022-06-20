@@ -1,10 +1,37 @@
 use crate::db::error::DbError;
 use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, ResponseError};
-use r2d2::Error;
 use serde::Serialize;
+use serde_json::json;
 use thiserror::Error;
 
+#[derive(Error, Debug)]
+pub enum SearchError {
+    #[error("Elastic error: {0}")]
+    Elastic(#[from] elasticsearch::Error),
+    #[error("Elastic error: {source}, with reason: {reason}")]
+    ElasticContext {
+        reason: String,
+        #[source]
+        source: elasticsearch::Error,
+    },
+    #[error("Failed to parse elastic response")]
+    ParseResponse,
+    #[error("Query string parsing failed for {key}: {message}")]
+    Query { key: String, message: String },
+}
+
+#[derive(Error, Debug)]
+pub enum FxaWebhookError {
+    #[error("Json error: {0}")]
+    JsonProcessing(#[from] serde_json::Error),
+    #[error("Base64 error: {0}")]
+    Base64(#[from] base64::DecodeError),
+    #[error("Invalid SET")]
+    InvalidSET,
+    #[error("Invalid signature")]
+    InvalidSignature(#[from] openidconnect::SignatureVerificationError),
+}
 #[derive(Error, Debug)]
 pub enum ApiError {
     #[error("unknown error")]
@@ -23,6 +50,12 @@ pub enum ApiError {
     JsonProcessingError,
     #[error("Invalid Bearer")]
     InvalidBearer,
+    #[error("Query error")]
+    Query(#[from] actix_web::error::QueryPayloadError),
+    #[error("Search error")]
+    Search(#[from] SearchError),
+    #[error("FxaWebhookError: {0}")]
+    FxaWebhook(FxaWebhookError),
 }
 
 impl ApiError {
@@ -36,6 +69,9 @@ impl ApiError {
             Self::MalformedUrl => "Malformed URL",
             Self::NotificationNotFound => "Notification not found",
             Self::JsonProcessingError => "Error processing JSON document",
+            Self::Query(_) => "Query error",
+            Self::Search(_) => "Search error",
+            Self::FxaWebhook(_) => "FxaWebhookError",
         }
     }
 }
@@ -50,25 +86,37 @@ struct ErrorResponse {
 impl ResponseError for ApiError {
     fn status_code(&self) -> StatusCode {
         match *self {
-            Self::Unknown => StatusCode::INTERNAL_SERVER_ERROR,
             Self::InvalidSession => StatusCode::BAD_REQUEST,
-            Self::ServerError => StatusCode::INTERNAL_SERVER_ERROR,
             Self::DocumentNotFound => StatusCode::NOT_FOUND,
             Self::InvalidBearer => StatusCode::FORBIDDEN,
             Self::NotificationNotFound => StatusCode::NOT_FOUND,
             Self::MalformedUrl => StatusCode::BAD_REQUEST,
-            Self::JsonProcessingError => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::Query(_) => StatusCode::BAD_REQUEST,
+            Self::Search(SearchError::Query { .. }) => StatusCode::BAD_REQUEST,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 
     fn error_response(&self) -> HttpResponse {
         let status_code = self.status_code();
-        let error_response = ErrorResponse {
-            code: status_code.as_u16(),
-            message: self.to_string(),
-            error: self.name().to_string(),
-        };
-        HttpResponse::build(status_code).json(error_response)
+        let mut builder = HttpResponse::build(status_code);
+        match self {
+            Self::Search(SearchError::Query { key, message }) => builder.json(json!({
+                "errors": {
+                    key: [
+                        {
+                            "message": message,
+                            "code": "invalid",
+                        }
+                    ]
+                }
+            })),
+            _ => builder.json(ErrorResponse {
+                code: status_code.as_u16(),
+                message: self.to_string(),
+                error: self.name().to_string(),
+            }),
+        }
     }
 }
 
@@ -77,6 +125,7 @@ impl From<DbError> for ApiError {
         match err {
             DbError::DieselResult(_) => ApiError::Unknown,
             DbError::R2D2Error(_) => ApiError::Unknown,
+            DbError::FxAError(_) => ApiError::Unknown,
         }
     }
 }
@@ -88,7 +137,7 @@ impl From<diesel::result::Error> for ApiError {
 }
 
 impl From<r2d2::Error> for ApiError {
-    fn from(_: Error) -> Self {
+    fn from(_: r2d2::Error) -> Self {
         ApiError::ServerError
     }
 }

@@ -1,0 +1,51 @@
+{
+  "uuid": "search",
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "url": "/mdn_docs/_count",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "query": {
+            "bool": {
+              "filter": [
+                {
+                  "multi_match": {
+                    "query": "footer",
+                    "fields": [
+                      "title",
+                      "body"
+                    ]
+                  }
+                },
+                {
+                  "terms": {
+                    "locale": [
+                      "en-us"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "count": 142,
+      "_shards": {
+        "total": 1,
+        "successful": 1,
+        "skipped": 0,
+        "failed": 0
+      }
+    }
+  }
+}

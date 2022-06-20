@@ -1,0 +1,342 @@
+{
+  "uuid": "search",
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "url": "/mdn_docs/_search",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "from": 0,
+          "size": 10,
+          "query": {
+            "bool": {
+              "filter": [
+                {
+                  "terms": {
+                    "locale": [
+                      "en-us"
+                    ]
+                  }
+                }
+              ],
+              "must": [
+                {
+                  "function_score": {
+                    "query": {
+                      "bool": {
+                        "should": [
+                          {
+                            "match": {
+                              "title": {
+                                "query": "foobar",
+                                "boost": 5.0
+                              }
+                            }
+                          },
+                          {
+                            "match": {
+                              "body": {
+                                "query": "foobar",
+                                "boost": 1.0
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "functions": [
+                      {
+                        "field_value_factor": {
+                          "field": "popularity",
+                          "factor": 10,
+                          "missing": 0
+                        }
+                      }
+                    ],
+                    "boost_mode": "sum",
+                    "score_mode": "max"
+                  }
+                }
+              ]
+            }
+          },
+          "_source": {
+            "excludes": [
+              "body"
+            ]
+          },
+          "highlight": {
+            "fields": {
+              "title": {},
+              "body": {}
+            },
+            "pre_tags": [
+              "<mark>"
+            ],
+            "post_tags": [
+              "</mark>"
+            ],
+            "number_of_fragments": 3,
+            "fragment_size": 120,
+            "encoder": "html"
+          },
+          "suggest": {
+            "text": "foobar",
+            "title_suggestions": {
+              "term": {
+                "field": "title"
+              }
+            },
+            "body_suggestions": {
+              "term": {
+                "field": "body"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "took": 64,
+      "timed_out": false,
+      "_shards": {
+        "total": 1,
+        "successful": 1,
+        "skipped": 0,
+        "failed": 0
+      },
+      "hits": {
+        "total": {
+          "value": 28,
+          "relation": "eq"
+        },
+        "max_score": 11.919639,
+        "hits": [
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/API/Element/scrollWidth",
+            "_score": 11.919639,
+            "_source": {
+              "summary": "The Element.scrollWidth read-only property is a\n  measurement of the width of an element's content, including content not visible on the\n  screen due to overflow.",
+              "popularity": 0.0034,
+              "title": "Element.scrollWidth",
+              "locale": "en-us",
+              "slug": "web/api/element/scrollwidth"
+            },
+            "highlight": {
+              "body": [
+                "text-overflow: ellipsis;\n}\n#aDiv {\nwidth: 100px;\n}\nbutton {\nmargin-bottom: 2em;\n}\n&lt;&#x2F;style&gt;\n&lt;&#x2F;head&gt;\n&lt;body&gt;\n&lt;div id=&quot;aDiv&quot;&gt;\n<mark>FooBar</mark>-<mark>FooBar</mark>-<mark>FooBar</mark>-<mark>FooBar</mark>",
+                "&lt;&#x2F;div&gt;\n&lt;button id=&quot;aButton&quot;&gt;\nCheck for overflow\n&lt;&#x2F;button&gt;\n&lt;div id=&quot;anotherDiv&quot;&gt;\n<mark>FooBar</mark>-<mark>FooBar</mark>-<mark>FooBar</mark>-<mark>FooBar</mark>\n&lt;&#x2F;div&gt;\n&lt;button"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions",
+            "_score": 11.798926,
+            "_source": {
+              "summary": "An arrow function expression is a compact alternative to a traditional\n  function expression,\n  but is limited and can't be used in all situations.",
+              "popularity": 0.1081,
+              "title": "Arrow function expressions",
+              "locale": "en-us",
+              "slug": "web/javascript/reference/functions/arrow_functions"
+            },
+            "highlight": {
+              "body": [
+                "callback = callback || (() =&gt; {});    &#x2F;&#x2F; ok\n&#x2F;&#x2F; An empty arrow function returns undefined\nlet empty = () =&gt; {};\n(() =&gt; &#x27;<mark>foobar</mark>",
+                "&#x27;)();\n&#x2F;&#x2F; Returns &quot;<mark>foobar</mark>&quot;\n&#x2F;&#x2F; (this is an Immediately Invoked Function Expression)\nvar simple = a =&gt; a &gt; 15 ?"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/then",
+            "_score": 11.614288,
+            "_source": {
+              "summary": "The then() method returns a Promise. It\n  takes up to two arguments: callback functions for the success and failure cases of the\n  Promise.",
+              "popularity": 0.0407,
+              "title": "Promise.prototype.then()",
+              "locale": "en-us",
+              "slug": "web/javascript/reference/global_objects/promise/then"
+            },
+            "highlight": {
+              "body": [
+                "Promise(function(resolve, reject) {\nsetTimeout(function() {\nstring += &#x27;bar&#x27;;\nresolve(string);\n}, 1);\n});\n})\n&#x2F;&#x2F; 2. receive &quot;<mark>foobar</mark>",
+                "This\n&#x2F;&#x2F; is because we mocked that to happen asynchronously with a setTimeout function\nconsole.log(string); &#x2F;&#x2F; <mark>foobar</mark>\n});",
+                "oops... didn&#x27;t bother to instantiate and return a promise in the prior then so the sequence may be a bit surprising\n&#x2F;&#x2F; <mark>foobar</mark>"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/API/Text/splitText",
+            "_score": 11.47912,
+            "_source": {
+              "summary": "The splitText() method of the Text interface\n  breaks the Text node into two nodes at the specified offset,\n  keeping both nodes in the tree as siblings.",
+              "popularity": 0.001,
+              "title": "Text.splitText()",
+              "locale": "en-us",
+              "slug": "web/api/text/splittext"
+            },
+            "highlight": {
+              "body": [
+                "&lt;p&gt;<mark>foobar</mark>&lt;&#x2F;p&gt;\nconst p = document.querySelector(&#x27;p&#x27;);\n&#x2F;&#x2F; Get contents of &lt;p&gt; as a text node\nconst <mark>foobar</mark> = p.firstChild;\n&#x2F;",
+                "&#x2F; Split &#x27;<mark>foobar</mark>&#x27; into two text nodes, &#x27;foo&#x27; and &#x27;bar&#x27;,\n&#x2F;&#x2F; and save &#x27;bar&#x27; as a const\nconst bar = <mark>foobar</mark>.splitText(3);\n&#x2F;&#x2F; Create"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/API/WebGLRenderingContext/vertexAttrib",
+            "_score": 11.46912,
+            "_source": {
+              "summary": "The WebGLRenderingContext.vertexAttrib[1234]f[v]()\n  methods of the WebGL API specify constant\n  values for generic vertex attributes.",
+              "popularity": 0,
+              "title": "WebGLRenderingContext.vertexAttrib[1234]f[v]()",
+              "locale": "en-us",
+              "slug": "web/api/webglrenderingcontext/vertexattrib"
+            },
+            "highlight": {
+              "body": [
+                "The only way to\nchange the values is by calling this function again.\nconst a_<mark>foobar</mark> = gl.getAttribLocation(shaderProgram,",
+                "&#x27;<mark>foobar</mark>&#x27;);\n&#x2F;&#x2F;either set each component individually:\ngl.vertexAttrib3f(a_<mark>foobar</mark>, 10.0, 5.0, 2.0);\n&#x2F;&#x2F;or provide a Float32Array",
+                ":\nconst floatArray = new Float32Array([10.0, 5.0, 2.0]);\ngl.vertexAttrib3fv(a_<mark>foobar</mark>, floatArray);\n&#x2F;&#x2F; we want to load the"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/entries",
+            "_score": 11.247289,
+            "_source": {
+              "summary": "The entries() method returns a new Iterator object\n  that contains an array of [value, value] for each element\n  in the Set object, in insertion order. For Set objects there\n  is no key like in Map objects. However, to keep the API\n  similar to the Map object, each entry has the same value for its\n  key and value here, so that an array [value, value] is\n  returned.",
+              "popularity": 0.004,
+              "title": "Set.prototype.entries()",
+              "locale": "en-us",
+              "slug": "web/javascript/reference/global_objects/set/entries"
+            },
+            "highlight": {
+              "body": [
+                "contains an array of [value, value] for each\nelement in the given Set, in insertion order.\nconst mySet = new Set();\nmySet.add(&#x27;<mark>foobar</mark>",
+                "&#x27;);\nmySet.add(1);\nmySet.add(&#x27;baz&#x27;);\nconst setIter = mySet.entries();\nconsole.log(setIter.next().value); &#x2F;&#x2F; [&quot;<mark>foobar</mark>&quot;, &quot;<mark>foobar</mark>"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/API/XMLHttpRequest/Using_XMLHttpRequest",
+            "_score": 10.974926,
+            "_source": {
+              "summary": "In this guide, we'll take a look at how to use\n  XMLHttpRequest to issue HTTP\n  requests in order to exchange data between the web site and a server.",
+              "popularity": 0.0257,
+              "title": "Using XMLHttpRequest",
+              "locale": "en-us",
+              "slug": "web/api/xmlhttprequest/using_xmlhttprequest"
+            },
+            "highlight": {
+              "body": [
+                "<mark>foobar=baz</mark> -&gt; http:&#x2F;&#x2F;foo.com&#x2F;bar.html?",
+                "<mark>foobar=baz</mark>&amp;12345\nAs the local cache is indexed by URL, this causes every request to be unique, thereby\nbypassing the cache"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/HTML/Attributes",
+            "_score": 10.931926,
+            "_source": {
+              "summary": "Elements in HTML have attributes; these are additional values that configure the elements or adjust their behavior in various ways to meet the criteria the users want.",
+              "popularity": 0.0214,
+              "title": "HTML attribute reference",
+              "locale": "en-us",
+              "slug": "web/html/attributes"
+            },
+            "highlight": {
+              "body": [
+                "For example, the default type for &lt;input&gt; elements is &quot;text&quot;, so if you set input.type=&quot;<mark>foobar</mark>&quot;, the &lt;input&gt; element will",
+                "be of type text (in the appearance and the behavior) but the &quot;type&quot; content attribute&#x27;s value will be &quot;<mark>foobar</mark>&quot;."
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map/set",
+            "_score": 10.851926,
+            "_source": {
+              "summary": "The set() method adds or updates an element with a specified key and a\n  value to a Map object.",
+              "popularity": 0.0134,
+              "title": "Map.prototype.set()",
+              "locale": "en-us",
+              "slug": "web/javascript/reference/global_objects/map/set"
+            },
+            "highlight": {
+              "body": [
+                "The Map object.\nlet myMap = new Map()\n&#x2F;&#x2F; Add new elements to the map\nmyMap.set(&#x27;bar&#x27;, &#x27;foo&#x27;)\nmyMap.set(1, &#x27;<mark>foobar</mark>&#x27;)\n&#x2F;&#x2F; Update",
+                "you can chain the\nmethod call like below:\n&#x2F;&#x2F; Add new elements to the map with chaining.\nmyMap.set(&#x27;bar&#x27;, &#x27;foo&#x27;)\n.set(1, &#x27;<mark>foobar</mark>"
+              ]
+            }
+          },
+          {
+            "_index": "mdn_docs_20220526111304",
+            "_type": "_doc",
+            "_id": "/en-US/docs/Glossary/First-class_Function",
+            "_score": 10.784926,
+            "_source": {
+              "summary": "A programming language is said to have First-class functions when functions in that language are treated like any other variable. For example, in such a language, a function can be passed as an argument to other functions, can be returned by another function and can be assigned as a value to a variable.",
+              "popularity": 0.0067,
+              "title": "First-class Function",
+              "locale": "en-us",
+              "slug": "glossary/first-class_function"
+            },
+            "highlight": {
+              "body": [
+                "can be returned by another function and can be assigned as a value to a variable.\nconst foo = function() {\nconsole.log(&quot;<mark>foobar</mark>",
+                "&quot;);\n}\nfoo(); &#x2F;&#x2F; Invoke it using the variable\n&#x2F;&#x2F; <mark>foobar</mark>\nWe assigned an Anonymous Function in a Variable, then we used that"
+              ]
+            }
+          }
+        ]
+      },
+      "suggest": {
+        "body_suggestions": [
+          {
+            "text": "foobar",
+            "offset": 0,
+            "length": 6,
+            "options": []
+          }
+        ],
+        "title_suggestions": [
+          {
+            "text": "foobar",
+            "offset": 0,
+            "length": 6,
+            "options": [
+              {
+                "text": "footer",
+                "score": 0.6666666,
+                "freq": 10
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

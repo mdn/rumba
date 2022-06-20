@@ -1,5 +1,5 @@
-use crate::db::schema::*;
-use crate::db::types::Subscription;
+use crate::db::types::{FxaEventStatus, Subscription};
+use crate::db::{schema::*, types::FxaEvent};
 use chrono::NaiveDateTime;
 
 use serde::{Deserialize, Serialize};
@@ -15,7 +15,6 @@ pub struct User {
     pub fxa_uid: String,
     pub fxa_refresh_token: String,
     pub avatar_url: Option<String>,
-    pub is_subscriber: bool,
     pub subscription_type: Subscription,
     pub email: String,
 }
@@ -30,7 +29,6 @@ pub struct UserQuery {
     pub fxa_uid: String,
     pub fxa_refresh_token: String,
     pub avatar_url: Option<String>,
-    pub is_subscriber: bool,
     pub subscription_type: Option<Subscription>,
 }
 
@@ -178,4 +176,34 @@ pub struct DocumentQuery {
     pub metadata: Option<Value>,
     pub title: String,
     pub paths: Vec<Option<String>>,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = webhook_events)]
+pub struct WebHookEventInsert {
+    pub fxa_uid: String,
+    pub change_time: Option<NaiveDateTime>,
+    pub issue_time: NaiveDateTime,
+    pub typ: FxaEvent,
+    pub status: FxaEventStatus,
+    pub payload: Value,
+}
+
+#[derive(Queryable, AsChangeset, Debug)]
+#[diesel(table_name = webhook_events)]
+pub struct WebHookEventQuery {
+    pub id: i64,
+    pub fxa_uid: String,
+    pub change_time: Option<NaiveDateTime>,
+    pub issue_time: NaiveDateTime,
+    pub typ: FxaEvent,
+    pub status: FxaEventStatus,
+    pub payload: Value,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = raw_webhook_events_tokens)]
+pub struct RawWebHookEventsTokenInsert {
+    pub token: String,
+    pub error: String,
 }

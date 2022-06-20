@@ -2,6 +2,7 @@
 uri = "postgres://rumba:rumba@127.0.0.1:5432/mdn"
 
 [server]
+host = "0.0.0.0"
 port = 8000
 
 [auth]
@@ -19,3 +20,8 @@ document_base_url = "http://localhost:4321"
 notifications_update_base_url = "http://localhost:4321/notifications"
 subscriptions_limit_watched_items = 3
 subscriptions_limit_collections = 5
+
+[search]
+url = "ignored"
+cache_max_age = 43200
+query_max_length = 200

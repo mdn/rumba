@@ -1,7 +1,7 @@
 #![allow(non_camel_case_types)]
 use crate::db::schema;
 use schema::sql_types::NotificationType;
-use schema::sql_types::{Locale as DbLocale, SubscriptionType};
+use schema::sql_types::{FxaEventStatusType, FxaEventType, Locale as DbLocale, SubscriptionType};
 use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, diesel_derive_enum::DbEnum, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -43,6 +43,49 @@ pub enum Locale {
     PartialOrd,
     Serialize,
 )]
+#[DieselExistingType = "FxaEventStatusType"]
+#[serde(rename_all = "snake_case")]
+pub enum FxaEventStatus {
+    Processed,
+    Ignored,
+    Pending,
+    Failed,
+}
+
+#[derive(
+    Copy,
+    Clone,
+    diesel_derive_enum::DbEnum,
+    Debug,
+    Deserialize,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+)]
+#[DieselExistingType = "FxaEventType"]
+#[serde(rename_all = "snake_case")]
+pub enum FxaEvent {
+    DeleteUser,
+    PasswordChange,
+    ProfileChange,
+    SubscriptionStateChange,
+    Unknown,
+}
+
+#[derive(
+    Copy,
+    Clone,
+    diesel_derive_enum::DbEnum,
+    Debug,
+    Deserialize,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+)]
 #[DieselExistingType = "SubscriptionType"]
 pub enum Subscription {
     #[serde(rename(serialize = "core"))]
@@ -55,6 +98,18 @@ pub enum Subscription {
     MdnPlus_5y,
     #[serde(rename = "mdn_plus_10y")]
     MdnPlus_10y,
+}
+
+impl Subscription {
+    pub fn is_subscriber(&self) -> bool {
+        match self {
+            Subscription::Core => false,
+            Subscription::MdnPlus_5m
+            | Subscription::MdnPlus_10m
+            | Subscription::MdnPlus_5y
+            | Subscription::MdnPlus_10y => true,
+        }
+    }
 }
 
 impl Default for Subscription {

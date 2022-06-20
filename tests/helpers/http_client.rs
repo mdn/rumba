@@ -122,6 +122,14 @@ impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error 
         res
     }
 
+    pub async fn trigger_webhook(&self, bearer: &str) -> ServiceResponse<EitherBody<BoxBody>> {
+        let req = test::TestRequest::get()
+            .uri("/events/fxa")
+            .insert_header(("Authorization", format!("Bearer {}", bearer).as_str()))
+            .to_request();
+        test::call_service(&self.service, req).await
+    }
+
     fn add_cookies_and_headers(
         &self,
         headers: Option<Vec<(&str, &str)>>,
