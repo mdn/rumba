@@ -29,6 +29,7 @@ pub struct Auth {
     pub auth_cookie_secure: bool,
     #[serde_as(as = "Base64")]
     pub auth_cookie_key: [u8; 64],
+    pub admin_update_bearer_token: String,
 }
 
 #[derive(Deserialize)]
