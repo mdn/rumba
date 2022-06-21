@@ -29,11 +29,13 @@ pub struct Auth {
     pub auth_cookie_secure: bool,
     #[serde_as(as = "Base64")]
     pub auth_cookie_key: [u8; 64],
+    pub admin_update_bearer_token: String,
 }
 
 #[derive(Deserialize)]
 pub struct Application {
     pub document_base_url: String,
+    pub notifications_update_base_url: String,
     pub subscriptions_limit_watched_items: i64,
     pub subscriptions_limit_collections: i64,
 }

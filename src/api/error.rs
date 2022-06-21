@@ -48,6 +48,8 @@ pub enum ApiError {
     MalformedUrl,
     #[error("Json error")]
     JsonProcessingError,
+    #[error("Invalid Bearer")]
+    InvalidBearer,
     #[error("Query error")]
     Query(#[from] actix_web::error::QueryPayloadError),
     #[error("Search error")]
@@ -63,6 +65,7 @@ impl ApiError {
             Self::InvalidSession => "Invalid Session",
             Self::ServerError => "Server error",
             Self::DocumentNotFound => "Document not found",
+            Self::InvalidBearer => "Invalid bearer info",
             Self::MalformedUrl => "Malformed URL",
             Self::NotificationNotFound => "Notification not found",
             Self::JsonProcessingError => "Error processing JSON document",
@@ -85,6 +88,7 @@ impl ResponseError for ApiError {
         match *self {
             Self::InvalidSession => StatusCode::BAD_REQUEST,
             Self::DocumentNotFound => StatusCode::NOT_FOUND,
+            Self::InvalidBearer => StatusCode::FORBIDDEN,
             Self::NotificationNotFound => StatusCode::NOT_FOUND,
             Self::MalformedUrl => StatusCode::BAD_REQUEST,
             Self::Query(_) => StatusCode::BAD_REQUEST,

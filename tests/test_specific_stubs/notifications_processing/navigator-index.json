@@ -1,0 +1,115 @@
+{
+  "uuid": "navigator.json",
+  "priority": 1,
+  "request": {
+    "method": "GET",
+    "url": "/en-US/docs/Web/API/Navigator/index.json"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "doc": {
+        "isMarkdown": true,
+        "isTranslated": false,
+        "isActive": true,
+        "flaws": {},
+        "title": "Navigator",
+        "mdn_url": "/en-US/docs/Web/API/Navigator",
+        "locale": "en-US",
+        "native": "English (US)",
+        "sidebarHTML": "",
+        "body": [
+          {
+            "type": "prose",
+            "value": {
+              "id": null,
+              "title": null,
+              "isH3": false,
+              "content": "<p>The <strong><code>Navigator</code></strong> interface represents the state and the identity of the user agent. It allows scripts to query it and to register themselves to carry on some activities.</p>\n<p>A <code>Navigator</code> object can be retrieved using the read-only <a href=\"/en-US/docs/Web/API/Window/navigator\"><code>window.navigator</code></a> property.</p>"
+            }
+          },
+          {
+            "type": "prose",
+            "value": {
+              "id": "properties",
+              "title": "Properties",
+              "isH3": false,
+              "content": "<p><em>Doesn't inherit any properties.</em></p>"
+            }
+          },          
+          {
+            "type": "specifications",
+            "value": {
+              "title": "Specifications",
+              "id": "specifications",
+              "isH3": false,
+              "specifications": [
+                {
+                  "bcdSpecificationURL": "https://html.spec.whatwg.org/multipage/system-state.html#the-navigator-object",
+                  "title": "HTML Standard"
+                }
+              ],
+              "query": "api.Navigator"
+            }
+          },
+          {
+            "type": "browser_compatibility",
+            "value": {
+              "title": "Browser compatibility",
+              "id": "browser_compatibility",
+              "isH3": false,
+              "query": "api.Navigator",
+              "dataURL": "/en-US/docs/Web/API/Navigator/bcd.json"
+            }
+          }
+        ],
+        "toc": [
+          { "text": "Properties", "id": "properties" },
+          { "text": "Methods", "id": "methods" },
+          { "text": "Specifications", "id": "specifications" },
+          { "text": "Browser compatibility", "id": "browser_compatibility" }
+        ],
+        "summary": "The Navigator interface represents the state and the identity of the user agent. It allows scripts to query it and to register themselves to carry on some activities.",
+        "popularity": 0.0087,
+        "modified": "2022-06-02T05:07:26.000Z",
+        "other_translations": [
+          { "title": "Navigator", "locale": "de", "native": "Deutsch" },
+          { "title": "Navigator", "locale": "es", "native": "Español" },
+          { "title": "Navigator", "locale": "fr", "native": "Français" },
+          { "title": "Navigator", "locale": "ja", "native": "日本語" },
+          { "title": "Navigator", "locale": "ko", "native": "한국어" },
+          { "title": "Navigator", "locale": "pl", "native": "Polski" },
+          {
+            "title": "Navigator",
+            "locale": "pt-BR",
+            "native": "Português (do Brasil)"
+          },
+          { "title": "Navigator", "locale": "ru", "native": "Русский" },
+          { "title": "Navigator", "locale": "zh-CN", "native": "中文 (简体)" },
+          {
+            "title": "Navigator",
+            "locale": "zh-TW",
+            "native": "正體中文 (繁體)"
+          }
+        ],
+        "source": {
+          "folder": "en-us/web/api/navigator",
+          "github_url": "https://github.com/mdn/content/blob/main/files/en-us/web/api/navigator/index.md",
+          "last_commit_url": "https://github.com/mdn/content/commit/a33268ca8d264ca3d504f65fdf11ce38a7bcb9bd",
+          "filename": "index.md"
+        },
+        "short_title": "Navigator",
+        "parents": [
+          { "uri": "/en-US/docs/Web", "title": "References" },
+          { "uri": "/en-US/docs/Web/API", "title": "Web APIs" },
+          { "uri": "/en-US/docs/Web/API/Navigator", "title": "Navigator" }
+        ],
+        "pageTitle": "Navigator - Web APIs | MDN",
+        "noIndexing": false
+      }
+    }
+  }
+}

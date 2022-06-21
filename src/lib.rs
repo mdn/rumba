@@ -12,6 +12,7 @@ pub mod util;
 
 #[macro_use]
 extern crate diesel;
+extern crate core;
 
 pub fn add_services<T>(app: App<T>) -> App<T>
 where
@@ -20,5 +21,6 @@ where
     app.service(api::healthz::healthz_app())
         .service(api::fxa_webhook::fxa_webhook_app())
         .service(api::auth::auth_service())
+        .service(api::admin::admin_service())
         .service(api::api_v1::api_v1_service())
 }

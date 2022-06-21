@@ -166,6 +166,18 @@ pub struct IdQuery {
     id: i64,
 }
 
+#[derive(Queryable)]
+pub struct DocumentQuery {
+    pub id: i64,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+    pub absolute_uri: String,
+    pub uri: String,
+    pub metadata: Option<Value>,
+    pub title: String,
+    pub paths: Vec<Option<String>>,
+}
+
 #[derive(Insertable)]
 #[diesel(table_name = webhook_events)]
 pub struct WebHookEventInsert {
