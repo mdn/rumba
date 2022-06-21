@@ -326,12 +326,12 @@ pub async fn process_notification_update(
         let mut suffix: Vec<&str> = Vec::with_capacity(parts.len());
 
         while !parts.is_empty() {
-            let subpath = parts.join(".");            
+            let subpath = parts.join(".");
             let doc = db::documents::get_document_by_path(&mut conn_pool, subpath).await;
             suffix.push(parts.pop().unwrap());
 
             if let Ok(document) = doc {
-                suffix.reverse();              
+                suffix.reverse();
                 let title = suffix.join(".");
                 let notification_data_id = create_notification_data(
                     &mut conn_pool,
