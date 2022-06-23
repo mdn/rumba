@@ -285,7 +285,7 @@ async fn change_profile_test() -> Result<(), Error> {
     let res = logged_in_client.trigger_webhook(set_token).await;
     assert!(res.response().status().is_success());
 
-    let mut tries = 10;
+    let mut tries = 100;
     while tries > 0 {
         let whoami = logged_in_client
             .get(
@@ -304,7 +304,7 @@ async fn change_profile_test() -> Result<(), Error> {
     }
 
     if tries == 0 {
-        return Err(anyhow!("Changes not applied after 100ms"));
+        return Err(anyhow!("Changes not applied after 1s"));
     }
 
     assert_last_fxa_webhook_with_retry(
