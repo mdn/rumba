@@ -16,7 +16,7 @@ use super::error::ApiError;
 pub enum Sorting {
     #[serde(rename = "title")]
     Title,
-    #[serde(rename = "created")]
+    #[serde(rename = "date")]
     Created,
 }
 
