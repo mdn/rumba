@@ -9,6 +9,7 @@ use crate::diesel::NullableExpressionMethods;
 use crate::diesel::OptionalExtension;
 use crate::diesel::PgTextExpressionMethods;
 use crate::util::normalize_uri;
+use chrono::{NaiveDateTime, Utc};
 use diesel::dsl::count;
 use diesel::expression_methods::ExpressionMethods;
 use diesel::r2d2::ConnectionManager;
@@ -155,8 +156,8 @@ pub async fn create_collection_item(
 
     let collection_insert = CollectionInsert {
         document_id,
-        notes: form.notes,
-        custom_name,
+        notes: form.notes.clone(),
+        custom_name: custom_name.clone(),
         user_id: user.id,
     };
 
@@ -167,7 +168,12 @@ pub async fn create_collection_item(
             schema::collections::document_id,
         ))
         .do_update()
-        .set(&collection_insert)
+        .set((
+            schema::collections::notes.eq(form.notes),
+            schema::collections::custom_name.eq(custom_name),
+            schema::collections::deleted_at.eq(None::<NaiveDateTime>),
+            schema::collections::updated_at.eq(Utc::now().naive_utc()),
+        ))
         .execute(pool)
 }
 
