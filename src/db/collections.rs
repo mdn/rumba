@@ -119,6 +119,24 @@ pub async fn get_collection_items_paginated(
         .get_results::<CollectionAndDocumentQuery>(pool)?)
 }
 
+pub async fn undelete_collection_item(
+    user: &UserQuery,
+    pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
+    url: String,
+) -> QueryResult<usize> {
+    update(schema::collections::table)
+        .filter(
+            schema::collections::document_id.eq_any(
+                schema::documents::table
+                    .filter(schema::documents::uri.eq(normalize_uri(&url)))
+                    .select(schema::documents::id),
+            ),
+        )
+        .filter(schema::collections::user_id.eq(user.id))
+        .set(schema::collections::deleted_at.eq(None::<NaiveDateTime>))
+        .execute(pool)
+}
+
 pub async fn delete_collection_item(
     user: &UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
@@ -182,7 +200,11 @@ pub async fn get_collection_item_count(
     user_id: i64,
 ) -> Result<i64, DbError> {
     let count = schema::collections::table
-        .filter(schema::collections::user_id.eq(user_id))
+        .filter(
+            schema::collections::user_id
+                .eq(user_id)
+                .and(schema::collections::deleted_at.is_null()),
+        )
         .select(count(schema::collections::id))
         .first(pool)?;
     Ok(count)
