@@ -163,17 +163,18 @@ pub async fn update_subscription_state_from_webhook(
     };
 
     if let Some(user) = user {
-        let ignore = schema::webhook_events::table
-            .filter(
-                schema::webhook_events::fxa_uid.eq(&fxa_event.fxa_uid).and(
-                    schema::webhook_events::typ
-                        .eq(&fxa_event.typ)
-                        .and(schema::webhook_events::change_time.ge(&fxa_event.change_time)),
-                ),
-            )
-            .count()
-            .first::<i64>(&mut conn)?
-            != 0;
+        let ignore = user.enforce_plus.is_some()
+            || schema::webhook_events::table
+                .filter(
+                    schema::webhook_events::fxa_uid.eq(&fxa_event.fxa_uid).and(
+                        schema::webhook_events::typ
+                            .eq(&fxa_event.typ)
+                            .and(schema::webhook_events::change_time.ge(&fxa_event.change_time)),
+                    ),
+                )
+                .count()
+                .first::<i64>(&mut conn)?
+                != 0;
         if !ignore {
             let id = insert_into(schema::webhook_events::table)
                 .values(fxa_event)
