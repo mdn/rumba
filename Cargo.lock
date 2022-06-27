@@ -2395,6 +2395,7 @@ dependencies = [
  "elasticsearch",
  "env_logger",
  "form_urlencoded",
+ "futures-util",
  "jsonwebtoken",
  "log",
  "once_cell",

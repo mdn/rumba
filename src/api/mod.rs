@@ -10,5 +10,6 @@ pub mod healthz;
 pub mod notifications;
 pub mod search;
 pub mod settings;
+pub mod user_middleware;
 pub mod watched_items;
 pub mod whoami;

@@ -56,6 +56,8 @@ pub enum ApiError {
     Search(#[from] SearchError),
     #[error("FxaWebhookError: {0}")]
     FxaWebhook(FxaWebhookError),
+    #[error("Unauthorized")]
+    Unauthorized,
 }
 
 impl ApiError {
@@ -72,6 +74,7 @@ impl ApiError {
             Self::Query(_) => "Query error",
             Self::Search(_) => "Search error",
             Self::FxaWebhook(_) => "FxaWebhookError",
+            Self::Unauthorized => "Unauthorized",
         }
     }
 }
@@ -93,6 +96,7 @@ impl ResponseError for ApiError {
             Self::MalformedUrl => StatusCode::BAD_REQUEST,
             Self::Query(_) => StatusCode::BAD_REQUEST,
             Self::Search(SearchError::Query { .. }) => StatusCode::BAD_REQUEST,
+            Self::Unauthorized => StatusCode::UNAUTHORIZED,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
