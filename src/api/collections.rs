@@ -225,6 +225,18 @@ pub async fn create_or_update_collection_item(
             )
             .await
         }
+        CollectionCreationOrDeletionForm::Deletion(collection_form)
+            if collection_form.delete.to_lowercase() == "false" =>
+        {
+            return undelete_collection_item(
+                pool,
+                id,
+                web::Query(CollectionDeletionParams {
+                    url: query.into_inner().url,
+                }),
+            )
+            .await
+        }
         CollectionCreationOrDeletionForm::Deletion(_) => Ok(HttpResponse::BadRequest().finish()),
     }
 }
@@ -265,6 +277,53 @@ async fn handle_create_update(
     })))
 }
 
+pub async fn undelete_collection_item(
+    pool: Data<Pool>,
+    id: Identity,
+    query: web::Query<CollectionDeletionParams>,
+) -> Result<HttpResponse, ApiError> {
+    match id.identity() {
+        Some(id) => {
+            let mut conn_pool = pool.get()?;
+            let user: UserQuery = get_user(&mut conn_pool, id).await?;
+
+            let sub_info = collections_subscription_info_for_user(&user, &mut conn_pool).await?;
+            if sub_info
+                .collection_items_remaining
+                .map_or(true, |number| number > 0)
+            {
+                let undeleted = crate::db::collections::undelete_collection_item(
+                    &user,
+                    &mut conn_pool,
+                    query.url.clone(),
+                )
+                .await
+                .map_err(DbError::from)?
+                    == 1;
+                let subscription_limit_reached =
+                    sub_info.collection_items_remaining.map_or(false, |number| {
+                        if undeleted {
+                            // we successfully undeleted so number is off by 1
+                            number < 2
+                        } else {
+                            number < 1
+                        }
+                    });
+                Ok(HttpResponse::Ok().json(json!({
+                    "subscription_limit_reached": subscription_limit_reached,
+                    "ok": true,
+                })))
+            } else {
+                Ok(HttpResponse::Ok().json(json!({
+                    "subscription_limit_reached": true,
+                    "ok": false,
+                })))
+            }
+        }
+        None => Ok(HttpResponse::Unauthorized().finish()),
+    }
+}
+
 pub async fn delete_collection_item(
     pool: Data<Pool>,
     id: Identity,
@@ -288,7 +347,8 @@ pub async fn delete_collection_item(
                 .collection_items_remaining
                 .map_or(false, |number| number < 0);
             Ok(HttpResponse::Ok().json(json!({
-                "subscription_limit_reached": subscription_limit_reached
+                "subscription_limit_reached": subscription_limit_reached,
+                "ok": true,
             })))
         }
         None => Ok(HttpResponse::Unauthorized().finish()),
