@@ -1,8 +1,10 @@
-use actix_identity::Identity;
 use actix_web::{web, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 
-use crate::db::{self, error::DbError, model::Settings, types::Locale, Pool};
+use crate::{
+    api::user_middleware::UserId,
+    db::{self, error::DbError, model::Settings, types::Locale, Pool},
+};
 
 use super::error::ApiError;
 
@@ -23,20 +25,18 @@ impl From<Settings> for SettingUpdateRequest {
 
 pub async fn update_settings(
     _req: HttpRequest,
-    id: Identity,
+    user_id: UserId,
     pool: web::Data<Pool>,
     payload: web::Json<SettingUpdateRequest>,
 ) -> Result<HttpResponse, ApiError> {
-    if let Some(id) = id.identity() {
-        let mut conn_pool = pool.get()?;
-        let user = db::users::get_user(&mut conn_pool, id).await;
+    let mut conn_pool = pool.get()?;
+    let user = db::users::get_user(&mut conn_pool, user_id.id).await;
 
-        let settings_update = payload.into_inner();
-        if let Ok(user) = user {
-            db::settings::create_or_update_settings(&mut conn_pool, &user, settings_update)
-                .map_err(DbError::from)?;
-            return Ok(HttpResponse::Created().finish());
-        }
+    let settings_update = payload.into_inner();
+    if let Ok(user) = user {
+        db::settings::create_or_update_settings(&mut conn_pool, &user, settings_update)
+            .map_err(DbError::from)?;
+        return Ok(HttpResponse::Created().finish());
     }
     Err(ApiError::InvalidSession)
 }

@@ -1,4 +1,3 @@
-use actix_identity::Identity;
 use diesel::r2d2::ConnectionManager;
 use diesel::PgConnection;
 use r2d2::PooledConnection;
@@ -6,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use crate::api::error::ApiError;
+use crate::api::user_middleware::UserId;
 use crate::db::collections::{
     collection_item_exists_for_user, create_collection_item, get_collection_item,
     get_collection_item_count, get_collection_items_paginated,
@@ -133,20 +133,15 @@ impl From<CollectionAndDocumentQuery> for CollectionItem {
 
 pub async fn collections(
     _req: HttpRequest,
-    id: Identity,
+    user_id: UserId,
     pool: web::Data<Pool>,
     query: web::Query<CollectionsQueryParams>,
 ) -> Result<HttpResponse, ApiError> {
-    match id.identity() {
-        Some(id) => {
-            let mut conn_pool = pool.get()?;
-            let user: UserQuery = get_user(&mut conn_pool, id).await?;
-            match &query.url {
-                Some(url) => get_single_collection_item(pool, user, url).await,
-                None => get_paginated_collection_items(pool, &user, &query).await,
-            }
-        }
-        None => Ok(HttpResponse::Unauthorized().finish()),
+    let mut conn_pool = pool.get()?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id).await?;
+    match &query.url {
+        Some(url) => get_single_collection_item(pool, user, url).await,
+        None => get_paginated_collection_items(pool, &user, &query).await,
     }
 }
 
@@ -204,21 +199,20 @@ async fn get_paginated_collection_items(
 pub async fn create_or_update_collection_item(
     pool: Data<Pool>,
     http_client: Data<Client>,
-    id: Identity,
+    user_id: UserId,
     query: web::Query<CollectionCreationParams>,
     collection_form: web::Form<CollectionCreationOrDeletionForm>,
 ) -> Result<HttpResponse, ApiError> {
     match collection_form.into_inner() {
-        CollectionCreationOrDeletionForm::Creation(collection_form) => match id.identity() {
-            Some(id) => handle_create_update(&pool, id, query, http_client, collection_form).await,
-            None => Ok(HttpResponse::Unauthorized().finish()),
-        },
+        CollectionCreationOrDeletionForm::Creation(collection_form) => {
+            handle_create_update(&pool, user_id.id, query, http_client, collection_form).await
+        }
         CollectionCreationOrDeletionForm::Deletion(collection_form)
             if collection_form.delete.to_lowercase() == "true" =>
         {
             return delete_collection_item(
                 pool,
-                id,
+                user_id,
                 web::Query(CollectionDeletionParams {
                     url: query.into_inner().url,
                 }),
@@ -230,7 +224,7 @@ pub async fn create_or_update_collection_item(
         {
             return undelete_collection_item(
                 pool,
-                id,
+                user_id,
                 web::Query(CollectionDeletionParams {
                     url: query.into_inner().url,
                 }),
@@ -279,80 +273,66 @@ async fn handle_create_update(
 
 pub async fn undelete_collection_item(
     pool: Data<Pool>,
-    id: Identity,
+    user_id: UserId,
     query: web::Query<CollectionDeletionParams>,
 ) -> Result<HttpResponse, ApiError> {
-    match id.identity() {
-        Some(id) => {
-            let mut conn_pool = pool.get()?;
-            let user: UserQuery = get_user(&mut conn_pool, id).await?;
+    let mut conn_pool = pool.get()?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id).await?;
 
-            let sub_info = collections_subscription_info_for_user(&user, &mut conn_pool).await?;
-            if sub_info
-                .collection_items_remaining
-                .map_or(true, |number| number > 0)
-            {
-                let undeleted = crate::db::collections::undelete_collection_item(
-                    &user,
-                    &mut conn_pool,
-                    query.url.clone(),
-                )
-                .await
-                .map_err(DbError::from)?
-                    == 1;
-                let subscription_limit_reached =
-                    sub_info.collection_items_remaining.map_or(false, |number| {
-                        if undeleted {
-                            // we successfully undeleted so number is off by 1
-                            number < 2
-                        } else {
-                            number < 1
-                        }
-                    });
-                Ok(HttpResponse::Ok().json(json!({
-                    "subscription_limit_reached": subscription_limit_reached,
-                    "ok": true,
-                })))
-            } else {
-                Ok(HttpResponse::Ok().json(json!({
-                    "subscription_limit_reached": true,
-                    "ok": false,
-                })))
-            }
-        }
-        None => Ok(HttpResponse::Unauthorized().finish()),
+    let sub_info = collections_subscription_info_for_user(&user, &mut conn_pool).await?;
+    if sub_info
+        .collection_items_remaining
+        .map_or(true, |number| number > 0)
+    {
+        let undeleted = crate::db::collections::undelete_collection_item(
+            &user,
+            &mut conn_pool,
+            query.url.clone(),
+        )
+        .await
+        .map_err(DbError::from)?
+            == 1;
+        let subscription_limit_reached =
+            sub_info.collection_items_remaining.map_or(false, |number| {
+                if undeleted {
+                    // we successfully undeleted so number is off by 1
+                    number < 2
+                } else {
+                    number < 1
+                }
+            });
+        Ok(HttpResponse::Ok().json(json!({
+            "subscription_limit_reached": subscription_limit_reached,
+            "ok": true,
+        })))
+    } else {
+        Ok(HttpResponse::Ok().json(json!({
+            "subscription_limit_reached": true,
+            "ok": false,
+        })))
     }
 }
 
 pub async fn delete_collection_item(
     pool: Data<Pool>,
-    id: Identity,
+    user_id: UserId,
     query: web::Query<CollectionDeletionParams>,
 ) -> Result<HttpResponse, ApiError> {
-    match id.identity() {
-        Some(id) => {
-            let mut conn_pool = pool.get()?;
-            let user: UserQuery = get_user(&mut conn_pool, id).await?;
+    let mut conn_pool = pool.get()?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id).await?;
 
-            let sub_info = collections_subscription_info_for_user(&user, &mut conn_pool).await?;
-            crate::db::collections::delete_collection_item(
-                &user,
-                &mut conn_pool,
-                query.url.clone(),
-            )
-            .await
-            .map_err(DbError::from)?;
+    let sub_info = collections_subscription_info_for_user(&user, &mut conn_pool).await?;
+    crate::db::collections::delete_collection_item(&user, &mut conn_pool, query.url.clone())
+        .await
+        .map_err(DbError::from)?;
 
-            let subscription_limit_reached = sub_info
-                .collection_items_remaining
-                .map_or(false, |number| number < 0);
-            Ok(HttpResponse::Ok().json(json!({
-                "subscription_limit_reached": subscription_limit_reached,
-                "ok": true,
-            })))
-        }
-        None => Ok(HttpResponse::Unauthorized().finish()),
-    }
+    let subscription_limit_reached = sub_info
+        .collection_items_remaining
+        .map_or(false, |number| number < 0);
+    Ok(HttpResponse::Ok().json(json!({
+        "subscription_limit_reached": subscription_limit_reached,
+        "ok": true,
+    })))
 }
 
 struct CollectionsSubscriptionInfo {
