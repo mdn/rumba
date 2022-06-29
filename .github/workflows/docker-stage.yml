@@ -1,0 +1,21 @@
+name: docker-stage
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  docker:
+    runs-on: ubuntu-18.04    
+    steps:
+      - uses: docker/build-push-action@v3
+      - name: Build and push
+        uses: actions-rs/toolchain@v1
+        with:
+          context: .
+          toolchain: 1.60.0
+          push: true
+          tags: rumba:latest
+

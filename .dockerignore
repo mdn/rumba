@@ -1,0 +1,10 @@
+.settings.local.toml
+.settings.test.toml
+.settings*.json
+secret-*.yaml
+.git/
+.vscode/
+.idea/
+target/
+!target/release/rumba
+**/.terraform/*
