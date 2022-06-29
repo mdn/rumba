@@ -28,11 +28,17 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Set outputs
         id: vars
-        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"        
+        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"   
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}             
       - name: Build and push
         uses: docker/build-push-action@v3        
         with:
           context: .
           push: true
-          tags: rumba:${{ steps.vars.outputs.sha_short }}
+          tags: ${{ steps.vars.outputs.sha_short }}
+          labels: ${{ steps.meta.outputs.labels }}
 
