@@ -10,7 +10,9 @@ CREATE TABLE users
     fxa_uid           VARCHAR(255) NOT NULL UNIQUE,
     fxa_refresh_token VARCHAR(255) NOT NULL,
     avatar_url        TEXT,
-    subscription_type subscription_type
+    subscription_type subscription_type,
+    enforce_plus      subscription_type,
+    is_admin          BOOLEAN NOT NULL DEFAULT false
 );
 
 CREATE INDEX fxa_id

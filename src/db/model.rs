@@ -12,14 +12,16 @@ use super::types::NotificationTypeEnum;
 #[diesel(table_name = users)]
 pub struct User {
     pub updated_at: NaiveDateTime,
+    pub email: String,
     pub fxa_uid: String,
     pub fxa_refresh_token: String,
-    pub avatar_url: Option<String>,
+    pub avatar_url: Option<Option<String>>,
     pub subscription_type: Subscription,
-    pub email: String,
+    pub enforce_plus: Option<Subscription>,
+    pub is_admin: Option<bool>,
 }
 
-#[derive(Queryable, AsChangeset, Debug)]
+#[derive(Queryable, Debug)]
 #[diesel(table_name = users)]
 pub struct UserQuery {
     pub id: i64,
@@ -30,6 +32,8 @@ pub struct UserQuery {
     pub fxa_refresh_token: String,
     pub avatar_url: Option<String>,
     pub subscription_type: Option<Subscription>,
+    pub enforce_plus: Option<Subscription>,
+    pub is_admin: bool,
 }
 
 #[derive(Queryable, Clone)]

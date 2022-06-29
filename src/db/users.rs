@@ -28,9 +28,11 @@ pub fn create_or_update_user(
         updated_at: chrono::offset::Utc::now().naive_utc(),
         fxa_uid: fxa_user.uid,
         fxa_refresh_token: String::from(refresh_token),
-        avatar_url: fxa_user.avatar,
+        avatar_url: Some(fxa_user.avatar),
         email: fxa_user.email,
         subscription_type: sub,
+        enforce_plus: None,
+        is_admin: None,
     };
 
     insert_into(users)

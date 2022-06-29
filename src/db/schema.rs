@@ -126,6 +126,8 @@ diesel::table! {
         fxa_refresh_token -> Varchar,
         avatar_url -> Nullable<Text>,
         subscription_type -> Nullable<SubscriptionType>,
+        enforce_plus -> Nullable<SubscriptionType>,
+        is_admin -> Bool,
     }
 }
 

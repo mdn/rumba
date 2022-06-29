@@ -2,10 +2,10 @@ use actix_identity::Identity;
 
 use serde::Serialize;
 
-use crate::api::error::ApiError;
 use crate::api::settings::SettingUpdateRequest;
 use crate::db;
 use crate::db::Pool;
+use crate::{api::error::ApiError, db::types::Subscription};
 use actix_web::{web, HttpRequest, HttpResponse};
 
 #[derive(Serialize)]
@@ -22,7 +22,7 @@ pub struct WhoamiResponse {
     email: Option<String>,
     avatar_url: Option<String>,
     is_subscriber: Option<bool>,
-    subscription_type: Option<String>,
+    subscription_type: Option<Subscription>,
     settings: Option<SettingUpdateRequest>,
 }
 
@@ -46,14 +46,17 @@ pub async fn whoami(
             match user {
                 Ok(found) => {
                     let settings = db::settings::get_settings(&mut conn_pool, &found)?;
+                    let subscription_type = found
+                        .enforce_plus
+                        .or(found.subscription_type)
+                        .unwrap_or_default();
+                    let is_subscriber = subscription_type.is_subscriber();
                     let response = WhoamiResponse {
                         geo: country,
                         username: Option::Some(found.fxa_uid),
-                        subscription_type: Option::Some(
-                            found.subscription_type.unwrap_or_default().into(),
-                        ),
+                        subscription_type: Option::Some(subscription_type),
                         avatar_url: found.avatar_url,
-                        is_subscriber: found.subscription_type.map(|s| s.is_subscriber()),
+                        is_subscriber: Some(is_subscriber),
                         is_authenticated: Option::Some(true),
                         email: Option::Some(found.email),
                         settings: settings.map(Into::into),
