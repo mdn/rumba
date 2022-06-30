@@ -1,0 +1,21 @@
+name: rumba
+rev: pr-17
+docker_registry: ghcr.io/mdn
+
+settings:  
+  server__port: 8000
+  server__host: "0.0.0.0"
+  auth__issuer_url: "https://accounts.stage.mozaws.net"
+  auth__redirect_url: "https://developer.allizom.org/users/fxa/login/callback/"
+  auth__scopes: "openid profile email profile:subscriptions"
+  auth__auth_cookie_name: "auth-cookie"
+  auth__auth_cookie_secure: false
+  auth__client_id: e7bc284c2d3b4a90
+
+  application__document_base_url: "https://developer.allizom.org"
+  application__notifications_update_base_url: "https://updates.developer.allizom.org/notifications"
+  application__subscriptions_limit_watched_items: 3
+  application__subscriptions_limit_collections: 5
+
+  search__cache_max_age: 43200
+  search__query_max_length: 200

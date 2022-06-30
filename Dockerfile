@@ -21,4 +21,4 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /root/
 COPY --from=0 /usr/src/rumba/target/release/rumba .
 
-CMD ["./rumba"]  
+CMD ["./rumba"]

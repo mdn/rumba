@@ -1,0 +1,67 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}-deployment
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}
+    spec:
+      containers:
+        - name: {{ .Values.name }}
+          image: {{ .Values.docker_registry }}/{{ .Values.name }}:{{ .Values.rev }}
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: 512Mi
+            limits:
+              memory: 2048Mi
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+          env:
+            - name: MDN_SETTINGS
+              value: "/app/.settings.toml"
+            {{- range $key, $value := .Values.settings }}
+            - name: MDN__{{ $key | upper }}
+              value: "{{ $value }}"
+            {{- end }}
+            {{- range list "db__uri" "auth__admin_update_bearer_token" "auth__auth_cookie_key" "auth__client_secret" "search__url" }}
+            - name: MDN__{{ . }}
+              valueFrom:
+                secretKeyRef:
+                  key: {{ . }}
+                  name: rumba-secrets
+            {{- end }}    
+          volumeMounts:
+            - name: settings-temp
+              mountPath: "/app/.settings.toml"
+              subPath: ".settings.toml"
+              readOnly: true
+      volumes:
+        - name: settings-temp
+          configMap:
+            name: temp-rumba-settings
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: temp-rumba-settings
+  namespace: mdn-stage
+data:
+  .settings.toml: |
+    [application]
+    document_base_url = ""
+    
