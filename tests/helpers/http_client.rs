@@ -30,7 +30,7 @@ impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error 
         let _stubr_ok = check_stubr_initialized().await;
 
         let login_req = test::TestRequest::get()
-            .uri("/users/fxa/login/authenticate")
+            .uri("/users/fxa/login/authenticate/")
             .to_request();
 
         let login_res = test::call_service(&service, login_req).await;
