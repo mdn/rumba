@@ -105,7 +105,7 @@ async fn no_prompt() -> Result<(), Error> {
     let app = test::init_service(app).await;
 
     let login_req = test::TestRequest::get()
-        .uri("/users/fxa/login/authenticate/no-prompt/?next=/foo&email=foo@bar.com")
+        .uri("/users/fxa/login/no-prompt/?next=/foo&email=foo@bar.com")
         .to_request();
     let login_res = test::call_service(&app, login_req).await;
 
