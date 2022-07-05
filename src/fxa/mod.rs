@@ -100,8 +100,8 @@ impl LoginManager {
         })
     }
 
-    pub fn login(&self) -> (Url, CsrfToken, Nonce) {
-        let (auth_url, csrf_token, nonce) = self
+    pub fn login(&self, email: Option<String>) -> (Url, CsrfToken, Nonce) {
+        let mut auth_req = self
             .login_client
             .authorize_url(
                 CoreAuthenticationFlow::AuthorizationCode,
@@ -109,8 +109,13 @@ impl LoginManager {
                 Nonce::new_random,
             )
             .add_scope(Scope::new(SETTINGS.auth.scopes.clone()))
-            .add_extra_param("access_type", "offline")
-            .url();
+            .add_extra_param("access_type", "offline");
+        if let Some(email) = email {
+            auth_req = auth_req
+                .add_extra_param("prompt", "none")
+                .add_extra_param("login_hint", email);
+        }
+        let (auth_url, csrf_token, nonce) = auth_req.url();
         (auth_url, csrf_token, nonce)
     }
 
