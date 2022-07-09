@@ -7,7 +7,7 @@ metadata:
   labels:
     app: {{ .Values.name }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.deployment.replicas }}
   selector:
     matchLabels:
       app: {{ .Values.name }}
@@ -22,9 +22,11 @@ spec:
           imagePullPolicy: Always
           resources:
             requests:
-              memory: 512Mi
+              cpu: {{ .Values.deployment.resources.requests.cpu }}
+              memory: {{ .Values.deployment.resources.requests.memory }}              
             limits:
-              memory: 2048Mi
+              memory: {{ .Values.deployment.resources.limits.memory }}
+              cpu: {{ .Values.deployment.resources.limits.cpu }}
           ports:
             - containerPort: 8000
           readinessProbe:
