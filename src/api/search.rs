@@ -5,7 +5,6 @@ use actix_web::http::header::{CacheControl, CacheDirective};
 use actix_web::{web, HttpRequest, HttpResponse};
 use elasticsearch::http::response::Response as ElasticResponse;
 use elasticsearch::{CountParts, Elasticsearch, SearchParts};
-use log::{debug, error};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::cmp::Ordering;
@@ -332,7 +331,10 @@ async fn do_search(
         highlight,
         suggest,
     };
-    debug!("elastic request: {}", serde_json::to_string(&search_body)?);
+    debug!(
+        "elastic request: {}",
+        serde_json::to_string(&search_body).unwrap_or_default()
+    );
     client
         .search(SearchParts::Index(&["mdn_docs"]))
         .body(search_body)
@@ -403,7 +405,10 @@ async fn do_count(
             ..elastic::QueryBool::default()
         }),
     };
-    debug!("elastic request: {}", serde_json::to_string(&body)?);
+    debug!(
+        "elastic request: {}",
+        serde_json::to_string(&body).unwrap_or_default()
+    );
     client
         .count(CountParts::Index(&["mdn_docs"]))
         .body(body)

@@ -11,6 +11,7 @@ use elasticsearch::Elasticsearch;
 use reqwest::Client;
 use rumba::add_services;
 use rumba::fxa::LoginManager;
+use rumba::logging::init_logging;
 use rumba::settings::SETTINGS;
 
 use super::{db::get_pool, identity::TestIdentityPolicy};
@@ -45,7 +46,7 @@ pub async fn test_app_with_login() -> anyhow::Result<
     let pool = Data::new(get_pool().clone());
     let login_manager = Data::new(LoginManager::init().await?);
     let client = Data::new(Client::new());
-    let _result = env_logger::try_init();
+    init_logging(!SETTINGS.logging.human_logs);
     let policy = CookieIdentityPolicy::new(&[0; 32])
         .name(&SETTINGS.auth.auth_cookie_name)
         .secure(SETTINGS.auth.auth_cookie_secure);

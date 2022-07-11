@@ -1,3 +1,9 @@
+#[macro_use]
+extern crate diesel;
+extern crate core;
+#[macro_use]
+extern crate slog_scope;
+
 use actix_web::{
     dev::{ServiceFactory, ServiceRequest},
     App, Error,
@@ -7,12 +13,11 @@ pub mod api;
 pub mod db;
 pub mod fxa;
 mod helpers;
+pub mod logging;
+pub mod metrics;
 pub mod settings;
+pub mod tags;
 pub mod util;
-
-#[macro_use]
-extern crate diesel;
-extern crate core;
 
 pub fn add_services<T>(app: App<T>) -> App<T>
 where

@@ -316,7 +316,7 @@ pub async fn process_notification_update(
             }
             DocumentChangeEvent::Unknown => {
                 //Probably log an error here
-                log::error!("Unknown event type received {:?}", event)
+                error!("Unknown event type received {:?}", event)
             }
         }
     });

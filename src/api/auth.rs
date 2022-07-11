@@ -84,7 +84,7 @@ async fn callback(
     session.clear();
     match (csrf_token, nonce) {
         (Some(state), Some(nonce)) if state.secret() == &q.state => {
-            println!("callback");
+            debug!("callback");
             let uid = login_manager
                 .callback(q.code, nonce, &pool)
                 .await

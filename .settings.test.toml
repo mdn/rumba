@@ -26,3 +26,10 @@ subscriptions_limit_collections = 5
 url = "ignored"
 cache_max_age = 43200
 query_max_length = 200
+
+[logging]
+human_logs = true
+
+[metrics]
+statsd_label = "rumba"
+statsd_port = 8125
