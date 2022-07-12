@@ -65,5 +65,9 @@ async fn main() -> anyhow::Result<()> {
     .bind((SETTINGS.server.host.as_str(), SETTINGS.server.port))?
     .run()
     .await?;
+
+    info!("Server closing");
+    logging::reset_logging();
+
     Ok(())
 }
