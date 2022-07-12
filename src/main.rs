@@ -12,7 +12,7 @@ use reqwest::Client as HttpClient;
 use rumba::{
     add_services, db,
     fxa::LoginManager,
-    logging::init_logging,
+    logging::{self, init_logging},
     metrics::{metrics_from_opts, MetricsData},
     settings::SETTINGS,
 };
