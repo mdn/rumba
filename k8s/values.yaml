@@ -2,7 +2,7 @@ name: rumba
 rev: pr-17
 docker_registry: ghcr.io/mdn
 
-settings:  
+settings:
   server__port: 8000
   server__host: "0.0.0.0"
   auth__issuer_url: "https://accounts.stage.mozaws.net"

@@ -164,7 +164,7 @@ async fn get_single_collection_item(
 
     let result = CollectionResponse {
         bookmarked,
-        csrfmiddlewaretoken: "abc".to_string(),
+        csrfmiddlewaretoken: "deprecated".to_string(),
         subscription_limit_reached: sub_info.limit_reached,
     };
     Ok(HttpResponse::Ok().json(result))
@@ -190,7 +190,7 @@ async fn get_paginated_collection_items(
 
     let result = CollectionsResponse {
         items,
-        csrfmiddlewaretoken: "abc".to_string(),
+        csrfmiddlewaretoken: "deprecated".to_string(),
         subscription_limit_reached: sub_info.limit_reached,
     };
     Ok(HttpResponse::Ok().json(result))
