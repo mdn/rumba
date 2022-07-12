@@ -344,7 +344,7 @@ async fn collections_subscription_info_for_user(
     user: &UserQuery,
     conn_pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
 ) -> Result<CollectionsSubscriptionInfo, ApiError> {
-    return match user.subscription_type {
+    return match user.get_subscription_type() {
         Some(_type) => {
             if matches!(_type, db::types::Subscription::Core) {
                 {

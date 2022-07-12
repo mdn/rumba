@@ -173,7 +173,7 @@ async fn watched_items_subscription_info_for_user(
     user: &UserQuery,
     conn_pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
 ) -> Result<WatchedItemsSubscriptionInfo, ApiError> {
-    return match user.subscription_type {
+    return match user.get_subscription_type() {
         Some(_type) => {
             if matches!(_type, db::types::Subscription::Core) {
                 {
