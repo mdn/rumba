@@ -21,6 +21,12 @@ pub struct User {
     pub is_admin: Option<bool>,
 }
 
+impl User {
+    pub fn get_subscription_type(&self) -> Subscription {
+        self.enforce_plus.unwrap_or(self.subscription_type)
+    }
+}
+
 #[derive(Queryable, Debug)]
 #[diesel(table_name = users)]
 pub struct UserQuery {
@@ -31,9 +37,15 @@ pub struct UserQuery {
     pub fxa_uid: String,
     pub fxa_refresh_token: String,
     pub avatar_url: Option<String>,
-    pub subscription_type: Option<Subscription>,
-    pub enforce_plus: Option<Subscription>,
+    subscription_type: Option<Subscription>,
+    enforce_plus: Option<Subscription>,
     pub is_admin: bool,
+}
+
+impl UserQuery {
+    pub fn get_subscription_type(&self) -> Option<Subscription> {
+        self.enforce_plus.or(self.subscription_type)
+    }
 }
 
 #[derive(Queryable, Clone)]
