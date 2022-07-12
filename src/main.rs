@@ -1,6 +1,6 @@
 #![warn(clippy::all)]
 
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 
 use actix_identity::{CookieIdentityPolicy, IdentityService};
 use actix_rt::Arbiter;
@@ -16,6 +16,7 @@ use rumba::{
     metrics::{metrics_from_opts, MetricsData},
     settings::SETTINGS,
 };
+use sentry::types::Dsn;
 use slog_scope::{debug, info};
 
 const MIGRATIONS: diesel_migrations::EmbeddedMigrations = diesel_migrations::embed_migrations!();
@@ -46,12 +47,22 @@ async fn main() -> anyhow::Result<()> {
         client: Arc::new(metrics_from_opts()?),
     });
 
+    let _guard = sentry::init(sentry::ClientOptions {
+        dsn: SETTINGS
+            .sentry
+            .as_ref()
+            .and_then(|s| Dsn::from_str(&s.dsn).ok()),
+        release: sentry::release_name!(),
+        ..Default::default()
+    });
+
     HttpServer::new(move || {
         let policy = CookieIdentityPolicy::new(&SETTINGS.auth.auth_cookie_key)
             .name(&SETTINGS.auth.auth_cookie_name)
             .secure(SETTINGS.auth.auth_cookie_secure)
             .same_site(SameSite::Strict);
         let app = App::new()
+            .wrap(sentry_actix::Sentry::new())
             .wrap(Logger::default().exclude("/healthz"))
             .wrap(IdentityService::new(policy))
             .app_data(Data::clone(&metrics))

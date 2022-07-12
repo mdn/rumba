@@ -59,6 +59,11 @@ pub struct Metrics {
     pub statsd_port: u16,
 }
 
+#[derive(Deserialize, Default)]
+pub struct Sentry {
+    pub dsn: String,
+}
+
 #[derive(Deserialize)]
 pub struct Settings {
     pub db: DB,
@@ -68,6 +73,7 @@ pub struct Settings {
     pub search: Search,
     pub logging: Logging,
     pub metrics: Metrics,
+    pub sentry: Option<Sentry>,
 }
 
 impl Settings {
