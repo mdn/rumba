@@ -1,5 +1,4 @@
 name: rumba
-rev: 24d36f0
 docker_registry: ghcr.io/mdn
 
 settings:

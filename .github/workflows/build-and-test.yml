@@ -12,7 +12,7 @@ env:
 jobs:
   build:
 
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:11
@@ -40,4 +40,3 @@ jobs:
         run: cargo build --all --all-features --verbose
       - name: Run tests
         run: MDN_SETTINGS=.settings.test.toml cargo test --all -- --test-threads=1 --nocapture
-

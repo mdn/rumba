@@ -12,7 +12,7 @@ RUN cargo vendor > .cargo/config
 COPY . .
 RUN cargo build --release
 
-FROM debian:10-slim
+FROM debian:11-slim
 
 RUN apt-get update && apt-get install -y \
     libpq5 ca-certificates \
