@@ -5,6 +5,7 @@ use serde::Serialize;
 use crate::api::settings::SettingUpdateRequest;
 use crate::db;
 use crate::db::Pool;
+use crate::metrics::Metrics;
 use crate::{api::error::ApiError, db::types::Subscription};
 use actix_web::{web, HttpRequest, HttpResponse};
 
@@ -32,6 +33,7 @@ pub async fn whoami(
     _req: HttpRequest,
     id: Identity,
     pool: web::Data<Pool>,
+    metrics: Metrics,
 ) -> Result<HttpResponse, ApiError> {
     let header_info = _req.headers().get(CLOUDFRONT_COUNTRY_HEADER);
 
@@ -58,12 +60,17 @@ pub async fn whoami(
                         email: Option::Some(found.email),
                         settings: settings.map(Into::into),
                     };
+                    metrics.incr("whoami.logged_in_success");
                     Ok(HttpResponse::Ok().json(response))
                 }
-                Err(_err) => Err(ApiError::InvalidSession),
+                Err(_err) => {
+                    metrics.incr("whoami.logged_in_invalid");
+                    Err(ApiError::InvalidSession)
+                }
             }
         }
         None => {
+            metrics.incr("whoami.anonymous");
             let res = WhoamiResponse {
                 geo: country,
                 ..Default::default()

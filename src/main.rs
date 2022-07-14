@@ -1,14 +1,22 @@
 #![warn(clippy::all)]
 
+use std::sync::Arc;
+
 use actix_identity::{CookieIdentityPolicy, IdentityService};
 use actix_rt::Arbiter;
 use actix_web::{cookie::SameSite, middleware::Logger, web::Data, App, HttpServer};
 use diesel_migrations::MigrationHarness;
 use elasticsearch::http::transport::Transport;
 use elasticsearch::Elasticsearch;
-use log::{debug, info};
 use reqwest::Client as HttpClient;
-use rumba::{add_services, db, fxa::LoginManager, settings::SETTINGS};
+use rumba::{
+    add_services, db,
+    fxa::LoginManager,
+    logging::{self, init_logging},
+    metrics::{metrics_from_opts, MetricsData},
+    settings::SETTINGS,
+};
+use slog_scope::{debug, info};
 
 const MIGRATIONS: diesel_migrations::EmbeddedMigrations = diesel_migrations::embed_migrations!();
 
@@ -17,7 +25,7 @@ async fn main() -> anyhow::Result<()> {
     if std::env::var("RUST_LOG").is_err() {
         std::env::set_var("RUST_LOG", "info");
     }
-    env_logger::init();
+    init_logging(!SETTINGS.logging.human_logs);
     info!("starting…");
     debug!("DEBUG logging enabled");
 
@@ -34,6 +42,9 @@ async fn main() -> anyhow::Result<()> {
 
     let elastic_transport = Transport::single_node(&SETTINGS.search.url)?;
     let elastic_client = Data::new(Elasticsearch::new(elastic_transport));
+    let metrics = Data::new(MetricsData {
+        client: Arc::new(metrics_from_opts()?),
+    });
 
     HttpServer::new(move || {
         let policy = CookieIdentityPolicy::new(&SETTINGS.auth.auth_cookie_key)
@@ -43,6 +54,7 @@ async fn main() -> anyhow::Result<()> {
         let app = App::new()
             .wrap(Logger::default().exclude("/healthz"))
             .wrap(IdentityService::new(policy))
+            .app_data(Data::clone(&metrics))
             .app_data(Data::clone(&pool))
             .app_data(Data::clone(&arbiter_handle))
             .app_data(Data::clone(&http_client))
@@ -53,5 +65,9 @@ async fn main() -> anyhow::Result<()> {
     .bind((SETTINGS.server.host.as_str(), SETTINGS.server.port))?
     .run()
     .await?;
+
+    info!("Server closing");
+    logging::reset_logging();
+
     Ok(())
 }

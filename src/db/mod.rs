@@ -2,6 +2,7 @@ pub mod collections;
 pub mod documents;
 pub mod error;
 pub mod fxa_webhook;
+#[allow(clippy::extra_unused_lifetimes)]
 pub mod model;
 pub mod notifications;
 #[allow(unused_imports)]

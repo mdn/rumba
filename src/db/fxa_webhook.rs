@@ -11,7 +11,6 @@ use chrono::{DateTime, Utc};
 use diesel::insert_into;
 use diesel::prelude::*;
 use diesel::ExpressionMethods;
-use log::{debug, error};
 use serde_json::json;
 
 use super::types::{FxaEventStatus, Subscription};

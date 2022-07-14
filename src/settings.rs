@@ -47,6 +47,18 @@ pub struct Search {
     pub query_max_length: usize,
 }
 
+#[derive(Deserialize, Default)]
+pub struct Logging {
+    pub human_logs: bool,
+}
+
+#[derive(Deserialize, Default)]
+pub struct Metrics {
+    pub statsd_label: String,
+    pub statsd_host: Option<String>,
+    pub statsd_port: u16,
+}
+
 #[derive(Deserialize)]
 pub struct Settings {
     pub db: DB,
@@ -54,6 +66,8 @@ pub struct Settings {
     pub auth: Auth,
     pub application: Application,
     pub search: Search,
+    pub logging: Logging,
+    pub metrics: Metrics,
 }
 
 impl Settings {

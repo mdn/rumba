@@ -5,7 +5,6 @@ use actix_web::{dev::HttpServiceFactory, web, HttpRequest, HttpResponse};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 use base64;
 use chrono::{DateTime, Utc};
-use log::{debug, error, warn};
 use openidconnect::{
     core::{CoreJsonWebKey, CoreJwsSigningAlgorithm},
     Audience, JsonWebKey,
@@ -123,6 +122,9 @@ async fn process_event(
     login_manager: web::Data<LoginManager>,
     arbiter: web::Data<ArbiterHandle>,
 ) -> Result<(), DbError> {
+    if payload.events.password_change.is_some() {
+        debug!("skipped password change event for {}", payload.fxa_uid);
+    }
     if let Some(profile_change) = payload.events.profile_change {
         update_profile_from_webhook(
             conn_pool.clone(),
@@ -150,9 +152,6 @@ async fn process_event(
             payload.issue_time,
         )
         .await?;
-    }
-    if payload.events.password_change.is_some() {
-        debug!("skipped password change event for {}", payload.fxa_uid);
     }
     Ok(())
 }
