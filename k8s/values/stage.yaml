@@ -1,0 +1,18 @@
+env: dev
+namespace: mdn-stage
+
+service:
+  ssl_certificate_arn: arn:aws:acm:us-west-2:178589013767:certificate/4c0418c7-6c02-4f23-89a9-f6e6709293d9
+
+deployment:
+  replicas: 2
+  updateStrategy:
+    type: RollingUpdate
+
+  resources: 
+    limits:
+      cpu: 2
+      memory: 2Gi
+    requests:
+      cpu: 2
+      memory: 512Mi  
