@@ -28,11 +28,23 @@ spec:
               memory: {{ .Values.deployment.resources.limits.memory }}
               cpu: {{ .Values.deployment.resources.limits.cpu }}
           ports:
-            - containerPort: 8000
+            - containerPort: {{ .Values.settings.server__port }}
           readinessProbe:
             httpGet:
               path: /healthz
-              port: 8000
+              port: {{ .Values.settings.server__port }}
+            initialDelaySeconds: 10
+            periodSeconds: 6
+            successThreshold: 1
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.settings.server__port }}
+            initialDelaySeconds: 20
+            periodSeconds: 6
+            successThreshold: 1
+            timeoutSeconds: 5
           env:
             - name: MDN_SETTINGS
               value: "/app/.settings.toml"
@@ -61,7 +73,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: temp-rumba-settings
-  namespace: mdn-stage
+  namespace: {{ .Values.namespace }}
 data:
   .settings.toml: |
     [application]
