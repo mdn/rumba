@@ -44,6 +44,8 @@ pub enum Browser {
     SafariIos,
     SamsungInternetAndroid,
     WebviewAndroid,
+    #[serde(other)]
+    Unknown,
 }
 
 #[derive(Eq, Hash, PartialEq)]
@@ -56,6 +58,7 @@ pub enum BrowserGroup {
     Opera,
     Safari,
     SamsungInternetAndroid,
+    Unknown,
 }
 
 impl Browser {
@@ -75,24 +78,15 @@ impl Browser {
             Browser::SafariIos => "Safari on iOS",
             Browser::SamsungInternetAndroid => "Samsung Internet",
             Browser::WebviewAndroid => "WebView Android",
+            Browser::Unknown => "Unknown",
         }
     }
     pub fn preview_name(&self) -> &str {
         match *self {
             Browser::Chrome => "Canary",
-            Browser::ChromeAndroid => "Chrome Android",
-            Browser::Deno => "Deno",
-            Browser::Edge => "Edge",
             Browser::Firefox => "Nightly",
-            Browser::FirefoxAndroid => "Firefox for Android",
-            Browser::InternetExplorer => "Internet Explorer",
-            Browser::NodeJs => "Node.js",
-            Browser::Opera => "Opera",
-            Browser::OperaAndroid => "Opera Android",
             Browser::Safari => "TP",
-            Browser::SafariIos => "Safari on iOS",
-            Browser::SamsungInternetAndroid => "Samsung Internet",
-            Browser::WebviewAndroid => "WebView Android",
+            _ => self.display_name(),
         }
     }
 
@@ -112,6 +106,7 @@ impl Browser {
             Browser::SafariIos => BrowserGroup::Safari,
             Browser::SamsungInternetAndroid => BrowserGroup::SamsungInternetAndroid,
             Browser::WebviewAndroid => BrowserGroup::Chrome,
+            Browser::Unknown => BrowserGroup::Unknown,
         }
     }
 }

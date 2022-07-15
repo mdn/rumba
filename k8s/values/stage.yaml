@@ -16,3 +16,6 @@ deployment:
     requests:
       cpu: 2
       memory: 512Mi  
+
+settings:
+  metrics__statsd_label: "rumba_stage"
