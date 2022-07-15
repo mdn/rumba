@@ -9,7 +9,7 @@ deployment:
   updateStrategy:
     type: RollingUpdate
 
-  resources: 
+  resources:
     limits:
       cpu: 2
       memory: 2Gi
@@ -17,7 +17,7 @@ deployment:
       cpu: 2
       memory: 512Mi
 
-settings:  
+settings:
   server__port: 8000
   server__host: "0.0.0.0"
   auth__issuer_url: "https://accounts.firefox.com"
@@ -34,3 +34,5 @@ settings:
 
   search__cache_max_age: 43200
   search__query_max_length: 200
+
+  metrics__statsd_label: "rumba_prod"
