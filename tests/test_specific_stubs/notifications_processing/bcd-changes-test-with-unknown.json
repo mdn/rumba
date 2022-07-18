@@ -1,0 +1,79 @@
+{
+  "uuid": "bcd-changes",
+  "priority": 1,
+  "request": {
+    "method": "GET",
+    "url": "/notifications/bcd-changes-test-with-unknown.json"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": [
+      {
+        "event": "added_stable",
+        "path": "api.Navigator.vibrate",
+        "description": null,
+        "browsers": [
+          {
+            "browser": "imaginary",
+            "version": "666",
+            "notes": null
+          }
+        ],
+        "mdn_url": "https://developer.mozilla.org/en-US/docs/Web/API/Navigator/vibrate",
+        "spec_url": [
+          "https://foo.bar.com"
+        ],
+        "status": {
+          "deprecated": false,
+          "experimental": true,
+          "standard_track": true
+        }
+      },
+      {
+        "event": "added_preview",
+        "path": "api.Navigator.new_thing_for_preview",
+        "description": null,
+        "browsers": [
+          {
+            "browser": "imaginary",
+            "version": "666",
+            "notes": null
+          }
+        ],
+        "mdn_url": "https://developer.mozilla.org/docs/Web/API/Navigator/vibrate",
+        "spec_url": [ 
+          "https://foobar.com"
+        ],
+        "status": {
+          "deprecated": false,
+          "experimental": true,
+          "standard_track": true
+        }
+      },
+      {
+        "event": "removed_stable",
+        "path": "api.Navigator.very_unstable_feature",
+        "description": null,
+        "browsers": [
+          {
+            "browser": "imaginary",
+            "version": "666",
+            "notes": [
+              "The Network API is enabled by default. Can be disabled using the <code>dom.netinfo.enabled</code> preference."
+            ]
+          }
+        ],
+        "mdn_url": "https://developer.mozilla.org/docs/Web/API/Navigator/connection",
+        "spec_url": ["https://wicg.github.io/netinfo/#connection-attribute"],
+        "status": {
+          "experimental": true,
+          "standard_track": true,
+          "deprecated": false
+        }
+      }
+    ]
+  }
+}
