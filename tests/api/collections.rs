@@ -57,6 +57,43 @@ async fn test_create_and_get_collection() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
+async fn test_create_and_get_collection_with_empty_title() -> Result<(), Error> {
+    reset()?;
+
+    let _stubr = Stubr::start_blocking_with(
+        vec!["tests/stubs", "tests/test_specific_stubs/collections"],
+        Config {
+            port: Some(4321),
+            latency: None,
+            global_delay: None,
+            verbose: Some(true),
+        },
+    );
+
+    let app = test_app_with_login().await?;
+    let service = test::init_service(app).await;
+
+    let mut logged_in_client = TestHttpClient::new(service).await;
+    let base_url = "/api/v1/plus/collection/?url=/en-US/docs/Web/CSS";
+    let payload = json!({
+        "name": "",
+    });
+    let create_res = logged_in_client
+        .post(base_url, None, Some(PostPayload::FormData(payload)))
+        .await;
+    assert_eq!(create_res.status(), 201);
+    let collection_res = logged_in_client.get(base_url, None).await;
+    let collection_json = read_json(collection_res).await;
+
+    let bookmarked = &collection_json["bookmarked"];
+    assert!(!bookmarked.is_null());
+    assert_eq!(bookmarked["title"], "CSS: Cascading Style Sheets");
+    assert_eq!(bookmarked["url"], "/en-US/docs/Web/CSS");
+
+    Ok(())
+}
+
+#[actix_rt::test]
 async fn test_create_get_delete_create_collection() -> Result<(), Error> {
     reset()?;
 
