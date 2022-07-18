@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:11
+        image: postgres:13
         env:
           POSTGRES_USER: rumba
           POSTGRES_PASSWORD: rumba
@@ -26,10 +26,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Install Rust 1.6.0
+      - name: Install Rust 1.62
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.60.0
+          toolchain: 1.62.0
           override: true
           components: rustfmt, clippy
       - name: FMT
