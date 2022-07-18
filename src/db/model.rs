@@ -27,7 +27,7 @@ impl User {
     }
 }
 
-#[derive(Queryable, Debug)]
+#[derive(Queryable, Debug, Serialize)]
 #[diesel(table_name = users)]
 pub struct UserQuery {
     pub id: i64,
@@ -38,7 +38,7 @@ pub struct UserQuery {
     pub fxa_refresh_token: String,
     pub avatar_url: Option<String>,
     subscription_type: Option<Subscription>,
-    enforce_plus: Option<Subscription>,
+    pub enforce_plus: Option<Subscription>,
     pub is_admin: bool,
 }
 

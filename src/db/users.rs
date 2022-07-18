@@ -1,13 +1,30 @@
+use crate::api::root::{RootEnforcePlusQuery, RootIsAdminQuery};
 use crate::db::error::DbError;
 use crate::db::model::{User, UserQuery};
 use crate::db::schema;
 use crate::diesel::ExpressionMethods;
 use crate::fxa::FxAUser;
-use diesel::{insert_into, OptionalExtension, PgConnection, QueryDsl, RunQueryDsl};
-use schema::users::dsl::*;
+use diesel::{
+    insert_into, update, OptionalExtension, PgConnection, QueryDsl, QueryResult, RunQueryDsl,
+};
 
 use super::types::Subscription;
 use super::v2::multiple_collections::create_default_multiple_collection_for_user;
+
+pub fn root_set_is_admin(conn: &mut PgConnection, query: RootIsAdminQuery) -> QueryResult<usize> {
+    update(schema::users::table.filter(schema::users::fxa_uid.eq(query.fxa_uid)))
+        .set((schema::users::is_admin.eq(query.is_admin),))
+        .execute(conn)
+}
+
+pub fn root_enforce_plus(
+    conn: &mut PgConnection,
+    query: RootEnforcePlusQuery,
+) -> QueryResult<usize> {
+    update(schema::users::table.filter(schema::users::fxa_uid.eq(query.fxa_uid)))
+        .set(schema::users::enforce_plus.eq(query.enforce_plus))
+        .execute(conn)
+}
 
 pub fn create_or_update_user(
     conn: &mut PgConnection,
@@ -36,15 +53,26 @@ pub fn create_or_update_user(
         is_admin: None,
     };
 
-    let user_id = insert_into(users)
+    let user_id = insert_into(schema::users::table)
         .values(&user)
-        .on_conflict(fxa_uid)
+        .on_conflict(schema::users::fxa_uid)
         .do_update()
         .set(&user)
         .returning(schema::users::id)
         .get_result(conn)?;
 
     create_default_multiple_collection_for_user(conn, user_id)
+}
+
+pub fn find_user_by_email(
+    conn_pool: &mut PgConnection,
+    user_email: impl AsRef<str>,
+) -> Result<Option<UserQuery>, DbError> {
+    schema::users::table
+        .filter(schema::users::email.eq(user_email.as_ref()))
+        .first::<UserQuery>(conn_pool)
+        .optional()
+        .map_err(Into::into)
 }
 
 pub fn get_user(conn_pool: &mut PgConnection, user: impl AsRef<str>) -> Result<UserQuery, DbError> {
