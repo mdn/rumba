@@ -23,7 +23,7 @@ actix-web-httpauth = "0.6"
 
 diesel = { version = "2.0.0-rc.0", features = ["postgres", "uuid", "r2d2", "chrono", "serde_json"] }
 diesel_migrations = "2.0.0-rc.0"
-diesel-derive-enum = { git = "https://github.com/adwhit/diesel-derive-enum", version = "2.0.0-pre", features = ["postgres"] } # "postgres", "mysql" or "sqlite"
+diesel-derive-enum = { version = "2.0.0-rc.0", features = ["postgres"] }
 
 elasticsearch = "7.14.0-alpha.1"
 
