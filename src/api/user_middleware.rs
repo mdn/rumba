@@ -12,7 +12,7 @@ use crate::api::error::ApiError;
 
 pub struct AddUser;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct UserId {
     pub id: String,
 }

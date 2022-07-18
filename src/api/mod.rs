@@ -8,6 +8,7 @@ pub mod error;
 pub mod fxa_webhook;
 pub mod healthz;
 pub mod notifications;
+pub mod root;
 pub mod search;
 pub mod settings;
 pub mod user_middleware;

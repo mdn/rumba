@@ -1,6 +1,28 @@
 use serde::{de::DeserializeOwned, Deserialize, Deserializer};
 use serde_json::{from_value, Value};
 
+use crate::db::types::Subscription;
+
+pub fn deserialize_enforce_plus<'de, D>(deserializer: D) -> Result<Option<Subscription>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value: String = Deserialize::deserialize(deserializer)?;
+    if value.is_empty() {
+        Ok(None)
+    } else {
+        Ok(Some(Subscription::from(value)))
+    }
+}
+
+pub fn deserialize_checkbox<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value: String = Deserialize::deserialize(deserializer)?;
+    Ok(value == "on")
+}
+
 pub fn deserialize_string_or_vec<'de, T, D>(deserializer: D) -> Result<Vec<T>, D::Error>
 where
     T: DeserializeOwned,

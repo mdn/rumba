@@ -107,6 +107,16 @@ impl Subscription {
             | Subscription::MdnPlus_10y => true,
         }
     }
+
+    pub fn as_str(&self) -> &str {
+        match self {
+            Subscription::MdnPlus_5m => "mdn_plus_5m",
+            Subscription::MdnPlus_5y => "mdn_plus_5y",
+            Subscription::MdnPlus_10y => "mdn_plus_10y",
+            Subscription::MdnPlus_10m => "mdn_plus_10m",
+            Subscription::Core => "core",
+        }
+    }
 }
 
 impl Default for Subscription {
@@ -129,14 +139,7 @@ impl From<String> for Subscription {
 
 impl From<Subscription> for String {
     fn from(val: Subscription) -> Self {
-        match val {
-            Subscription::MdnPlus_5m => "mdn_plus_5m",
-            Subscription::MdnPlus_5y => "mdn_plus_5y",
-            Subscription::MdnPlus_10y => "mdn_plus_10y",
-            Subscription::MdnPlus_10m => "mdn_plus_10m",
-            Subscription::Core => "core",
-        }
-        .into()
+        val.as_str().into()
     }
 }
 
