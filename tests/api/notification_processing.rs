@@ -254,7 +254,15 @@ async fn test_receive_notification_unknown() -> Result<(), Error> {
 
     let notifications_json = read_json(res).await;
     let notifications = notifications_json["items"].as_array().unwrap();
-    assert_eq!(notifications.len(), 0);
+    assert_eq!(notifications.len(), 1);
 
+    assert_eq!(
+        notifications[0]["text"].as_str().unwrap(),
+        "Supported in Firefox 3.5"
+    );
+    assert_eq!(
+        notifications[0]["title"].as_str().unwrap(),
+        "Navigator.vibrate_more"
+    );
     Ok(())
 }

@@ -33,6 +33,32 @@
         }
       },
       {
+        "event": "added_stable",
+        "path": "api.Navigator.vibrate_more",
+        "description": null,
+        "browsers": [
+          {
+            "browser": "imaginary",
+            "version": "666",
+            "notes": null
+          },
+          {
+            "browser": "firefox",
+            "version": "3.5",
+            "notes": null
+          }
+        ],
+        "mdn_url": "https://developer.mozilla.org/en-US/docs/Web/API/Navigator/vibrate",
+        "spec_url": [
+          "https://foo.bar.com"
+        ],
+        "status": {
+          "deprecated": false,
+          "experimental": true,
+          "standard_track": true
+        }
+      },
+      {
         "event": "added_preview",
         "path": "api.Navigator.new_thing_for_preview",
         "description": null,
