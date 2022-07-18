@@ -203,3 +203,66 @@ async fn test_receive_notification_subscribed_specific_path() -> Result<(), Erro
 
     Ok(())
 }
+
+#[actix_rt::test]
+async fn test_receive_notification_unknown() -> Result<(), Error> {
+    reset()?;
+    let _stubr = Stubr::start_blocking_with(
+        vec![
+            "tests/stubs",
+            "tests/test_specific_stubs/notifications_processing",
+        ],
+        Config {
+            port: Some(4321),
+            latency: None,
+            global_delay: None,
+            verbose: Some(true),
+        },
+    );
+
+    let app = test_app_with_login().await?;
+    let service = test::init_service(app).await;
+    let mut logged_in_client = TestHttpClient::new(service).await;
+    //Given a user is watching API/Navigator
+
+    let mut base_url = "/api/v1/plus/watching/?url=/en-US/docs/Web/API/Navigator";
+    let mut payload = json!({
+        "title": "Navigator",
+        "path": "this.gets.ignored",
+    });
+    let mut res = logged_in_client
+        .post(base_url, None, Some(PostPayload::Json(payload)))
+        .await;
+    assert_eq!(res.response().status(), 200);
+
+    //When notifications are triggered for API/Navigator/vibrate and API/Navigator/connection
+    base_url = "/admin-api/update/";
+    payload = json!({"filename" : "bcd-changes-test-with-unknown.json"});
+    res = logged_in_client
+        .post(
+            base_url,
+            Some(vec![("Authorization", "Bearer TEST_TOKEN")]),
+            Some(PostPayload::Json(payload)),
+        )
+        .await;
+    assert_eq!(res.response().status(), 200);
+
+    //Then they should receive them as API/Navigator is the parent
+    base_url = "/api/v1/plus/notifications/";
+    res = logged_in_client.get(base_url, None).await;
+    assert_eq!(res.response().status(), 200);
+
+    let notifications_json = read_json(res).await;
+    let notifications = notifications_json["items"].as_array().unwrap();
+    assert_eq!(notifications.len(), 1);
+
+    assert_eq!(
+        notifications[0]["text"].as_str().unwrap(),
+        "Supported in Firefox 3.5"
+    );
+    assert_eq!(
+        notifications[0]["title"].as_str().unwrap(),
+        "Navigator.vibrate_more"
+    );
+    Ok(())
+}

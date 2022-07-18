@@ -25,7 +25,7 @@ pub struct UpdateNotificationsRequest {
     pub filename: String,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, PartialEq, Eq, Serialize, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
 pub enum Browser {
     Chrome,
@@ -246,9 +246,10 @@ pub async fn process_notification_update(
         match event {
             DocumentChangeEvent::RemovedStable(change)
             | DocumentChangeEvent::AddedStable(change) => {
-                let mut browsers_grouped_by_type: HashMap<BrowserGroup, Vec<String>> =
-                    HashMap::new();
-                group_by_browsers(&change.browsers, &mut browsers_grouped_by_type, false);
+                let browsers_grouped_by_type = group_by_browsers(&change.browsers, false);
+                if browsers_grouped_by_type.is_empty() {
+                    return;
+                }
                 let mut notifications = generate_bcd_notifications_for_event(
                     event,
                     &change.path,
@@ -257,9 +258,10 @@ pub async fn process_notification_update(
                 bcd_notifications.append(&mut notifications);
             }
             DocumentChangeEvent::AddedPreview(change) => {
-                let mut browsers_grouped_by_type: HashMap<BrowserGroup, Vec<String>> =
-                    HashMap::new();
-                group_by_browsers(&change.browsers, &mut browsers_grouped_by_type, true);
+                let browsers_grouped_by_type = group_by_browsers(&change.browsers, true);
+                if browsers_grouped_by_type.is_empty() {
+                    return;
+                }
                 //Create one BCD update per browser group
                 let mut new_notifications = generate_bcd_notifications_for_event(
                     event,
@@ -284,8 +286,12 @@ pub async fn process_notification_update(
                 let browsers_by_name: Vec<String> = change
                     .support_changes
                     .iter()
+                    .filter(|val| val.browser != Browser::Unknown)
                     .map(|val| val.browser.display_name().to_owned())
                     .collect();
+                if browsers_by_name.is_empty() {
+                    return;
+                }
                 let text = get_pluralized_string(&browsers_by_name);
                 let non_null_notification = BcdNotification {
                     path: change.path.as_str(),
@@ -404,24 +410,27 @@ fn get_pluralized_string(browser_strings: &[String]) -> String {
 
 fn group_by_browsers(
     val: &[BrowserItem],
-    browser_groups: &mut HashMap<BrowserGroup, Vec<String>>,
     is_preview_feature: bool,
-) {
-    val.iter().for_each(|item| {
-        //Normalize browser name
-        let browser_name = if is_preview_feature {
-            item.browser.preview_name()
-        } else {
-            item.browser.display_name()
-        };
-        let update_string = format!("{} {}", browser_name, item.version);
-        // Group by 'browser group' and update string.
-        if let Some(exists) = browser_groups.get_mut(&item.browser.browser_group()) {
-            exists.push(update_string);
-        } else {
-            browser_groups.insert(item.browser.browser_group(), vec![update_string]);
-        }
-    });
+) -> HashMap<BrowserGroup, Vec<String>> {
+    let mut map: HashMap<BrowserGroup, Vec<String>> = HashMap::new();
+    val.iter()
+        .filter(|b| b.browser != Browser::Unknown)
+        .for_each(|item| {
+            //Normalize browser name
+            let browser_name = if is_preview_feature {
+                item.browser.preview_name()
+            } else {
+                item.browser.display_name()
+            };
+            let update_string = format!("{} {}", browser_name, item.version);
+            // Group by 'browser group' and update string.
+            if let Some(exists) = map.get_mut(&item.browser.browser_group()) {
+                exists.push(update_string);
+            } else {
+                map.insert(item.browser.browser_group(), vec![update_string]);
+            }
+        });
+    map
 }
 
 async fn get_update_json(
