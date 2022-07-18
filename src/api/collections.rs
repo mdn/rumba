@@ -111,11 +111,12 @@ impl From<CollectionAndDocumentQuery> for CollectionItem {
         match collection_and_document.metadata {
             Some(metadata) => {
                 parents = serde_json::from_value(metadata["parents"].clone()).unwrap_or(None);
-                title = Some(
-                    collection_and_document
-                        .custom_name
-                        .unwrap_or(collection_and_document.title),
-                );
+                title = Some(match collection_and_document.custom_name {
+                    // We currently have empty strings instead of nulls due to our migration.
+                    // Let's fix this in the API for now.
+                    Some(custom_name) if !custom_name.is_empty() => custom_name,
+                    _ => collection_and_document.title,
+                });
                 url = serde_json::from_value(metadata["mdn_url"].clone()).unwrap_or(url);
             }
             None => (),
