@@ -1,11 +1,8 @@
 #![allow(non_camel_case_types)]
-use crate::db::schema;
-use schema::sql_types::NotificationType;
-use schema::sql_types::{FxaEventStatusType, FxaEventType, Locale as DbLocale, SubscriptionType};
 use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, diesel_derive_enum::DbEnum, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[DieselExistingType = "DbLocale"]
+#[DieselTypePath = "crate::db::schema::sql_types::Locale"]
 pub enum Locale {
     #[serde(rename = "de")]
     De,
@@ -43,7 +40,7 @@ pub enum Locale {
     PartialOrd,
     Serialize,
 )]
-#[DieselExistingType = "FxaEventStatusType"]
+#[DieselTypePath = "crate::db::schema::sql_types::FxaEventStatusType"]
 #[serde(rename_all = "snake_case")]
 pub enum FxaEventStatus {
     Processed,
@@ -64,7 +61,7 @@ pub enum FxaEventStatus {
     PartialOrd,
     Serialize,
 )]
-#[DieselExistingType = "FxaEventType"]
+#[DieselTypePath = "crate::db::schema::sql_types::FxaEventType"]
 #[serde(rename_all = "snake_case")]
 pub enum FxaEvent {
     DeleteUser,
@@ -86,7 +83,7 @@ pub enum FxaEvent {
     PartialOrd,
     Serialize,
 )]
-#[DieselExistingType = "SubscriptionType"]
+#[DieselTypePath = "crate::db::schema::sql_types::SubscriptionType"]
 pub enum Subscription {
     #[serde(rename(serialize = "core"))]
     Core,
@@ -155,7 +152,7 @@ impl From<Subscription> for String {
     PartialOrd,
     Serialize,
 )]
-#[DieselExistingType = "NotificationType"]
+#[DieselTypePath = "crate::db::schema::sql_types::NotificationType"]
 pub enum NotificationTypeEnum {
     #[serde(rename(serialize = "content"))]
     Content,
