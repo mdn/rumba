@@ -4,6 +4,7 @@ use std::time::Duration;
 use crate::helpers::app::test_app_with_login;
 use crate::helpers::db::get_pool;
 use crate::helpers::db::reset;
+use crate::helpers::http_client::PostPayload;
 use crate::helpers::http_client::TestHttpClient;
 use crate::helpers::read_json;
 use actix_http::StatusCode;
@@ -174,10 +175,19 @@ async fn subscription_state_change_to_core_test(set_token: &str) -> Result<(), E
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
 async fn delete_user_test() -> Result<(), Error> {
     let set_token = include_str!("../data/set_tokens/set_token_delete_user.txt");
     reset()?;
+    let _stubr = Stubr::start_blocking_with(
+        vec!["tests/stubs", "tests/test_specific_stubs/collections"],
+        Config {
+            port: Some(4321),
+            latency: None,
+            global_delay: None,
+            verbose: Some(true),
+        },
+    );
+
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -191,6 +201,21 @@ async fn delete_user_test() -> Result<(), Error> {
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Iceland");
     assert_eq!(json["is_authenticated"], true);
+
+    let base_url = "/api/v1/plus/collection/?url=/en-US/docs/Web/CSS";
+    let payload = serde_json::json!({
+        "name": "CSS: Cascading Style Sheets",
+        "notes": "Notes notes notes",
+    });
+    let create_res = logged_in_client
+        .post(base_url, None, Some(PostPayload::FormData(payload)))
+        .await;
+    assert_eq!(create_res.status(), 201);
+    let collection_res = logged_in_client.get(base_url, None).await;
+    let collection_json = read_json(collection_res).await;
+
+    let bookmarked = &collection_json["bookmarked"];
+    assert!(!bookmarked.is_null());
 
     let res = logged_in_client.trigger_webhook(set_token).await;
     assert!(res.response().status().is_success());
