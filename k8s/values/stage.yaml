@@ -22,6 +22,4 @@ settings:
 
 podDisruptionBudget:
   enabled: true
-  name: rumba
-  labels: {}
   minAvailable: 1
