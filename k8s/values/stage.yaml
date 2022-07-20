@@ -19,3 +19,7 @@ deployment:
 
 settings:
   metrics__statsd_label: "rumba_stage"
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1

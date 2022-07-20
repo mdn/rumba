@@ -22,3 +22,6 @@ settings:
   logging__human_logs: false
 
   metrics__statsd_port: 8125
+
+podDisruptionBudget:
+  enabled: false
