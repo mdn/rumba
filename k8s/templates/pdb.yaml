@@ -8,6 +8,7 @@ apiVersion: policy/v1beta1
 kind: PodDisruptionBudget
 metadata:
   name: {{ .Values.name }}-pdb
+  namespace: {{ .Values.namespace }}
   labels:
     app: {{ .Values.name }}
 spec:
