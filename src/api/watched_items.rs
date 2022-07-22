@@ -171,7 +171,7 @@ fn watched_items_subscription_info_for_user(
     user: &UserQuery,
     conn_pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
 ) -> Result<WatchedItemsSubscriptionInfo, ApiError> {
-    return match user.get_subscription_type() {
+    match user.get_subscription_type() {
         Some(_type) => {
             if matches!(_type, db::types::Subscription::Core) {
                 {
@@ -199,7 +199,7 @@ fn watched_items_subscription_info_for_user(
             limit_reached: true,
             watched_items_remaining: Some(0),
         }),
-    };
+    }
 }
 
 pub async fn update_watched_item(
@@ -258,7 +258,7 @@ fn handle_unwatch(
     conn_pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     user: &UserQuery,
 ) -> Result<HttpResponse, ApiError> {
-    return if let Some(item) = res {
+    if let Some(item) = res {
         delete_watched_item(conn_pool, item.user_id, item.document_id)?;
         let subscription_limit_reached =
             watched_items_subscription_info_for_user(user, conn_pool)?.limit_reached;
@@ -270,7 +270,7 @@ fn handle_unwatch(
         }))
     } else {
         Err(ApiError::DocumentNotFound)
-    };
+    }
 }
 
 #[derive(Deserialize)]
