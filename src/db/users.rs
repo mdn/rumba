@@ -43,17 +43,14 @@ pub fn create_or_update_user(
         .execute(conn)
 }
 
-pub async fn get_user(
-    conn_pool: &mut PgConnection,
-    user: impl AsRef<str>,
-) -> Result<UserQuery, DbError> {
+pub fn get_user(conn_pool: &mut PgConnection, user: impl AsRef<str>) -> Result<UserQuery, DbError> {
     schema::users::table
         .filter(schema::users::fxa_uid.eq(user.as_ref()))
         .first::<UserQuery>(conn_pool)
         .map_err(Into::into)
 }
 
-pub async fn get_user_opt(
+pub fn get_user_opt(
     conn_pool: &mut PgConnection,
     user: impl AsRef<str>,
 ) -> Result<Option<UserQuery>, DbError> {

@@ -16,7 +16,7 @@ use diesel::RunQueryDsl;
 use crate::diesel::PgTextExpressionMethods;
 use diesel::expression_methods::ExpressionMethods;
 
-pub async fn get_watched_items(
+pub fn get_watched_items(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     user_id: i64,
     query: &WatchedItemQueryParams,
@@ -57,7 +57,7 @@ pub async fn get_watched_items(
         .get_results::<WatchedItemsQuery>(pool)?)
 }
 
-pub async fn get_watched_item(
+pub fn get_watched_item(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     user_id: i64,
     url: &String,
@@ -82,7 +82,7 @@ pub async fn get_watched_item(
     Ok(item)
 }
 
-pub async fn get_watched_item_count(
+pub fn get_watched_item_count(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     user_id: i64,
 ) -> Result<i64, DbError> {
@@ -93,13 +93,13 @@ pub async fn get_watched_item_count(
     Ok(count)
 }
 
-pub async fn create_watched_item(
+pub fn create_watched_item(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     user_id: i64,
     metadata: DocumentMetadata,
     url: String,
 ) -> QueryResult<usize> {
-    let document_id = create_or_update_document(pool, metadata, url).await?;
+    let document_id = create_or_update_document(pool, metadata, url)?;
     let insert = WatchedItemInsert {
         document_id,
         user_id,
@@ -111,7 +111,7 @@ pub async fn create_watched_item(
     Ok(inserted_rows)
 }
 
-pub async fn delete_watched_items(
+pub fn delete_watched_items(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     user_id: i64,
     urls: Vec<String>,
@@ -128,7 +128,7 @@ pub async fn delete_watched_items(
         .execute(pool)
 }
 
-pub async fn delete_watched_item(
+pub fn delete_watched_item(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     user_id: i64,
     document_id: i64,

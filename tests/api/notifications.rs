@@ -373,8 +373,7 @@ async fn create_notifications(user_id: i64, number: usize) -> Vec<i64> {
             &mut conn_pool.get().unwrap(),
             document,
             uri.to_string(),
-        )
-        .await;
+        );
 
         let data = NotificationDataInsert {
             text: format!("Test text {}", i),
@@ -391,7 +390,6 @@ async fn create_notifications(user_id: i64, number: usize) -> Vec<i64> {
 
         let notification_data_id =
             db::notifications::create_notification_data(&mut conn_pool.get().unwrap(), data)
-                .await
                 .unwrap();
 
         let id = db::notifications::create_notification(
@@ -399,7 +397,6 @@ async fn create_notifications(user_id: i64, number: usize) -> Vec<i64> {
             user_id,
             notification_data_id,
         )
-        .await
         .unwrap();
         notification_ids.push(id);
     }

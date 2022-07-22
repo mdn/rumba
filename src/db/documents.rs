@@ -13,7 +13,7 @@ use r2d2::PooledConnection;
 
 use crate::settings::SETTINGS;
 
-pub async fn create_or_update_document(
+pub fn create_or_update_document(
     conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
     document: DocumentMetadata,
     uri: String,
@@ -40,7 +40,7 @@ pub async fn create_or_update_document(
         .get_result(conn)
 }
 
-pub async fn get_document_by_path(
+pub fn get_document_by_path(
     conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
     path: String,
 ) -> Result<DocumentQuery, DbError> {
@@ -60,7 +60,7 @@ pub async fn get_document_by_path(
     Ok(doc)
 }
 
-pub async fn get_document_by_url(
+pub fn get_document_by_url(
     conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
     url: &str,
 ) -> Result<DocumentQuery, DbError> {

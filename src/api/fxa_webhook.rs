@@ -142,16 +142,14 @@ async fn process_event(
             payload.fxa_uid.clone(),
             subscription_state_change,
             payload.issue_time,
-        )
-        .await?;
+        )?;
     }
     if payload.events.delete_user.is_some() {
         delete_profile_from_webhook(
             conn_pool.clone(),
             payload.fxa_uid.clone(),
             payload.issue_time,
-        )
-        .await?;
+        )?;
     }
     Ok(())
 }

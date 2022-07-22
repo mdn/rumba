@@ -20,7 +20,7 @@ use r2d2::PooledConnection;
 
 use super::model::IdQuery;
 
-pub async fn get_collection_item(
+pub fn get_collection_item(
     user: &UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     url: &str,
@@ -50,7 +50,7 @@ pub async fn get_collection_item(
     Ok(collection)
 }
 
-pub async fn get_collection_items_paginated(
+pub fn get_collection_items_paginated(
     user: &UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     query_params: &CollectionsQueryParams,
@@ -119,7 +119,7 @@ pub async fn get_collection_items_paginated(
         .get_results::<CollectionAndDocumentQuery>(pool)?)
 }
 
-pub async fn undelete_collection_item(
+pub fn undelete_collection_item(
     user: &UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     url: String,
@@ -137,7 +137,7 @@ pub async fn undelete_collection_item(
         .execute(pool)
 }
 
-pub async fn delete_collection_item(
+pub fn delete_collection_item(
     user: &UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     url: String,
@@ -155,7 +155,7 @@ pub async fn delete_collection_item(
         .execute(pool)
 }
 
-pub async fn create_collection_item(
+pub fn create_collection_item(
     user: &UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     url: String,
@@ -170,7 +170,7 @@ pub async fn create_collection_item(
 
     let url_normalized = normalize_uri(&url);
 
-    let document_id = create_or_update_document(pool, document, url_normalized).await?;
+    let document_id = create_or_update_document(pool, document, url_normalized)?;
 
     let collection_insert = CollectionInsert {
         document_id,
@@ -195,7 +195,7 @@ pub async fn create_collection_item(
         .execute(pool)
 }
 
-pub async fn get_collection_item_count(
+pub fn get_collection_item_count(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     user_id: i64,
 ) -> Result<i64, DbError> {
@@ -210,7 +210,7 @@ pub async fn get_collection_item_count(
     Ok(count)
 }
 
-pub async fn collection_item_exists_for_user(
+pub fn collection_item_exists_for_user(
     user: &UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     url: &str,

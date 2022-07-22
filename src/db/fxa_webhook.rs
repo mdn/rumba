@@ -30,7 +30,7 @@ pub fn log_failed_webhook_event(
     Ok(())
 }
 
-pub async fn delete_profile_from_webhook(
+pub fn delete_profile_from_webhook(
     pool: web::Data<Pool>,
     fxa_uid: String,
     issue_time: DateTime<Utc>,
@@ -113,7 +113,7 @@ pub async fn update_profile_from_webhook(
     issue_time: DateTime<Utc>,
 ) -> Result<(), DbError> {
     let mut conn = pool.get()?;
-    let user: Option<UserQuery> = get_user_opt(&mut conn, &fxa_uid).await?;
+    let user: Option<UserQuery> = get_user_opt(&mut conn, &fxa_uid)?;
     let mut fxa_event = WebHookEventInsert {
         fxa_uid,
         change_time: None,
@@ -144,14 +144,14 @@ pub async fn update_profile_from_webhook(
     }
 }
 
-pub async fn update_subscription_state_from_webhook(
+pub fn update_subscription_state_from_webhook(
     pool: web::Data<Pool>,
     fxa_uid: String,
     update: SubscriptionStateChange,
     issue_time: DateTime<Utc>,
 ) -> Result<(), DbError> {
     let mut conn = pool.get()?;
-    let user: Option<UserQuery> = get_user_opt(&mut conn, &fxa_uid).await?;
+    let user: Option<UserQuery> = get_user_opt(&mut conn, &fxa_uid)?;
     let mut fxa_event = WebHookEventInsert {
         fxa_uid,
         change_time: Some(update.change_time.naive_utc()),

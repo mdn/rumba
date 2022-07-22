@@ -109,7 +109,7 @@ pub async fn get_watched_items(
     query: web::Query<WatchedItemQueryParams>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id).await?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
     let query = query.into_inner();
     if let Some(url) = query.url {
         handle_single_item_query(&mut conn_pool, &user, &url).await
@@ -123,14 +123,13 @@ async fn handle_paginated_items_query(
     user: UserQuery,
     query: &WatchedItemQueryParams,
 ) -> Result<HttpResponse, ApiError> {
-    let res = watched_items::get_watched_items(conn_pool, user.id, query).await?;
+    let res = watched_items::get_watched_items(conn_pool, user.id, query)?;
     let items: Vec<WatchedItem> = res
         .iter()
         .map(|watched_item| Into::<WatchedItem>::into(watched_item.clone()))
         .collect();
-    let subscription_limit_reached = watched_items_subscription_info_for_user(&user, conn_pool)
-        .await?
-        .limit_reached;
+    let subscription_limit_reached =
+        watched_items_subscription_info_for_user(&user, conn_pool)?.limit_reached;
     Ok(HttpResponse::Ok().json(WatchedItemsResponse {
         items,
         csrfmiddlewaretoken: "TODO".to_string(),
@@ -143,11 +142,10 @@ async fn handle_single_item_query(
     user: &UserQuery,
     url: &str,
 ) -> Result<HttpResponse, ApiError> {
-    let res = watched_items::get_watched_item(conn_pool, user.id, &normalize_uri(url)).await?;
+    let res = watched_items::get_watched_item(conn_pool, user.id, &normalize_uri(url))?;
 
-    let subscription_limit_reached = watched_items_subscription_info_for_user(user, conn_pool)
-        .await?
-        .limit_reached;
+    let subscription_limit_reached =
+        watched_items_subscription_info_for_user(user, conn_pool)?.limit_reached;
 
     if let Some(item) = res {
         Ok(HttpResponse::Ok().json(SingleWatchedItemResponse {
@@ -169,7 +167,7 @@ struct WatchedItemsSubscriptionInfo {
     pub watched_items_remaining: Option<i64>,
 }
 
-async fn watched_items_subscription_info_for_user(
+fn watched_items_subscription_info_for_user(
     user: &UserQuery,
     conn_pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
 ) -> Result<WatchedItemsSubscriptionInfo, ApiError> {
@@ -177,7 +175,7 @@ async fn watched_items_subscription_info_for_user(
         Some(_type) => {
             if matches!(_type, db::types::Subscription::Core) {
                 {
-                    let count = get_watched_item_count(conn_pool, user.id).await?;
+                    let count = get_watched_item_count(conn_pool, user.id)?;
                     let limit_reached =
                         count >= SETTINGS.application.subscriptions_limit_watched_items;
 
@@ -213,22 +211,21 @@ pub async fn update_watched_item(
     form_data: web::Json<UpdateWatchedItemFormData>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id).await?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
     let url = query.into_inner().url;
-    let res =
-        watched_items::get_watched_item(&mut conn_pool, user.id, &normalize_uri(&url)).await?;
+    let res = watched_items::get_watched_item(&mut conn_pool, user.id, &normalize_uri(&url))?;
 
     match form_data.unwatch {
         Some(val) => {
             if val {
-                let res = handle_unwatch(res, &mut conn_pool, &user).await?;
+                let res = handle_unwatch(res, &mut conn_pool, &user)?;
                 return Ok(res);
             }
         }
         None => (),
     }
 
-    let subscription_info = watched_items_subscription_info_for_user(&user, &mut conn_pool).await?;
+    let subscription_info = watched_items_subscription_info_for_user(&user, &mut conn_pool)?;
 
     if subscription_info.limit_reached {
         return Ok(HttpResponse::BadRequest().json(WatchedItemUpdateResponse {
@@ -242,8 +239,7 @@ pub async fn update_watched_item(
     }
     //Handle create.
     let metadata = get_document_metadata(http_client, &url).await?;
-    let created =
-        create_watched_item(&mut conn_pool, user.id, metadata, normalize_uri(&url)).await?;
+    let created = create_watched_item(&mut conn_pool, user.id, metadata, normalize_uri(&url))?;
 
     let subscription_limit_reached = subscription_info
         .watched_items_remaining
@@ -257,16 +253,15 @@ pub async fn update_watched_item(
     }))
 }
 
-async fn handle_unwatch(
+fn handle_unwatch(
     res: Option<WatchedItemsQuery>,
     conn_pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     user: &UserQuery,
 ) -> Result<HttpResponse, ApiError> {
     return if let Some(item) = res {
-        delete_watched_item(conn_pool, item.user_id, item.document_id).await?;
-        let subscription_limit_reached = watched_items_subscription_info_for_user(user, conn_pool)
-            .await?
-            .limit_reached;
+        delete_watched_item(conn_pool, item.user_id, item.document_id)?;
+        let subscription_limit_reached =
+            watched_items_subscription_info_for_user(user, conn_pool)?.limit_reached;
         Ok(HttpResponse::Ok().json(WatchedItemUpdateResponse {
             ok: true,
             subscription_limit_reached,
@@ -290,13 +285,13 @@ pub async fn unwatch_many(
     urls: web::Json<UnwatchManyRequest>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id).await?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
     let normalized_urls = urls
         .into_inner()
         .unwatch
         .iter()
         .map(|v| normalize_uri(v))
         .collect();
-    watched_items::delete_watched_items(&mut conn_pool, user.id, normalized_urls).await?;
+    watched_items::delete_watched_items(&mut conn_pool, user.id, normalized_urls)?;
     Ok(HttpResponse::Ok().finish())
 }
