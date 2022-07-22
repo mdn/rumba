@@ -44,7 +44,7 @@ pub async fn whoami(
     match id.identity() {
         Some(id) => {
             let mut conn_pool = pool.get()?;
-            let user = db::users::get_user(&mut conn_pool, id).await;
+            let user = db::users::get_user(&mut conn_pool, id);
             match user {
                 Ok(found) => {
                     let settings = db::settings::get_settings(&mut conn_pool, &found)?;

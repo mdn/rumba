@@ -58,6 +58,8 @@ pub enum ApiError {
     FxaWebhook(FxaWebhookError),
     #[error("Unauthorized")]
     Unauthorized,
+    #[error("Blocking error")]
+    BlockingError(#[from] actix_web::error::BlockingError),
 }
 
 impl ApiError {
@@ -75,6 +77,7 @@ impl ApiError {
             Self::Search(_) => "Search error",
             Self::FxaWebhook(_) => "FxaWebhookError",
             Self::Unauthorized => "Unauthorized",
+            Self::BlockingError(_) => "Blocking error",
         }
     }
 }

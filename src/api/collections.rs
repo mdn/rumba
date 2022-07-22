@@ -139,7 +139,7 @@ pub async fn collections(
     query: web::Query<CollectionsQueryParams>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id).await?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
     match &query.url {
         Some(url) => get_single_collection_item(pool, user, url).await,
         None => get_paginated_collection_items(pool, &user, &query).await,
@@ -152,7 +152,7 @@ async fn get_single_collection_item(
     url: &str,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let collection = get_collection_item(&user, &mut conn_pool, url).await;
+    let collection = get_collection_item(&user, &mut conn_pool, url);
     let bookmarked = match collection {
         Ok(val) => Some(val.into()),
         Err(e) => match e {
@@ -177,7 +177,7 @@ async fn get_paginated_collection_items(
     query: &CollectionsQueryParams,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let collection = get_collection_items_paginated(user, &mut conn_pool, query).await;
+    let collection = get_collection_items_paginated(user, &mut conn_pool, query);
 
     let items = match collection {
         Ok(val) => val
@@ -244,11 +244,10 @@ async fn handle_create_update(
     collection_form: CollectionCreationForm,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, id).await?;
+    let user: UserQuery = get_user(&mut conn_pool, id)?;
     let url = &query.into_inner().url;
     let info = collections_subscription_info_for_user(&user, &mut conn_pool).await?;
-    let collection_item_exists =
-        collection_item_exists_for_user(&user, &mut conn_pool, url).await?;
+    let collection_item_exists = collection_item_exists_for_user(&user, &mut conn_pool, url)?;
     if !collection_item_exists //Create or Update? 
         && info.collection_items_remaining.map_or(false, |val| val == 0)
     {
@@ -262,7 +261,6 @@ async fn handle_create_update(
         metadata,
         collection_form,
     )
-    .await
     .map_err(DbError::from)?;
     let subscription_limit_reached = info.collection_items_remaining.map_or(false, |val| {
         val - 1 <= SETTINGS.application.subscriptions_limit_collections
@@ -278,7 +276,7 @@ pub async fn undelete_collection_item(
     query: web::Query<CollectionDeletionParams>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id).await?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
 
     let sub_info = collections_subscription_info_for_user(&user, &mut conn_pool).await?;
     if sub_info
@@ -290,7 +288,6 @@ pub async fn undelete_collection_item(
             &mut conn_pool,
             query.url.clone(),
         )
-        .await
         .map_err(DbError::from)?
             == 1;
         let subscription_limit_reached =
@@ -320,11 +317,10 @@ pub async fn delete_collection_item(
     query: web::Query<CollectionDeletionParams>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id).await?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
 
     let sub_info = collections_subscription_info_for_user(&user, &mut conn_pool).await?;
     crate::db::collections::delete_collection_item(&user, &mut conn_pool, query.url.clone())
-        .await
         .map_err(DbError::from)?;
 
     let subscription_limit_reached = sub_info
@@ -345,11 +341,11 @@ async fn collections_subscription_info_for_user(
     user: &UserQuery,
     conn_pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
 ) -> Result<CollectionsSubscriptionInfo, ApiError> {
-    return match user.get_subscription_type() {
+    match user.get_subscription_type() {
         Some(_type) => {
             if matches!(_type, db::types::Subscription::Core) {
                 {
-                    let count = get_collection_item_count(conn_pool, user.id).await?;
+                    let count = get_collection_item_count(conn_pool, user.id)?;
                     let limit_reached =
                         count >= SETTINGS.application.subscriptions_limit_collections;
 
@@ -373,5 +369,5 @@ async fn collections_subscription_info_for_user(
             limit_reached: true,
             collection_items_remaining: Some(0),
         }),
-    };
+    }
 }

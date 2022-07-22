@@ -328,7 +328,7 @@ pub async fn process_notification_update(
 
         while !parts.is_empty() {
             let subpath = parts.join(".");
-            let doc = db::documents::get_document_by_path(&mut conn_pool, subpath).await;
+            let doc = db::documents::get_document_by_path(&mut conn_pool, subpath);
             suffix.push(parts.pop().unwrap());
 
             if let Ok(document) = doc {
@@ -344,10 +344,8 @@ pub async fn process_notification_update(
                         type_: db::types::NotificationTypeEnum::Compat,
                         document_id: document.id,
                     },
-                )
-                .await?;
-                create_notifications_for_users(&mut conn_pool, document.id, notification_data_id)
-                    .await?;
+                )?;
+                create_notifications_for_users(&mut conn_pool, document.id, notification_data_id)?;
             } else {
                 continue;
             }
@@ -355,8 +353,7 @@ pub async fn process_notification_update(
     }
 
     for notification in content_notifications.iter() {
-        let doc =
-            db::documents::get_document_by_url(&mut conn_pool, notification.url.as_str()).await;
+        let doc = db::documents::get_document_by_url(&mut conn_pool, notification.url.as_str());
 
         if let Ok(document) = doc {
             let notification_data_id = create_notification_data(
@@ -369,10 +366,8 @@ pub async fn process_notification_update(
                     type_: db::types::NotificationTypeEnum::Content,
                     document_id: document.id,
                 },
-            )
-            .await?;
-            create_notifications_for_users(&mut conn_pool, document.id, notification_data_id)
-                .await?;
+            )?;
+            create_notifications_for_users(&mut conn_pool, document.id, notification_data_id)?;
         } else {
             continue;
         }

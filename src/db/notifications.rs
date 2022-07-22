@@ -20,7 +20,7 @@ use diesel::{QueryDsl, QueryResult};
 use crate::diesel::PgTextExpressionMethods;
 use diesel::expression_methods::ExpressionMethods;
 
-pub async fn get_notifications(
+pub fn get_notifications(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     user_id: i64,
     query: NotificationQueryParams,
@@ -86,7 +86,7 @@ pub async fn get_notifications(
         .get_results::<NotificationsQuery>(pool)?)
 }
 
-pub async fn mark_all_as_read(
+pub fn mark_all_as_read(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     user_id: i64,
 ) -> QueryResult<usize> {
@@ -96,7 +96,7 @@ pub async fn mark_all_as_read(
         .execute(pool)
 }
 
-pub async fn set_deleted(
+pub fn set_deleted(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     user_id: i64,
     id: i64,
@@ -108,7 +108,7 @@ pub async fn set_deleted(
         .execute(pool)
 }
 
-pub async fn set_deleted_many(
+pub fn set_deleted_many(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     user_id: i64,
     ids: Vec<i64>,
@@ -120,7 +120,7 @@ pub async fn set_deleted_many(
         .execute(pool)
 }
 
-pub async fn clear_deleted(
+pub fn clear_deleted(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     user_id: i64,
     id: i64,
@@ -132,7 +132,7 @@ pub async fn clear_deleted(
         .execute(pool)
 }
 
-pub async fn mark_as_read(
+pub fn mark_as_read(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     user_id: i64,
     id: i64,
@@ -144,7 +144,7 @@ pub async fn mark_as_read(
         .execute(pool)
 }
 
-pub async fn update_all_starred(
+pub fn update_all_starred(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     user: UserQuery,
     ids: NotificationIds,
@@ -157,7 +157,7 @@ pub async fn update_all_starred(
         .execute(pool)
 }
 
-pub async fn toggle_starred(
+pub fn toggle_starred(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     user: UserQuery,
     notification_id: i64,
@@ -169,7 +169,7 @@ pub async fn toggle_starred(
         .execute(pool)
 }
 
-pub async fn create_notification(
+pub fn create_notification(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     user_id: i64,
     notification_data_id: i64,
@@ -188,7 +188,7 @@ pub async fn create_notification(
         .get_result(pool)
 }
 
-pub async fn create_notifications_for_users(
+pub fn create_notifications_for_users(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     document_id: i64,
     notification_data_id: i64,
@@ -215,7 +215,7 @@ pub async fn create_notifications_for_users(
     Ok(1)
 }
 
-pub async fn create_notification_data(
+pub fn create_notification_data(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     notification_data_insert: NotificationDataInsert,
 ) -> QueryResult<i64> {
