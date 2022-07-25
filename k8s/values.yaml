@@ -25,3 +25,7 @@ settings:
 
 podDisruptionBudget:
   enabled: false
+
+hpa:
+  minReplicas: 2
+  maxReplicas: 10
