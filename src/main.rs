@@ -2,9 +2,15 @@
 
 use std::sync::Arc;
 
-use actix_identity::{CookieIdentityPolicy, IdentityService};
+use actix_identity::IdentityMiddleware;
 use actix_rt::Arbiter;
-use actix_web::{cookie::SameSite, middleware::Logger, web::Data, App, HttpServer};
+use actix_session::{storage::CookieSessionStore, SessionMiddleware};
+use actix_web::{
+    cookie::{Key, SameSite},
+    middleware::Logger,
+    web::Data,
+    App, HttpServer,
+};
 use const_format::formatcp;
 use diesel_migrations::MigrationHarness;
 use elasticsearch::http::transport::Transport;
@@ -63,16 +69,25 @@ async fn main() -> anyhow::Result<()> {
         })
     };
 
+    let session_cookie_key = Key::derive_from(&SETTINGS.auth.auth_cookie_key);
+
     HttpServer::new(move || {
-        let policy = CookieIdentityPolicy::new(&SETTINGS.auth.auth_cookie_key)
-            .name(&SETTINGS.auth.auth_cookie_name)
-            .secure(SETTINGS.auth.auth_cookie_secure)
-            .same_site(SameSite::Strict);
         let app = App::new()
             .wrap(error_handler())
             .wrap(Logger::new(LOG_FMT).exclude("/healthz"))
             .wrap(sentry_actix::Sentry::new())
-            .wrap(IdentityService::new(policy))
+            .wrap(IdentityMiddleware::default())
+            .wrap(
+                SessionMiddleware::builder(
+                    CookieSessionStore::default(),
+                    session_cookie_key.clone(),
+                )
+                .cookie_name(SETTINGS.auth.auth_cookie_name.clone())
+                .cookie_secure(SETTINGS.auth.auth_cookie_secure)
+                .cookie_same_site(SameSite::Strict)
+                .build(),
+            )
+            .wrap(Logger::default().exclude("/healthz"))
             .app_data(Data::clone(&metrics))
             .app_data(Data::clone(&pool))
             .app_data(Data::clone(&arbiter_handle))

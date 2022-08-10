@@ -15,9 +15,8 @@ pub mod api_assertions;
 pub mod app;
 pub mod db;
 pub mod http_client;
-pub mod identity;
 
-pub type RumbaTestResponse = ServiceResponse<EitherBody<EitherBody<BoxBody>>>;
+pub type RumbaTestResponse = ServiceResponse<EitherBody<BoxBody>>;
 
 pub async fn read_json<B: MessageBody + Unpin>(res: ServiceResponse<B>) -> Value {
     serde_json::from_slice(test::read_body(res).await.as_ref()).unwrap()

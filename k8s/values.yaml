@@ -8,6 +8,7 @@ settings:
   auth__redirect_url: "https://developer.allizom.org/users/fxa/login/callback/"
   auth__scopes: "openid profile email profile:subscriptions"
   auth__auth_cookie_name: "auth-cookie"
+  auth__login_cookie_name: "login-cookie"
   auth__auth_cookie_secure: false
   auth__client_id: e7bc284c2d3b4a90
 

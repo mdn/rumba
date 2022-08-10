@@ -10,6 +10,7 @@ issuer_url = "http://localhost:4321"
 redirect_url = "http://localhost:8000/users/fxa/login/callback/"
 scopes = "openid profile email profile:subscriptions"
 auth_cookie_name = "auth-cookie"
+login_cookie_name = "login-cookie"
 auth_cookie_secure = false
 client_id="TEST_CLIENT_ID"
 client_secret="TEST_CLIENT_SECRET"

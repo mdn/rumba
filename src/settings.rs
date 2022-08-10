@@ -27,6 +27,7 @@ pub struct Auth {
     pub scopes: String,
     pub redirect_url: Url,
     pub auth_cookie_name: String,
+    pub login_cookie_name: String,
     pub auth_cookie_secure: bool,
     #[serde_as(as = "Base64")]
     pub auth_cookie_key: [u8; 64],

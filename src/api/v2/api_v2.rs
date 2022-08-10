@@ -1,4 +1,3 @@
-use crate::api::user_middleware::AddUser;
 use actix_web::dev::HttpServiceFactory;
 use actix_web::web;
 
@@ -11,7 +10,6 @@ use super::multiple_collections::{
 
 pub fn api_v2_service() -> impl HttpServiceFactory {
     web::scope("/api/v2")
-        .wrap(AddUser)
         .service(
             web::resource("/collections/")
                 .route(web::get().to(get_collections))

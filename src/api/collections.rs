@@ -1,3 +1,4 @@
+use actix_identity::Identity;
 use diesel::r2d2::ConnectionManager;
 use diesel::PgConnection;
 use r2d2::PooledConnection;
@@ -5,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use crate::api::error::ApiError;
-use crate::api::user_middleware::UserId;
 use crate::db::collections::{
     collection_item_exists_for_user, create_collection_item, get_collection_item,
     get_collection_item_count, get_collection_items_paginated,
@@ -135,12 +135,12 @@ impl From<CollectionAndDocumentQuery> for CollectionItem {
 
 pub async fn collections(
     _req: HttpRequest,
-    user_id: UserId,
+    user_id: Identity,
     pool: web::Data<Pool>,
     query: web::Query<CollectionsQueryParams>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     match &query.url {
         Some(url) => get_single_collection_item(pool, user, url).await,
         None => get_paginated_collection_items(pool, &user, &query).await,
@@ -201,13 +201,20 @@ async fn get_paginated_collection_items(
 pub async fn create_or_update_collection_item(
     pool: Data<Pool>,
     http_client: Data<Client>,
-    user_id: UserId,
+    user_id: Identity,
     query: web::Query<CollectionCreationParams>,
     collection_form: web::Form<CollectionCreationOrDeletionForm>,
 ) -> Result<HttpResponse, ApiError> {
     match collection_form.into_inner() {
         CollectionCreationOrDeletionForm::Creation(collection_form) => {
-            handle_create_update(&pool, user_id.id, query, http_client, collection_form).await
+            handle_create_update(
+                &pool,
+                user_id.id().unwrap(),
+                query,
+                http_client,
+                collection_form,
+            )
+            .await
         }
         CollectionCreationOrDeletionForm::Deletion(collection_form)
             if collection_form.delete.to_lowercase() == "true" =>
@@ -273,11 +280,11 @@ async fn handle_create_update(
 
 pub async fn undelete_collection_item(
     pool: Data<Pool>,
-    user_id: UserId,
+    user_id: Identity,
     query: web::Query<CollectionDeletionParams>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
 
     let sub_info = collections_subscription_info_for_user(&user, &mut conn_pool).await?;
     if sub_info
@@ -314,11 +321,11 @@ pub async fn undelete_collection_item(
 
 pub async fn delete_collection_item(
     pool: Data<Pool>,
-    user_id: UserId,
+    user_id: Identity,
     query: web::Query<CollectionDeletionParams>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
 
     let sub_info = collections_subscription_info_for_user(&user, &mut conn_pool).await?;
     crate::db::collections::delete_collection_item(&user, &mut conn_pool, query.url.clone())

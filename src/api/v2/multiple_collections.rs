@@ -1,6 +1,5 @@
 use crate::api::common::{get_document_metadata, Sorting};
 use crate::api::error::ApiError;
-use crate::api::user_middleware::UserId;
 use crate::db::error::DbError;
 use crate::db::model::UserQuery;
 use crate::db::types::Subscription;
@@ -19,6 +18,7 @@ use crate::db::v2::multiple_collections::{
 use crate::db::Pool;
 use crate::helpers::to_utc;
 use crate::settings::HARSH;
+use actix_identity::Identity;
 use actix_web::web::Data;
 use actix_web::{web, HttpRequest, HttpResponse};
 use chrono::NaiveDateTime;
@@ -233,11 +233,11 @@ impl From<MultipleCollectionsQuery> for MultipleCollectionInfo {
 
 pub async fn get_collections(
     _req: HttpRequest,
-    user_id: UserId,
+    user_id: Identity,
     pool: web::Data<Pool>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     let res: Vec<MultipleCollectionInfo> =
         get_multiple_collections_for_user(&user, &mut conn_pool)?
             .into_iter()
@@ -247,13 +247,13 @@ pub async fn get_collections(
 }
 
 pub async fn get_collection_by_id(
-    user_id: UserId,
+    user_id: Identity,
     pool: web::Data<Pool>,
     id: web::Path<EncodedId>,
     query: web::Query<CollectionItemQueryParams>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     let collection_id = id.into_inner();
     let collection_info =
         get_multiple_collection_by_id_for_user(&user, &mut conn_pool, &collection_id.get()?)?;
@@ -277,12 +277,12 @@ pub async fn get_collection_by_id(
 }
 
 pub async fn get_collection_item_in_collection_by_id(
-    user_id: UserId,
+    user_id: Identity,
     pool: web::Data<Pool>,
     path: web::Path<EncodedCollectionAndItemId>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     let ids = &path.into_inner();
     let CollectionAndItemId {
         collection_id,
@@ -302,12 +302,12 @@ pub async fn get_collection_item_in_collection_by_id(
 
 pub async fn create_multiple_collection(
     pool: Data<Pool>,
-    user_id: UserId,
+    user_id: Identity,
     data: web::Json<MultipleCollectionCreationRequest>,
 ) -> Result<HttpResponse, ApiError> {
     data.validate()?;
     let mut conn_pool = pool.get()?;
-    let user = get_user(&mut conn_pool, user_id.id)?;
+    let user = get_user(&mut conn_pool, user_id.id().unwrap())?;
     let req = data.into_inner();
     let count = get_count_of_multiple_collections_for_user(&user, &mut conn_pool)?;
     let core_sub = Some(Subscription::Core) == user.get_subscription_type();
@@ -329,13 +329,13 @@ pub async fn create_multiple_collection(
 
 pub async fn modify_collection(
     pool: Data<Pool>,
-    user_id: UserId,
+    user_id: Identity,
     collection_id: web::Path<EncodedId>,
     data: web::Json<MultipleCollectionCreationRequest>,
 ) -> Result<HttpResponse, ApiError> {
     data.validate()?;
     let mut conn_pool = pool.get()?;
-    let user = get_user(&mut conn_pool, user_id.id)?;
+    let user = get_user(&mut conn_pool, user_id.id().unwrap())?;
     let req = data.into_inner();
     let c_id = collection_id.into_inner();
 
@@ -362,13 +362,13 @@ pub async fn modify_collection(
 
 pub async fn modify_collection_item_in_collection(
     pool: Data<Pool>,
-    user_id: UserId,
+    user_id: Identity,
     path: web::Path<EncodedCollectionAndItemId>,
     data: web::Json<CollectionItemModificationRequest>,
 ) -> Result<HttpResponse, ApiError> {
     data.validate()?;
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     let ids = &path.into_inner();
     let CollectionAndItemId {
         collection_id,
@@ -385,13 +385,13 @@ pub async fn modify_collection_item_in_collection(
 pub async fn add_collection_item_to_collection(
     pool: Data<Pool>,
     http_client: Data<Client>,
-    user_id: UserId,
+    user_id: Identity,
     collection_id: web::Path<EncodedId>,
     data: web::Json<CollectionItemCreationRequest>,
 ) -> Result<HttpResponse, ApiError> {
     data.validate()?;
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     let c_id = collection_id.into_inner();
     let collection_exists = multiple_collection_exists(&user, &c_id.get()?, &mut conn_pool)?;
     if !collection_exists {
@@ -423,11 +423,11 @@ pub async fn add_collection_item_to_collection(
 
 pub async fn remove_collection_item_from_collection(
     pool: Data<Pool>,
-    user_id: UserId,
+    user_id: Identity,
     path: web::Path<EncodedCollectionAndItemId>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     let ids = &path.into_inner();
     let CollectionAndItemId {
         collection_id,
@@ -443,12 +443,12 @@ pub async fn remove_collection_item_from_collection(
 
 pub async fn delete_collection(
     pool: Data<Pool>,
-    user_id: UserId,
+    user_id: Identity,
     collection_id: web::Path<EncodedId>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
-    let collection_id = collection_id.into_inner().get()?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
+    let collection_id = collection_id.into_inner().get()?;    
     // REMOVE this once Migration to V2 is completed.
     if is_default_collection(&mut conn_pool, &user, collection_id)? {
         return Ok(HttpResponse::BadRequest().json(ConflictResponse {
@@ -466,11 +466,11 @@ pub async fn delete_collection(
 
 pub async fn lookup_collections_containing_article(
     pool: Data<Pool>,
-    user_id: UserId,
+    user_id: Identity,
     page: web::Query<MultipleCollectionLookupQueryParams>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user = get_user(&mut conn_pool, user_id.id)?;
+    let user = get_user(&mut conn_pool, user_id.id().unwrap())?;
     let ids = get_collections_and_items_containing_url(&user, &mut conn_pool, page.url.as_str())?;
     let entries: Vec<LookupEntry> = ids.iter().map(|val| val.into()).collect();
     Ok(HttpResponse::Ok().json(MultipleCollectionLookupQueryResponse { results: entries }))

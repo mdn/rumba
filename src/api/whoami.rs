@@ -32,7 +32,7 @@ const CLOUDFRONT_COUNTRY_HEADER: &str = "CloudFront-Viewer-Country-Name";
 
 pub async fn whoami(
     _req: HttpRequest,
-    id: Identity,
+    id: Option<Identity>,
     pool: web::Data<Pool>,
     metrics: Metrics,
 ) -> Result<HttpResponse, ApiError> {
@@ -42,10 +42,10 @@ pub async fn whoami(
         country: String::from(header.to_str().unwrap_or("Unknown")),
     });
 
-    match id.identity() {
+    match id {
         Some(id) => {
             let mut conn_pool = pool.get()?;
-            let user = db::users::get_user(&mut conn_pool, id);
+            let user = db::users::get_user(&mut conn_pool, id.id().unwrap());
             match user {
                 Ok(found) => {
                     let settings = db::settings::get_settings(&mut conn_pool, &found)?;
