@@ -2461,6 +2461,7 @@ dependencies = [
  "cadence",
  "chrono",
  "config",
+ "const_format",
  "diesel",
  "diesel-derive-enum",
  "diesel_migrations",

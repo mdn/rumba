@@ -9,7 +9,8 @@ use serde_json::json;
 use thiserror::Error;
 use uuid::Uuid;
 
-static ERROR_ID_HEADER_NAME: HeaderName = HeaderName::from_static("error-id");
+pub const ERROR_ID_HEADER_NAME_STR: &str = "error-id";
+static ERROR_ID_HEADER_NAME: HeaderName = HeaderName::from_static(ERROR_ID_HEADER_NAME_STR);
 
 #[derive(Error, Debug)]
 pub enum SearchError {
