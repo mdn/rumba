@@ -1,9 +1,16 @@
 use crate::db::error::DbError;
+use actix_http::header::HeaderValue;
+use actix_web::http::header::HeaderName;
 use actix_web::http::StatusCode;
+use actix_web::middleware::{ErrorHandlerResponse, ErrorHandlers};
 use actix_web::{HttpResponse, ResponseError};
 use serde::Serialize;
 use serde_json::json;
 use thiserror::Error;
+use uuid::Uuid;
+
+pub const ERROR_ID_HEADER_NAME_STR: &str = "error-id";
+static ERROR_ID_HEADER_NAME: HeaderName = HeaderName::from_static(ERROR_ID_HEADER_NAME_STR);
 
 #[derive(Error, Debug)]
 pub enum SearchError {
@@ -60,6 +67,8 @@ pub enum ApiError {
     Unauthorized,
     #[error("Blocking error")]
     BlockingError(#[from] actix_web::error::BlockingError),
+    #[error("DB Error: {0}")]
+    DbError(#[from] DbError),
 }
 
 impl ApiError {
@@ -78,15 +87,16 @@ impl ApiError {
             Self::FxaWebhook(_) => "FxaWebhookError",
             Self::Unauthorized => "Unauthorized",
             Self::BlockingError(_) => "Blocking error",
+            Self::DbError(_) => "DB error",
         }
     }
 }
 
 #[derive(Serialize)]
-struct ErrorResponse {
+struct ErrorResponse<'a> {
     code: u16,
-    error: String,
-    message: String,
+    error: &'a str,
+    message: &'a str,
 }
 
 impl ResponseError for ApiError {
@@ -118,21 +128,16 @@ impl ResponseError for ApiError {
                     ]
                 }
             })),
+            _ if status_code == StatusCode::INTERNAL_SERVER_ERROR => builder.json(ErrorResponse {
+                code: status_code.as_u16(),
+                message: "internal server error",
+                error: self.name(),
+            }),
             _ => builder.json(ErrorResponse {
                 code: status_code.as_u16(),
-                message: self.to_string(),
-                error: self.name().to_string(),
+                message: &self.to_string(),
+                error: self.name(),
             }),
-        }
-    }
-}
-
-impl From<DbError> for ApiError {
-    fn from(err: DbError) -> Self {
-        match err {
-            DbError::DieselResult(_) => ApiError::Unknown,
-            DbError::R2D2Error(_) => ApiError::Unknown,
-            DbError::FxAError(_) => ApiError::Unknown,
         }
     }
 }
@@ -153,4 +158,25 @@ impl From<serde_json::Error> for ApiError {
     fn from(_: serde_json::Error) -> Self {
         ApiError::JsonProcessingError
     }
+}
+
+fn log_error<B>(
+    mut res: actix_web::dev::ServiceResponse<B>,
+) -> actix_web::Result<ErrorHandlerResponse<B>> {
+    if let Some(error) = res.response().error() {
+        let uuid = Uuid::new_v4().as_hyphenated().to_string();
+        let header_value =
+            HeaderValue::from_str(&uuid).unwrap_or(HeaderValue::from_static("invalid-uuid"));
+        warn!("{} - eid:{}", error, &uuid);
+        res.headers_mut()
+            .append(ERROR_ID_HEADER_NAME.clone(), header_value);
+    }
+    Ok(ErrorHandlerResponse::Response(res.map_into_left_body()))
+}
+
+pub fn error_handler<B>() -> ErrorHandlers<B>
+where
+    B: 'static,
+{
+    ErrorHandlers::new().handler(StatusCode::INTERNAL_SERVER_ERROR, log_error)
 }
