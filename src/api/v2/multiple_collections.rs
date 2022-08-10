@@ -140,7 +140,7 @@ pub async fn get_collections(
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
     let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
-    let res = get_multiple_collections_for_user(&user, &mut conn_pool)?;
+    let res: Vec<MultipleCollectionInfo> = get_multiple_collections_for_user(&user, &mut conn_pool)?.into_iter().map(|query| MultipleCollectionInfo::from(query)).collect();
     Ok(HttpResponse::Ok().json(res))
 }
 

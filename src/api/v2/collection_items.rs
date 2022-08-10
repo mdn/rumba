@@ -57,12 +57,6 @@ pub struct CollectionItemsResponse {
     items: Vec<CollectionItem>,
 }
 
-#[derive(Serialize)]
-pub struct CollectionResponse {
-    bookmarked: Option<CollectionItem>,
-    csrfmiddlewaretoken: String,
-    subscription_limit_reached: bool,
-}
 
 #[derive(Deserialize, Debug)]
 pub struct CollectionItemCreationForm {
