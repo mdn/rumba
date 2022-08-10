@@ -157,7 +157,7 @@ pub fn get_collection_items_for_user_multiple_collection(
             schema::multiple_collections_to_items::table
                 .inner_join(schema::collection_items::table.inner_join(schema::documents::table)),
         )
-        .filter(schema::multiple_collections::user_id.eq(user.id))
+        .filter(schema::multiple_collections::user_id.eq(user.id).and(schema::multiple_collections::id.eq(collection_id)))
         .into_boxed();
 
     if let Some(query) = &query_params.q {
