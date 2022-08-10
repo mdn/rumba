@@ -10,7 +10,9 @@ use elasticsearch::http::transport::Transport;
 use elasticsearch::Elasticsearch;
 use reqwest::Client as HttpClient;
 use rumba::{
-    add_services, db,
+    add_services,
+    api::error::error_handler,
+    db,
     fxa::LoginManager,
     logging::{self, init_logging},
     metrics::{metrics_from_opts, MetricsData},
@@ -52,7 +54,11 @@ async fn main() -> anyhow::Result<()> {
             .secure(SETTINGS.auth.auth_cookie_secure)
             .same_site(SameSite::Strict);
         let app = App::new()
-            .wrap(Logger::default().exclude("/healthz"))
+            .wrap(error_handler())
+            .wrap(
+                Logger::new(r#"%a "%r" %s %b "%{Referer}i" "%{User-Agent}i" eid:%{Error-Id}o %T"#)
+                    .exclude("/healthz"),
+            )
             .wrap(IdentityService::new(policy))
             .app_data(Data::clone(&metrics))
             .app_data(Data::clone(&pool))
