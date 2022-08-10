@@ -11,6 +11,8 @@ use crate::diesel::PgTextExpressionMethods;
 
 use diesel::QueryDsl;
 use diesel::RunQueryDsl;
+use diesel::dsl::count;
+use diesel::dsl::count_distinct;
 use diesel::{dsl::exists, expression_methods::ExpressionMethods};
 use diesel::{insert_into, select};
 use diesel::{r2d2::ConnectionManager, PgConnection};
@@ -25,12 +27,23 @@ pub fn get_multiple_collections_for_user(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
 ) -> Result<Vec<MultipleCollectionsQuery>, DbError> {
     let collections: Vec<MultipleCollectionsQuery> = schema::multiple_collections::table
-        .filter(
+    .filter(
             schema::multiple_collections::user_id
                 .eq(user.id)
                 .and(schema::multiple_collections::deleted_at.is_null()),
         )
-        .select(schema::multiple_collections::all_columns)
+        .inner_join(schema::multiple_collections_to_items::table)
+        .group_by(schema::multiple_collections::id)
+        .select((
+            schema::multiple_collections::id,        
+            schema::multiple_collections::created_at,
+            schema::multiple_collections::updated_at,
+            schema::multiple_collections::deleted_at,
+            schema::multiple_collections::user_id,   
+            schema::multiple_collections::notes,     
+            schema::multiple_collections::name,
+            count(schema::multiple_collections_to_items::collection_item_id)
+        ))    
         .get_results::<MultipleCollectionsQuery>(pool)?;
 
     Ok(collections)
@@ -48,7 +61,18 @@ pub fn get_multiple_collection_by_id_for_user(
                 .and(schema::multiple_collections::deleted_at.is_null())
                 .and(schema::multiple_collections::id.eq(id)),
         )
-        .select(schema::multiple_collections::all_columns)
+        .inner_join(schema::multiple_collections_to_items::table)
+        .group_by(schema::multiple_collections::id)
+        .select((
+            schema::multiple_collections::id,        
+            schema::multiple_collections::created_at,
+            schema::multiple_collections::updated_at,
+            schema::multiple_collections::deleted_at,
+            schema::multiple_collections::user_id,   
+            schema::multiple_collections::notes,     
+            schema::multiple_collections::name,
+            count(schema::multiple_collections_to_items::collection_item_id)
+        ))
         .first::<MultipleCollectionsQuery>(pool)
         .optional()?;
     Ok(collection)

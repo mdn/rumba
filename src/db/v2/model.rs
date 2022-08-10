@@ -38,6 +38,7 @@ pub struct MultipleCollectionsQuery {
     pub user_id: i64,
     pub notes: Option<String>,
     pub name: String,
+    pub collection_item_count: i64,
 }
 
 #[derive(Insertable, AsChangeset)]

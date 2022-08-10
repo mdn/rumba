@@ -53,25 +53,20 @@ pub struct CollectionItem {
 }
 
 #[derive(Serialize)]
-pub struct CollectionInfo {
+pub struct MultipleCollectionInfo {
+    pub id: String,
     pub name: String,
     pub notes: Option<String>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+    pub article_count: i64,
 }
 
 #[derive(Serialize)]
-pub struct CollectionResponse {
+pub struct MultipleCollectionResponse {
     #[serde(flatten)]
-    pub info: CollectionInfo,
+    pub info: MultipleCollectionInfo,
     pub items: Vec<CollectionItem>,
-}
-
-#[derive(Serialize)]
-pub struct CollectionsResponse {
-    #[serde(flatten)]
-    pub collections: Vec<CollectionInfo>,
-    pub selected: Vec<CollectionItem>,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -84,7 +79,7 @@ pub struct CollectionItemCreationRequest {
 #[derive(Deserialize, Serialize, Clone)]
 pub struct MultipleColletionCreationRequest {
     pub name: String,
-    pub notes: Option<String>,
+    pub description: Option<String>,
 }
 
 impl From<CollectionItemCreationRequest> for CollectionItemCreationForm {
@@ -125,13 +120,15 @@ impl From<CollectionItemAndDocumentQuery> for CollectionItem {
     }
 }
 
-impl From<MultipleCollectionsQuery> for CollectionInfo {
+impl From<MultipleCollectionsQuery> for MultipleCollectionInfo {
     fn from(collection: MultipleCollectionsQuery) -> Self {
-        CollectionInfo {
+        MultipleCollectionInfo {
             name: collection.name,
             created_at: collection.created_at,
             updated_at: collection.updated_at,
             notes: collection.notes,
+            id: collection.id.to_string(),
+            article_count: collection.collection_item_count,
         }
     }
 }
@@ -171,7 +168,7 @@ pub async fn get_collection_by_id(
             .iter()
             .map(|val| Into::<CollectionItem>::into(val.clone()))
             .collect();
-        let collection_response = CollectionResponse {
+        let collection_response = MultipleCollectionResponse {
             info: info.into(),
             items,
         };
