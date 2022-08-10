@@ -20,6 +20,7 @@ use r2d2::PooledConnection;
 
 use super::model::CollectionItemAndDocumentQuery;
 use super::model::CollectionToItemsInsert;
+use super::model::MultipleCollectionInsert;
 use super::model::MultipleCollectionsQuery;
 
 pub fn get_multiple_collections_for_user(
@@ -104,6 +105,22 @@ pub fn add_collection_item_to_multiple_collection(
         collection_item_id,
     };
     let res = insert_into(schema::multiple_collections_to_items::table)
+        .values(insert)
+        .execute(pool)?;
+    Ok(res)
+}
+
+pub fn create_default_multiple_collection_for_user(
+    pool: &mut PgConnection,
+    user_id: i64,    
+) -> Result<usize,diesel::result::Error> {
+    let insert = MultipleCollectionInsert {
+        deleted_at: None,
+        name: format!("Default"),
+        notes: None,
+        user_id 
+    };
+    let res = insert_into(schema::multiple_collections::table)
         .values(insert)
         .execute(pool)?;
     Ok(res)

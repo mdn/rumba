@@ -7,12 +7,13 @@ use diesel::{insert_into, OptionalExtension, PgConnection, QueryDsl, QueryResult
 use schema::users::dsl::*;
 
 use super::types::Subscription;
+use super::v2::multiple_collections::create_default_multiple_collection_for_user;
 
 pub fn create_or_update_user(
     conn: &mut PgConnection,
     mut fxa_user: FxAUser,
     refresh_token: &str,
-) -> QueryResult<usize> {
+) -> Result<usize, diesel::result::Error> {
     if fxa_user.subscriptions.len() > 1 {
         fxa_user.subscriptions.sort();
     }
@@ -35,12 +36,15 @@ pub fn create_or_update_user(
         is_admin: None,
     };
 
-    insert_into(users)
+    let user_id = insert_into(users)
         .values(&user)
         .on_conflict(fxa_uid)
         .do_update()
         .set(&user)
-        .execute(conn)
+        .returning(schema::users::id)
+        .get_result(conn)?;
+    
+    create_default_multiple_collection_for_user(conn, user_id)
 }
 
 pub fn get_user(conn_pool: &mut PgConnection, user: impl AsRef<str>) -> Result<UserQuery, DbError> {

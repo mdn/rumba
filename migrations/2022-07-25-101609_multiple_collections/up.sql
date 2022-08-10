@@ -4,7 +4,7 @@ CREATE TABLE multiple_collections
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
     deleted_at TIMESTAMP,
-    user_id    BIGSERIAL references users (id),
+    user_id    BIGSERIAL references users (id) ON DELETE CASCADE,
     notes      TEXT,
     name       TEXT      NOT NULL
 );
@@ -19,12 +19,12 @@ CREATE TABLE collection_items
     document_id BIGSERIAL references documents (id),
     notes       TEXT,
     custom_name TEXT,
-    user_id     BIGSERIAL REFERENCES users (id)
+    user_id     BIGSERIAL REFERENCES users (id) ON DELETE CASCADE
 );
 
 CREATE TABLE multiple_collections_to_items
 (
-    multiple_collection_id BIGSERIAL references multiple_collections (id),
+    multiple_collection_id BIGSERIAL references multiple_collections (id) ON DELETE CASCADE,
     collection_item_id    BIGSERIAL references collection_items (id),
     PRIMARY KEY (multiple_collection_id, collection_item_id)
 );
