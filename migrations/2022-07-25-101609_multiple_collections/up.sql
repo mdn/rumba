@@ -6,7 +6,8 @@ CREATE TABLE multiple_collections
     deleted_at TIMESTAMP,
     user_id    BIGSERIAL references users (id) ON DELETE CASCADE,
     notes      TEXT,
-    name       TEXT      NOT NULL
+    name       TEXT      NOT NULL,
+    UNIQUE(user_id, name)
 );
 
 --This is the same as 'Collections' but without the uniqueness constrain on user_id , document_id

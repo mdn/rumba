@@ -22,7 +22,7 @@ pub fn api_v2_service() -> impl HttpServiceFactory {
         )
         .service(
             web::resource("/collections/{id}/items/{item_id}")
-                .route(web::delete().to(remove_collection_item_from_collection))
+                .route(web::post().to(remove_collection_item_from_collection))
                 .route(web::post().to(modify_collection_item_in_collection)),
         )
 }

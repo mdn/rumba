@@ -11,9 +11,10 @@ use crate::db::v2::collection_items::{
 };
 use crate::db::v2::model::{CollectionItemAndDocumentQuery, MultipleCollectionsQuery};
 use crate::db::v2::multiple_collections::{
-    add_collection_item_to_multiple_collection, get_collection_item_id_for_collection,
-    get_collection_items_for_user_multiple_collection, get_multiple_collection_by_id_for_user,
-    get_multiple_collections_for_user, multiple_collection_exists,
+    add_collection_item_to_multiple_collection, create_multiple_collection_for_user,
+    get_collection_item_id_for_collection, get_collection_items_for_user_multiple_collection,
+    get_multiple_collection_by_id_for_user, get_multiple_collections_for_user,
+    multiple_collection_exists,
 };
 use crate::db::Pool;
 use actix_web::web::Data;
@@ -56,7 +57,7 @@ pub struct CollectionItem {
 pub struct MultipleCollectionInfo {
     pub id: String,
     pub name: String,
-    pub notes: Option<String>,
+    pub description: Option<String>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
     pub article_count: i64,
@@ -77,7 +78,7 @@ pub struct CollectionItemCreationRequest {
 }
 
 #[derive(Deserialize, Serialize, Clone)]
-pub struct MultipleColletionCreationRequest {
+pub struct MultipleCollectionCreationRequest {
     pub name: String,
     pub description: Option<String>,
 }
@@ -126,7 +127,7 @@ impl From<MultipleCollectionsQuery> for MultipleCollectionInfo {
             name: collection.name,
             created_at: collection.created_at,
             updated_at: collection.updated_at,
-            notes: collection.notes,
+            description: collection.notes,
             id: collection.id.to_string(),
             article_count: collection.collection_item_count,
         }
@@ -140,7 +141,11 @@ pub async fn get_collections(
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
     let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
-    let res: Vec<MultipleCollectionInfo> = get_multiple_collections_for_user(&user, &mut conn_pool)?.into_iter().map(|query| MultipleCollectionInfo::from(query)).collect();
+    let res: Vec<MultipleCollectionInfo> =
+        get_multiple_collections_for_user(&user, &mut conn_pool)?
+            .into_iter()
+            .map(|query| MultipleCollectionInfo::from(query))
+            .collect();
     Ok(HttpResponse::Ok().json(res))
 }
 
@@ -182,10 +187,12 @@ pub async fn create_multiple_collection(
     pool: Data<Pool>,
     http_client: Data<Client>,
     user_id: UserId,
-    collection_id: web::Path<i64>,
-    data: web::Json<CollectionItemCreationRequest>,
+    data: web::Json<MultipleCollectionCreationRequest>,
 ) -> Result<HttpResponse, ApiError> {
-    Ok(HttpResponse::Ok().json(json!({"TODO" : true})))
+    let mut conn_pool = pool.get()?;
+    let user = get_user(&mut conn_pool, user_id.id)?;
+    let created = create_multiple_collection_for_user(&mut conn_pool, user.id, &data.into_inner())?;
+    Ok(HttpResponse::Created().json(created))
 }
 
 pub async fn modify_collection_item_in_collection(

@@ -1,5 +1,6 @@
 use crate::api::common::Sorting;
 use crate::api::v2::collection_items::CollectionItemQueryParams;
+use crate::api::v2::multiple_collections::MultipleCollectionCreationRequest;
 use crate::db::error::DbError;
 use crate::db::model::CollectionAndDocumentQuery;
 use crate::db::model::UserQuery;
@@ -9,10 +10,10 @@ use crate::diesel::NullableExpressionMethods;
 use crate::diesel::OptionalExtension;
 use crate::diesel::PgTextExpressionMethods;
 
-use diesel::QueryDsl;
-use diesel::RunQueryDsl;
 use diesel::dsl::count;
 use diesel::dsl::count_distinct;
+use diesel::QueryDsl;
+use diesel::RunQueryDsl;
 use diesel::{dsl::exists, expression_methods::ExpressionMethods};
 use diesel::{insert_into, select};
 use diesel::{r2d2::ConnectionManager, PgConnection};
@@ -22,13 +23,14 @@ use super::model::CollectionItemAndDocumentQuery;
 use super::model::CollectionToItemsInsert;
 use super::model::MultipleCollectionInsert;
 use super::model::MultipleCollectionsQuery;
+use super::model::MultipleCollectionsQueryNoCount;
 
 pub fn get_multiple_collections_for_user(
     user: &UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
 ) -> Result<Vec<MultipleCollectionsQuery>, DbError> {
     let collections: Vec<MultipleCollectionsQuery> = schema::multiple_collections::table
-    .filter(
+        .filter(
             schema::multiple_collections::user_id
                 .eq(user.id)
                 .and(schema::multiple_collections::deleted_at.is_null()),
@@ -36,18 +38,36 @@ pub fn get_multiple_collections_for_user(
         .inner_join(schema::multiple_collections_to_items::table)
         .group_by(schema::multiple_collections::id)
         .select((
-            schema::multiple_collections::id,        
+            schema::multiple_collections::id,
             schema::multiple_collections::created_at,
             schema::multiple_collections::updated_at,
             schema::multiple_collections::deleted_at,
-            schema::multiple_collections::user_id,   
-            schema::multiple_collections::notes,     
+            schema::multiple_collections::user_id,
+            schema::multiple_collections::notes,
             schema::multiple_collections::name,
-            count(schema::multiple_collections_to_items::collection_item_id)
-        ))    
+            count(schema::multiple_collections_to_items::collection_item_id),
+        ))
         .get_results::<MultipleCollectionsQuery>(pool)?;
 
     Ok(collections)
+}
+
+pub fn create_multiple_collection_for_user(
+    pool: &mut PgConnection,
+    user_id: i64,
+    data: &MultipleCollectionCreationRequest,
+) -> Result<MultipleCollectionsQuery, diesel::result::Error> {
+    let insert = MultipleCollectionInsert {
+        deleted_at: None,
+        name: data.name.to_owned(),
+        notes: data.description.to_owned(),
+        user_id,
+    };
+    let res = insert_into(schema::multiple_collections::table)
+        .values(insert)
+        .returning(schema::multiple_collections::all_columns)
+        .get_result::<MultipleCollectionsQueryNoCount>(pool)?;
+    Ok(res.into())
 }
 
 pub fn get_multiple_collection_by_id_for_user(
@@ -65,14 +85,14 @@ pub fn get_multiple_collection_by_id_for_user(
         .inner_join(schema::multiple_collections_to_items::table)
         .group_by(schema::multiple_collections::id)
         .select((
-            schema::multiple_collections::id,        
+            schema::multiple_collections::id,
             schema::multiple_collections::created_at,
             schema::multiple_collections::updated_at,
             schema::multiple_collections::deleted_at,
-            schema::multiple_collections::user_id,   
-            schema::multiple_collections::notes,     
+            schema::multiple_collections::user_id,
+            schema::multiple_collections::notes,
             schema::multiple_collections::name,
-            count(schema::multiple_collections_to_items::collection_item_id)
+            count(schema::multiple_collections_to_items::collection_item_id),
         ))
         .first::<MultipleCollectionsQuery>(pool)
         .optional()?;
@@ -112,13 +132,13 @@ pub fn add_collection_item_to_multiple_collection(
 
 pub fn create_default_multiple_collection_for_user(
     pool: &mut PgConnection,
-    user_id: i64,    
-) -> Result<usize,diesel::result::Error> {
+    user_id: i64,
+) -> Result<usize, diesel::result::Error> {
     let insert = MultipleCollectionInsert {
         deleted_at: None,
         name: format!("Default"),
         notes: None,
-        user_id 
+        user_id,
     };
     let res = insert_into(schema::multiple_collections::table)
         .values(insert)

@@ -43,7 +43,7 @@ pub fn create_or_update_user(
         .set(&user)
         .returning(schema::users::id)
         .get_result(conn)?;
-    
+
     create_default_multiple_collection_for_user(conn, user_id)
 }
 
