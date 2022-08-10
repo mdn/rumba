@@ -34,7 +34,7 @@ pub enum FxaWebhookError {
 }
 #[derive(Error, Debug)]
 pub enum ApiError {
-    #[error("unknown error")]
+    #[error("Unknown error")]
     Unknown,
     #[error("Invalid Session info")]
     InvalidSession,
@@ -42,6 +42,8 @@ pub enum ApiError {
     ServerError,
     #[error("Document Not found")]
     DocumentNotFound,
+    #[error("Collection not found")]
+    CollectionNotFound,
     #[error("Notification Not found")]
     NotificationNotFound,
     #[error("Malformed Url")]
@@ -78,6 +80,7 @@ impl ApiError {
             Self::FxaWebhook(_) => "FxaWebhookError",
             Self::Unauthorized => "Unauthorized",
             Self::BlockingError(_) => "Blocking error",
+            Self::CollectionNotFound => "Collection not found",
         }
     }
 }

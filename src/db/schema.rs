@@ -26,6 +26,22 @@ diesel::table! {
     use diesel::sql_types::*;
     use crate::db::types::*;
 
+    collection_items (id) {
+        id -> Int8,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+        deleted_at -> Nullable<Timestamp>,
+        document_id -> Int8,
+        notes -> Nullable<Text>,
+        custom_name -> Nullable<Text>,
+        user_id -> Int8,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+
     collections (id) {
         id -> Int8,
         created_at -> Timestamp,
@@ -51,6 +67,31 @@ diesel::table! {
         metadata -> Nullable<Jsonb>,
         title -> Text,
         paths -> Array<Nullable<Text>>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+
+    multiple_collections (id) {
+        id -> Int8,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+        deleted_at -> Nullable<Timestamp>,
+        user_id -> Int8,
+        notes -> Nullable<Text>,
+        name -> Text,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+
+    multiple_collections_to_items (multiple_collection_id, collection_item_id) {
+        multiple_collection_id -> Int8,
+        collection_item_id -> Int8,
     }
 }
 
@@ -159,8 +200,13 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(collection_items -> documents (document_id));
+diesel::joinable!(collection_items -> users (user_id));
 diesel::joinable!(collections -> documents (document_id));
 diesel::joinable!(collections -> users (user_id));
+diesel::joinable!(multiple_collections -> users (user_id));
+diesel::joinable!(multiple_collections_to_items -> collection_items (collection_item_id));
+diesel::joinable!(multiple_collections_to_items -> multiple_collections (multiple_collection_id));
 diesel::joinable!(notification_data -> documents (document_id));
 diesel::joinable!(notifications -> notification_data (notification_data_id));
 diesel::joinable!(notifications -> users (user_id));
@@ -169,8 +215,11 @@ diesel::joinable!(watched_items -> documents (document_id));
 diesel::joinable!(watched_items -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
+    collection_items,
     collections,
     documents,
+    multiple_collections,
+    multiple_collections_to_items,
     notification_data,
     notifications,
     raw_webhook_events_tokens,

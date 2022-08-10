@@ -3,6 +3,7 @@ use actix_web::dev::ServiceResponse;
 use actix_web::test;
 use serde_json::Value;
 
+pub mod api_assertions;
 pub mod app;
 pub mod db;
 pub mod http_client;

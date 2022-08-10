@@ -66,3 +66,4 @@ woothee = "0.13"
 [dev-dependencies]
 stubr = "0.5.0-rc.1"
 stubr-attributes = "0.5.0-rc.1"
+assert-json-diff = "2.0.2"
