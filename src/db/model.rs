@@ -95,6 +95,7 @@ pub struct Settings {
     pub user_id: i64,
     pub col_in_search: bool,
     pub locale_override: Option<Locale>,
+    pub multiple_collections: bool,
 }
 
 #[derive(Insertable, AsChangeset)]
@@ -103,6 +104,7 @@ pub struct SettingsInsert {
     pub user_id: i64,
     pub col_in_search: Option<bool>,
     pub locale_override: Option<Option<Locale>>,
+    pub multiple_collections: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize)]

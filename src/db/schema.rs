@@ -109,6 +109,7 @@ diesel::table! {
         user_id -> Int8,
         col_in_search -> Bool,
         locale_override -> Nullable<Locale>,
+        multiple_collections -> Bool,
     }
 }
 

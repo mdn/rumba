@@ -12,6 +12,7 @@ use super::error::ApiError;
 pub struct SettingUpdateRequest {
     pub col_in_search: Option<bool>,
     pub locale_override: Option<Option<Locale>>,
+    pub multiple_collections: Option<bool>,
 }
 
 impl From<Settings> for SettingUpdateRequest {
@@ -19,6 +20,7 @@ impl From<Settings> for SettingUpdateRequest {
         SettingUpdateRequest {
             col_in_search: Some(val.col_in_search),
             locale_override: Some(val.locale_override),
+            multiple_collections: Some(val.multiple_collections),
         }
     }
 }

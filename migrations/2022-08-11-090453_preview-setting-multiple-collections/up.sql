@@ -1,0 +1,1 @@
+ALTER TABLE settings ADD COLUMN multiple_collections BOOLEAN NOT NULL DEFAULT FALSE;
