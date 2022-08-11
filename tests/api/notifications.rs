@@ -1,24 +1,24 @@
 use crate::helpers::app::test_app_with_login;
-use crate::helpers::db::{get_pool, reset};
+use crate::helpers::db::reset;
 use crate::helpers::http_client::{PostPayload, TestHttpClient};
 use crate::helpers::{read_json, wait_for_stubr};
 use actix_web::test;
 use anyhow::Error;
-use rumba::db;
 use rumba::db::model::{DocumentMetadata, NotificationDataInsert};
+use rumba::db::{self, Pool};
 use serde_json::json;
 
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn test_get_notifications() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
     wait_for_stubr()?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     //Database was reset so we can naively assume user_id = 1.
-    let _ids = create_notifications(1, 100).await;
+    let _ids = create_notifications(&pool, 1, 100).await;
     let mut offset = 0;
     let mut limit = 10;
 
@@ -106,14 +106,13 @@ async fn test_get_notifications() -> Result<(), Error> {
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn test_mark_all_read() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
     wait_for_stubr()?;
-
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     //Database was reset so we can naively assume user_id = 1.
-    let _ids = create_notifications(1, 100).await;
+    let _ids = create_notifications(&pool, 1, 100).await;
 
     let mut res = logged_in_client
         .get("/api/v1/plus/notifications/?offset=0&limit=100", None)
@@ -139,14 +138,13 @@ async fn test_mark_all_read() -> Result<(), Error> {
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn test_mark_id_as_read() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
     wait_for_stubr()?;
-
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     //Database was reset so we can naively assume user_id = 1.
-    let _ids = create_notifications(1, 100).await;
+    let _ids = create_notifications(&pool, 1, 100).await;
 
     let mut res = logged_in_client
         .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
@@ -178,14 +176,13 @@ async fn test_mark_id_as_read() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 
 async fn test_star_unstar_many() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
     wait_for_stubr()?;
-
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     //Database was reset so we can naively assume user_id = 1.
-    let _ids = create_notifications(1, 100).await;
+    let _ids = create_notifications(&pool, 1, 100).await;
 
     let mut res = logged_in_client
         .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
@@ -235,14 +232,13 @@ async fn test_star_unstar_many() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 
 async fn test_toggle_starred() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
     wait_for_stubr()?;
-
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     //Database was reset so we can naively assume user_id = 1.
-    let _ids = create_notifications(1, 100).await;
+    let _ids = create_notifications(&pool, 1, 100).await;
 
     let mut res = logged_in_client
         .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
@@ -285,14 +281,13 @@ async fn test_toggle_starred() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 
 async fn test_delete_and_undo() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
     wait_for_stubr()?;
-
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     //Database was reset so we can naively assume user_id = 1.
-    let _ids = create_notifications(1, 10).await;
+    let _ids = create_notifications(&pool, 1, 10).await;
 
     let mut res = logged_in_client
         .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
@@ -332,14 +327,13 @@ async fn test_delete_and_undo() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 
 async fn test_delete_many() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
     wait_for_stubr()?;
-
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     //Database was reset so we can naively assume user_id = 1.
-    let _ids = create_notifications(1, 10).await;
+    let _ids = create_notifications(&pool, 1, 10).await;
 
     let mut res = logged_in_client
         .get("/api/v1/plus/notifications/?offset=0&limit=10", None)
@@ -370,8 +364,7 @@ async fn test_delete_many() -> Result<(), Error> {
     Ok(())
 }
 
-async fn create_notifications(user_id: i64, number: usize) -> Vec<i64> {
-    let conn_pool = get_pool();
+async fn create_notifications(pool: &Pool, user_id: i64, number: usize) -> Vec<i64> {
     let mut notification_ids: Vec<i64> = vec![];
     for i in 0..number {
         let uri = format!("{}/{}", "https://developer.allizom.org", i);
@@ -383,7 +376,7 @@ async fn create_notifications(user_id: i64, number: usize) -> Vec<i64> {
         };
 
         let document_id = db::documents::create_or_update_document(
-            &mut conn_pool.get().unwrap(),
+            &mut pool.get().unwrap(),
             document,
             uri.to_string(),
         );
@@ -402,11 +395,10 @@ async fn create_notifications(user_id: i64, number: usize) -> Vec<i64> {
         };
 
         let notification_data_id =
-            db::notifications::create_notification_data(&mut conn_pool.get().unwrap(), data)
-                .unwrap();
+            db::notifications::create_notification_data(&mut pool.get().unwrap(), data).unwrap();
 
         let id = db::notifications::create_notification(
-            &mut conn_pool.get().unwrap(),
+            &mut pool.get().unwrap(),
             user_id,
             notification_data_id,
         )

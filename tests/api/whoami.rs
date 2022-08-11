@@ -10,9 +10,9 @@ use stubr::{Config, Stubr};
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn whoami_anonymous_test() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
     wait_for_stubr()?;
-    let app = test_app_with_login().await.unwrap();
+    let app = test_app_with_login(&pool).await.unwrap();
     let service = test::init_service(app).await;
     let request = test::TestRequest::get()
         .uri("/api/v1/whoami")
@@ -30,10 +30,9 @@ async fn whoami_anonymous_test() -> Result<(), Error> {
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn whoami_logged_in_test() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
     wait_for_stubr()?;
-
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
@@ -64,10 +63,9 @@ async fn whoami_logged_in_test() -> Result<(), Error> {
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn whoami_settings_test() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
     wait_for_stubr()?;
-
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
@@ -167,7 +165,7 @@ async fn whoami_settings_test() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
     let _stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/whoami"],
@@ -180,7 +178,7 @@ async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
     );
     wait_for_stubr()?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client

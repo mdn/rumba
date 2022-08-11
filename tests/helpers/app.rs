@@ -14,6 +14,7 @@ use elasticsearch::Elasticsearch;
 use reqwest::Client;
 use rumba::add_services;
 use rumba::api::error::error_handler;
+use rumba::db::Pool;
 use rumba::fxa::LoginManager;
 use rumba::settings::SETTINGS;
 use slog::{slog_o, Drain};
@@ -21,10 +22,12 @@ use stubr::{Config, Stubr};
 
 use super::db::reset;
 use super::http_client::TestHttpClient;
+use super::identity::TestIdentityPolicy;
 use super::RumbaTestResponse;
-use super::{db::get_pool, identity::TestIdentityPolicy};
 
-pub async fn test_app() -> App<
+pub async fn test_app(
+    pool: &Pool,
+) -> App<
     impl ServiceFactory<
         ServiceRequest,
         Response = ServiceResponse<EitherBody<BoxBody>>,
@@ -33,14 +36,15 @@ pub async fn test_app() -> App<
         InitError = (),
     >,
 > {
-    let pool = get_pool();
     let app = App::new()
         .wrap(IdentityService::new(TestIdentityPolicy::new()))
-        .app_data(pool);
+        .app_data(pool.clone());
     add_services(app)
 }
 
-pub async fn test_app_with_login() -> anyhow::Result<
+pub async fn test_app_with_login(
+    pool: &Pool,
+) -> anyhow::Result<
     App<
         impl ServiceFactory<
             ServiceRequest,
@@ -51,7 +55,7 @@ pub async fn test_app_with_login() -> anyhow::Result<
         >,
     >,
 > {
-    let pool = Data::new(get_pool().clone());
+    let pool = Data::new(pool.clone());
     let login_manager = Data::new(LoginManager::init().await?);
     let client = Data::new(Client::new());
     init_logging();
@@ -116,7 +120,7 @@ pub async fn init_test(
     ),
     anyhow::Error,
 > {
-    reset()?;
+    let pool = reset()?;
     let _stubr = Stubr::start_blocking_with(
         custom_stubs,
         Config {
@@ -126,7 +130,7 @@ pub async fn init_test(
             verbose: Some(true),
         },
     );
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let logged_in_client = TestHttpClient::new(service).await;
     Ok((logged_in_client, _stubr))

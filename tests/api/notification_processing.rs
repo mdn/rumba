@@ -13,7 +13,7 @@ use crate::helpers::{
 
 #[actix_rt::test]
 async fn test_receive_notification_subscribed_top_level() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
     let _stubr = Stubr::start_blocking_with(
         vec![
             "tests/stubs",
@@ -28,7 +28,7 @@ async fn test_receive_notification_subscribed_top_level() -> Result<(), Error> {
     );
     wait_for_stubr()?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     //Given a user is watching API/Navigator
@@ -125,7 +125,7 @@ async fn test_receive_notification_subscribed_top_level() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_receive_notification_subscribed_specific_path() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
     let _stubr = Stubr::start_blocking_with(
         vec![
             "tests/stubs",
@@ -140,7 +140,7 @@ async fn test_receive_notification_subscribed_specific_path() -> Result<(), Erro
     );
     wait_for_stubr()?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     //Given a user is watching API/Navigator/vibrate
@@ -209,7 +209,7 @@ async fn test_receive_notification_subscribed_specific_path() -> Result<(), Erro
 
 #[actix_rt::test]
 async fn test_receive_notification_unknown() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
     let _stubr = Stubr::start_blocking_with(
         vec![
             "tests/stubs",
@@ -224,7 +224,7 @@ async fn test_receive_notification_unknown() -> Result<(), Error> {
     );
     wait_for_stubr()?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     //Given a user is watching API/Navigator

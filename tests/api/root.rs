@@ -20,7 +20,7 @@ async fn find_user() -> Result<(), Error> {
     let pool = get_pool();
     let mut conn = pool.get()?;
 
-    let app = test_app_with_login().await.unwrap();
+    let app = test_app_with_login(&pool).await.unwrap();
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
 

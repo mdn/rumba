@@ -5,22 +5,15 @@ use rumba::{
     settings::SETTINGS,
 };
 
-use once_cell::sync::OnceCell;
-
 const MIGRATIONS: diesel_migrations::EmbeddedMigrations = diesel_migrations::embed_migrations!();
-static CONN_POOL: OnceCell<Pool> = OnceCell::new();
 
-pub fn get_pool() -> &'static Pool {
-    if let Some(val) = CONN_POOL.get() {
-        val
-    } else {
-        let _res = CONN_POOL.set(establish_connection(&SETTINGS.db.uri));
-        return CONN_POOL.get().unwrap();
-    }
+pub fn get_pool() -> Pool {
+    establish_connection(&SETTINGS.db.uri)
 }
 
-pub fn reset() -> Result<(), Error> {
-    let mut connection = get_pool().get()?;
+pub fn reset() -> Result<Pool, Error> {
+    let pool = get_pool();
+    let mut connection = pool.get()?;
 
     connection
         .revert_all_migrations(MIGRATIONS)
@@ -28,5 +21,5 @@ pub fn reset() -> Result<(), Error> {
     connection
         .run_pending_migrations(MIGRATIONS)
         .expect("failed to run migrations");
-    Ok(())
+    Ok(pool)
 }

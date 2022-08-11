@@ -11,9 +11,9 @@ use crate::helpers::db::reset;
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn basic() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
-    let app = test_app_with_login().await.unwrap();
+    let app = test_app_with_login(&pool).await.unwrap();
     let app = test::init_service(app).await;
 
     let login_req = test::TestRequest::get()
@@ -55,9 +55,9 @@ async fn basic() -> Result<(), Error> {
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn next() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
-    let app = test_app_with_login().await.unwrap();
+    let app = test_app_with_login(&pool).await.unwrap();
     let app = test::init_service(app).await;
 
     let login_req = test::TestRequest::get()
@@ -99,9 +99,9 @@ async fn next() -> Result<(), Error> {
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn no_prompt() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
-    let app = test_app_with_login().await.unwrap();
+    let app = test_app_with_login(&pool).await.unwrap();
     let app = test::init_service(app).await;
 
     let login_req = test::TestRequest::get()

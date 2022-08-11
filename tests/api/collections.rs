@@ -14,7 +14,7 @@ use stubr::{Config, Stubr};
 
 #[actix_rt::test]
 async fn test_create_and_get_collection() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
     let _stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
@@ -27,7 +27,7 @@ async fn test_create_and_get_collection() -> Result<(), Error> {
     );
     wait_for_stubr()?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
 
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -59,7 +59,7 @@ async fn test_create_and_get_collection() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_create_and_get_collection_with_empty_title() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
     let _stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
@@ -72,7 +72,7 @@ async fn test_create_and_get_collection_with_empty_title() -> Result<(), Error> 
     );
     wait_for_stubr()?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
 
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -97,7 +97,7 @@ async fn test_create_and_get_collection_with_empty_title() -> Result<(), Error> 
 
 #[actix_rt::test]
 async fn test_create_get_delete_create_collection() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
     let _stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
@@ -110,7 +110,7 @@ async fn test_create_get_delete_create_collection() -> Result<(), Error> {
     );
     wait_for_stubr()?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
 
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -160,7 +160,7 @@ async fn test_create_get_delete_create_collection() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_pagination_default_sort_by_created() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
     let _stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
@@ -173,7 +173,7 @@ async fn test_pagination_default_sort_by_created() -> Result<(), Error> {
     );
     wait_for_stubr()?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
 
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -270,7 +270,7 @@ async fn test_pagination_default_sort_by_created() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_create_fails_404_no_index_found() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
     let _stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
@@ -283,7 +283,7 @@ async fn test_create_fails_404_no_index_found() -> Result<(), Error> {
     );
     wait_for_stubr()?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let base_url = "/api/v1/plus/collection/?url=/en-US/docs/Web/CSS_DEFINITELY_DOESNT_EXIST";
@@ -305,7 +305,7 @@ added by changing the name in the creation request.
 */
 #[actix_rt::test]
 async fn test_filters_by_custom_name_over_title() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
     let _stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
@@ -318,7 +318,7 @@ async fn test_filters_by_custom_name_over_title() -> Result<(), Error> {
     );
     wait_for_stubr()?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let mut base_url = "/api/v1/plus/collection/?url=/en-US/docs/Web/CSS1";
@@ -376,7 +376,7 @@ async fn test_filters_by_custom_name_over_title() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_query_finds_strings_in_notes() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
     let _stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
@@ -389,7 +389,7 @@ async fn test_query_finds_strings_in_notes() -> Result<(), Error> {
     );
     wait_for_stubr()?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let base_url = "/api/v1/plus/collection/?url=/en-US/docs/Web/CSS1";
@@ -434,7 +434,7 @@ async fn test_query_finds_strings_in_notes() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_delete_collection() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
     let _stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
@@ -447,7 +447,7 @@ async fn test_delete_collection() -> Result<(), Error> {
     );
     wait_for_stubr()?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
 
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -474,7 +474,7 @@ async fn test_delete_collection() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_undelete_collection() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
     let _stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
@@ -487,7 +487,7 @@ async fn test_undelete_collection() -> Result<(), Error> {
     );
     wait_for_stubr()?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
 
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -531,7 +531,7 @@ async fn test_undelete_collection() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_delete_collection_via_post() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
     let _stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
@@ -544,7 +544,7 @@ async fn test_delete_collection_via_post() -> Result<(), Error> {
     );
     wait_for_stubr()?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
 
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -577,7 +577,7 @@ async fn test_delete_collection_via_post() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_collection_subscription_limits() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
     let _stubr = Stubr::start_blocking_with(
         vec![
@@ -594,7 +594,7 @@ async fn test_collection_subscription_limits() -> Result<(), Error> {
     );
     wait_for_stubr()?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
 
     let mut logged_in_client = TestHttpClient::new(service).await;

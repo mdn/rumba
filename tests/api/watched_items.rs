@@ -13,7 +13,7 @@ use stubr::{Config, Stubr};
 
 #[actix_rt::test]
 async fn test_create_get_watched_items() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
     let _stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
@@ -26,7 +26,7 @@ async fn test_create_get_watched_items() -> Result<(), Error> {
     );
     wait_for_stubr()?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
 
@@ -91,7 +91,7 @@ async fn test_create_get_watched_items() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_unwatch_many() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
     let _stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
@@ -104,7 +104,7 @@ async fn test_unwatch_many() -> Result<(), Error> {
     );
     wait_for_stubr()?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
 
@@ -149,8 +149,7 @@ async fn test_unwatch_many() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_single_item_operations() -> Result<(), Error> {
-    reset()?;
-
+    let pool = reset()?;
     let _stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
@@ -162,7 +161,7 @@ async fn test_single_item_operations() -> Result<(), Error> {
     );
     wait_for_stubr()?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
 
@@ -240,7 +239,7 @@ async fn create_watched_items(
 
 #[actix_rt::test]
 async fn test_watched_item_subscription_limit() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
     let _stubr = Stubr::start_blocking_with(
         vec![
@@ -257,7 +256,7 @@ async fn test_watched_item_subscription_limit() -> Result<(), Error> {
     );
     wait_for_stubr()?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
 
