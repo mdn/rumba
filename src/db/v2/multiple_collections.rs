@@ -35,7 +35,7 @@ pub fn get_multiple_collections_for_user(
                 .eq(user.id)
                 .and(schema::multiple_collections::deleted_at.is_null()),
         )
-        .inner_join(schema::multiple_collections_to_items::table)
+        .left_join(schema::multiple_collections_to_items::table)
         .group_by(schema::multiple_collections::id)
         .select((
             schema::multiple_collections::id,
