@@ -5,12 +5,15 @@ use std::sync::Arc;
 use actix_identity::{CookieIdentityPolicy, IdentityService};
 use actix_rt::Arbiter;
 use actix_web::{cookie::SameSite, middleware::Logger, web::Data, App, HttpServer};
+use const_format::formatcp;
 use diesel_migrations::MigrationHarness;
 use elasticsearch::http::transport::Transport;
 use elasticsearch::Elasticsearch;
 use reqwest::Client as HttpClient;
 use rumba::{
-    add_services, db,
+    add_services,
+    api::error::{error_handler, ERROR_ID_HEADER_NAME_STR},
+    db,
     fxa::LoginManager,
     logging::{self, init_logging},
     metrics::{metrics_from_opts, MetricsData},
@@ -19,6 +22,11 @@ use rumba::{
 use slog_scope::{debug, info};
 
 const MIGRATIONS: diesel_migrations::EmbeddedMigrations = diesel_migrations::embed_migrations!();
+
+static LOG_FMT: &str = formatcp!(
+    r#"%a "%r" %s %b "%{{Referer}}i" "%{{User-Agent}}i" eid:%{{{}}}o %T"#,
+    ERROR_ID_HEADER_NAME_STR,
+);
 
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
@@ -52,7 +60,8 @@ async fn main() -> anyhow::Result<()> {
             .secure(SETTINGS.auth.auth_cookie_secure)
             .same_site(SameSite::Strict);
         let app = App::new()
-            .wrap(Logger::default().exclude("/healthz"))
+            .wrap(error_handler())
+            .wrap(Logger::new(LOG_FMT).exclude("/healthz"))
             .wrap(IdentityService::new(policy))
             .app_data(Data::clone(&metrics))
             .app_data(Data::clone(&pool))
