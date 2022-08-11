@@ -43,11 +43,14 @@ pub async fn get_document_metadata(
     .map_err(|_| ApiError::MalformedUrl)?;
 
     let document = http_client
-        .get(document_url)
+        .get(document_url.to_owned())
         .send()
         .await
         .map_err(|err: reqwest::Error| match err.status() {
-            Some(StatusCode::NOT_FOUND) => ApiError::DocumentNotFound,
+            Some(StatusCode::NOT_FOUND) =>  {
+                error!("Error NOT_FOUND fetching document {} ", &document_url);
+                return ApiError::DocumentNotFound
+            },
             _ => ApiError::Unknown,
         })?;
 

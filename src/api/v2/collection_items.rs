@@ -57,7 +57,6 @@ pub struct CollectionItemsResponse {
     items: Vec<CollectionItem>,
 }
 
-
 #[derive(Deserialize, Debug)]
 pub struct CollectionItemCreationForm {
     pub name: String,

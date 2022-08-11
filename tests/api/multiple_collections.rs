@@ -40,40 +40,84 @@ async fn test_create_and_get_collection() -> Result<(), Error> {
         res,
         json!(
             {
-                "id": {},
                 "name": "Test",
                 "description": "Test description",
-                "article_count" : "0"
+                "article_count" : 0
             }
         ),
     )
     .await
     .unwrap();
-    // let get_res = client
-    //     .get(
-    //         format!("{:1}{:2}", base_url, body["id"].as_str().unwrap()).as_str(),
-    //         None,
-    //     )
-    //     .await;
-    // assert_ok_with_json_containing(
-    //     get_res,
-    //     json!(
-    //         {
-    //             "id": {},
-    //             "name": "Test",
-    //             "notes": "Test notes",
-    //             "articles" : "0"
-    //         }
-    //     ),
-    // )
-    // .await
-    // .unwrap();
+
+    let get_res = client
+        .get(
+            format!("{}{}/", base_url, body["id"].as_str().unwrap()).as_str(),
+            None,
+        )
+        .await;
+
+    assert_ok_with_json_containing(
+        get_res,
+        json!(
+            {
+               "id": body["id"].as_str(),
+               "name": "Test",
+               "description": "Test description",
+               "article_count" : 0,
+               "items": []
+            }
+        ),
+    )
+    .await
+    .unwrap();
     Ok(())
 }
 
 #[actix_rt::test]
-async fn test_add_item_to_collection() -> Result<(), Error> {
-    Ok(())
+async fn test_add_items_to_collection() -> Result<(), Error> {
+    let (mut client, _stubr) =
+    init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+let base_url = "/api/v2/collections/";
+
+let res = client
+    .post(
+        base_url,
+        None,
+        Some(PostPayload::Json(json!({
+            "name": "Test",
+            "description": "Test description"
+        }))),
+    )
+    .await;
+
+let body = assert_created_with_json_containing(
+    res,json!(
+        {
+            "name": "Test",
+            "description": "Test description",
+            "article_count" : 0
+        }
+    ),
+)
+.await
+.unwrap();
+_stubr.uri();
+for i in 1..12 {
+let mut create_res = client
+    .post(
+        format!("{}{}/items/", base_url, body["id"].as_str().unwrap()).as_str(),
+        None,
+        Some(PostPayload::Json(json!({
+            "name" : format!("Interesting CSS{}",i),
+            "url": format!("/en-US/docs/Web/CSS{}",i)
+        }
+        )))
+    )
+    .await;
+ assert_eq!(create_res.status(), StatusCode::CREATED);   
+}
+ 
+Ok(())
 }
 
 #[actix_rt::test]

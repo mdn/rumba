@@ -47,7 +47,7 @@ pub struct MultipleCollectionsQuery {
     pub user_id: i64,
     pub notes: Option<String>,
     pub name: String,
-    pub collection_item_count: i64,
+    pub collection_item_count: Option<i64>,
 }
 
 impl From<MultipleCollectionsQueryNoCount> for MultipleCollectionsQuery {
@@ -60,7 +60,7 @@ impl From<MultipleCollectionsQueryNoCount> for MultipleCollectionsQuery {
             user_id: query.user_id,
             notes: query.notes,
             name: query.name,
-            collection_item_count: 0,
+            collection_item_count: Some(0),
         };
     }
 }

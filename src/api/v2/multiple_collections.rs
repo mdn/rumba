@@ -129,7 +129,7 @@ impl From<MultipleCollectionsQuery> for MultipleCollectionInfo {
             updated_at: collection.updated_at,
             description: collection.notes,
             id: collection.id.to_string(),
-            article_count: collection.collection_item_count,
+            article_count: collection.collection_item_count.unwrap_or(0),
         }
     }
 }
@@ -150,7 +150,6 @@ pub async fn get_collections(
 }
 
 pub async fn get_collection_by_id(
-    _req: HttpRequest,
     user_id: UserId,
     pool: web::Data<Pool>,
     id: web::Path<i64>,
@@ -179,20 +178,19 @@ pub async fn get_collection_by_id(
         };
         Ok(HttpResponse::Ok().json(collection_response))
     } else {
-        return Ok(HttpResponse::NotFound().finish());
+        return Ok(HttpResponse::BadRequest().finish());
     }
 }
 
 pub async fn create_multiple_collection(
     pool: Data<Pool>,
-    http_client: Data<Client>,
     user_id: UserId,
     data: web::Json<MultipleCollectionCreationRequest>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
     let user = get_user(&mut conn_pool, user_id.id)?;
     let created = create_multiple_collection_for_user(&mut conn_pool, user.id, &data.into_inner())?;
-    Ok(HttpResponse::Created().json(created))
+    Ok(HttpResponse::Created().json(MultipleCollectionInfo::from(created)))
 }
 
 pub async fn modify_collection_item_in_collection(

@@ -45,7 +45,7 @@ pub fn get_multiple_collections_for_user(
             schema::multiple_collections::user_id,
             schema::multiple_collections::notes,
             schema::multiple_collections::name,
-            count(schema::multiple_collections_to_items::collection_item_id),
+            count(schema::multiple_collections_to_items::collection_item_id).nullable(),
         ))
         .get_results::<MultipleCollectionsQuery>(pool)?;
 
@@ -82,7 +82,7 @@ pub fn get_multiple_collection_by_id_for_user(
                 .and(schema::multiple_collections::deleted_at.is_null())
                 .and(schema::multiple_collections::id.eq(id)),
         )
-        .inner_join(schema::multiple_collections_to_items::table)
+        .left_join(schema::multiple_collections_to_items::table)
         .group_by(schema::multiple_collections::id)
         .select((
             schema::multiple_collections::id,
@@ -92,7 +92,7 @@ pub fn get_multiple_collection_by_id_for_user(
             schema::multiple_collections::user_id,
             schema::multiple_collections::notes,
             schema::multiple_collections::name,
-            count(schema::multiple_collections_to_items::collection_item_id),
+            count(schema::multiple_collections_to_items::collection_item_id).nullable(),
         ))
         .first::<MultipleCollectionsQuery>(pool)
         .optional()?;
@@ -157,7 +157,11 @@ pub fn get_collection_items_for_user_multiple_collection(
             schema::multiple_collections_to_items::table
                 .inner_join(schema::collection_items::table.inner_join(schema::documents::table)),
         )
-        .filter(schema::multiple_collections::user_id.eq(user.id).and(schema::multiple_collections::id.eq(collection_id)))
+        .filter(
+            schema::multiple_collections::user_id
+                .eq(user.id)
+                .and(schema::multiple_collections::id.eq(collection_id)),
+        )
         .into_boxed();
 
     if let Some(query) = &query_params.q {
