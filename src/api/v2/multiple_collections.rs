@@ -12,9 +12,10 @@ use crate::db::v2::collection_items::{
 };
 use crate::db::v2::model::{CollectionItemAndDocumentQuery, MultipleCollectionsQuery};
 use crate::db::v2::multiple_collections::{
-    add_collection_item_to_multiple_collection, create_multiple_collection_for_user,
-    get_collection_item_id_for_collection, get_collection_items_for_user_multiple_collection,
-    get_multiple_collection_by_id_for_user, get_multiple_collections_for_user,
+    create_multiple_collection_for_user,
+    get_collection_items_for_user_multiple_collection, 
+    get_multiple_collection_by_id_for_user,
+    get_multiple_collections_for_user, 
     multiple_collection_exists,
 };
 use crate::db::Pool;
@@ -233,24 +234,27 @@ pub async fn add_collection_item_to_collection(
     }
     let creation_data = data.into_inner();
 
-    let collection_item_in_collection_id =
-        get_collection_item_id_for_collection(&c_id, &user.id, &creation_data.url, &mut conn_pool)?;
-    if let Some(ci_id) = collection_item_in_collection_id {
-        info!("Found collection_item_id {} in Collection {}", ci_id, c_id);
-        update_collection_item(ci_id, &mut conn_pool, &creation_data)?;
-        return Ok(HttpResponse::Accepted().finish());
+    let metadata = get_document_metadata(http_client, &creation_data.url).await?;
+    let res = create_collection_item(
+        user.id,
+        &mut conn_pool,
+        &creation_data.url,
+        metadata,
+        &creation_data.to_owned().into(),
+        c_id,
+    );
+
+    if let Err(db_err) = res {
+        match db_err {
+            DbError::Conflict(_) => {
+                return Ok(HttpResponse::Conflict().json(json!({
+                    "error": "Collection item already exists in collection"
+                })))
+            }
+            _ => return Err(ApiError::DbError(db_err)),
+        }
     } else {
-        //Create new collection item.
-        let metadata = get_document_metadata(http_client, &creation_data.url).await?;
-        let created = create_collection_item(
-            user.id,
-            &mut conn_pool,
-            &creation_data.url,
-            metadata,
-            &creation_data.to_owned().into(),
-        )?;
-        add_collection_item_to_multiple_collection(&mut conn_pool, &c_id, created)?;
-        return Ok(HttpResponse::Created().finish());
+        Ok(HttpResponse::Created().finish())
     }
 }
 

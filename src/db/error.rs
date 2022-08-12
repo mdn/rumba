@@ -25,10 +25,10 @@ impl From<r2d2::Error> for DbError {
 impl From<diesel::result::Error> for DbError {
     fn from(e: diesel::result::Error) -> Self {
         match e {
-            diesel::result::Error::DatabaseError(kind,_) => match kind {
+            diesel::result::Error::DatabaseError(kind, _) => match kind {
                 diesel::result::DatabaseErrorKind::UniqueViolation => DbError::Conflict(e),
                 _ => DbError::DieselResult(e),
-            }
+            },
             _ => DbError::DieselResult(e),
         }
     }

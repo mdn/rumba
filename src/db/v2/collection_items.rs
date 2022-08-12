@@ -162,6 +162,7 @@ pub fn create_collection_item(
     url: &str,
     document: DocumentMetadata,
     form: &CollectionItemCreationRequest,
+    collection_id: i64,
 ) -> Result<i64, DbError> {
     let mut custom_name = None;
 
@@ -178,6 +179,7 @@ pub fn create_collection_item(
         notes: form.notes.clone(),
         custom_name: custom_name.clone(),
         user_id,
+        multiple_collection_id: collection_id,
     };
 
     let id_created = insert_into(schema::collection_items::table)

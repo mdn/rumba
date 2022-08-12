@@ -34,6 +34,7 @@ pub struct CollectionItemInsert {
     pub custom_name: Option<String>,
     pub user_id: i64,
     pub notes: Option<String>,
+    pub multiple_collection_id: i64,
 }
 
 #[derive(Identifiable, Serialize, Queryable, Associations, PartialEq, Debug)]
@@ -78,9 +79,3 @@ pub struct MultipleCollectionsQueryNoCount {
     pub name: String,
 }
 
-#[derive(Insertable, AsChangeset)]
-#[diesel(table_name = multiple_collections_to_items)]
-pub struct CollectionToItemsInsert {
-    pub multiple_collection_id: i64,
-    pub collection_item_id: i64,
-}
