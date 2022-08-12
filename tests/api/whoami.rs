@@ -1,7 +1,7 @@
 use crate::helpers::db::reset;
 use crate::helpers::http_client::TestHttpClient;
-use crate::helpers::read_json;
 use crate::helpers::{app::test_app_with_login, http_client::PostPayload};
+use crate::helpers::{read_json, wait_for_stubr};
 use actix_web::test;
 use anyhow::Error;
 use serde_json::json;
@@ -11,6 +11,7 @@ use stubr::{Config, Stubr};
 #[stubr::mock(port = 4321)]
 async fn whoami_anonymous_test() -> Result<(), Error> {
     reset()?;
+    wait_for_stubr()?;
     let app = test_app_with_login().await.unwrap();
     let service = test::init_service(app).await;
     let request = test::TestRequest::get()
@@ -30,6 +31,8 @@ async fn whoami_anonymous_test() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn whoami_logged_in_test() -> Result<(), Error> {
     reset()?;
+    wait_for_stubr()?;
+
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -62,6 +65,8 @@ async fn whoami_logged_in_test() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn whoami_settings_test() -> Result<(), Error> {
     reset()?;
+    wait_for_stubr()?;
+
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -146,6 +151,7 @@ async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
+    wait_for_stubr()?;
 
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;

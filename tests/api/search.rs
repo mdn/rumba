@@ -1,12 +1,15 @@
-use crate::helpers::app::test_app_only_search;
 use crate::helpers::read_json;
+use crate::helpers::{app::test_app_only_search, wait_for_stubr};
 use actix_web::{http::header, test};
 use anyhow::Error;
 use stubr::{Config, Stubr};
 
 async fn do_request(
     path: &str,
-) -> actix_web::dev::ServiceResponse<actix_web::body::EitherBody<actix_web::body::BoxBody>> {
+) -> Result<
+    actix_web::dev::ServiceResponse<actix_web::body::EitherBody<actix_web::body::BoxBody>>,
+    Error,
+> {
     let _stubr = Stubr::start_blocking_with(
         vec!["tests/test_specific_stubs/search"],
         Config {
@@ -16,15 +19,16 @@ async fn do_request(
             latency: None,
         },
     );
+    wait_for_stubr()?;
     let app = test_app_only_search().await;
     let service = test::init_service(app).await;
     let request = test::TestRequest::get().uri(path).to_request();
-    test::call_service(&service, request).await
+    Ok(test::call_service(&service, request).await)
 }
 
 #[actix_rt::test]
 async fn test_basic() -> Result<(), Error> {
-    let search = do_request("/api/v1/search?q=mozilla&locale=en-US").await;
+    let search = do_request("/api/v1/search?q=mozilla&locale=en-US").await?;
 
     assert!(search.status().is_success());
     assert_eq!(
@@ -71,7 +75,7 @@ async fn test_basic() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_sort_relevance() -> Result<(), Error> {
-    let search = do_request("/api/v1/search?q=mozilla&sort=relevance&locale=en-US").await;
+    let search = do_request("/api/v1/search?q=mozilla&sort=relevance&locale=en-US").await?;
 
     assert!(search.status().is_success());
     assert_eq!(
@@ -87,7 +91,7 @@ async fn test_sort_relevance() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_sort_popularity() -> Result<(), Error> {
-    let search = do_request("/api/v1/search?q=mozilla&sort=popularity&locale=en-US").await;
+    let search = do_request("/api/v1/search?q=mozilla&sort=popularity&locale=en-US").await?;
 
     assert!(search.status().is_success());
     assert_eq!(
@@ -103,7 +107,7 @@ async fn test_sort_popularity() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_sort_invalid() -> Result<(), Error> {
-    let search = do_request("/api/v1/search?q=mozilla&sort=foobar&locale=en-US").await;
+    let search = do_request("/api/v1/search?q=mozilla&sort=foobar&locale=en-US").await?;
 
     assert!(search.status().is_client_error());
     assert!(!search.headers().contains_key(header::CACHE_CONTROL));
@@ -116,7 +120,7 @@ async fn test_sort_invalid() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_locale_multiple() -> Result<(), Error> {
-    let search = do_request("/api/v1/search?q=mozilla&locale=fr&locale=en-US").await;
+    let search = do_request("/api/v1/search?q=mozilla&locale=fr&locale=en-US").await?;
 
     assert!(search.status().is_success());
     assert_eq!(
@@ -133,7 +137,7 @@ async fn test_locale_multiple() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_locale_invalid() -> Result<(), Error> {
-    let search = do_request("/api/v1/search?q=mozilla&locale=foobar").await;
+    let search = do_request("/api/v1/search?q=mozilla&locale=foobar").await?;
 
     assert!(search.status().is_client_error());
     assert!(!search.headers().contains_key(header::CACHE_CONTROL));
@@ -146,7 +150,7 @@ async fn test_locale_invalid() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_locale_none() -> Result<(), Error> {
-    let search = do_request("/api/v1/search?q=mozilla").await;
+    let search = do_request("/api/v1/search?q=mozilla").await?;
 
     assert!(search.status().is_success());
     assert_eq!(
@@ -162,7 +166,7 @@ async fn test_locale_none() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_page_2() -> Result<(), Error> {
-    let search = do_request("/api/v1/search?q=mozilla&page=2&locale=en-US").await;
+    let search = do_request("/api/v1/search?q=mozilla&page=2&locale=en-US").await?;
 
     assert!(search.status().is_success());
     assert_eq!(
@@ -184,7 +188,7 @@ async fn test_page_2() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_page_invalid() -> Result<(), Error> {
-    let search = do_request("/api/v1/search?q=mozilla&page=foobar&locale=en-US").await;
+    let search = do_request("/api/v1/search?q=mozilla&page=foobar&locale=en-US").await?;
 
     assert!(search.status().is_client_error());
     assert!(!search.headers().contains_key(header::CACHE_CONTROL));
@@ -197,7 +201,7 @@ async fn test_page_invalid() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_page_too_small() -> Result<(), Error> {
-    let search = do_request("/api/v1/search?q=mozilla&page=0&locale=en-US").await;
+    let search = do_request("/api/v1/search?q=mozilla&page=0&locale=en-US").await?;
 
     assert!(search.status().is_client_error());
     assert!(!search.headers().contains_key(header::CACHE_CONTROL));
@@ -210,7 +214,7 @@ async fn test_page_too_small() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_page_too_big() -> Result<(), Error> {
-    let search = do_request("/api/v1/search?q=mozilla&page=11&locale=en-US").await;
+    let search = do_request("/api/v1/search?q=mozilla&page=11&locale=en-US").await?;
 
     assert!(search.status().is_client_error());
     assert!(!search.headers().contains_key(header::CACHE_CONTROL));
@@ -223,7 +227,7 @@ async fn test_page_too_big() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_suggestion() -> Result<(), Error> {
-    let search = do_request("/api/v1/search?q=foobar&locale=en-US").await;
+    let search = do_request("/api/v1/search?q=foobar&locale=en-US").await?;
 
     assert!(search.status().is_success());
     assert_eq!(
@@ -241,7 +245,7 @@ async fn test_suggestion() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_no_results() -> Result<(), Error> {
-    let search = do_request("/api/v1/search?q=veryspecificquery&locale=en-US").await;
+    let search = do_request("/api/v1/search?q=veryspecificquery&locale=en-US").await?;
 
     assert!(search.status().is_success());
     assert_eq!(
@@ -259,7 +263,7 @@ async fn test_no_results() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_elastic_error() -> Result<(), Error> {
-    let search = do_request("/api/v1/search?q=closedindex&locale=en-US").await;
+    let search = do_request("/api/v1/search?q=closedindex&locale=en-US").await?;
 
     assert!(search.status().is_server_error());
     assert!(!search.headers().contains_key(header::CACHE_CONTROL));
@@ -273,7 +277,7 @@ async fn test_query_too_big() -> Result<(), Error> {
         "/api/v1/search?q={}&locale=en-US",
         str::repeat("a", 201)
     ))
-    .await;
+    .await?;
 
     assert!(search.status().is_client_error());
     assert!(!search.headers().contains_key(header::CACHE_CONTROL));

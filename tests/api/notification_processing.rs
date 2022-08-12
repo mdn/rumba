@@ -4,6 +4,7 @@ use serde_json::{json, Value};
 use stubr::{Config, Stubr};
 
 use crate::helpers::db::reset;
+use crate::helpers::wait_for_stubr;
 use crate::helpers::{
     app::test_app_with_login,
     http_client::{PostPayload, TestHttpClient},
@@ -25,6 +26,7 @@ async fn test_receive_notification_subscribed_top_level() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
+    wait_for_stubr()?;
 
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
@@ -136,6 +138,7 @@ async fn test_receive_notification_subscribed_specific_path() -> Result<(), Erro
             verbose: Some(true),
         },
     );
+    wait_for_stubr()?;
 
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
@@ -219,6 +222,7 @@ async fn test_receive_notification_unknown() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
+    wait_for_stubr()?;
 
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
