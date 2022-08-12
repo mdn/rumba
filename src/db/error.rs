@@ -1,3 +1,5 @@
+use std::borrow::Borrow;
+
 use crate::fxa::error::FxaError;
 use r2d2::Error;
 use thiserror::Error;
@@ -6,6 +8,8 @@ use thiserror::Error;
 pub enum DbError {
     #[error(transparent)]
     DieselResult(diesel::result::Error),
+    #[error(transparent)]
+    Conflict(diesel::result::Error),
     #[error(transparent)]
     R2D2Error(r2d2::Error),
     #[error(transparent)]
@@ -20,6 +24,12 @@ impl From<r2d2::Error> for DbError {
 
 impl From<diesel::result::Error> for DbError {
     fn from(e: diesel::result::Error) -> Self {
-        DbError::DieselResult(e)
+        match e {
+            diesel::result::Error::DatabaseError(kind,_) => match kind {
+                diesel::result::DatabaseErrorKind::UniqueViolation => DbError::Conflict(e),
+                _ => DbError::DieselResult(e),
+            }
+            _ => DbError::DieselResult(e),
+        }
     }
 }

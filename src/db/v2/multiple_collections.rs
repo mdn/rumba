@@ -56,13 +56,14 @@ pub fn create_multiple_collection_for_user(
     pool: &mut PgConnection,
     user_id: i64,
     data: &MultipleCollectionCreationRequest,
-) -> Result<MultipleCollectionsQuery, diesel::result::Error> {
+) -> Result<MultipleCollectionsQuery, DbError> {
     let insert = MultipleCollectionInsert {
         deleted_at: None,
         name: data.name.to_owned(),
         notes: data.description.to_owned(),
         user_id,
     };
+    //MultipleCollectionsQueryNoCount prevents type errors with returning all columns of the created object (as count of collection items is missing)
     let res = insert_into(schema::multiple_collections::table)
         .values(insert)
         .returning(schema::multiple_collections::all_columns)

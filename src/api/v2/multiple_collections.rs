@@ -4,6 +4,7 @@ use crate::api::common::{get_document_metadata, Sorting};
 use crate::api::error::ApiError;
 use crate::api::user_middleware::UserId;
 use crate::db;
+use crate::db::error::DbError;
 use crate::db::model::UserQuery;
 use crate::db::users::get_user;
 use crate::db::v2::collection_items::{
@@ -189,8 +190,21 @@ pub async fn create_multiple_collection(
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
     let user = get_user(&mut conn_pool, user_id.id)?;
-    let created = create_multiple_collection_for_user(&mut conn_pool, user.id, &data.into_inner())?;
-    Ok(HttpResponse::Created().json(MultipleCollectionInfo::from(created)))
+    let req = data.into_inner();
+    let created = create_multiple_collection_for_user(&mut conn_pool, user.id, &req);
+
+    if let Err(db_err) = created {
+        match db_err {
+            DbError::Conflict(_) => {
+                return Ok(HttpResponse::Conflict().json(json!({
+                    "error": format!("Collection with name '{}' already exists", &req.name)
+                })))
+            }
+            _ => return Err(ApiError::DbError(db_err)),
+        }
+    } else {
+        Ok(HttpResponse::Created().json(MultipleCollectionInfo::from(created.unwrap())))
+    }
 }
 
 pub async fn modify_collection_item_in_collection(

@@ -12,7 +12,7 @@ use serde_json::Value;
 use url::Url;
 
 pub struct TestHttpClient<
-    T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error = Error>,
+    T: Service<Request, Response = ServiceResponse<EitherBody<EitherBody<BoxBody>>>, Error = Error>,
 > {
     service: T,
     cookies: CookieJar,
@@ -23,8 +23,13 @@ pub enum PostPayload {
     FormData(Value),
 }
 
-impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error = Error>>
-    TestHttpClient<T>
+impl<
+        T: Service<
+            Request,
+            Response = ServiceResponse<EitherBody<EitherBody<BoxBody>>>,
+            Error = Error,
+        >,
+    > TestHttpClient<T>
 {
     pub async fn new(service: T) -> Self {
         let _stubr_ok = check_stubr_initialized().await;
@@ -75,7 +80,7 @@ impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error 
         &mut self,
         uri: &str,
         headers: Option<Vec<(&str, &str)>>,
-    ) -> ServiceResponse<EitherBody<BoxBody>> {
+    ) -> ServiceResponse<EitherBody<EitherBody<BoxBody>>> {
         let mut base = test::TestRequest::get().uri(&*uri);
         base = self.add_cookies_and_headers(headers, base);
         let res = test::call_service(&self.service, base.to_request()).await;
@@ -90,7 +95,7 @@ impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error 
         uri: &str,
         headers: Option<Vec<(&str, &str)>>,
         payload: Option<PostPayload>,
-    ) -> ServiceResponse<EitherBody<BoxBody>> {
+    ) -> ServiceResponse<EitherBody<EitherBody<BoxBody>>> {
         let mut base = test::TestRequest::post().uri(&*uri);
         match payload {
             Some(payload) => match payload {
@@ -112,7 +117,7 @@ impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error 
         &mut self,
         uri: &str,
         headers: Option<Vec<(&str, &str)>>,
-    ) -> ServiceResponse<EitherBody<BoxBody>> {
+    ) -> ServiceResponse<EitherBody<EitherBody<BoxBody>>> {
         let mut base = test::TestRequest::delete().uri(&*uri);
         base = self.add_cookies_and_headers(headers, base);
         let res = test::call_service(&self.service, base.to_request()).await;
@@ -122,7 +127,10 @@ impl<T: Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error 
         res
     }
 
-    pub async fn trigger_webhook(&self, bearer: &str) -> ServiceResponse<EitherBody<BoxBody>> {
+    pub async fn trigger_webhook(
+        &self,
+        bearer: &str,
+    ) -> ServiceResponse<EitherBody<EitherBody<BoxBody>>> {
         let req = test::TestRequest::get()
             .uri("/events/fxa")
             .insert_header(("Authorization", format!("Bearer {}", bearer).as_str()))

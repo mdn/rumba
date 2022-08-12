@@ -9,7 +9,7 @@ use slog::info;
 use crate::helpers::read_json;
 
 pub async fn assert_created_with_json_containing(
-    res: ServiceResponse<EitherBody<BoxBody>>,
+    res: ServiceResponse<EitherBody<EitherBody<BoxBody>>>,
     expected_json: serde_json::Value,
 ) -> Result<(serde_json::Value), ()> {
     assert_eq!(res.status(), StatusCode::CREATED);
@@ -19,10 +19,21 @@ pub async fn assert_created_with_json_containing(
 }
 
 pub async fn assert_ok_with_json_containing(
-    res: ServiceResponse<EitherBody<BoxBody>>,
+    res: ServiceResponse<EitherBody<EitherBody<BoxBody>>>,
     expected_json: serde_json::Value,
-) -> Result<(serde_json::Value), ()> {
+) -> Result<serde_json::Value, ()> {
     assert_eq!(res.status(), StatusCode::OK);
+    let body = read_json(res).await;
+    println!("{:}", body);
+    assert_json_include!(actual: body, expected: expected_json);
+    Ok(body)
+}
+
+pub async fn assert_conflict_with_json_containing(
+    res: ServiceResponse<EitherBody<EitherBody<BoxBody>>>,
+    expected_json: serde_json::Value,
+) -> Result<serde_json::Value, ()> {
+    assert_eq!(res.status(), StatusCode::CONFLICT);
     let body = read_json(res).await;
     println!("{:}", body);
     assert_json_include!(actual: body, expected: expected_json);

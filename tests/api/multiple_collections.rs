@@ -1,5 +1,6 @@
 use crate::helpers::api_assertions::{
-    assert_created_with_json_containing, assert_ok_with_json_containing,
+    assert_conflict_with_json_containing, assert_created_with_json_containing,
+    assert_ok_with_json_containing,
 };
 use crate::helpers::app::test_app_with_login;
 use crate::helpers::db::reset;
@@ -76,48 +77,214 @@ async fn test_create_and_get_collection() -> Result<(), Error> {
 #[actix_rt::test]
 async fn test_add_items_to_collection() -> Result<(), Error> {
     let (mut client, _stubr) =
-    init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
-let base_url = "/api/v2/collections/";
+        init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+    let base_url = "/api/v2/collections/";
 
-let res = client
-    .post(
-        base_url,
-        None,
-        Some(PostPayload::Json(json!({
-            "name": "Test",
-            "description": "Test description"
-        }))),
+    let res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Test",
+                "description": "Test description"
+            }))),
+        )
+        .await;
+
+    let body = assert_created_with_json_containing(
+        res,
+        json!(
+            {
+                "name": "Test",
+                "description": "Test description",
+                "article_count" : 0
+            }
+        ),
+    )
+    .await
+    .unwrap();
+
+    let c_id = body["id"].as_str().unwrap();
+
+    for i in 1..12 {
+        let mut create_res = client
+            .post(
+                format!("{}{}/items/", base_url, c_id).as_str(),
+                None,
+                Some(PostPayload::Json(json!({
+                    "name" : format!("Interesting CSS{}",i),
+                    "url": format!("/en-US/docs/Web/CSS{}",i)
+                }
+                ))),
+            )
+            .await;
+        assert_eq!(create_res.status(), StatusCode::CREATED);
+    }
+
+    let res = client
+        .get(format!("{}{}/", base_url, c_id).as_str(), None)
+        .await;
+    let returned = assert_ok_with_json_containing(
+        res,
+        json!({
+            "article_count": 11,
+            "items": [
+                {"url" : "/en-US/docs/Web/CSS11"},
+                {"url" : "/en-US/docs/Web/CSS10"},
+                {"url" : "/en-US/docs/Web/CSS9"},
+                {"url" : "/en-US/docs/Web/CSS8"},
+                {"url" : "/en-US/docs/Web/CSS7"},
+                {"url" : "/en-US/docs/Web/CSS6"},
+                {"url" : "/en-US/docs/Web/CSS5"},
+                {"url" : "/en-US/docs/Web/CSS4"},
+                {"url" : "/en-US/docs/Web/CSS3"},
+                {"url" : "/en-US/docs/Web/CSS2"},
+                ]
+
+        }),
     )
     .await;
 
-let body = assert_created_with_json_containing(
-    res,json!(
-        {
-            "name": "Test",
-            "description": "Test description",
-            "article_count" : 0
-        }
-    ),
-)
-.await
-.unwrap();
-_stubr.uri();
-for i in 1..12 {
-let mut create_res = client
-    .post(
-        format!("{}{}/items/", base_url, body["id"].as_str().unwrap()).as_str(),
-        None,
-        Some(PostPayload::Json(json!({
-            "name" : format!("Interesting CSS{}",i),
-            "url": format!("/en-US/docs/Web/CSS{}",i)
-        }
-        )))
+    let res = client
+        .get(
+            format!("{}{}/?offset=10&limit=1", base_url, c_id).as_str(),
+            None,
+        )
+        .await;
+    let returned = assert_ok_with_json_containing(
+        res,
+        json!({
+            "article_count": 11,
+            "items": [
+                {"url" : "/en-US/docs/Web/CSS1"},
+                ]
+
+        }),
     )
     .await;
- assert_eq!(create_res.status(), StatusCode::CREATED);   
+
+    Ok(())
 }
- 
-Ok(())
+
+#[actix_rt::test]
+async fn test_conflicts_and_scope() -> Result<(), Error> {
+    let (mut client, _stubr) =
+        init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+    let base_url = "/api/v2/collections/";
+
+    let mut res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Test",
+                "description": "Test description"
+            }))),
+        )
+        .await;
+
+    let body = assert_created_with_json_containing(
+        res,
+        json!(
+            {
+                "name": "Test",
+                "description": "Test description",
+                "article_count" : 0
+            }
+        ),
+    )
+    .await
+    .unwrap();
+
+    res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Test",
+                "description": "Test description"
+            }))),
+        )
+        .await;
+    //Same name should be a conflict
+    assert_conflict_with_json_containing(
+        res,
+        json!({
+            "error" : "Collection with name 'Test' already exists"
+        }),
+    )
+    .await;
+
+    res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Test 2",
+                "description": "Test description"
+            }))),
+        )
+        .await;
+    let c_id = body["id"].as_str().unwrap();
+
+    for i in 1..12 {
+        let mut create_res = client
+            .post(
+                format!("{}{}/items/", base_url, c_id).as_str(),
+                None,
+                Some(PostPayload::Json(json!({
+                    "name" : format!("Interesting CSS{}",i),
+                    "url": format!("/en-US/docs/Web/CSS{}",i)
+                }
+                ))),
+            )
+            .await;
+        assert_eq!(create_res.status(), StatusCode::CREATED);
+    }
+
+    let res = client
+        .get(format!("{}{}/", base_url, c_id).as_str(), None)
+        .await;
+    let returned = assert_ok_with_json_containing(
+        res,
+        json!({
+            "article_count": 11,
+            "items": [
+                {"url" : "/en-US/docs/Web/CSS11"},
+                {"url" : "/en-US/docs/Web/CSS10"},
+                {"url" : "/en-US/docs/Web/CSS9"},
+                {"url" : "/en-US/docs/Web/CSS8"},
+                {"url" : "/en-US/docs/Web/CSS7"},
+                {"url" : "/en-US/docs/Web/CSS6"},
+                {"url" : "/en-US/docs/Web/CSS5"},
+                {"url" : "/en-US/docs/Web/CSS4"},
+                {"url" : "/en-US/docs/Web/CSS3"},
+                {"url" : "/en-US/docs/Web/CSS2"},
+                ]
+
+        }),
+    )
+    .await;
+
+    let res = client
+        .get(
+            format!("{}{}/?offset=10&limit=1", base_url, c_id).as_str(),
+            None,
+        )
+        .await;
+    let returned = assert_ok_with_json_containing(
+        res,
+        json!({
+            "article_count": 11,
+            "items": [
+                {"url" : "/en-US/docs/Web/CSS1"},
+                ]
+
+        }),
+    )
+    .await;
+
+    Ok(())
 }
 
 #[actix_rt::test]
@@ -139,7 +306,7 @@ async fn init_test(
         TestHttpClient<
             impl Service<
                 Request,
-                Response = ServiceResponse<EitherBody<BoxBody>>,
+                Response = ServiceResponse<EitherBody<EitherBody<BoxBody>>>,
                 Error = actix_web::Error,
             >,
         >,

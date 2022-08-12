@@ -162,7 +162,7 @@ pub fn create_collection_item(
     url: &str,
     document: DocumentMetadata,
     form: &CollectionItemCreationRequest,
-) -> QueryResult<i64> {
+) -> Result<i64, DbError> {
     let mut custom_name = None;
 
     if form.name != document.title {
@@ -180,21 +180,11 @@ pub fn create_collection_item(
         user_id,
     };
 
-    insert_into(schema::collection_items::table)
+    let id_created = insert_into(schema::collection_items::table)
         .values(&collection_insert)
-        .on_conflict((
-            schema::collection_items::user_id,
-            schema::collection_items::document_id,
-        ))
-        .do_update()
-        .set((
-            schema::collection_items::notes.eq(&form.notes),
-            schema::collection_items::custom_name.eq(custom_name),
-            schema::collection_items::deleted_at.eq(None::<NaiveDateTime>),
-            schema::collection_items::updated_at.eq(Utc::now().naive_utc()),
-        ))
         .returning(schema::collection_items::id)
-        .get_result::<i64>(pool)
+        .get_result::<i64>(pool);
+    Ok(id_created?)
 }
 
 pub fn get_collection_item_count(

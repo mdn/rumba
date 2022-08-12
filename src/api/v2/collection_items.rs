@@ -113,7 +113,7 @@ impl From<CollectionItemAndDocumentQuery> for CollectionItem {
     }
 }
 
-async fn get_paginated_collection_items(
+fn get_paginated_collection_items(
     pool: Data<Pool>,
     user: &UserQuery,
     query: &CollectionItemQueryParams,
