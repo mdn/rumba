@@ -211,7 +211,7 @@ pub async fn create_or_update_collection_item(
         CollectionCreationOrDeletionForm::Deletion(collection_form)
             if collection_form.delete.to_lowercase() == "true" =>
         {
-            return delete_collection_item(
+            delete_collection_item(
                 pool,
                 user_id,
                 web::Query(CollectionDeletionParams {
@@ -223,7 +223,7 @@ pub async fn create_or_update_collection_item(
         CollectionCreationOrDeletionForm::Deletion(collection_form)
             if collection_form.delete.to_lowercase() == "false" =>
         {
-            return undelete_collection_item(
+            undelete_collection_item(
                 pool,
                 user_id,
                 web::Query(CollectionDeletionParams {

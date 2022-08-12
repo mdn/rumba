@@ -7,6 +7,7 @@ use crate::helpers::db::reset;
 use crate::helpers::http_client::PostPayload;
 use crate::helpers::http_client::TestHttpClient;
 use crate::helpers::read_json;
+use crate::helpers::wait_for_stubr;
 use actix_http::StatusCode;
 use actix_web::test;
 use anyhow::anyhow;
@@ -65,6 +66,8 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
     let set_token =
         include_str!("../data/set_tokens/set_token_subscription_state_change_to_10m.txt");
     reset()?;
+    wait_for_stubr()?;
+
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -133,6 +136,8 @@ async fn subscription_state_change_to_core_test_inactive() -> Result<(), Error> 
 
 async fn subscription_state_change_to_core_test(set_token: &str) -> Result<(), Error> {
     reset()?;
+    wait_for_stubr()?;
+
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -187,6 +192,7 @@ async fn delete_user_test() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
+    wait_for_stubr()?;
 
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
@@ -238,6 +244,8 @@ async fn delete_user_test() -> Result<(), Error> {
 async fn invalid_set_test() -> Result<(), Error> {
     let set_token = include_str!("../data/set_tokens/set_token_delete_user_invalid.txt");
     reset()?;
+    wait_for_stubr()?;
+
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -276,6 +284,7 @@ async fn change_profile_test() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
+    wait_for_stubr()?;
 
     let set_token = include_str!("../data/set_tokens/set_token_profile_change.txt");
     reset()?;
@@ -304,6 +313,7 @@ async fn change_profile_test() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
+    wait_for_stubr()?;
 
     thread::sleep(TEN_MS);
 
