@@ -1,21 +1,17 @@
-use std::fmt;
-
 use crate::api::common::{get_document_metadata, Sorting};
 use crate::api::error::ApiError;
 use crate::api::user_middleware::UserId;
-use crate::db;
 use crate::db::error::DbError;
 use crate::db::model::UserQuery;
 use crate::db::users::get_user;
 use crate::db::v2::collection_items::{
-    collection_item_exists_for_user, create_collection_item, update_collection_item,
+    create_collection_item, delete_collection_item, get_collection_item_by_id,
+    update_collection_item,
 };
 use crate::db::v2::model::{CollectionItemAndDocumentQuery, MultipleCollectionsQuery};
 use crate::db::v2::multiple_collections::{
-    create_multiple_collection_for_user,
-    get_collection_items_for_user_multiple_collection, 
-    get_multiple_collection_by_id_for_user,
-    get_multiple_collections_for_user, 
+    create_multiple_collection_for_user, get_collection_items_for_user_multiple_collection,
+    get_multiple_collection_by_id_for_user, get_multiple_collections_for_user,
     multiple_collection_exists,
 };
 use crate::db::Pool;
@@ -23,15 +19,12 @@ use actix_web::web::Data;
 use actix_web::{web, HttpRequest, HttpResponse};
 use chrono::NaiveDateTime;
 
-use diesel::IntoSql;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use super::collection_items::{CollectionItemCreationForm, CollectionItemQueryParams};
-
 #[derive(Deserialize)]
-pub struct CollectionsQueryParams {
+pub struct CollectionItemQueryParams {
     pub q: Option<String>,
     pub sort: Option<Sorting>,
     pub url: Option<String>,
@@ -80,18 +73,35 @@ pub struct CollectionItemCreationRequest {
 }
 
 #[derive(Deserialize, Serialize, Clone)]
+pub struct CollectionItemModificationRequest {
+    pub title: String,
+    pub notes: Option<String>,
+}
+
+#[derive(Deserialize, Serialize, Clone)]
 pub struct MultipleCollectionCreationRequest {
     pub name: String,
     pub description: Option<String>,
 }
 
-impl From<CollectionItemCreationRequest> for CollectionItemCreationForm {
-    fn from(val: CollectionItemCreationRequest) -> Self {
-        CollectionItemCreationForm {
-            name: val.name,
-            notes: val.notes,
-        }
-    }
+#[derive(Serialize)]
+pub struct CollectionItemsResponse {
+    items: Vec<CollectionItem>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CollectionItemCreationParams {
+    pub url: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CollectionItemDeletionForm {
+    pub delete: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CollectionItemDeletionParams {
+    pub url: String,
 }
 
 impl From<CollectionItemAndDocumentQuery> for CollectionItem {
@@ -146,7 +156,7 @@ pub async fn get_collections(
     let res: Vec<MultipleCollectionInfo> =
         get_multiple_collections_for_user(&user, &mut conn_pool)?
             .into_iter()
-            .map(|query| MultipleCollectionInfo::from(query))
+            .map(MultipleCollectionInfo::from)
             .collect();
     Ok(HttpResponse::Ok().json(res))
 }
@@ -180,7 +190,27 @@ pub async fn get_collection_by_id(
         };
         Ok(HttpResponse::Ok().json(collection_response))
     } else {
-        return Ok(HttpResponse::BadRequest().finish());
+        Err(ApiError::CollectionNotFound(collection_id))
+    }
+}
+
+pub async fn get_collection_item_in_collection_by_id(
+    user_id: UserId,
+    pool: web::Data<Pool>,
+    params: web::Path<(i64, i64)>,
+) -> Result<HttpResponse, ApiError> {
+    let mut conn_pool = pool.get()?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let (collection_id, item_id) = params.into_inner();
+    let collection_exists = multiple_collection_exists(&user, &collection_id, &mut conn_pool)?;
+    if !collection_exists {
+        return Err(ApiError::CollectionNotFound(collection_id));
+    }
+    let res = get_collection_item_by_id(&user, &mut conn_pool, item_id)?;
+    if let Some(item) = res {
+        Ok(HttpResponse::Ok().json(CollectionItem::from(item)))
+    } else {
+        Err(ApiError::DocumentNotFound)
     }
 }
 
@@ -196,12 +226,10 @@ pub async fn create_multiple_collection(
 
     if let Err(db_err) = created {
         match db_err {
-            DbError::Conflict(_) => {
-                return Ok(HttpResponse::Conflict().json(json!({
-                    "error": format!("Collection with name '{}' already exists", &req.name)
-                })))
-            }
-            _ => return Err(ApiError::DbError(db_err)),
+            DbError::Conflict(_) => Ok(HttpResponse::Conflict().json(json!({
+                "error": format!("Collection with name '{}' already exists", &req.name)
+            }))),
+            _ => Err(ApiError::DbError(db_err)),
         }
     } else {
         Ok(HttpResponse::Created().json(MultipleCollectionInfo::from(created.unwrap())))
@@ -211,10 +239,18 @@ pub async fn create_multiple_collection(
 pub async fn modify_collection_item_in_collection(
     pool: Data<Pool>,
     user_id: UserId,
-    collection_id: web::Path<i64>,
-    data: web::Json<CollectionItemCreationRequest>,
+    params: web::Path<(i64, i64)>,
+    data: web::Json<CollectionItemModificationRequest>,
 ) -> Result<HttpResponse, ApiError> {
-    Ok(HttpResponse::Ok().json(json!({"TODO" : true})))
+    let mut conn_pool = pool.get()?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let (collection_id, item_id) = params.into_inner();
+    let collection_exists = multiple_collection_exists(&user, &collection_id, &mut conn_pool)?;
+    if !collection_exists {
+        return Err(ApiError::CollectionNotFound(collection_id));
+    }
+    update_collection_item(item_id, user.id, &mut conn_pool, &data.into_inner())?;
+    Ok(HttpResponse::Ok().finish())
 }
 
 pub async fn add_collection_item_to_collection(
@@ -225,12 +261,11 @@ pub async fn add_collection_item_to_collection(
     data: web::Json<CollectionItemCreationRequest>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-
     let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
     let c_id = collection_id.into_inner();
     let collection_exists = multiple_collection_exists(&user, &c_id, &mut conn_pool)?;
     if !collection_exists {
-        return Err(ApiError::CollectionNotFound);
+        return Err(ApiError::CollectionNotFound(c_id));
     }
     let creation_data = data.into_inner();
 
@@ -240,18 +275,16 @@ pub async fn add_collection_item_to_collection(
         &mut conn_pool,
         &creation_data.url,
         metadata,
-        &creation_data.to_owned().into(),
+        &creation_data.to_owned(),
         c_id,
     );
 
     if let Err(db_err) = res {
         match db_err {
-            DbError::Conflict(_) => {
-                return Ok(HttpResponse::Conflict().json(json!({
-                    "error": "Collection item already exists in collection"
-                })))
-            }
-            _ => return Err(ApiError::DbError(db_err)),
+            DbError::Conflict(_) => Ok(HttpResponse::Conflict().json(json!({
+                "error": "Collection item already exists in collection"
+            }))),
+            _ => Err(ApiError::DbError(db_err)),
         }
     } else {
         Ok(HttpResponse::Created().finish())
@@ -260,16 +293,27 @@ pub async fn add_collection_item_to_collection(
 
 pub async fn remove_collection_item_from_collection(
     pool: Data<Pool>,
-    http_client: Data<Client>,
     user_id: UserId,
-    id: web::Path<i64>,
-    query: web::Json<CollectionItemCreationRequest>,
+    params: web::Path<(i64, i64)>,
 ) -> Result<HttpResponse, ApiError> {
-    Ok(HttpResponse::Ok().json(json!({"TODO" : true})))
+    let mut conn_pool = pool.get()?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let (_, item_id) = params.into_inner();
+    delete_collection_item(&user, &mut conn_pool, item_id)?;
+    Ok(HttpResponse::Ok().finish())
+}
 
-    // let mut conn_pool = pool.get()?;
-    // let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
-    // let collection_id = id.into_inner();
-
-    // Err(ApiError::DocumentNotFound)
+pub async fn delete_collection(
+    pool: Data<Pool>,
+    user_id: UserId,
+    collection_id: web::Path<i64>,
+) -> Result<HttpResponse, ApiError> {
+    let mut conn_pool = pool.get()?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    crate::db::v2::multiple_collections::delete_collection_by_id(
+        &user,
+        &mut conn_pool,
+        collection_id.into_inner(),
+    )?;
+    Ok(HttpResponse::Ok().finish())
 }

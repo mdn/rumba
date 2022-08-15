@@ -3,7 +3,7 @@ use crate::db::model::{User, UserQuery};
 use crate::db::schema;
 use crate::diesel::ExpressionMethods;
 use crate::fxa::FxAUser;
-use diesel::{insert_into, OptionalExtension, PgConnection, QueryDsl, QueryResult, RunQueryDsl};
+use diesel::{insert_into, OptionalExtension, PgConnection, QueryDsl, RunQueryDsl};
 use schema::users::dsl::*;
 
 use super::types::Subscription;

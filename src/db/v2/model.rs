@@ -38,8 +38,8 @@ pub struct CollectionItemInsert {
 }
 
 #[derive(Identifiable, Serialize, Queryable, Associations, PartialEq, Debug)]
-#[belongs_to(User)]
-#[table_name = "multiple_collections"]
+#[diesel(belongs_to(User))]
+#[diesel(table_name = multiple_collections)]
 pub struct MultipleCollectionsQuery {
     pub id: i64,
     pub created_at: NaiveDateTime,
@@ -53,7 +53,7 @@ pub struct MultipleCollectionsQuery {
 
 impl From<MultipleCollectionsQueryNoCount> for MultipleCollectionsQuery {
     fn from(query: MultipleCollectionsQueryNoCount) -> Self {
-        return MultipleCollectionsQuery {
+        MultipleCollectionsQuery {
             id: query.id,
             created_at: query.created_at,
             updated_at: query.updated_at,
@@ -62,13 +62,13 @@ impl From<MultipleCollectionsQueryNoCount> for MultipleCollectionsQuery {
             notes: query.notes,
             name: query.name,
             collection_item_count: Some(0),
-        };
+        }
     }
 }
 
 #[derive(Identifiable, Serialize, Queryable, Associations, PartialEq, Debug)]
-#[belongs_to(User)]
-#[table_name = "multiple_collections"]
+#[diesel(belongs_to(User))]
+#[diesel(table_name = multiple_collections)]
 pub struct MultipleCollectionsQueryNoCount {
     pub id: i64,
     pub created_at: NaiveDateTime,
@@ -78,4 +78,3 @@ pub struct MultipleCollectionsQueryNoCount {
     pub notes: Option<String>,
     pub name: String,
 }
-

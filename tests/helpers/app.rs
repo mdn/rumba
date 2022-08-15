@@ -1,7 +1,9 @@
 use actix_http::body::{BoxBody, EitherBody};
+use actix_http::Request;
 use actix_identity::{CookieIdentityPolicy, IdentityService};
 use actix_rt::Arbiter;
-use actix_web::middleware::Logger;
+use actix_web::dev::Service;
+use actix_web::test;
 use actix_web::web::Data;
 use actix_web::{
     dev::{ServiceFactory, ServiceRequest, ServiceResponse},
@@ -15,7 +17,10 @@ use rumba::api::error::error_handler;
 use rumba::fxa::LoginManager;
 use rumba::settings::SETTINGS;
 use slog::{slog_o, Drain};
+use stubr::{Config, Stubr};
 
+use super::db::reset;
+use super::http_client::TestHttpClient;
 use super::{db::get_pool, identity::TestIdentityPolicy};
 
 pub async fn test_app() -> App<
@@ -96,7 +101,33 @@ fn init_logging() {
     slog_stdlog::init().ok();
 }
 
-pub fn reset_logging() {
-    let logger = slog::Logger::root(slog::Discard, slog_o!());
-    slog_scope::set_global_logger(logger).cancel_reset();
+pub async fn init_test(
+    custom_stubs: Vec<&str>,
+) -> Result<
+    (
+        TestHttpClient<
+            impl Service<
+                Request,
+                Response = ServiceResponse<EitherBody<EitherBody<BoxBody>>>,
+                Error = actix_web::Error,
+            >,
+        >,
+        Stubr,
+    ),
+    anyhow::Error,
+> {
+    reset()?;
+    let _stubr = Stubr::start_blocking_with(
+        custom_stubs,
+        Config {
+            port: Some(4321),
+            latency: None,
+            global_delay: None,
+            verbose: Some(true),
+        },
+    );
+    let app = test_app_with_login().await?;
+    let service = test::init_service(app).await;
+    let logged_in_client = TestHttpClient::new(service).await;
+    Ok((logged_in_client, _stubr))
 }

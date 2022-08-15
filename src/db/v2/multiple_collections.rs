@@ -1,8 +1,7 @@
 use crate::api::common::Sorting;
-use crate::api::v2::collection_items::CollectionItemQueryParams;
+use crate::api::v2::multiple_collections::CollectionItemQueryParams;
 use crate::api::v2::multiple_collections::MultipleCollectionCreationRequest;
 use crate::db::error::DbError;
-use crate::db::model::CollectionAndDocumentQuery;
 use crate::db::model::UserQuery;
 use crate::db::schema;
 use crate::diesel::BoolExpressionMethods;
@@ -12,7 +11,9 @@ use crate::diesel::OptionalExtension;
 use crate::diesel::PgTextExpressionMethods;
 
 use diesel::dsl::count;
+use diesel::update;
 use diesel::QueryDsl;
+use diesel::QueryResult;
 use diesel::RunQueryDsl;
 use diesel::{dsl::exists, expression_methods::ExpressionMethods};
 use diesel::{insert_into, select};
@@ -32,7 +33,8 @@ pub fn get_multiple_collections_for_user(
         .filter(
             schema::multiple_collections::user_id
                 .eq(user.id)
-                .and(schema::multiple_collections::deleted_at.is_null()),
+                .and(schema::multiple_collections::deleted_at.is_null())
+                .and(schema::collection_items::deleted_at.is_null()),
         )
         .left_join(schema::collection_items::table)
         .group_by(schema::multiple_collections::id)
@@ -83,8 +85,9 @@ pub fn get_multiple_collection_by_id_for_user(
                 .and(schema::multiple_collections::id.eq(id)),
         )
         .left_join(
-            schema::collection_items::table
-                .on(schema::collection_items::multiple_collection_id.eq(id)),
+            schema::collection_items::table.on(schema::collection_items::multiple_collection_id
+                .eq(id)
+                .and(schema::collection_items::deleted_at.is_null())),
         )
         .group_by(schema::multiple_collections::id)
         .select((
@@ -124,7 +127,7 @@ pub fn create_default_multiple_collection_for_user(
 ) -> Result<usize, diesel::result::Error> {
     let insert = MultipleCollectionInsert {
         deleted_at: None,
-        name: format!("Default"),
+        name: "Default".to_string(),
         notes: None,
         user_id,
     };
@@ -145,6 +148,7 @@ pub fn get_collection_items_for_user_multiple_collection(
         .filter(
             schema::collection_items::user_id
                 .eq(user.id)
+                .and(schema::collection_items::deleted_at.is_null())
                 .and(schema::collection_items::multiple_collection_id.eq(collection_id)),
         )
         .into_boxed();
@@ -204,4 +208,19 @@ pub fn get_collection_items_for_user_multiple_collection(
             schema::documents::title,
         ))
         .get_results::<CollectionItemAndDocumentQuery>(pool)?)
+}
+
+pub fn delete_collection_by_id(
+    user: &UserQuery,
+    pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
+    id: i64,
+) -> QueryResult<usize> {
+    update(schema::multiple_collections::table)
+        .filter(
+            schema::multiple_collections::user_id
+                .eq(user.id)
+                .and(schema::multiple_collections::id.eq(id)),
+        )
+        .set(schema::multiple_collections::deleted_at.eq(chrono::offset::Utc::now().naive_utc()))
+        .execute(pool)
 }

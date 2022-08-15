@@ -1,6 +1,7 @@
 use crate::api::common::Sorting;
-use crate::api::v2::collection_items::CollectionItemQueryParams;
-use crate::api::v2::multiple_collections::CollectionItemCreationRequest;
+use crate::api::v2::multiple_collections::{
+    CollectionItemCreationRequest, CollectionItemModificationRequest, CollectionItemQueryParams,
+};
 use crate::db::documents::create_or_update_document;
 use crate::db::error::DbError;
 use crate::db::model::{DocumentMetadata, IdQuery, UserQuery};
@@ -21,7 +22,7 @@ use r2d2::PooledConnection;
 
 use super::model::{CollectionItemAndDocumentQuery, CollectionItemInsert};
 
-pub fn get_collection_item(
+pub fn get_collection_item_by_url(
     user: &UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     url: &str,
@@ -47,6 +48,36 @@ pub fn get_collection_item(
             schema::documents::title,
         ))
         .first::<CollectionItemAndDocumentQuery>(pool)?;
+
+    Ok(collection)
+}
+
+pub fn get_collection_item_by_id(
+    user: &UserQuery,
+    pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
+    id: i64,
+) -> Result<Option<CollectionItemAndDocumentQuery>, DbError> {
+    let collection: Option<CollectionItemAndDocumentQuery> = schema::collection_items::table
+        .filter(
+            schema::collection_items::user_id
+                .eq(user.id)
+                .and(schema::collection_items::id.eq(id)),
+        )
+        .inner_join(schema::documents::table)
+        .select((
+            schema::collection_items::id,
+            schema::collection_items::created_at,
+            schema::collection_items::updated_at,
+            schema::collection_items::document_id,
+            schema::collection_items::notes,
+            schema::collection_items::custom_name,
+            schema::collection_items::user_id,
+            schema::documents::uri,
+            schema::documents::metadata,
+            schema::documents::title,
+        ))
+        .first::<CollectionItemAndDocumentQuery>(pool)
+        .optional()?;
 
     Ok(collection)
 }
@@ -141,17 +172,14 @@ pub fn undelete_collection_item(
 pub fn delete_collection_item(
     user: &UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
-    url: String,
+    id: i64,
 ) -> QueryResult<usize> {
     update(schema::collection_items::table)
         .filter(
-            schema::collection_items::document_id.eq_any(
-                schema::documents::table
-                    .filter(schema::documents::uri.eq(normalize_uri(&url)))
-                    .select(schema::documents::id),
-            ),
+            schema::collection_items::user_id
+                .eq(user.id)
+                .and(schema::collection_items::id.eq(id)),
         )
-        .filter(schema::collection_items::user_id.eq(user.id))
         .set(schema::collection_items::deleted_at.eq(chrono::offset::Utc::now().naive_utc()))
         .execute(pool)
 }
@@ -170,14 +198,14 @@ pub fn create_collection_item(
         custom_name = Some(form.name.to_owned());
     }
 
-    let url_normalized = normalize_uri(&url);
+    let url_normalized = normalize_uri(url);
 
     let document_id = create_or_update_document(pool, document, url_normalized)?;
 
     let collection_insert = CollectionItemInsert {
         document_id,
         notes: form.notes.clone(),
-        custom_name: custom_name.clone(),
+        custom_name,
         user_id,
         multiple_collection_id: collection_id,
     };
@@ -246,15 +274,20 @@ pub fn get_collection_items_for_user(
 
 pub fn update_collection_item(
     collection_item_id: i64,
+    user_id: i64,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
-    req: &CollectionItemCreationRequest,
+    req: &CollectionItemModificationRequest,
 ) -> Result<usize, DbError> {
     Ok(update(
-        schema::collection_items::table.filter(schema::collection_items::id.eq(collection_item_id)),
+        schema::collection_items::table.filter(
+            schema::collection_items::id
+                .eq(collection_item_id)
+                .and(schema::collection_items::user_id.eq(user_id)),
+        ),
     )
     .set((
         schema::collection_items::notes.eq(&req.notes),
-        schema::collection_items::custom_name.eq(&req.name),
+        schema::collection_items::custom_name.eq(&req.title),
         schema::collection_items::updated_at.eq(Utc::now().naive_utc()),
     ))
     .execute(pool)?)

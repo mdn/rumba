@@ -1,24 +1,14 @@
 use crate::helpers::api_assertions::{
-    assert_conflict, assert_conflict_with_json_containing, assert_created,
-    assert_created_with_json_containing, assert_ok_with_json_containing,
+    assert_bad_request_with_json_containing, assert_conflict_with_json_containing, assert_created,
+    assert_created_with_json_containing, assert_ok, assert_ok_with_json_containing,
 };
-use crate::helpers::app::test_app_with_login;
-use crate::helpers::db::reset;
-use crate::helpers::http_client::{PostPayload, TestHttpClient};
+use crate::helpers::app::init_test;
+use crate::helpers::http_client::PostPayload;
 use crate::helpers::read_json;
-use actix_http::body::{BoxBody, EitherBody};
-use actix_http::{Request, StatusCode};
-use actix_web::dev::{Service, ServiceFactory, ServiceRequest, ServiceResponse};
-use actix_web::test;
+
+use actix_http::StatusCode;
 use anyhow::Error;
-use assert_json_diff::assert_json_include;
-use serde_json::{json, Value};
-
-use std::thread;
-use std::time::Duration;
-use stubr::{Config, Stubr};
-
-// /en-US/docs/Web/CSS -> URL
+use serde_json::json;
 
 #[actix_rt::test]
 async fn test_create_and_get_collection() -> Result<(), Error> {
@@ -104,7 +94,7 @@ async fn test_add_items_to_collection() -> Result<(), Error> {
     let c_id = body["id"].as_str().unwrap();
 
     for i in 1..12 {
-        let mut create_res = client
+        let create_res = client
             .post(
                 format!("{}{}/items/", base_url, c_id).as_str(),
                 None,
@@ -121,7 +111,7 @@ async fn test_add_items_to_collection() -> Result<(), Error> {
     let res = client
         .get(format!("{}{}/", base_url, c_id).as_str(), None)
         .await;
-    let returned = assert_ok_with_json_containing(
+    assert_ok_with_json_containing(
         res,
         json!({
             "article_count": 11,
@@ -148,7 +138,7 @@ async fn test_add_items_to_collection() -> Result<(), Error> {
             None,
         )
         .await;
-    let returned = assert_ok_with_json_containing(
+    assert_ok_with_json_containing(
         res,
         json!({
             "article_count": 11,
@@ -157,7 +147,8 @@ async fn test_add_items_to_collection() -> Result<(), Error> {
                 ]
 
         }),
-    );
+    )
+    .await;
 
     Ok(())
 }
@@ -220,7 +211,7 @@ async fn test_collection_name_conflicts() -> Result<(), Error> {
             }))),
         )
         .await;
-        assert_created_with_json_containing(res, json!({"name":"Test 2"})).await;
+    assert_created_with_json_containing(res, json!({"name":"Test 2"})).await;
     Ok(())
 }
 
@@ -294,51 +285,190 @@ async fn test_collection_item_conflicts() -> Result<(), Error> {
             ))),
         )
         .await;
-    assert_conflict_with_json_containing(res, json!({
-        "error" : "Collection item already exists in collection"
-    }));
+    assert_conflict_with_json_containing(
+        res,
+        json!({
+            "error" : "Collection item already exists in collection"
+        }),
+    )
+    .await;
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_edit_item_in_collection() -> Result<(), Error> {
-    reset()?;
+    let (mut client, _stubr) =
+        init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+    let base_url = "/api/v2/collections/";
+
+    let mut res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Test",
+                "description": "Test description"
+            }))),
+        )
+        .await;
+    let res_1 = assert_created_with_json_containing(res, json!({"name":"Test"})).await;
+    let collection_1 = res_1["id"].as_str().unwrap();
+
+    res = client
+        .post(
+            format!("{}{}/items/", base_url, collection_1).as_str(),
+            None,
+            Some(PostPayload::Json(json!({
+                "name" : "Interesting CSS1",
+                "url": "/en-US/docs/Web/CSS1"
+            }
+            ))),
+        )
+        .await;
+
+    assert_created(res);
+    res = client
+        .get(format!("{}{}/", base_url, collection_1).as_str(), None)
+        .await;
+    let body = read_json(res).await;
+    let item_id = body["items"][0]["id"].as_i64().unwrap();
+
+    res = client
+        .post(
+            format!("{}{}/items/{}/", base_url, collection_1, item_id).as_str(),
+            None,
+            Some(PostPayload::Json(json!({
+                "title" : "Interesting CSS1 Custom name",
+                "notes": "Cool notes"
+            }
+            ))),
+        )
+        .await;
+    assert_ok(res);
+    res = client
+        .get(
+            format!("{}{}/items/{}/", base_url, collection_1, item_id).as_str(),
+            None,
+        )
+        .await;
+    assert_ok_with_json_containing(
+        res,
+        json!({
+            "id" : item_id,
+            "notes" : "Cool notes",
+            "title" : "Interesting CSS1 Custom name"
+        }),
+    )
+    .await;
     Ok(())
 }
 
 #[actix_rt::test]
-async fn test_get_collection_detail() -> Result<(), Error> {
-    reset()?;
+async fn test_delete_item_in_collection() -> Result<(), Error> {
+    let (mut client, _stubr) =
+        init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+    let base_url = "/api/v2/collections/";
+
+    let mut res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Test",
+                "description": "Test description"
+            }))),
+        )
+        .await;
+    let res_1 = assert_created_with_json_containing(res, json!({"name":"Test"})).await;
+    let collection_1 = res_1["id"].as_str().unwrap();
+
+    res = client
+        .post(
+            format!("{}{}/items/", base_url, collection_1).as_str(),
+            None,
+            Some(PostPayload::Json(json!({
+                "name" : "Interesting CSS1",
+                "url": "/en-US/docs/Web/CSS1"
+            }
+            ))),
+        )
+        .await;
+
+    assert_created(res);
+    res = client
+        .get(format!("{}{}/", base_url, collection_1).as_str(), None)
+        .await;
+    let body = assert_ok_with_json_containing(res, json!({"id":"2","article_count": 1})).await;
+    let item_id = body["items"][0]["id"].as_i64().unwrap();
+
+    res = client
+        .delete(
+            format!("{}{}/items/{}/", base_url, collection_1, item_id).as_str(),
+            None,
+        )
+        .await;
+    assert_ok(res);
+    res = client
+        .get(format!("{}{}/", base_url, collection_1).as_str(), None)
+        .await;
+    assert_ok_with_json_containing(res, json!({"id":"2","article_count": 0, "items": []})).await;
+
     Ok(())
 }
 
-async fn init_test(
-    custom_stubs: Vec<&str>,
-) -> Result<
-    (
-        TestHttpClient<
-            impl Service<
-                Request,
-                Response = ServiceResponse<EitherBody<EitherBody<BoxBody>>>,
-                Error = actix_web::Error,
-            >,
-        >,
-        Stubr,
-    ),
-    anyhow::Error,
-> {
-    reset()?;
-    let _stubr = Stubr::start_blocking_with(
-        custom_stubs,
-        Config {
-            port: Some(4321),
-            latency: None,
-            global_delay: None,
-            verbose: Some(true),
-        },
-    );
-    let app = test_app_with_login().await?;
-    let service = test::init_service(app).await;
-    let mut logged_in_client = TestHttpClient::new(service).await;
-    Ok((logged_in_client, _stubr))
+#[actix_rt::test]
+async fn test_delete_collection() -> Result<(), Error> {
+    let (mut client, _stubr) =
+        init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+    let base_url = "/api/v2/collections/";
+
+    let mut res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Test",
+                "description": "Test description"
+            }))),
+        )
+        .await;
+    let res_1 = assert_created_with_json_containing(res, json!({"name":"Test"})).await;
+    let collection_1 = res_1["id"].as_str().unwrap();
+
+    res = client
+        .post(
+            format!("{}{}/items/", base_url, collection_1).as_str(),
+            None,
+            Some(PostPayload::Json(json!({
+                "name" : "Interesting CSS1",
+                "url": "/en-US/docs/Web/CSS1"
+            }
+            ))),
+        )
+        .await;
+
+    assert_created(res);
+    res = client
+        .get(format!("{}{}/", base_url, collection_1).as_str(), None)
+        .await;
+    assert_ok_with_json_containing(res, json!({"id":"2","article_count": 1})).await;
+
+    //Delete collection
+    res = client
+        .delete(format!("{}{}/", base_url, collection_1).as_str(), None)
+        .await;
+    assert_ok(res);
+    res = client
+        .get(format!("{}{}/", base_url, collection_1).as_str(), None)
+        .await;
+    assert_bad_request_with_json_containing(
+        res,
+        json!({
+            "code": 400,
+            "error": "Collection not found",
+            "message": "Collection with id 2 not found"
+        }),
+    )
+    .await;
+    Ok(())
 }

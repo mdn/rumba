@@ -49,7 +49,7 @@ pub async fn get_document_metadata(
         .map_err(|err: reqwest::Error| match err.status() {
             Some(StatusCode::NOT_FOUND) => {
                 warn!("Error NOT_FOUND fetching document {} ", &document_url);
-                return ApiError::DocumentNotFound;
+                ApiError::DocumentNotFound
             }
             _ => ApiError::Unknown,
         })?;
