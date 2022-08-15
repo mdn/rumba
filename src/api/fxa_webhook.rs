@@ -111,7 +111,7 @@ fn verify(raw_token: &str, key: &CoreJsonWebKey) -> Result<FxASetTokenPayload, F
     Ok(payload)
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone)]
 pub struct EventsClaim {
     events: BTreeMap<String, Value>,
 }

@@ -1,7 +1,7 @@
 use crate::helpers::app::test_app_with_login;
 use crate::helpers::db::{get_pool, reset};
 use crate::helpers::http_client::{PostPayload, TestHttpClient};
-use crate::helpers::read_json;
+use crate::helpers::{read_json, wait_for_stubr};
 use actix_web::test;
 use anyhow::Error;
 use rumba::db;
@@ -12,6 +12,7 @@ use serde_json::json;
 #[stubr::mock(port = 4321)]
 async fn test_get_notifications() -> Result<(), Error> {
     reset()?;
+    wait_for_stubr()?;
 
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
@@ -106,6 +107,8 @@ async fn test_get_notifications() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn test_mark_all_read() -> Result<(), Error> {
     reset()?;
+    wait_for_stubr()?;
+
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -137,6 +140,8 @@ async fn test_mark_all_read() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn test_mark_id_as_read() -> Result<(), Error> {
     reset()?;
+    wait_for_stubr()?;
+
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -174,6 +179,8 @@ async fn test_mark_id_as_read() -> Result<(), Error> {
 
 async fn test_star_unstar_many() -> Result<(), Error> {
     reset()?;
+    wait_for_stubr()?;
+
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -229,6 +236,8 @@ async fn test_star_unstar_many() -> Result<(), Error> {
 
 async fn test_toggle_starred() -> Result<(), Error> {
     reset()?;
+    wait_for_stubr()?;
+
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -277,6 +286,8 @@ async fn test_toggle_starred() -> Result<(), Error> {
 
 async fn test_delete_and_undo() -> Result<(), Error> {
     reset()?;
+    wait_for_stubr()?;
+
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -322,6 +333,8 @@ async fn test_delete_and_undo() -> Result<(), Error> {
 
 async fn test_delete_many() -> Result<(), Error> {
     reset()?;
+    wait_for_stubr()?;
+
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;

@@ -1,7 +1,7 @@
 use crate::helpers::db::reset;
 use crate::helpers::http_client::TestHttpClient;
-use crate::helpers::read_json;
 use crate::helpers::{app::test_app_with_login, http_client::PostPayload};
+use crate::helpers::{read_json, wait_for_stubr};
 use actix_web::test;
 use anyhow::Error;
 use serde_json::json;
@@ -11,6 +11,7 @@ use stubr::{Config, Stubr};
 #[stubr::mock(port = 4321)]
 async fn whoami_anonymous_test() -> Result<(), Error> {
     reset()?;
+    wait_for_stubr()?;
     let app = test_app_with_login().await.unwrap();
     let service = test::init_service(app).await;
     let request = test::TestRequest::get()
@@ -30,6 +31,8 @@ async fn whoami_anonymous_test() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn whoami_logged_in_test() -> Result<(), Error> {
     reset()?;
+    wait_for_stubr()?;
+
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -62,6 +65,8 @@ async fn whoami_logged_in_test() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn whoami_settings_test() -> Result<(), Error> {
     reset()?;
+    wait_for_stubr()?;
+
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -88,15 +93,17 @@ async fn whoami_settings_test() -> Result<(), Error> {
         "Subscription type wrong"
     );
     assert_eq!(json["settings"], json!(null));
-    let whoami = logged_in_client
+    let settings = logged_in_client
         .post(
             "/api/v1/plus/settings/",
             None,
-            Some(PostPayload::Json(json!({"col_in_search": true}))),
+            Some(PostPayload::Json(
+                json!({"col_in_search": true, "multiple_collections": true}),
+            )),
         )
         .await;
 
-    assert_eq!(whoami.status(), 201);
+    assert_eq!(settings.status(), 201);
     let whoami = logged_in_client
         .get(
             "/api/v1/whoami",
@@ -107,8 +114,9 @@ async fn whoami_settings_test() -> Result<(), Error> {
     let json = read_json(whoami).await;
     assert_eq!(json["settings"]["col_in_search"], true);
     assert_eq!(json["settings"]["locale_override"], serde_json::Value::Null);
+    assert_eq!(json["settings"]["multiple_collections"], true);
 
-    let whoami = logged_in_client
+    let settings = logged_in_client
         .post(
             "/api/v1/plus/settings/",
             None,
@@ -118,7 +126,7 @@ async fn whoami_settings_test() -> Result<(), Error> {
         )
         .await;
 
-    assert_eq!(whoami.status(), 201);
+    assert_eq!(settings.status(), 201);
 
     let whoami = logged_in_client
         .get(
@@ -130,6 +138,30 @@ async fn whoami_settings_test() -> Result<(), Error> {
     let json = read_json(whoami).await;
     assert_eq!(json["settings"]["col_in_search"], false);
     assert_eq!(json["settings"]["locale_override"], "zh-TW");
+    assert_eq!(json["settings"]["multiple_collections"], true);
+
+    let settings = logged_in_client
+        .post(
+            "/api/v1/plus/settings/",
+            None,
+            Some(PostPayload::Json(json!({"multiple_collections": false}))),
+        )
+        .await;
+
+    assert_eq!(settings.status(), 201);
+
+    let whoami = logged_in_client
+        .get(
+            "/api/v1/whoami",
+            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+        )
+        .await;
+    assert!(whoami.response().status().is_success());
+    let json = read_json(whoami).await;
+    assert_eq!(json["settings"]["col_in_search"], false);
+    assert_eq!(json["settings"]["locale_override"], "zh-TW");
+    assert_eq!(json["settings"]["multiple_collections"], false);
+
     Ok(())
 }
 
@@ -146,6 +178,7 @@ async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
+    wait_for_stubr()?;
 
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;

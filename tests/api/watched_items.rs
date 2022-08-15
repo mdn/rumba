@@ -4,7 +4,7 @@ use std::time::Duration;
 use crate::helpers::app::test_app_with_login;
 use crate::helpers::db::reset;
 use crate::helpers::http_client::{PostPayload, TestHttpClient};
-use crate::helpers::read_json;
+use crate::helpers::{read_json,wait_for_stubr};
 use actix_http::body::EitherBody;
 use actix_web::dev::{Service, ServiceResponse};
 use actix_web::test;
@@ -25,6 +25,7 @@ async fn test_create_get_watched_items() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
+    wait_for_stubr()?;
 
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
@@ -102,6 +103,7 @@ async fn test_unwatch_many() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
+    wait_for_stubr()?;
 
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
@@ -149,6 +151,7 @@ async fn test_unwatch_many() -> Result<(), Error> {
 #[actix_rt::test]
 async fn test_single_item_operations() -> Result<(), Error> {
     reset()?;
+
     let _stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
@@ -158,6 +161,7 @@ async fn test_single_item_operations() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
+    wait_for_stubr()?;
 
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
@@ -256,6 +260,7 @@ async fn test_watched_item_subscription_limit() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
+    wait_for_stubr()?;
 
     let app = test_app_with_login().await?;
     let service = test::init_service(app).await;
