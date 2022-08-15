@@ -93,15 +93,17 @@ async fn whoami_settings_test() -> Result<(), Error> {
         "Subscription type wrong"
     );
     assert_eq!(json["settings"], json!(null));
-    let whoami = logged_in_client
+    let settings = logged_in_client
         .post(
             "/api/v1/plus/settings/",
             None,
-            Some(PostPayload::Json(json!({"col_in_search": true}))),
+            Some(PostPayload::Json(
+                json!({"col_in_search": true, "multiple_collections": true}),
+            )),
         )
         .await;
 
-    assert_eq!(whoami.status(), 201);
+    assert_eq!(settings.status(), 201);
     let whoami = logged_in_client
         .get(
             "/api/v1/whoami",
@@ -112,8 +114,9 @@ async fn whoami_settings_test() -> Result<(), Error> {
     let json = read_json(whoami).await;
     assert_eq!(json["settings"]["col_in_search"], true);
     assert_eq!(json["settings"]["locale_override"], serde_json::Value::Null);
+    assert_eq!(json["settings"]["multiple_collections"], true);
 
-    let whoami = logged_in_client
+    let settings = logged_in_client
         .post(
             "/api/v1/plus/settings/",
             None,
@@ -123,7 +126,7 @@ async fn whoami_settings_test() -> Result<(), Error> {
         )
         .await;
 
-    assert_eq!(whoami.status(), 201);
+    assert_eq!(settings.status(), 201);
 
     let whoami = logged_in_client
         .get(
@@ -135,6 +138,30 @@ async fn whoami_settings_test() -> Result<(), Error> {
     let json = read_json(whoami).await;
     assert_eq!(json["settings"]["col_in_search"], false);
     assert_eq!(json["settings"]["locale_override"], "zh-TW");
+    assert_eq!(json["settings"]["multiple_collections"], true);
+
+    let settings = logged_in_client
+        .post(
+            "/api/v1/plus/settings/",
+            None,
+            Some(PostPayload::Json(json!({"multiple_collections": false}))),
+        )
+        .await;
+
+    assert_eq!(settings.status(), 201);
+
+    let whoami = logged_in_client
+        .get(
+            "/api/v1/whoami",
+            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+        )
+        .await;
+    assert!(whoami.response().status().is_success());
+    let json = read_json(whoami).await;
+    assert_eq!(json["settings"]["col_in_search"], false);
+    assert_eq!(json["settings"]["locale_override"], "zh-TW");
+    assert_eq!(json["settings"]["multiple_collections"], false);
+
     Ok(())
 }
 

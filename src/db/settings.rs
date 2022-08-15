@@ -29,6 +29,7 @@ pub fn create_or_update_settings(
         user_id: user.id,
         col_in_search: settings_update.col_in_search,
         locale_override: settings_update.locale_override,
+        multiple_collections: settings_update.multiple_collections,
     };
     insert_into(schema::settings::table)
         .values(&settings)
