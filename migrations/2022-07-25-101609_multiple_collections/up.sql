@@ -40,7 +40,7 @@ select now(),
        users.user_id,
        '',
        'Default'
-from users;
+from mdn.public.users;
 
 -- Migrate collections to collection_items
 with collections_old as (
@@ -67,10 +67,10 @@ select collections_old.id,
        collections_old.custom_name,
        mcs.id
 from collections_old
-         left join multiple_collections mcs on mcs.user_id = collections_old.user_id;
+         left join mdn.public.multiple_collections mcs on mcs.user_id = collections_old.user_id;
 
 -- Increment collection_items sequence.
-SELECT setval('collection_items_id_seq', (SELECT max(id) from collection_items));
+SELECT setval('collection_items_id_seq', (SELECT max(id) from mdn.public.collection_items));
 
 -- This creates a collection_item and adds it to the user's default collection any time they create a V1 collection.
 CREATE OR REPLACE FUNCTION synchronize_collection_items()
