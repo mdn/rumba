@@ -12,7 +12,7 @@ use crate::db::v2::model::{CollectionItemAndDocumentQuery, MultipleCollectionsQu
 use crate::db::v2::multiple_collections::{
     create_multiple_collection_for_user, get_collection_items_for_user_multiple_collection,
     get_multiple_collection_by_id_for_user, get_multiple_collections_for_user,
-    multiple_collection_exists,
+    multiple_collection_exists, get_ids_of_collections_containing_url,
 };
 use crate::db::Pool;
 use actix_web::web::Data;
@@ -101,6 +101,11 @@ pub struct CollectionItemDeletionForm {
 
 #[derive(Deserialize, Debug)]
 pub struct CollectionItemDeletionParams {
+    pub url: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct MultipleCollectionLookupQueryParams {
     pub url: String,
 }
 
@@ -316,4 +321,13 @@ pub async fn delete_collection(
         collection_id.into_inner(),
     )?;
     Ok(HttpResponse::Ok().finish())
+}
+
+pub async fn get_ids_of_containing_collections(pool: Data<Pool>,
+    user_id: UserId,
+    page: web::Query<MultipleCollectionLookupQueryParams>) -> Result<HttpResponse,ApiError> {
+        let mut conn_pool = pool.get()?;
+        let user = get_user(&mut conn_pool, user_id.id)?;
+        let ids = get_ids_of_collections_containing_url(&user, &mut conn_pool, page.url.as_str())?;
+        Ok(HttpResponse::Ok().json(ids))
 }

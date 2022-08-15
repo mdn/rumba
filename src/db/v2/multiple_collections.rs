@@ -9,6 +9,7 @@ use crate::diesel::JoinOnDsl;
 use crate::diesel::NullableExpressionMethods;
 use crate::diesel::OptionalExtension;
 use crate::diesel::PgTextExpressionMethods;
+use crate::util::normalize_uri;
 
 use diesel::dsl::count;
 use diesel::update;
@@ -224,3 +225,17 @@ pub fn delete_collection_by_id(
         .set(schema::multiple_collections::deleted_at.eq(chrono::offset::Utc::now().naive_utc()))
         .execute(pool)
 }
+
+pub fn get_ids_of_collections_containing_url(user: &UserQuery,
+    pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
+    url: &str) -> Result<Vec<i64>,DbError> {
+    Ok(schema::collection_items::table
+     .inner_join(schema::documents::table)
+     .filter(
+        schema::documents::uri
+            .eq(normalize_uri(url))
+            .and(schema::collection_items::deleted_at.is_null()
+        .and(schema::collection_items::user_id.eq(user.id))),
+    )     .select(schema::collection_items::multiple_collection_id)
+     .get_results(pool)?)
+    }
