@@ -134,6 +134,7 @@ pub fn create_default_multiple_collection_for_user(
     };
     let res = insert_into(schema::multiple_collections::table)
         .values(insert)
+        .on_conflict_do_nothing()
         .execute(pool)?;
     Ok(res)
 }
