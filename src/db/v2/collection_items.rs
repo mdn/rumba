@@ -194,8 +194,8 @@ pub fn create_collection_item(
 ) -> Result<i64, DbError> {
     let mut custom_name = None;
 
-    if form.name != document.title {
-        custom_name = Some(form.name.to_owned());
+    if form.title != document.title {
+        custom_name = Some(form.title.to_owned());
     }
 
     let url_normalized = normalize_uri(url);

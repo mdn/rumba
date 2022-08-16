@@ -67,7 +67,7 @@ pub struct MultipleCollectionResponse {
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct CollectionItemCreationRequest {
-    pub name: String,
+    pub title: String,
     pub url: String,
     pub notes: Option<String>,
 }
@@ -82,26 +82,6 @@ pub struct CollectionItemModificationRequest {
 pub struct MultipleCollectionCreationRequest {
     pub name: String,
     pub description: Option<String>,
-}
-
-#[derive(Serialize)]
-pub struct CollectionItemsResponse {
-    items: Vec<CollectionItem>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct CollectionItemCreationParams {
-    pub url: String,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct CollectionItemDeletionForm {
-    pub delete: String,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct CollectionItemDeletionParams {
-    pub url: String,
 }
 
 #[derive(Deserialize, Debug)]

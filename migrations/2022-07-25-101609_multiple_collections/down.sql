@@ -6,5 +6,3 @@ DROP TRIGGER trigger_sync_collection_items ON mdn.public.collections;
 DROP TRIGGER trigger_update_collection_items ON mdn.public.collections;
 DROP FUNCTION synchronize_collection_items;
 DROP FUNCTION synchronize_collections_old;
-DROP INDEX multiple_collection_unique_name_user_not_deleted;
-DROP INDEX collection_items_unique_to_user_multiple_collection_not_deleted;

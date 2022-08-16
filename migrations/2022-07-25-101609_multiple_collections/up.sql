@@ -37,10 +37,10 @@ into mdn.public.multiple_collections(created_at, updated_at, deleted_at, user_id
 select now(),
        now(),
        null,
-       users.user_id,
+        users.user_id,
        '',
        'Default'
-from mdn.public.users;
+from users;
 
 -- Migrate collections to collection_items
 with collections_old as (

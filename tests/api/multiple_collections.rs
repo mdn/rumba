@@ -99,7 +99,7 @@ async fn test_add_items_to_collection() -> Result<(), Error> {
                 format!("{}{}/items/", base_url, c_id).as_str(),
                 None,
                 Some(PostPayload::Json(json!({
-                    "name" : format!("Interesting CSS{}",i),
+                    "title" : format!("Interesting CSS{}",i),
                     "url": format!("/en-US/docs/Web/CSS{}",i)
                 }
                 ))),
@@ -252,7 +252,7 @@ async fn test_collection_item_conflicts() -> Result<(), Error> {
             format!("{}{}/items/", base_url, collection_1).as_str(),
             None,
             Some(PostPayload::Json(json!({
-                "name" : "Interesting CSS1",
+                "title" : "Interesting CSS1",
                 "url": "/en-US/docs/Web/CSS1"
             }
             ))),
@@ -265,7 +265,7 @@ async fn test_collection_item_conflicts() -> Result<(), Error> {
             format!("{}{}/items/", base_url, collection_2).as_str(),
             None,
             Some(PostPayload::Json(json!({
-                "name" : "Interesting CSS1",
+                "title" : "Interesting CSS1",
                 "url": "/en-US/docs/Web/CSS1"
             }
             ))),
@@ -279,7 +279,7 @@ async fn test_collection_item_conflicts() -> Result<(), Error> {
             format!("{}{}/items/", base_url, collection_2).as_str(),
             None,
             Some(PostPayload::Json(json!({
-                "name" : "Interesting CSS1",
+                "title" : "Interesting CSS1",
                 "url": "/en-US/docs/Web/CSS1"
             }
             ))),
@@ -319,7 +319,7 @@ async fn test_edit_item_in_collection() -> Result<(), Error> {
             format!("{}{}/items/", base_url, collection_1).as_str(),
             None,
             Some(PostPayload::Json(json!({
-                "name" : "Interesting CSS1",
+                "title" : "Interesting CSS1",
                 "url": "/en-US/docs/Web/CSS1"
             }
             ))),
@@ -387,7 +387,7 @@ async fn test_delete_item_in_collection() -> Result<(), Error> {
             format!("{}{}/items/", base_url, collection_1).as_str(),
             None,
             Some(PostPayload::Json(json!({
-                "name" : "Interesting CSS1",
+                "title" : "Interesting CSS1",
                 "url": "/en-US/docs/Web/CSS1"
             }
             ))),
@@ -440,7 +440,7 @@ async fn test_delete_collection() -> Result<(), Error> {
             format!("{}{}/items/", base_url, collection_1).as_str(),
             None,
             Some(PostPayload::Json(json!({
-                "name" : "Interesting CSS1",
+                "title" : "Interesting CSS1",
                 "url": "/en-US/docs/Web/CSS1"
             }
             ))),
