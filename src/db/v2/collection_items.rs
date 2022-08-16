@@ -12,10 +12,10 @@ use crate::diesel::OptionalExtension;
 use crate::diesel::PgTextExpressionMethods;
 use crate::util::normalize_uri;
 use chrono::{NaiveDateTime, Utc};
-use diesel::dsl::count;
+use diesel::dsl::{count, exists};
 use diesel::expression_methods::ExpressionMethods;
 use diesel::r2d2::ConnectionManager;
-use diesel::{insert_into, PgConnection};
+use diesel::{insert_into, select, PgConnection};
 use diesel::{update, RunQueryDsl};
 use diesel::{QueryDsl, QueryResult};
 use r2d2::PooledConnection;
@@ -169,7 +169,7 @@ pub fn undelete_collection_item(
         .execute(pool)
 }
 
-pub fn delete_collection_item(
+pub fn delete_collection_item_in_collection(
     user: &UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     id: i64,
@@ -250,6 +250,21 @@ pub fn collection_item_exists_for_user(
         .optional()?;
 
     Ok(collection)
+}
+
+pub fn multiple_collection_exists_for_user(
+    user: &UserQuery,
+    pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
+    collection_id: i64,
+) -> Result<bool, DbError> {
+    Ok(select(exists(
+        schema::multiple_collections::table.filter(
+            schema::multiple_collections::id
+                .eq(collection_id)
+                .and(schema::multiple_collections::user_id.eq(user.id)),
+        ),
+    ))
+    .get_result(pool)?)
 }
 
 pub fn get_collection_items_for_user(

@@ -21,6 +21,7 @@ use stubr::{Config, Stubr};
 
 use super::db::reset;
 use super::http_client::TestHttpClient;
+use super::RumbaTestResponse;
 use super::{db::get_pool, identity::TestIdentityPolicy};
 
 pub async fn test_app() -> App<
@@ -43,7 +44,7 @@ pub async fn test_app_with_login() -> anyhow::Result<
     App<
         impl ServiceFactory<
             ServiceRequest,
-            Response = ServiceResponse<EitherBody<EitherBody<BoxBody>>>,
+            Response = RumbaTestResponse,
             Error = Error,
             Config = (),
             InitError = (),
@@ -106,11 +107,7 @@ pub async fn init_test(
 ) -> Result<
     (
         TestHttpClient<
-            impl Service<
-                Request,
-                Response = ServiceResponse<EitherBody<EitherBody<BoxBody>>>,
-                Error = actix_web::Error,
-            >,
+            impl Service<Request, Response = RumbaTestResponse, Error = actix_web::Error>,
         >,
         Stubr,
     ),

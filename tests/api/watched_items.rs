@@ -4,9 +4,8 @@ use std::time::Duration;
 use crate::helpers::app::test_app_with_login;
 use crate::helpers::db::reset;
 use crate::helpers::http_client::{PostPayload, TestHttpClient};
-use crate::helpers::{read_json, wait_for_stubr};
-use actix_http::body::EitherBody;
-use actix_web::dev::{Service, ServiceResponse};
+use crate::helpers::{read_json, wait_for_stubr, RumbaTestResponse};
+use actix_web::dev::Service;
 use actix_web::test;
 use anyhow::Error;
 use serde_json::json;
@@ -222,11 +221,7 @@ async fn test_single_item_operations() -> Result<(), Error> {
 
 async fn create_watched_items(
     logged_in_client: &mut TestHttpClient<
-        impl Service<
-            actix_http::Request,
-            Response = ServiceResponse<EitherBody<EitherBody<actix_http::body::BoxBody>>>,
-            Error = actix_web::Error,
-        >,
+        impl Service<actix_http::Request, Response = RumbaTestResponse, Error = actix_web::Error>,
     >,
 ) {
     for i in 1..12 {

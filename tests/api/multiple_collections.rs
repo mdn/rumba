@@ -470,5 +470,32 @@ async fn test_delete_collection() -> Result<(), Error> {
         }),
     )
     .await;
+    //Recreate the collection.
+    res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Test",
+                "description": "Test description"
+            }))),
+        )
+        .await;
+    let recreated = assert_created_with_json_containing(res, json!({"name":"Test"})).await;
+    let collection_1 = recreated["id"].as_str().unwrap();
+
+    res = client
+        .post(
+            format!("{}{}/items/", base_url, collection_1).as_str(),
+            None,
+            Some(PostPayload::Json(json!({
+                "title" : "Interesting CSS1",
+                "url": "/en-US/docs/Web/CSS1"
+            }
+            ))),
+        )
+        .await;
+
+    assert_created(res);
     Ok(())
 }

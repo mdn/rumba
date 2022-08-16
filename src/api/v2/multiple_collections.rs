@@ -5,8 +5,8 @@ use crate::db::error::DbError;
 use crate::db::model::UserQuery;
 use crate::db::users::get_user;
 use crate::db::v2::collection_items::{
-    create_collection_item, delete_collection_item, get_collection_item_by_id,
-    update_collection_item,
+    create_collection_item, delete_collection_item_in_collection, get_collection_item_by_id,
+    multiple_collection_exists_for_user, update_collection_item,
 };
 use crate::db::v2::model::{CollectionItemAndDocumentQuery, MultipleCollectionsQuery};
 use crate::db::v2::multiple_collections::{
@@ -22,7 +22,6 @@ use chrono::NaiveDateTime;
 
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 
 #[derive(Deserialize)]
 pub struct CollectionItemQueryParams {
@@ -99,6 +98,11 @@ pub struct LookupEntry {
 #[derive(Serialize)]
 pub struct MultipleCollectionLookupQueryResponse {
     results: Vec<LookupEntry>,
+}
+
+#[derive(Serialize)]
+pub struct ConflictResponse {
+    error: String,
 }
 
 impl From<&(i64, CollectionItemAndDocumentQuery)> for LookupEntry {
@@ -227,15 +231,14 @@ pub async fn create_multiple_collection(
     let req = data.into_inner();
     let created = create_multiple_collection_for_user(&mut conn_pool, user.id, &req);
 
-    if let Err(db_err) = created {
-        match db_err {
-            DbError::Conflict(_) => Ok(HttpResponse::Conflict().json(json!({
-                "error": format!("Collection with name '{}' already exists", &req.name)
-            }))),
+    match created {
+        Err(db_err) => match db_err {
+            DbError::Conflict(_) => Ok(HttpResponse::Conflict().json(ConflictResponse {
+                error: format!("Collection with name '{}' already exists", &req.name),
+            })),
             _ => Err(ApiError::DbError(db_err)),
-        }
-    } else {
-        Ok(HttpResponse::Created().json(MultipleCollectionInfo::from(created.unwrap())))
+        },
+        Ok(result) => Ok(HttpResponse::Created().json(MultipleCollectionInfo::from(result))),
     }
 }
 
@@ -252,9 +255,9 @@ pub async fn modify_collection(
     let updated = edit_multiple_collection_for_user(&mut conn_pool, user.id, c_id, &req);
     if let Err(db_err) = updated {
         match db_err {
-            DbError::Conflict(_) => Ok(HttpResponse::Conflict().json(json!({
-                "error": format!("Collection with name '{}' already exists", &req.name)
-            }))),
+            DbError::Conflict(_) => Ok(HttpResponse::Conflict().json(ConflictResponse {
+                error: format!("Collection with name '{}' already exists", &req.name),
+            })),
             DbError::NotFound(_) => Err(ApiError::CollectionNotFound(c_id)),
             _ => Err(ApiError::DbError(db_err)),
         }
@@ -308,9 +311,9 @@ pub async fn add_collection_item_to_collection(
 
     if let Err(db_err) = res {
         match db_err {
-            DbError::Conflict(_) => Ok(HttpResponse::Conflict().json(json!({
-                "error": "Collection item already exists in collection"
-            }))),
+            DbError::Conflict(_) => Ok(HttpResponse::Conflict().json(ConflictResponse {
+                error: "Collection item already exists in collection".to_string(),
+            })),
             _ => Err(ApiError::DbError(db_err)),
         }
     } else {
@@ -325,9 +328,13 @@ pub async fn remove_collection_item_from_collection(
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
     let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
-    let (_, item_id) = params.into_inner();
-    delete_collection_item(&user, &mut conn_pool, item_id)?;
-    Ok(HttpResponse::Ok().finish())
+    let (collection_id, item_id) = params.into_inner();
+    if multiple_collection_exists_for_user(&user, &mut conn_pool, collection_id)? {
+        delete_collection_item_in_collection(&user, &mut conn_pool, item_id)?;
+        Ok(HttpResponse::Ok().finish())
+    } else {
+        Err(ApiError::CollectionNotFound(collection_id))
+    }
 }
 
 pub async fn delete_collection(
