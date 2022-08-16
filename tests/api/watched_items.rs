@@ -4,7 +4,7 @@ use std::time::Duration;
 use crate::helpers::app::test_app_with_login;
 use crate::helpers::db::reset;
 use crate::helpers::http_client::{PostPayload, TestHttpClient};
-use crate::helpers::{read_json,wait_for_stubr};
+use crate::helpers::{read_json, wait_for_stubr};
 use actix_http::body::EitherBody;
 use actix_web::dev::{Service, ServiceResponse};
 use actix_web::test;

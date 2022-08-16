@@ -227,16 +227,34 @@ pub fn delete_collection_by_id(
         .execute(pool)
 }
 
-pub fn get_ids_of_collections_containing_url(user: &UserQuery,
+pub fn get_collections_and_items_containing_url(
+    user: &UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
-    url: &str) -> Result<Vec<i64>,DbError> {
+    url: &str,
+) -> Result<Vec<(i64, CollectionItemAndDocumentQuery)>, DbError> {
     Ok(schema::collection_items::table
-     .inner_join(schema::documents::table)
-     .filter(
-        schema::documents::uri
-            .eq(normalize_uri(url))
-            .and(schema::collection_items::deleted_at.is_null()
-        .and(schema::collection_items::user_id.eq(user.id))),
-    )     .select(schema::collection_items::multiple_collection_id)
-     .get_results(pool)?)
-    }
+        .inner_join(schema::documents::table)
+        .filter(
+            schema::documents::uri.eq(normalize_uri(url)).and(
+                schema::collection_items::deleted_at
+                    .is_null()
+                    .and(schema::collection_items::user_id.eq(user.id)),
+            ),
+        )
+        .select((
+            (schema::collection_items::multiple_collection_id),
+            (
+                schema::collection_items::id,
+                schema::collection_items::created_at,
+                schema::collection_items::updated_at,
+                schema::collection_items::document_id,
+                schema::collection_items::notes,
+                schema::collection_items::custom_name,
+                schema::collection_items::user_id,
+                schema::documents::uri,
+                schema::documents::metadata,
+                schema::documents::title,
+            ),
+        ))
+        .get_results(pool)?)
+}

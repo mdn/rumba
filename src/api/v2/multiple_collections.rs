@@ -11,8 +11,8 @@ use crate::db::v2::collection_items::{
 use crate::db::v2::model::{CollectionItemAndDocumentQuery, MultipleCollectionsQuery};
 use crate::db::v2::multiple_collections::{
     create_multiple_collection_for_user, get_collection_items_for_user_multiple_collection,
-    get_multiple_collection_by_id_for_user, get_multiple_collections_for_user,
-    multiple_collection_exists, get_ids_of_collections_containing_url,
+    get_collections_and_items_containing_url, get_multiple_collection_by_id_for_user,
+    get_multiple_collections_for_user, multiple_collection_exists,
 };
 use crate::db::Pool;
 use actix_web::web::Data;
@@ -107,6 +107,26 @@ pub struct CollectionItemDeletionParams {
 #[derive(Deserialize, Debug)]
 pub struct MultipleCollectionLookupQueryParams {
     pub url: String,
+}
+
+#[derive(Serialize)]
+pub struct LookupEntry {
+    collection_id: i64,
+    item: CollectionItem,
+}
+
+#[derive(Serialize)]
+pub struct MultipleCollectionLookupQueryResponse {
+    results: Vec<LookupEntry>,
+}
+
+impl From<&(i64, CollectionItemAndDocumentQuery)> for LookupEntry {
+    fn from(val: &(i64, CollectionItemAndDocumentQuery)) -> Self {
+        LookupEntry {
+            collection_id: val.0,
+            item: val.1.to_owned().into(),
+        }
+    }
 }
 
 impl From<CollectionItemAndDocumentQuery> for CollectionItem {
@@ -323,11 +343,14 @@ pub async fn delete_collection(
     Ok(HttpResponse::Ok().finish())
 }
 
-pub async fn get_ids_of_containing_collections(pool: Data<Pool>,
+pub async fn lookup_collections_containing_article(
+    pool: Data<Pool>,
     user_id: UserId,
-    page: web::Query<MultipleCollectionLookupQueryParams>) -> Result<HttpResponse,ApiError> {
-        let mut conn_pool = pool.get()?;
-        let user = get_user(&mut conn_pool, user_id.id)?;
-        let ids = get_ids_of_collections_containing_url(&user, &mut conn_pool, page.url.as_str())?;
-        Ok(HttpResponse::Ok().json(ids))
+    page: web::Query<MultipleCollectionLookupQueryParams>,
+) -> Result<HttpResponse, ApiError> {
+    let mut conn_pool = pool.get()?;
+    let user = get_user(&mut conn_pool, user_id.id)?;
+    let ids = get_collections_and_items_containing_url(&user, &mut conn_pool, page.url.as_str())?;
+    let entries: Vec<LookupEntry> = ids.iter().map(|val| val.into()).collect();
+    Ok(HttpResponse::Ok().json(MultipleCollectionLookupQueryResponse { results: entries }))
 }
