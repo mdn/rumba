@@ -23,7 +23,7 @@ CREATE TABLE collection_items
     notes                  TEXT,
     custom_name            TEXT,
     user_id                BIGSERIAL REFERENCES users (id) ON DELETE CASCADE,
-    multiple_collection_id BIGSERIAL references multiple_collections (id)
+    multiple_collection_id BIGSERIAL references multiple_collections (id) ON DELETE CASCADE
 );
 CREATE UNIQUE INDEX collection_items_unique_to_user_multiple_collection_not_deleted 
 ON collection_items (user_id, document_id, multiple_collection_id) where deleted_at is null;
