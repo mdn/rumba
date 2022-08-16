@@ -10,9 +10,10 @@ use crate::db::v2::collection_items::{
 };
 use crate::db::v2::model::{CollectionItemAndDocumentQuery, MultipleCollectionsQuery};
 use crate::db::v2::multiple_collections::{
-    create_multiple_collection_for_user, get_collection_items_for_user_multiple_collection,
-    get_collections_and_items_containing_url, get_multiple_collection_by_id_for_user,
-    get_multiple_collections_for_user, multiple_collection_exists,
+    create_multiple_collection_for_user, edit_multiple_collection_for_user,
+    get_collection_items_for_user_multiple_collection, get_collections_and_items_containing_url,
+    get_multiple_collection_by_id_for_user, get_multiple_collections_for_user,
+    multiple_collection_exists,
 };
 use crate::db::Pool;
 use actix_web::web::Data;
@@ -185,10 +186,7 @@ pub async fn get_collection_by_id(
             &collection_id,
             collections_query,
         )?;
-        let items = res
-            .iter()
-            .map(|val| Into::<CollectionItem>::into(val.clone()))
-            .collect();
+        let items = res.into_iter().map(Into::<CollectionItem>::into).collect();
         let collection_response = MultipleCollectionResponse {
             info: info.into(),
             items,
@@ -238,6 +236,30 @@ pub async fn create_multiple_collection(
         }
     } else {
         Ok(HttpResponse::Created().json(MultipleCollectionInfo::from(created.unwrap())))
+    }
+}
+
+pub async fn modify_collection(
+    pool: Data<Pool>,
+    user_id: UserId,
+    collection_id: web::Path<i64>,
+    data: web::Json<MultipleCollectionCreationRequest>,
+) -> Result<HttpResponse, ApiError> {
+    let mut conn_pool = pool.get()?;
+    let user = get_user(&mut conn_pool, user_id.id)?;
+    let req = data.into_inner();
+    let c_id = collection_id.into_inner();
+    let updated = edit_multiple_collection_for_user(&mut conn_pool, user.id, c_id, &req);
+    if let Err(db_err) = updated {
+        match db_err {
+            DbError::Conflict(_) => Ok(HttpResponse::Conflict().json(json!({
+                "error": format!("Collection with name '{}' already exists", &req.name)
+            }))),
+            DbError::NotFound(_) => Err(ApiError::CollectionNotFound(c_id)),
+            _ => Err(ApiError::DbError(db_err)),
+        }
+    } else {
+        Ok(HttpResponse::Ok().json(MultipleCollectionInfo::from(updated.unwrap())))
     }
 }
 

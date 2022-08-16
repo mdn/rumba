@@ -73,6 +73,32 @@ pub fn create_multiple_collection_for_user(
     Ok(res.into())
 }
 
+pub fn edit_multiple_collection_for_user(
+    pool: &mut PgConnection,
+    user_id: i64,
+    collection_id: i64,
+    data: &MultipleCollectionCreationRequest,
+) -> Result<MultipleCollectionsQuery, DbError> {
+    let insert = MultipleCollectionInsert {
+        deleted_at: None,
+        name: data.name.to_owned(),
+        notes: data.description.to_owned(),
+        user_id,
+    };
+
+    let res = update(
+        schema::multiple_collections::table.filter(
+            schema::multiple_collections::user_id
+                .eq(user_id)
+                .and(schema::multiple_collections::id.eq(collection_id)),
+        ),
+    )
+    .set(insert)
+    .returning(schema::multiple_collections::all_columns)
+    .get_result::<MultipleCollectionsQueryNoCount>(pool)?;
+    Ok(res.into())
+}
+
 pub fn get_multiple_collection_by_id_for_user(
     user: &UserQuery,
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,

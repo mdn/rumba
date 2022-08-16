@@ -5,7 +5,7 @@ use actix_web::web;
 use super::multiple_collections::{
     add_collection_item_to_collection, create_multiple_collection, delete_collection,
     get_collection_by_id, get_collection_item_in_collection_by_id, get_collections,
-    lookup_collections_containing_article, modify_collection_item_in_collection,
+    lookup_collections_containing_article, modify_collection, modify_collection_item_in_collection,
     remove_collection_item_from_collection,
 };
 
@@ -24,6 +24,7 @@ pub fn api_v2_service() -> impl HttpServiceFactory {
         .service(
             web::resource("/collections/{id}/")
                 .route(web::get().to(get_collection_by_id))
+                .route(web::post().to(modify_collection))
                 .route(web::delete().to(delete_collection)),
         )
         .service(

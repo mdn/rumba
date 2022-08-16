@@ -1,3 +1,4 @@
+#![allow(clippy::extra_unused_lifetimes)] /* https://github.com/rust-lang/rust-clippy/issues/9014 */
 use crate::db::model::User;
 use crate::db::schema::*;
 use chrono::NaiveDateTime;
@@ -37,7 +38,7 @@ pub struct CollectionItemInsert {
     pub multiple_collection_id: i64,
 }
 
-#[derive(Identifiable, Serialize, Queryable, Associations, PartialEq, Debug)]
+#[derive(Identifiable, Serialize, Queryable, Associations, PartialEq, Eq, Debug)]
 #[diesel(belongs_to(User))]
 #[diesel(table_name = multiple_collections)]
 pub struct MultipleCollectionsQuery {
@@ -66,7 +67,7 @@ impl From<MultipleCollectionsQueryNoCount> for MultipleCollectionsQuery {
     }
 }
 
-#[derive(Identifiable, Serialize, Queryable, Associations, PartialEq, Debug)]
+#[derive(Identifiable, Serialize, Queryable, Associations, PartialEq, Eq, Debug)]
 #[diesel(belongs_to(User))]
 #[diesel(table_name = multiple_collections)]
 pub struct MultipleCollectionsQueryNoCount {
