@@ -30,10 +30,10 @@ ON collection_items (user_id, document_id, multiple_collection_id) where deleted
 -- Create default collection for every user
 with users as (
     select id as user_id
-    from mdn.public.users
+    from users
 )
 insert
-into mdn.public.multiple_collections(created_at, updated_at, deleted_at, user_id, notes, name)
+into multiple_collections(created_at, updated_at, deleted_at, user_id, notes, name)
 select now(),
        now(),
        null,
@@ -52,10 +52,10 @@ with collections_old as (
            notes,
            custom_name,
            user_id
-    from mdn.public.collections
+    from collections
 )
 insert
-into mdn.public.collection_items(id, created_at, updated_at, deleted_at, document_id, user_id, notes, custom_name,
+into collection_items(id, created_at, updated_at, deleted_at, document_id, user_id, notes, custom_name,
                                  multiple_collection_id)
 select collections_old.id,
        collections_old.created_at,
@@ -67,10 +67,10 @@ select collections_old.id,
        collections_old.custom_name,
        mcs.id
 from collections_old
-         left join mdn.public.multiple_collections mcs on mcs.user_id = collections_old.user_id;
+         left join multiple_collections mcs on mcs.user_id = collections_old.user_id;
 
 -- Increment collection_items sequence.
-SELECT setval('collection_items_id_seq', (SELECT max(id) from mdn.public.collection_items));
+SELECT setval('collection_items_id_seq', (SELECT max(id) from collection_items));
 
 -- This creates a collection_item and adds it to the user's default collection any time they create a V1 collection.
 CREATE OR REPLACE FUNCTION synchronize_collection_items()
@@ -83,7 +83,7 @@ BEGIN
                                      where user_id = NEW.user_id
                                        and mcs.name = 'Default')
     INSERT
-    INTO mdn.public.collection_items (created_at,
+    INTO collection_items (created_at,
                                       updated_at,
                                       deleted_at,
                                       document_id,
@@ -110,7 +110,7 @@ CREATE OR REPLACE FUNCTION update_collection_item()
     RETURNS TRIGGER AS
 $$
 BEGIN
-    UPDATE mdn.public.collection_items ci
+    UPDATE collection_items ci
     set notes       = NEW.notes,
         custom_name = NEW.custom_name,
         deleted_at  = NEW.deleted_at,
@@ -129,7 +129,7 @@ BEGIN
     IF EXISTS (SELECT id as default_id
                         from multiple_collections
                         where user_id = NEW.user_id and name = 'Default' and id = NEW.multiple_collection_id)
-        THEN INSERT into mdn.public.collections(created_at,
+        THEN INSERT into collections(created_at,
                                            updated_at,
                                            deleted_at,
                                            document_id,
@@ -148,21 +148,21 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trigger_sync_collection_items
     AFTER INSERT
-    ON mdn.public.collections
+    ON collections
     FOR EACH ROW
 WHEN (pg_trigger_depth() = 0)
 EXECUTE PROCEDURE synchronize_collection_items();
 
 CREATE TRIGGER trigger_sync_collections_old
     AFTER INSERT OR UPDATE
-    ON mdn.public.collection_items
+    ON collection_items
     FOR EACH ROW
 WHEN (pg_trigger_depth() = 0)    
 EXECUTE PROCEDURE synchronize_collections_old();
 
 CREATE TRIGGER trigger_update_collection_items
     AFTER UPDATE
-    ON mdn.public.collections
+    ON collections
     FOR EACH ROW
 WHEN (pg_trigger_depth() = 0)    
 EXECUTE PROCEDURE update_collection_item();
