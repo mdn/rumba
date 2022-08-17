@@ -156,7 +156,7 @@ async fn get_single_collection_item(
     let bookmarked = match collection {
         Ok(val) => Some(val.into()),
         Err(e) => match e {
-            DbError::DieselResult(_) => None,
+            DbError::NotFound(_) => None,
             _ => return Err(ApiError::Unknown),
         },
     };
