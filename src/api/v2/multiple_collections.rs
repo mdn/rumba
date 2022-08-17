@@ -252,7 +252,6 @@ pub async fn modify_collection(
     let user = get_user(&mut conn_pool, user_id.id)?;
     let req = data.into_inner();
     let c_id = collection_id.into_inner();
-    
     let updated = edit_multiple_collection_for_user(&mut conn_pool, user.id, c_id, &req);
     if let Err(db_err) = updated {
         match db_err {
