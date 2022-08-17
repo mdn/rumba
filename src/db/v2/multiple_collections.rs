@@ -284,3 +284,20 @@ pub fn get_collections_and_items_containing_url(
         ))
         .get_results(pool)?)
 }
+
+pub fn is_default_collection(
+    pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
+    user: &UserQuery,
+    multiple_collection_id: i64,
+) -> Result<bool, DbError> {
+    let exists = select(exists(
+        schema::multiple_collections::table.filter(
+            schema::multiple_collections::id
+                .eq(multiple_collection_id)
+                .and(schema::multiple_collections::user_id.eq(user.id))
+                .and(schema::multiple_collections::name.eq("Default")),
+        ),
+    ))
+    .get_result(pool)?;
+    Ok(exists)
+}

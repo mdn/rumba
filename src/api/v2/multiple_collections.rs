@@ -13,7 +13,7 @@ use crate::db::v2::multiple_collections::{
     create_multiple_collection_for_user, edit_multiple_collection_for_user,
     get_collection_items_for_user_multiple_collection, get_collections_and_items_containing_url,
     get_multiple_collection_by_id_for_user, get_multiple_collections_for_user,
-    multiple_collection_exists,
+    is_default_collection, multiple_collection_exists,
 };
 use crate::db::Pool;
 use actix_web::web::Data;
@@ -252,6 +252,14 @@ pub async fn modify_collection(
     let user = get_user(&mut conn_pool, user_id.id)?;
     let req = data.into_inner();
     let c_id = collection_id.into_inner();
+
+    // REMOVE this once Migration to V2 is completed. Allow modification of notes but not name.
+    if is_default_collection(&mut conn_pool, &user, c_id)? && req.name != "Default" {
+        return Ok(HttpResponse::BadRequest().json(ConflictResponse {
+            error: "Cannot modify default collection".to_owned(),
+        }));
+    }
+
     let updated = edit_multiple_collection_for_user(&mut conn_pool, user.id, c_id, &req);
     if let Err(db_err) = updated {
         match db_err {
@@ -344,10 +352,18 @@ pub async fn delete_collection(
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
     let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let collection_id = collection_id.into_inner();
+    // REMOVE this once Migration to V2 is completed.
+    if is_default_collection(&mut conn_pool, &user, collection_id)? {
+        return Ok(HttpResponse::BadRequest().json(ConflictResponse {
+            error: "Cannot delete default collection".to_owned(),
+        }));
+    }
+
     crate::db::v2::multiple_collections::delete_collection_by_id(
         &user,
         &mut conn_pool,
-        collection_id.into_inner(),
+        collection_id,
     )?;
     Ok(HttpResponse::Ok().finish())
 }
