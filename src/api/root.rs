@@ -21,20 +21,20 @@ pub struct RootQuery {
 }
 
 #[derive(Deserialize)]
-pub struct RootEnforcePlusQuery {
+pub struct RootSetEnforcePlusQuery {
     pub fxa_uid: String,
     pub enforce_plus: Option<Subscription>,
 }
 
 #[derive(Deserialize)]
-pub struct RootIsAdminQuery {
+pub struct RootSetIsAdminQuery {
     pub fxa_uid: String,
     pub is_admin: bool,
 }
 
 async fn set_enforce_plus(
     pool: Data<Pool>,
-    query: web::Json<RootEnforcePlusQuery>,
+    query: web::Json<RootSetEnforcePlusQuery>,
     user_id: UserId,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
@@ -52,7 +52,7 @@ async fn set_enforce_plus(
 
 async fn set_is_admin(
     pool: Data<Pool>,
-    query: web::Json<RootIsAdminQuery>,
+    query: web::Json<RootSetIsAdminQuery>,
     user_id: UserId,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;

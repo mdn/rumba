@@ -1,4 +1,4 @@
-use crate::api::root::{RootEnforcePlusQuery, RootIsAdminQuery};
+use crate::api::root::{RootSetEnforcePlusQuery, RootSetIsAdminQuery};
 use crate::db::error::DbError;
 use crate::db::model::{User, UserQuery};
 use crate::db::schema;
@@ -11,7 +11,7 @@ use diesel::{
 use super::types::Subscription;
 use super::v2::multiple_collections::create_default_multiple_collection_for_user;
 
-pub fn root_set_is_admin(conn: &mut PgConnection, query: RootIsAdminQuery) -> QueryResult<usize> {
+pub fn root_set_is_admin(conn: &mut PgConnection, query: RootSetIsAdminQuery) -> QueryResult<usize> {
     update(schema::users::table.filter(schema::users::fxa_uid.eq(query.fxa_uid)))
         .set((schema::users::is_admin.eq(query.is_admin),))
         .execute(conn)
@@ -19,7 +19,7 @@ pub fn root_set_is_admin(conn: &mut PgConnection, query: RootIsAdminQuery) -> Qu
 
 pub fn root_enforce_plus(
     conn: &mut PgConnection,
-    query: RootEnforcePlusQuery,
+    query: RootSetEnforcePlusQuery,
 ) -> QueryResult<usize> {
     update(schema::users::table.filter(schema::users::fxa_uid.eq(query.fxa_uid)))
         .set(schema::users::enforce_plus.eq(query.enforce_plus))

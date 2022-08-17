@@ -8,7 +8,7 @@ use crate::helpers::{app::test_app_with_login, http_client::PostPayload};
 use actix_http::StatusCode;
 use actix_web::test;
 use anyhow::Error;
-use rumba::api::root::RootIsAdminQuery;
+use rumba::api::root::RootSetIsAdminQuery;
 use rumba::db::users::{create_or_update_user, root_set_is_admin};
 use serde_json::json;
 
@@ -31,7 +31,7 @@ async fn find_user() -> Result<(), Error> {
 
     root_set_is_admin(
         &mut conn,
-        RootIsAdminQuery {
+        RootSetIsAdminQuery {
             fxa_uid: "TEST_SUB".into(),
             is_admin: true,
         },
