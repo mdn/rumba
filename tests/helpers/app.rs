@@ -91,7 +91,10 @@ pub async fn test_app_only_search() -> App<
 
 fn init_logging() {
     let decorator = slog_term::PlainSyncDecorator::new(slog_term::TestStdoutWriter);
-    let drain = std::sync::Mutex::new(slog_term::FullFormat::new(decorator).build()).fuse();
+    let drain = std::sync::Mutex::new(slog_envlogger::new(
+        slog_term::FullFormat::new(decorator).build(),
+    ))
+    .fuse();
     let logger = slog::Logger::root(drain, slog_o!());
 
     // XXX: cancel slog_scope's NoGlobalLoggerSet for now, it's difficult to
