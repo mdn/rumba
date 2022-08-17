@@ -499,3 +499,55 @@ async fn test_delete_collection() -> Result<(), Error> {
     assert_created(res);
     Ok(())
 }
+
+#[actix_rt::test]
+async fn test_no_modify_delete_default() -> Result<(), Error> {
+    let (mut client, _stubr) =
+        init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+    let base_url = "/api/v2/collections/";
+
+    let all = client.get(base_url, None).await;
+    let json = assert_ok_with_json_containing(all, json!([{"name":"Default"}])).await;
+    let default_collection_id = json[0]["id"].as_str().unwrap();
+    let res = client
+        .post(
+            format!("{}{}/", base_url, default_collection_id).as_str(),
+            None,
+            Some(PostPayload::Json(json!({
+                "name" : "Default",
+                "notes": "This is the default collection. I can add notes :)"
+            }
+            ))),
+        )
+        .await;
+    assert_ok(res);
+    let res = client
+        .post(
+            format!("{}{}/", base_url, default_collection_id).as_str(),
+            None,
+            Some(PostPayload::Json(json!({
+                "name" : "Changing Default name oh noes!",
+            }
+            ))),
+        )
+        .await;
+    assert_bad_request_with_json_containing(
+        res,
+        json!({"error": "Cannot modify default collection"}),
+    )
+    .await;
+
+    let delete_res = client
+        .delete(
+            format!("{}{}/", base_url, default_collection_id).as_str(),
+            None,
+        )
+        .await;
+    assert_bad_request_with_json_containing(
+        delete_res,
+        json!({"error": "Cannot delete default collection"}),
+    )
+    .await;
+
+    Ok(())
+}
