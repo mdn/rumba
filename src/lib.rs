@@ -28,4 +28,5 @@ where
         .service(api::auth::auth_service())
         .service(api::admin::admin_service())
         .service(api::api_v1::api_v1_service())
+        .service(api::v2::api_v2::api_v2_service())
 }

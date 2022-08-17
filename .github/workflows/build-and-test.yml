@@ -39,4 +39,4 @@ jobs:
       - name: Build
         run: cargo build --all --all-features --verbose
       - name: Run tests
-        run: MDN_SETTINGS=.settings.test.toml cargo test --all -- --test-threads=1 --nocapture
+        run: RUST_LOG=rumba:info MDN_SETTINGS=.settings.test.toml cargo test --all -- --test-threads=1 --nocapture

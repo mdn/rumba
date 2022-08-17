@@ -41,7 +41,7 @@ pub enum FxaWebhookError {
 }
 #[derive(Error, Debug)]
 pub enum ApiError {
-    #[error("unknown error")]
+    #[error("Unknown error")]
     Unknown,
     #[error("Invalid Session info")]
     InvalidSession,
@@ -49,6 +49,8 @@ pub enum ApiError {
     ServerError,
     #[error("Document Not found")]
     DocumentNotFound,
+    #[error("Collection with id {0} not found")]
+    CollectionNotFound(i64),
     #[error("Notification Not found")]
     NotificationNotFound,
     #[error("Malformed Url")]
@@ -87,6 +89,7 @@ impl ApiError {
             Self::FxaWebhook(_) => "FxaWebhookError",
             Self::Unauthorized => "Unauthorized",
             Self::BlockingError(_) => "Blocking error",
+            Self::CollectionNotFound(_) => "Collection not found",
             Self::DbError(_) => "DB error",
         }
     }
@@ -110,6 +113,7 @@ impl ResponseError for ApiError {
             Self::Query(_) => StatusCode::BAD_REQUEST,
             Self::Search(SearchError::Query { .. }) => StatusCode::BAD_REQUEST,
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
+            Self::CollectionNotFound(_) => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -128,6 +132,11 @@ impl ResponseError for ApiError {
                     ]
                 }
             })),
+            ApiError::CollectionNotFound(id) => builder.json(ErrorResponse {
+                code: status_code.as_u16(),
+                message: format!("Collection with id {} not found", id).as_str(),
+                error: self.name(),
+            }),
             _ if status_code == StatusCode::INTERNAL_SERVER_ERROR => builder.json(ErrorResponse {
                 code: status_code.as_u16(),
                 message: "internal server error",

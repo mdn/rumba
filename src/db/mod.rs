@@ -10,6 +10,7 @@ pub mod schema;
 pub mod settings;
 pub mod types;
 pub mod users;
+pub mod v2;
 pub mod watched_items;
 
 use diesel::pg::PgConnection;

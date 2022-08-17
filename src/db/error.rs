@@ -7,6 +7,10 @@ pub enum DbError {
     #[error(transparent)]
     DieselResult(diesel::result::Error),
     #[error(transparent)]
+    Conflict(diesel::result::Error),
+    #[error(transparent)]
+    NotFound(diesel::result::Error),
+    #[error(transparent)]
     R2D2Error(r2d2::Error),
     #[error(transparent)]
     FxAError(#[from] FxaError),
@@ -20,6 +24,13 @@ impl From<r2d2::Error> for DbError {
 
 impl From<diesel::result::Error> for DbError {
     fn from(e: diesel::result::Error) -> Self {
-        DbError::DieselResult(e)
+        match e {
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::UniqueViolation,
+                _,
+            ) => DbError::Conflict(e),
+            diesel::result::Error::NotFound => DbError::NotFound(e),
+            _ => DbError::DieselResult(e),
+        }
     }
 }
