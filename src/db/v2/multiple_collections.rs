@@ -34,10 +34,13 @@ pub fn get_multiple_collections_for_user(
         .filter(
             schema::multiple_collections::user_id
                 .eq(user.id)
-                .and(schema::multiple_collections::deleted_at.is_null())
-                .and(schema::collection_items::deleted_at.is_null()),
+                .and(schema::multiple_collections::deleted_at.is_null()),
         )
-        .left_join(schema::collection_items::table)
+        .left_join(
+            schema::collection_items::table.on(schema::multiple_collections::id
+                .eq(schema::collection_items::multiple_collection_id)
+                .and(schema::collection_items::deleted_at.is_null())),
+        )
         .group_by(schema::multiple_collections::id)
         .select((
             schema::multiple_collections::id,
