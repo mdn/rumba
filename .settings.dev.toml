@@ -2,7 +2,7 @@
 uri = "postgres://rumba:rumba@127.0.0.1:5432/mdn"
 
 [server]
-host = "0.0.0.0"
+host = "localhost"
 port = 8000
 
 [auth]
