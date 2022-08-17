@@ -40,7 +40,7 @@ struct CollectionParent {
 
 #[derive(Serialize)]
 pub struct CollectionItem {
-    id: i64,
+    id: String,
     url: String,
     title: String,
     notes: Option<String>,
@@ -91,7 +91,7 @@ pub struct MultipleCollectionLookupQueryParams {
 
 #[derive(Serialize)]
 pub struct LookupEntry {
-    collection_id: i64,
+    collection_id: String,
     item: CollectionItem,
 }
 
@@ -108,7 +108,7 @@ pub struct ConflictResponse {
 impl From<&(i64, CollectionItemAndDocumentQuery)> for LookupEntry {
     fn from(val: &(i64, CollectionItemAndDocumentQuery)) -> Self {
         LookupEntry {
-            collection_id: val.0,
+            collection_id: val.0.to_string(),
             item: val.1.to_owned().into(),
         }
     }
@@ -138,7 +138,7 @@ impl From<CollectionItemAndDocumentQuery> for CollectionItem {
             notes: collection_and_document.notes,
             url,
             title: title.unwrap_or_default(),
-            id: collection_and_document.id,
+            id: collection_and_document.id.to_string(),
         }
     }
 }
@@ -252,6 +252,7 @@ pub async fn modify_collection(
     let user = get_user(&mut conn_pool, user_id.id)?;
     let req = data.into_inner();
     let c_id = collection_id.into_inner();
+    
     let updated = edit_multiple_collection_for_user(&mut conn_pool, user.id, c_id, &req);
     if let Err(db_err) = updated {
         match db_err {

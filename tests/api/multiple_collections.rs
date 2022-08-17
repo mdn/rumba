@@ -331,7 +331,7 @@ async fn test_edit_item_in_collection() -> Result<(), Error> {
         .get(format!("{}{}/", base_url, collection_1).as_str(), None)
         .await;
     let body = read_json(res).await;
-    let item_id = body["items"][0]["id"].as_i64().unwrap();
+    let item_id = body["items"][0]["id"].as_str().unwrap();
 
     res = client
         .post(
@@ -399,7 +399,7 @@ async fn test_delete_item_in_collection() -> Result<(), Error> {
         .get(format!("{}{}/", base_url, collection_1).as_str(), None)
         .await;
     let body = assert_ok_with_json_containing(res, json!({"id":"2","article_count": 1})).await;
-    let item_id = body["items"][0]["id"].as_i64().unwrap();
+    let item_id = body["items"][0]["id"].as_str().unwrap();
 
     res = client
         .delete(
