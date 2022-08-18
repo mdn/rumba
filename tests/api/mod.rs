@@ -4,6 +4,7 @@ pub mod healthz;
 mod multiple_collections;
 mod notification_processing;
 mod notifications;
+mod root;
 mod search;
 pub mod watched_items;
 mod whoami;

@@ -1,6 +1,7 @@
 use crate::api::collections::{
     collections, create_or_update_collection_item, delete_collection_item,
 };
+use crate::api::root::root_service;
 use crate::api::search::search;
 use crate::api::settings::update_settings;
 use crate::api::user_middleware::AddUser;
@@ -59,4 +60,5 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
         )
         .service(web::resource("/search").route(web::get().to(search)))
         .service(web::resource("/whoami").route(web::get().to(whoami)))
+        .service(root_service())
 }
