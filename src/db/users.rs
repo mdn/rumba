@@ -11,7 +11,10 @@ use diesel::{
 use super::types::Subscription;
 use super::v2::multiple_collections::create_default_multiple_collection_for_user;
 
-pub fn root_set_is_admin(conn: &mut PgConnection, query: RootSetIsAdminQuery) -> QueryResult<usize> {
+pub fn root_set_is_admin(
+    conn: &mut PgConnection,
+    query: RootSetIsAdminQuery,
+) -> QueryResult<usize> {
     update(schema::users::table.filter(schema::users::fxa_uid.eq(query.fxa_uid)))
         .set((schema::users::is_admin.eq(query.is_admin),))
         .execute(conn)
