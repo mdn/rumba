@@ -142,6 +142,7 @@ diesel::table! {
         col_in_search -> Bool,
         locale_override -> Nullable<Locale>,
         multiple_collections -> Bool,
+        collections_last_modified_time -> Nullable<Timestamp>,
     }
 }
 
