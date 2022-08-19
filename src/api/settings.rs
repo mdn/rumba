@@ -29,8 +29,8 @@ impl From<Settings> for SettingsResponse {
         SettingsResponse {
             col_in_search: Some(val.col_in_search),
             locale_override: Some(val.locale_override),
-            multiple_collections: Some(val.multiple_collections),  
-            collections_last_modified_time: val.collections_last_modified_time          
+            multiple_collections: Some(val.multiple_collections),
+            collections_last_modified_time: val.collections_last_modified_time,
         }
     }
 }

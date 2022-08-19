@@ -2,7 +2,6 @@ use actix_identity::Identity;
 
 use serde::Serialize;
 
-use crate::api::settings::SettingUpdateRequest;
 use crate::db;
 use crate::db::Pool;
 use crate::metrics::Metrics;

@@ -21,16 +21,16 @@ CREATE OR REPLACE FUNCTION update_last_modified()
     RETURNS TRIGGER AS
 $$
 BEGIN
-IF NEW.deleted_at is not null THEN
+    IF NEW.deleted_at is not null THEN
         UPDATE settings
         set collections_last_modified_time = NEW.deleted_at
         where settings.user_id = NEW.user_id;
-ELSE
-    UPDATE settings
+    ELSE
+        UPDATE settings
         set collections_last_modified_time = NEW.updated_at
         where settings.user_id = NEW.user_id;
-END IF;
-RETURN NEW;
+    END IF;
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
