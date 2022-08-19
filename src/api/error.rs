@@ -41,6 +41,8 @@ pub enum FxaWebhookError {
 }
 #[derive(Error, Debug)]
 pub enum ApiError {
+    #[error("Artificial error")]
+    Artificial,
     #[error("Unknown error")]
     Unknown,
     #[error("Invalid Session info")]
@@ -76,6 +78,7 @@ pub enum ApiError {
 impl ApiError {
     pub fn name(&self) -> &str {
         match self {
+            Self::Artificial => "Artificial",
             Self::Unknown => "Unknown",
             Self::InvalidSession => "Invalid Session",
             Self::ServerError => "Server error",
