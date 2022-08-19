@@ -11,7 +11,8 @@ INTO settings(user_id, collections_last_modified_time)
     (SELECT COLLECTION_LAST_MODIFIED_USER.user_id, COLLECTION_LAST_MODIFIED_USER.modified_time
      from COLLECTION_LAST_MODIFIED_USER)
 ON CONFLICT(user_id) DO UPDATE SET collections_last_modified_time = (SELECT COLLECTION_LAST_MODIFIED_USER.modified_time
-                                                                     from COLLECTION_LAST_MODIFIED_USER);
+                                                                     from COLLECTION_LAST_MODIFIED_USER
+                                                                     where user_id = EXCLUDED.user_id);
 
 -- Trigger and function to update collection_items + default collections when old API is used.
 CREATE OR REPLACE FUNCTION update_last_modified()
