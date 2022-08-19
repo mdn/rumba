@@ -1,11 +1,11 @@
-use actix_web::{web, HttpRequest, HttpResponse};
-use chrono::NaiveDateTime;
-use serde::{Deserialize, Serialize};
 use crate::helpers::maybe_to_utc;
 use crate::{
     api::user_middleware::UserId,
     db::{self, error::DbError, model::Settings, types::Locale, Pool},
 };
+use actix_web::{web, HttpRequest, HttpResponse};
+use chrono::NaiveDateTime;
+use serde::{Deserialize, Serialize};
 
 use super::error::ApiError;
 
