@@ -2,12 +2,9 @@ ALTER TABLE settings
     ADD COLUMN collections_last_modified_time TIMESTAMP DEFAULT NULL;
 
 WITH COLLECTION_LAST_MODIFIED_USER AS (
-    SELECT users.id as user_id, max(collections.updated_at) as modified_time
-    from users
-             left join collections on users.id = collections.user_id
-             left join collection_items on users.id = collection_items.user_id
-    where collections.updated_at is not null
-    group by users.id
+    SELECT user_id, max(collections.updated_at) as modified_time
+    from collections
+    group by user_id
 )
 INSERT
 INTO settings(user_id, collections_last_modified_time)
@@ -22,13 +19,16 @@ CREATE OR REPLACE FUNCTION update_last_modified()
 $$
 BEGIN
     IF NEW.deleted_at is not null THEN
-        UPDATE settings
-        set collections_last_modified_time = NEW.deleted_at
+        INSERT INTO settings (user_id, collections_last_modified_time)
+        VALUES (NEW.user_id, NEW.deleted_at)
+        ON CONFLICT (user_id) DO UPDATE set collections_last_modified_time = NEW.deleted_at
         where settings.user_id = NEW.user_id;
     ELSE
-        UPDATE settings
-        set collections_last_modified_time = NEW.updated_at
-        where settings.user_id = NEW.user_id;
+        INSERT INTO settings(user_id, collections_last_modified_time)
+        VALUES (NEW.user_id, NEW.updated_at)
+        ON CONFLICT (user_id)
+            DO UPDATE SET collections_last_modified_time = NEW.updated_at
+        WHERE settings.user_id = NEW.user_id;
     END IF;
     RETURN NEW;
 END;
