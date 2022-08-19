@@ -1,4 +1,5 @@
 use crate::helpers::api_assertions::assert_created_with_json_containing;
+use crate::helpers::naive_to_date_time_utc;
 use crate::helpers::{
     api_assertions::assert_ok_with_json_containing, app::init_test, db::get_pool,
     http_client::PostPayload,
@@ -40,7 +41,7 @@ async fn test_adding_to_default_collection_updates_last_modifed() -> Result<(), 
     whoami = client.get(whoamibase, None).await;
     assert_ok_with_json_containing(
         whoami,
-        json!({"settings" : { "collections_last_modified_time" : created }}),
+        json!({"settings" : { "collections_last_modified_time" : naive_to_date_time_utc(created) }}),
     )
     .await;
 
@@ -62,7 +63,7 @@ async fn test_adding_to_default_collection_updates_last_modifed() -> Result<(), 
     whoami = client.get(whoamibase, None).await;
     assert_ok_with_json_containing(
         whoami,
-        json!({"settings" : { "collections_last_modified_time" : updated }}),
+        json!({"settings" : { "collections_last_modified_time" : naive_to_date_time_utc(updated) }}),
     )
     .await;
 
@@ -98,7 +99,7 @@ async fn test_deleting_from_default_updates_last_modified() -> Result<(), Error>
     whoami = client.get(whoamibase, None).await;
     assert_ok_with_json_containing(
         whoami,
-        json!({"settings" : { "collections_last_modified_time" : created }}),
+        json!({"settings" : { "collections_last_modified_time" : naive_to_date_time_utc(created) }}),
     )
     .await;
 
@@ -117,7 +118,7 @@ async fn test_deleting_from_default_updates_last_modified() -> Result<(), Error>
     whoami = client.get(whoamibase, None).await;
     assert_ok_with_json_containing(
         whoami,
-        json!({"settings" : { "collections_last_modified_time" : deleted_at.unwrap() }}),
+        json!({"settings" : { "collections_last_modified_time" : naive_to_date_time_utc(deleted_at.unwrap()) }}),
     )
     .await;
 
@@ -153,7 +154,7 @@ async fn test_adding_deleting_to_collections_v1_updates_last_modifed() -> Result
     whoami = client.get(whoamibase, None).await;
     assert_ok_with_json_containing(
         whoami,
-        json!({"settings" : { "collections_last_modified_time" : created }}),
+        json!({"settings" : { "collections_last_modified_time" : naive_to_date_time_utc(created) }}),
     )
     .await;
 
@@ -173,7 +174,7 @@ async fn test_adding_deleting_to_collections_v1_updates_last_modifed() -> Result
     whoami = client.get(whoamibase, None).await;
     assert_ok_with_json_containing(
         whoami,
-        json!({"settings" : { "collections_last_modified_time" : updated_at }}),
+        json!({"settings" : { "collections_last_modified_time" : naive_to_date_time_utc(updated_at) }}),
     )
     .await;
 
@@ -194,7 +195,7 @@ async fn test_adding_deleting_to_collections_v1_updates_last_modifed() -> Result
     whoami = client.get(whoamibase, None).await;
     assert_ok_with_json_containing(
         whoami,
-        json!({"settings" : { "collections_last_modified_time" : deleted_at.unwrap() }}),
+        json!({"settings" : { "collections_last_modified_time" : naive_to_date_time_utc(deleted_at.unwrap()) }}),
     )
     .await;
 
