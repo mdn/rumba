@@ -17,7 +17,7 @@ use rumba::{
     fxa::LoginManager,
     logging::{self, init_logging},
     metrics::{metrics_from_opts, MetricsData},
-    settings::SETTINGS,
+    settings::{Sentry, SETTINGS},
 };
 use slog_scope::{debug, info};
 
@@ -53,6 +53,15 @@ async fn main() -> anyhow::Result<()> {
     let metrics = Data::new(MetricsData {
         client: Arc::new(metrics_from_opts()?),
     });
+    let _guard = if let Some(Sentry { dsn }) = &SETTINGS.sentry {
+        info!("initializing sentry");
+        sentry::init(dsn.as_str())
+    } else {
+        sentry::init(sentry::ClientOptions {
+            release: sentry::release_name!(),
+            ..Default::default()
+        })
+    };
 
     HttpServer::new(move || {
         let policy = CookieIdentityPolicy::new(&SETTINGS.auth.auth_cookie_key)
@@ -62,6 +71,7 @@ async fn main() -> anyhow::Result<()> {
         let app = App::new()
             .wrap(error_handler())
             .wrap(Logger::new(LOG_FMT).exclude("/healthz"))
+            .wrap(sentry_actix::Sentry::new())
             .wrap(IdentityService::new(policy))
             .app_data(Data::clone(&metrics))
             .app_data(Data::clone(&pool))
