@@ -1,6 +1,7 @@
 #![allow(clippy::extra_unused_lifetimes)] /* https://github.com/rust-lang/rust-clippy/issues/9014 */
 use crate::db::model::User;
 use crate::db::schema::*;
+use crate::helpers::{maybe_to_utc, to_utc};
 use chrono::NaiveDateTime;
 use serde::Serialize;
 use serde_json::Value;
@@ -43,8 +44,11 @@ pub struct CollectionItemInsert {
 #[diesel(table_name = multiple_collections)]
 pub struct MultipleCollectionsQuery {
     pub id: i64,
+    #[serde(serialize_with = "to_utc")]
     pub created_at: NaiveDateTime,
+    #[serde(serialize_with = "to_utc")]
     pub updated_at: NaiveDateTime,
+    #[serde(serialize_with = "maybe_to_utc")]
     pub deleted_at: Option<NaiveDateTime>,
     pub user_id: i64,
     pub notes: Option<String>,
@@ -72,8 +76,11 @@ impl From<MultipleCollectionsQueryNoCount> for MultipleCollectionsQuery {
 #[diesel(table_name = multiple_collections)]
 pub struct MultipleCollectionsQueryNoCount {
     pub id: i64,
+    #[serde(serialize_with = "to_utc")]
     pub created_at: NaiveDateTime,
+    #[serde(serialize_with = "to_utc")]
     pub updated_at: NaiveDateTime,
+    #[serde(serialize_with = "maybe_to_utc")]
     pub deleted_at: Option<NaiveDateTime>,
     pub user_id: i64,
     pub notes: Option<String>,

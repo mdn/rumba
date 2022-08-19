@@ -20,12 +20,12 @@ use actix_web::{web, HttpRequest, HttpResponse};
 use chrono::NaiveDateTime;
 use reqwest::Client;
 
+use super::common::{get_document_metadata, Sorting};
 use crate::db;
 use crate::db::error::DbError;
 use crate::db::model::{CollectionAndDocumentQuery, UserQuery};
 use crate::db::users::get_user;
-
-use super::common::{get_document_metadata, Sorting};
+use crate::helpers::to_utc;
 
 #[derive(Deserialize)]
 pub struct CollectionsQueryParams {
@@ -49,6 +49,7 @@ struct CollectionItem {
     title: String,
     notes: Option<String>,
     parents: Vec<CollectionParent>,
+    #[serde(serialize_with = "to_utc")]
     created: NaiveDateTime,
 }
 
