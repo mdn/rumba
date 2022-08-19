@@ -1,5 +1,6 @@
 use crate::db::types::{FxaEventStatus, Subscription};
 use crate::db::{schema::*, types::FxaEvent};
+use crate::helpers::to_utc;
 use chrono::NaiveDateTime;
 
 use serde::{Deserialize, Serialize};
@@ -31,7 +32,9 @@ impl User {
 #[diesel(table_name = users)]
 pub struct UserQuery {
     pub id: i64,
+    #[serde(serialize_with = "to_utc")]
     pub created_at: NaiveDateTime,
+    #[serde(serialize_with = "to_utc")]
     pub updated_at: NaiveDateTime,
     pub email: String,
     pub fxa_uid: String,

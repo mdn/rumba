@@ -16,6 +16,7 @@ use crate::db::v2::multiple_collections::{
     is_default_collection, multiple_collection_exists,
 };
 use crate::db::Pool;
+use crate::helpers::to_utc;
 use actix_web::web::Data;
 use actix_web::{web, HttpRequest, HttpResponse};
 use chrono::NaiveDateTime;
@@ -45,6 +46,7 @@ pub struct CollectionItem {
     title: String,
     notes: Option<String>,
     parents: Vec<CollectionParent>,
+    #[serde(serialize_with = "to_utc")]
     created: NaiveDateTime,
 }
 
@@ -53,7 +55,9 @@ pub struct MultipleCollectionInfo {
     pub id: String,
     pub name: String,
     pub description: Option<String>,
+    #[serde(serialize_with = "to_utc")]
     pub created_at: NaiveDateTime,
+    #[serde(serialize_with = "to_utc")]
     pub updated_at: NaiveDateTime,
     pub article_count: i64,
 }

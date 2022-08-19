@@ -1,4 +1,5 @@
-use serde::{de::DeserializeOwned, Deserialize, Deserializer};
+use chrono::{DateTime, NaiveDateTime, Utc};
+use serde::{de::DeserializeOwned, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{from_value, Value};
 
 pub fn deserialize_string_or_vec<'de, T, D>(deserializer: D) -> Result<Vec<T>, D::Error>
@@ -82,6 +83,24 @@ pub mod serde_utc_milliseconds {
     }
 }
 
+pub fn maybe_to_utc<S>(naive: &Option<NaiveDateTime>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    match naive {
+        Some(naive) => to_utc(naive, serializer),
+        None => None::<DateTime<Utc>>.serialize(serializer),
+    }
+}
+
+pub fn to_utc<S>(naive: &NaiveDateTime, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let dt = DateTime::<Utc>::from_utc(*naive, Utc);
+    dt.serialize(serializer)
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -146,6 +165,41 @@ mod test {
         );
         assert_eq!(dt, dt_serde.dt);
 
+        Ok(())
+    }
+
+    #[test]
+    fn test_to_utc() -> Result<(), Error> {
+        #[derive(Serialize)]
+        struct DateWrapper {
+            #[serde(serialize_with = "to_utc")]
+            date: NaiveDateTime,
+        }
+
+        let d = DateWrapper {
+            date: NaiveDateTime::from_timestamp(0, 0),
+        };
+        let v = serde_json::to_string(&d)?;
+        assert_eq!(v, r#"{"date":"1970-01-01T00:00:00Z"}"#);
+        Ok(())
+    }
+
+    #[test]
+    fn test_maybe_to_utc() -> Result<(), Error> {
+        #[derive(Serialize)]
+        struct DateWrapper {
+            #[serde(serialize_with = "maybe_to_utc")]
+            date: Option<NaiveDateTime>,
+        }
+
+        let d = DateWrapper {
+            date: Some(NaiveDateTime::from_timestamp(0, 0)),
+        };
+        let v = serde_json::to_string(&d)?;
+        assert_eq!(v, r#"{"date":"1970-01-01T00:00:00Z"}"#);
+        let d = DateWrapper { date: None };
+        let v = serde_json::to_string(&d)?;
+        assert_eq!(v, r#"{"date":null}"#);
         Ok(())
     }
 }

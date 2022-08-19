@@ -14,6 +14,7 @@ use crate::{
 };
 
 use super::{common::Sorting, error::ApiError};
+use crate::helpers::to_utc;
 
 #[derive(Deserialize)]
 pub enum NotificationType {
@@ -40,6 +41,7 @@ pub struct Notification {
     pub title: String,
     pub text: String,
     pub url: String,
+    #[serde(serialize_with = "to_utc")]
     pub created: NaiveDateTime,
     pub deleted: bool,
     pub read: bool,
