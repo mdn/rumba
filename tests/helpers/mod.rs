@@ -5,6 +5,7 @@ use actix_http::body::{BoxBody, EitherBody, MessageBody};
 use actix_web::dev::ServiceResponse;
 use actix_web::test;
 use anyhow::{anyhow, Error};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use serde_json::Value;
 
 pub mod api_assertions;
@@ -24,4 +25,8 @@ pub fn wait_for_stubr() -> Result<(), Error> {
         .map_err(|_| anyhow!("strubr not ready after 200ms"))?;
     stream.shutdown(Shutdown::Both)?;
     Ok(())
+}
+
+pub fn naive_to_date_time_utc(updated: NaiveDateTime) -> DateTime<Utc> {
+    DateTime::<Utc>::from_utc(updated, Utc)
 }

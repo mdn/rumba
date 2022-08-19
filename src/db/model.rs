@@ -99,6 +99,7 @@ pub struct Settings {
     pub col_in_search: bool,
     pub locale_override: Option<Locale>,
     pub multiple_collections: bool,
+    pub collections_last_modified_time: Option<NaiveDateTime>,
 }
 
 #[derive(Insertable, AsChangeset)]

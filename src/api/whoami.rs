@@ -2,12 +2,13 @@ use actix_identity::Identity;
 
 use serde::Serialize;
 
-use crate::api::settings::SettingUpdateRequest;
 use crate::db;
 use crate::db::Pool;
 use crate::metrics::Metrics;
 use crate::{api::error::ApiError, db::types::Subscription};
 use actix_web::{web, HttpRequest, HttpResponse};
+
+use super::settings::SettingsResponse;
 
 #[derive(Serialize)]
 pub struct GeoInfo {
@@ -24,7 +25,7 @@ pub struct WhoamiResponse {
     avatar_url: Option<String>,
     is_subscriber: Option<bool>,
     subscription_type: Option<Subscription>,
-    settings: Option<SettingUpdateRequest>,
+    settings: Option<SettingsResponse>,
 }
 
 const CLOUDFRONT_COUNTRY_HEADER: &str = "CloudFront-Viewer-Country-Name";

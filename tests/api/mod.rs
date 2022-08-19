@@ -6,5 +6,6 @@ mod notification_processing;
 mod notifications;
 mod root;
 mod search;
+mod settings;
 pub mod watched_items;
 mod whoami;
