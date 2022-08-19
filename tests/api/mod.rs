@@ -8,3 +8,4 @@ mod root;
 mod search;
 pub mod watched_items;
 mod whoami;
+mod settings;
