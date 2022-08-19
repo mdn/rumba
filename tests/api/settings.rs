@@ -212,7 +212,7 @@ async fn test_operations_on_other_collections_not_update_last_modified() -> Resu
     assert_ok_with_json_containing(whoami, json!({ "settings": null })).await;
     let res = client
         .post(
-            format!("{}", collections_base_url).as_str(),
+            collections_base_url,
             None,
             Some(PostPayload::Json(json!({
                 "name" : "Other collection",
