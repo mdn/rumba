@@ -35,7 +35,7 @@ pub struct CollectionItemQueryParams {
 
 #[derive(Serialize, Deserialize)]
 struct CollectionParent {
-    url: String,
+    uri: String,
     title: String,
 }
 
