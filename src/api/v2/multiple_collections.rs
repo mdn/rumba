@@ -47,7 +47,9 @@ pub struct CollectionItem {
     notes: Option<String>,
     parents: Vec<CollectionParent>,
     #[serde(serialize_with = "to_utc")]
-    created: NaiveDateTime,
+    created_at: NaiveDateTime,
+    #[serde(serialize_with = "to_utc")]
+    updated_at: NaiveDateTime,
 }
 
 #[derive(Serialize)]
@@ -138,7 +140,8 @@ impl From<CollectionItemAndDocumentQuery> for CollectionItem {
         }
         CollectionItem {
             parents: parents.unwrap_or_default(),
-            created: collection_and_document.created_at,
+            created_at: collection_and_document.created_at,
+            updated_at: collection_and_document.updated_at,
             notes: collection_and_document.notes,
             url,
             title: title.unwrap_or_default(),
