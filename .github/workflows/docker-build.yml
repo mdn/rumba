@@ -48,7 +48,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Print staging deploy command
-        run: echo "::notice Prod deploy run - helm template --set rev=${{ steps.meta.outputs.tags }} -f k8s/values.yaml -f k8s/values/stage.yaml k8s | kubectl apply -f -"
+        run: echo "::notice Prod deploy run - helm template --set rev=${{ steps.vars.outputs.sha_short }} -f k8s/values.yaml -f k8s/values/stage.yaml k8s | kubectl apply -f -"
 
       - name: Print production deploy command
-        run: echo "::notice Prod deploy - helm template --set rev=${{ steps.meta.outputs.tags }} -f k8s/values.yaml -f k8s/values/prod.yaml k8s | kubectl apply -f -"
+        run: echo "::notice Prod deploy - helm template --set rev=${{ steps.vars.outputs.sha_short }} -f k8s/values.yaml -f k8s/values/prod.yaml k8s | kubectl apply -f -"
