@@ -137,9 +137,9 @@ dependencies = [
 
 [[package]]
 name = "actix-session"
-version = "0.6.2"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c9138a66462f1e65da829f9c0de81b44a96dfe193a4f19bfea32ee2be312368"
+checksum = "d324d2a6e670f8746ae64f333c2c0fe856bdf624bcb72fb56e250e62a7e9a85f"
 dependencies = [
  "actix-service",
  "actix-utils",
@@ -149,7 +149,6 @@ dependencies = [
  "derive_more",
  "serde",
  "serde_json",
- "time 0.3.11",
  "tracing",
 ]
 
@@ -2822,9 +2821,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.83"
+version = "1.0.85"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38dd04e3c8279e75b31ef29dbdceebfe5ad89f4d0937213c53f7d49d01b3d5a7"
+checksum = "e55a28e3aaef9d5ce0506d0a14dbba8054ddc7e499ef522dd8b26859ec9d4a44"
 dependencies = [
  "indexmap",
  "itoa",
