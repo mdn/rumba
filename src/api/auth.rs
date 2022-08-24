@@ -1,5 +1,5 @@
 use actix_identity::Identity;
-use actix_session::SessionLength;
+use actix_session::config::PersistentSession;
 use actix_session::{storage::CookieSessionStore, Session, SessionMiddleware};
 use actix_web::cookie::time::Duration;
 use actix_web::cookie::SameSite;
@@ -111,9 +111,7 @@ pub fn auth_service() -> impl HttpServiceFactory {
             )
             .cookie_same_site(SameSite::Lax)
             .cookie_secure(SETTINGS.auth.auth_cookie_secure)
-            .session_length(SessionLength::Predetermined {
-                max_session_length: Some(Duration::minutes(15)),
-            })
+            .session_lifecycle(PersistentSession::default().session_ttl(Duration::minutes(15)))
             .build(),
         )
         .service(web::resource("/no-prompt/").route(web::get().to(login_no_prompt)))
