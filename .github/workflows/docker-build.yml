@@ -11,9 +11,11 @@ env:
 jobs:
   docker-build:
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       packages: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -24,9 +26,11 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set outputs
         id: vars
         run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"   
+
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v4
@@ -34,6 +38,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=sha,prefix=,suffix=,format=short
+
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
@@ -41,7 +46,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
       - name: Print staging deploy command
-        run: echo "::notice Prod deploy run - helm template --set rev=${{ steps.meta.outputs.tags }} -f k8s/values.yaml -f k8s/values/stage.yaml k8s | kubectl apply -f -"
+        run: echo "helm template --set rev=${{ steps.vars.outputs.sha_short }} -f k8s/values.yaml -f k8s/values/stage.yaml k8s | kubectl apply -f -"
+
       - name: Print production deploy command
-        run: echo "::notice Prod deploy - helm template --set rev=${{ steps.meta.outputs.tags }} -f k8s/values.yaml -f k8s/values/prod.yaml k8s | kubectl apply -f -"
+        run: echo "helm template --set rev=${{ steps.vars.outputs.sha_short }} -f k8s/values.yaml -f k8s/values/prod.yaml k8s | kubectl apply -f -"
