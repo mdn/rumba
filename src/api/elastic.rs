@@ -221,10 +221,14 @@ pub struct ResponseHit {
 
 #[derive(Deserialize)]
 pub struct ResponseSource {
+    #[serde(default = "String::default")]
     pub title: String,
     pub locale: Locale,
+    #[serde(default = "String::default")]
     pub slug: String,
+    #[serde(default = "f64::default")]
     pub popularity: f64,
+    #[serde(default = "String::default")]
     pub summary: String,
 }
 
