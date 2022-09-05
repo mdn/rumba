@@ -67,7 +67,7 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
     let set_token =
         include_str!("../data/set_tokens/set_token_subscription_state_change_to_10m.txt");
     let pool = reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -138,7 +138,7 @@ async fn subscription_state_change_to_core_test_inactive() -> Result<(), Error> 
 
 async fn subscription_state_change_to_core_test(set_token: &str) -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -194,7 +194,7 @@ async fn delete_user_test() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -251,7 +251,7 @@ async fn delete_user_test() -> Result<(), Error> {
 async fn invalid_set_test() -> Result<(), Error> {
     let set_token = include_str!("../data/set_tokens/set_token_delete_user_invalid.txt");
     let pool = reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -289,7 +289,7 @@ async fn change_profile_test() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let set_token = include_str!("../data/set_tokens/set_token_profile_change.txt");
     let pool = reset()?;
@@ -318,7 +318,7 @@ async fn change_profile_test() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     thread::sleep(TEN_MS);
 

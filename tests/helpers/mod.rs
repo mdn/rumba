@@ -1,7 +1,7 @@
-use std::net::{Shutdown, TcpStream};
 use std::time::Duration;
 
 use actix_http::body::{BoxBody, EitherBody, MessageBody};
+use actix_rt::{net::TcpStream, time::timeout};
 use actix_web::dev::ServiceResponse;
 use actix_web::test;
 use anyhow::{anyhow, Error};
@@ -20,11 +20,15 @@ pub async fn read_json<B: MessageBody + Unpin>(res: ServiceResponse<B>) -> Value
     serde_json::from_slice(test::read_body(res).await.as_ref()).unwrap()
 }
 
-pub fn wait_for_stubr() -> Result<(), Error> {
-    let stream =
-        TcpStream::connect_timeout(&"127.0.0.1:4321".parse()?, Duration::from_millis(1_000))
+pub async fn wait_for_stubr() -> Result<(), Error> {
+    timeout(Duration::from_millis(1_000), async {
+        TcpStream::connect(("127.0.0.1", 4321))
+            .await
             .map_err(|_| anyhow!("strubr not ready after 1000ms"))?;
-    stream.shutdown(Shutdown::Both)?;
+        Ok::<(), Error>(())
+    })
+    .await??;
+
     Ok(())
 }
 

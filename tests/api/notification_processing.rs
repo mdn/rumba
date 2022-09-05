@@ -26,7 +26,7 @@ async fn test_receive_notification_subscribed_top_level() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -138,7 +138,7 @@ async fn test_receive_notification_subscribed_specific_path() -> Result<(), Erro
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -222,7 +222,7 @@ async fn test_receive_notification_unknown() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;

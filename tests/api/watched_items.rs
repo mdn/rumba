@@ -24,7 +24,7 @@ async fn test_create_get_watched_items() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -102,7 +102,7 @@ async fn test_unwatch_many() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -159,7 +159,7 @@ async fn test_single_item_operations() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -254,7 +254,7 @@ async fn test_watched_item_subscription_limit() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;

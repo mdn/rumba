@@ -25,7 +25,7 @@ async fn test_create_and_get_collection() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -70,7 +70,7 @@ async fn test_create_and_get_collection_with_empty_title() -> Result<(), Error> 
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -108,7 +108,7 @@ async fn test_create_get_delete_create_collection() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -171,7 +171,7 @@ async fn test_pagination_default_sort_by_created() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -281,7 +281,7 @@ async fn test_create_fails_404_no_index_found() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -316,7 +316,7 @@ async fn test_filters_by_custom_name_over_title() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -387,7 +387,7 @@ async fn test_query_finds_strings_in_notes() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -445,7 +445,7 @@ async fn test_delete_collection() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -485,7 +485,7 @@ async fn test_undelete_collection() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -542,7 +542,7 @@ async fn test_delete_collection_via_post() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -592,7 +592,7 @@ async fn test_collection_subscription_limits() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;

@@ -11,7 +11,7 @@ use stubr::{Config, Stubr};
 #[stubr::mock(port = 4321)]
 async fn whoami_anonymous_test() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await.unwrap();
     let service = test::init_service(app).await;
     let request = test::TestRequest::get()
@@ -31,7 +31,7 @@ async fn whoami_anonymous_test() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn whoami_logged_in_test() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -64,7 +64,7 @@ async fn whoami_logged_in_test() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn whoami_settings_test() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -176,7 +176,7 @@ async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;

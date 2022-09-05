@@ -19,7 +19,7 @@ async fn do_request(
             latency: None,
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let app = test_app_only_search().await;
     let service = test::init_service(app).await;
     let request = test::TestRequest::get().uri(path).to_request();

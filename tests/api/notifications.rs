@@ -12,7 +12,7 @@ use serde_json::json;
 #[stubr::mock(port = 4321)]
 async fn test_get_notifications() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -107,7 +107,7 @@ async fn test_get_notifications() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn test_mark_all_read() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -139,7 +139,7 @@ async fn test_mark_all_read() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn test_mark_id_as_read() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -177,7 +177,7 @@ async fn test_mark_id_as_read() -> Result<(), Error> {
 
 async fn test_star_unstar_many() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -233,7 +233,7 @@ async fn test_star_unstar_many() -> Result<(), Error> {
 
 async fn test_toggle_starred() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -282,7 +282,7 @@ async fn test_toggle_starred() -> Result<(), Error> {
 
 async fn test_delete_and_undo() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -328,7 +328,7 @@ async fn test_delete_and_undo() -> Result<(), Error> {
 
 async fn test_delete_many() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
