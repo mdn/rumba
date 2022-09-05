@@ -22,12 +22,11 @@ pub async fn read_json<B: MessageBody + Unpin>(res: ServiceResponse<B>) -> Value
 
 pub async fn wait_for_stubr() -> Result<(), Error> {
     timeout(Duration::from_millis(1_000), async {
-        TcpStream::connect(("127.0.0.1", 4321))
-            .await
-            .map_err(|_| anyhow!("strubr not ready after 1000ms"))?;
+        TcpStream::connect(("127.0.0.1", 4321)).await?;
         Ok::<(), Error>(())
     })
-    .await??;
+    .await
+    .map_err(|_| anyhow!("strubr not ready after 1000ms"))??;
 
     Ok(())
 }
