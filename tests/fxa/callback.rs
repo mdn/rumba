@@ -10,7 +10,7 @@ use crate::helpers::db::reset;
 use crate::helpers::wait_for_stubr;
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
+#[stubr::mock(port = 42321)]
 async fn basic() -> Result<(), Error> {
     let pool = reset()?;
 
@@ -50,11 +50,12 @@ async fn basic() -> Result<(), Error> {
     assert!(res.status().is_redirection());
     assert_eq!(res.headers().get("Location").unwrap(), "/");
 
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
+#[stubr::mock(port = 42321)]
 async fn next() -> Result<(), Error> {
     let pool = reset()?;
     wait_for_stubr().await?;
@@ -95,11 +96,12 @@ async fn next() -> Result<(), Error> {
     assert!(res.status().is_redirection());
     assert_eq!(res.headers().get("Location").unwrap(), "/foo");
 
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
+#[stubr::mock(port = 42321)]
 async fn no_prompt() -> Result<(), Error> {
     let pool = reset()?;
 
@@ -146,5 +148,6 @@ async fn no_prompt() -> Result<(), Error> {
     assert!(res.status().is_redirection());
     assert_eq!(res.headers().get("Location").unwrap(), "/foo");
 
+    drop(stubr);
     Ok(())
 }

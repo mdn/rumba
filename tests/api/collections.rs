@@ -16,10 +16,10 @@ use stubr::{Config, Stubr};
 async fn test_create_and_get_collection() -> Result<(), Error> {
     let pool = reset()?;
 
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(4321),
+            port: Some(42321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -54,6 +54,7 @@ async fn test_create_and_get_collection() -> Result<(), Error> {
     assert_eq!(bookmarked["parents"][1]["uri"], "/en-US/docs/Web/CSS");
     assert_eq!(bookmarked["parents"][1]["title"], "CSS");
 
+    drop(stubr);
     Ok(())
 }
 
@@ -61,10 +62,10 @@ async fn test_create_and_get_collection() -> Result<(), Error> {
 async fn test_create_and_get_collection_with_empty_title() -> Result<(), Error> {
     let pool = reset()?;
 
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(4321),
+            port: Some(42321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -92,6 +93,7 @@ async fn test_create_and_get_collection_with_empty_title() -> Result<(), Error> 
     assert_eq!(bookmarked["title"], "CSS: Cascading Style Sheets");
     assert_eq!(bookmarked["url"], "/en-US/docs/Web/CSS");
 
+    drop(stubr);
     Ok(())
 }
 
@@ -99,10 +101,10 @@ async fn test_create_and_get_collection_with_empty_title() -> Result<(), Error> 
 async fn test_create_get_delete_create_collection() -> Result<(), Error> {
     let pool = reset()?;
 
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(4321),
+            port: Some(42321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -155,6 +157,7 @@ async fn test_create_get_delete_create_collection() -> Result<(), Error> {
     assert_eq!(bookmarked["url"], "/en-US/docs/Web/CSS");
     assert_eq!(bookmarked["notes"], "Notes notes notes notes");
 
+    drop(stubr);
     Ok(())
 }
 
@@ -162,10 +165,10 @@ async fn test_create_get_delete_create_collection() -> Result<(), Error> {
 async fn test_pagination_default_sort_by_created() -> Result<(), Error> {
     let pool = reset()?;
 
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(4321),
+            port: Some(42321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -265,6 +268,7 @@ async fn test_pagination_default_sort_by_created() -> Result<(), Error> {
         .to_string()
         .ends_with("CSS1"));
 
+    drop(stubr);
     Ok(())
 }
 
@@ -272,10 +276,10 @@ async fn test_pagination_default_sort_by_created() -> Result<(), Error> {
 async fn test_create_fails_404_no_index_found() -> Result<(), Error> {
     let pool = reset()?;
 
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(4321),
+            port: Some(42321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -296,6 +300,7 @@ async fn test_create_fails_404_no_index_found() -> Result<(), Error> {
         .await;
     assert_eq!(create_res.status(), 404);
 
+    drop(stubr);
     Ok(())
 }
 
@@ -307,10 +312,10 @@ added by changing the name in the creation request.
 async fn test_filters_by_custom_name_over_title() -> Result<(), Error> {
     let pool = reset()?;
 
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(4321),
+            port: Some(42321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -371,6 +376,7 @@ async fn test_filters_by_custom_name_over_title() -> Result<(), Error> {
     assert_eq!(items_filtered[0]["title"], "Crippling Style Shorts");
     assert_eq!(items_filtered[0]["url"], "/en-US/docs/Web/CSS2");
 
+    drop(stubr);
     Ok(())
 }
 
@@ -378,10 +384,10 @@ async fn test_filters_by_custom_name_over_title() -> Result<(), Error> {
 async fn test_query_finds_strings_in_notes() -> Result<(), Error> {
     let pool = reset()?;
 
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(4321),
+            port: Some(42321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -429,6 +435,7 @@ async fn test_query_finds_strings_in_notes() -> Result<(), Error> {
     assert_eq!(items[0]["title"], "CSS: Cascading Style Sheets");
     assert_eq!(items[0]["url"], "/en-US/docs/Web/CSS2");
     assert_eq!(items[0]["notes"], "RANDOM");
+    drop(stubr);
     Ok(())
 }
 
@@ -436,10 +443,10 @@ async fn test_query_finds_strings_in_notes() -> Result<(), Error> {
 async fn test_delete_collection() -> Result<(), Error> {
     let pool = reset()?;
 
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(4321),
+            port: Some(42321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -469,6 +476,7 @@ async fn test_delete_collection() -> Result<(), Error> {
     let try_get_collection_res = logged_in_client.get(base_url, None).await;
     let collection_json = read_json(try_get_collection_res).await;
     assert!(collection_json["bookmarked"].is_null());
+    drop(stubr);
     Ok(())
 }
 
@@ -476,10 +484,10 @@ async fn test_delete_collection() -> Result<(), Error> {
 async fn test_undelete_collection() -> Result<(), Error> {
     let pool = reset()?;
 
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(4321),
+            port: Some(42321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -526,6 +534,7 @@ async fn test_undelete_collection() -> Result<(), Error> {
     let try_get_collection_res = logged_in_client.get(base_url, None).await;
     let collection_json = read_json(try_get_collection_res).await;
     assert!(!collection_json["bookmarked"].is_null());
+    drop(stubr);
     Ok(())
 }
 
@@ -533,10 +542,10 @@ async fn test_undelete_collection() -> Result<(), Error> {
 async fn test_delete_collection_via_post() -> Result<(), Error> {
     let pool = reset()?;
 
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(4321),
+            port: Some(42321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -572,6 +581,7 @@ async fn test_delete_collection_via_post() -> Result<(), Error> {
     let try_get_collection_res = logged_in_client.get(base_url, None).await;
     let collection_json = read_json(try_get_collection_res).await;
     assert!(collection_json["bookmarked"].is_null());
+    drop(stubr);
     Ok(())
 }
 
@@ -579,14 +589,14 @@ async fn test_delete_collection_via_post() -> Result<(), Error> {
 async fn test_collection_subscription_limits() -> Result<(), Error> {
     let pool = reset()?;
 
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec![
             "tests/stubs",
             "tests/test_specific_stubs/collections",
             "tests/test_specific_stubs/collections_core_user",
         ],
         Config {
-            port: Some(4321),
+            port: Some(42321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -679,5 +689,6 @@ async fn test_collection_subscription_limits() -> Result<(), Error> {
     assert!(!collection_json["subscription_limit_reached"]
         .as_bool()
         .unwrap());
+    drop(stubr);
     Ok(())
 }

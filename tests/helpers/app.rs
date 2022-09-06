@@ -84,7 +84,7 @@ pub async fn test_app_only_search() -> App<
         InitError = (),
     >,
 > {
-    let elastic_transport = Transport::single_node("http://localhost:4321").unwrap();
+    let elastic_transport = Transport::single_node("http://localhost:42321").unwrap();
     let elastic_client = Elasticsearch::new(elastic_transport);
 
     let app = App::new()
@@ -121,10 +121,10 @@ pub async fn init_test(
     anyhow::Error,
 > {
     let pool = reset()?;
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         custom_stubs,
         Config {
-            port: Some(4321),
+            port: Some(42321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -133,5 +133,5 @@ pub async fn init_test(
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let logged_in_client = TestHttpClient::new(service).await;
-    Ok((logged_in_client, _stubr))
+    Ok((logged_in_client, stubr))
 }

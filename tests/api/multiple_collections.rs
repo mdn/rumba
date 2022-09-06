@@ -12,7 +12,7 @@ use serde_json::json;
 
 #[actix_rt::test]
 async fn test_create_and_get_collection() -> Result<(), Error> {
-    let (mut client, _) =
+    let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
     let base_url = "/api/v2/collections/";
 
@@ -59,12 +59,13 @@ async fn test_create_and_get_collection() -> Result<(), Error> {
         ),
     )
     .await;
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_add_items_to_collection() -> Result<(), Error> {
-    let (mut client, _stubr) =
+    let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
     let base_url = "/api/v2/collections/";
 
@@ -150,12 +151,13 @@ async fn test_add_items_to_collection() -> Result<(), Error> {
     )
     .await;
 
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_collection_name_conflicts() -> Result<(), Error> {
-    let (mut client, _stubr) =
+    let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
     let base_url = "/api/v2/collections/";
 
@@ -212,12 +214,13 @@ async fn test_collection_name_conflicts() -> Result<(), Error> {
         )
         .await;
     assert_created_with_json_containing(res, json!({"name":"Test 2"})).await;
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_collection_item_conflicts() -> Result<(), Error> {
-    let (mut client, _stubr) =
+    let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
     let base_url = "/api/v2/collections/";
 
@@ -292,12 +295,13 @@ async fn test_collection_item_conflicts() -> Result<(), Error> {
         }),
     )
     .await;
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_edit_item_in_collection() -> Result<(), Error> {
-    let (mut client, _stubr) =
+    let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
     let base_url = "/api/v2/collections/";
 
@@ -360,12 +364,13 @@ async fn test_edit_item_in_collection() -> Result<(), Error> {
         }),
     )
     .await;
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_delete_item_in_collection() -> Result<(), Error> {
-    let (mut client, _stubr) =
+    let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
     let base_url = "/api/v2/collections/";
 
@@ -413,12 +418,13 @@ async fn test_delete_item_in_collection() -> Result<(), Error> {
         .await;
     assert_ok_with_json_containing(res, json!({"id":"2","article_count": 0, "items": []})).await;
 
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_delete_collection() -> Result<(), Error> {
-    let (mut client, _stubr) =
+    let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
     let base_url = "/api/v2/collections/";
 
@@ -497,12 +503,13 @@ async fn test_delete_collection() -> Result<(), Error> {
         .await;
 
     assert_created(res);
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_no_modify_delete_default() -> Result<(), Error> {
-    let (mut client, _stubr) =
+    let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
     let base_url = "/api/v2/collections/";
 
@@ -549,5 +556,6 @@ async fn test_no_modify_delete_default() -> Result<(), Error> {
     )
     .await;
 
+    drop(stubr);
     Ok(())
 }

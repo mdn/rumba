@@ -9,7 +9,7 @@ use rumba::db::{self, Pool};
 use serde_json::json;
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
+#[stubr::mock(port = 42321)]
 async fn test_get_notifications() -> Result<(), Error> {
     let pool = reset()?;
     wait_for_stubr().await?;
@@ -100,11 +100,12 @@ async fn test_get_notifications() -> Result<(), Error> {
         .await;
     res_json = read_json(res).await;
     assert_eq!(res_json["items"].as_array().unwrap().len(), 0);
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
+#[stubr::mock(port = 42321)]
 async fn test_mark_all_read() -> Result<(), Error> {
     let pool = reset()?;
     wait_for_stubr().await?;
@@ -132,11 +133,12 @@ async fn test_mark_all_read() -> Result<(), Error> {
     items = res_json["items"].as_array().unwrap();
     assert_eq!(items.len(), 100);
     items.iter().for_each(|val| assert_eq!(val["read"], true));
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
+#[stubr::mock(port = 42321)]
 async fn test_mark_id_as_read() -> Result<(), Error> {
     let pool = reset()?;
     wait_for_stubr().await?;
@@ -169,11 +171,12 @@ async fn test_mark_id_as_read() -> Result<(), Error> {
     assert_eq!(items[1]["read"], true);
     assert_eq!(items[2]["read"], false);
 
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
+#[stubr::mock(port = 42321)]
 
 async fn test_star_unstar_many() -> Result<(), Error> {
     let pool = reset()?;
@@ -225,11 +228,12 @@ async fn test_star_unstar_many() -> Result<(), Error> {
     assert_eq!(items[0]["starred"], true);
     assert_eq!(items[1]["starred"], false);
     assert_eq!(items[2]["starred"], false);
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
+#[stubr::mock(port = 42321)]
 
 async fn test_toggle_starred() -> Result<(), Error> {
     let pool = reset()?;
@@ -274,11 +278,12 @@ async fn test_toggle_starred() -> Result<(), Error> {
     assert_eq!(items[0]["starred"], false);
     assert_eq!(items[1]["starred"], false);
     assert_eq!(items[2]["starred"], false);
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
+#[stubr::mock(port = 42321)]
 
 async fn test_delete_and_undo() -> Result<(), Error> {
     let pool = reset()?;
@@ -320,11 +325,12 @@ async fn test_delete_and_undo() -> Result<(), Error> {
     assert_eq!(items[1]["id"], 9);
     assert_eq!(items[2]["id"], 8);
 
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
+#[stubr::mock(port = 42321)]
 
 async fn test_delete_many() -> Result<(), Error> {
     let pool = reset()?;
@@ -361,6 +367,7 @@ async fn test_delete_many() -> Result<(), Error> {
     assert_eq!(items[1]["id"], 6);
     assert_eq!(items[2]["id"], 5);
 
+    drop(stubr);
     Ok(())
 }
 

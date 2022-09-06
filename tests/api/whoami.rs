@@ -8,7 +8,7 @@ use serde_json::json;
 use stubr::{Config, Stubr};
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
+#[stubr::mock(port = 42321)]
 async fn whoami_anonymous_test() -> Result<(), Error> {
     let pool = reset()?;
     wait_for_stubr().await?;
@@ -24,11 +24,12 @@ async fn whoami_anonymous_test() -> Result<(), Error> {
 
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Iceland");
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
+#[stubr::mock(port = 42321)]
 async fn whoami_logged_in_test() -> Result<(), Error> {
     let pool = reset()?;
     wait_for_stubr().await?;
@@ -57,11 +58,12 @@ async fn whoami_logged_in_test() -> Result<(), Error> {
         json["subscription_type"], "mdn_plus_5m",
         "Subscription type wrong"
     );
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
+#[stubr::mock(port = 42321)]
 async fn whoami_settings_test() -> Result<(), Error> {
     let pool = reset()?;
     wait_for_stubr().await?;
@@ -160,6 +162,7 @@ async fn whoami_settings_test() -> Result<(), Error> {
     assert_eq!(json["settings"]["locale_override"], "zh-TW");
     assert_eq!(json["settings"]["multiple_collections"], false);
 
+    drop(stubr);
     Ok(())
 }
 
@@ -167,10 +170,10 @@ async fn whoami_settings_test() -> Result<(), Error> {
 async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
     let pool = reset()?;
 
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/whoami"],
         Config {
-            port: Some(4321),
+            port: Some(42321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -200,5 +203,6 @@ async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
     );
     assert_eq!(json["is_subscriber"], true);
     assert_eq!(json["subscription_type"], "mdn_plus_5y");
+    drop(stubr);
     Ok(())
 }

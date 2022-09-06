@@ -10,10 +10,10 @@ async fn do_request(
     actix_web::dev::ServiceResponse<actix_web::body::EitherBody<actix_web::body::BoxBody>>,
     Error,
 > {
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec!["tests/test_specific_stubs/search"],
         Config {
-            port: Some(4321),
+            port: Some(42321),
             verbose: Some(true),
             global_delay: None,
             latency: None,
@@ -23,7 +23,9 @@ async fn do_request(
     let app = test_app_only_search().await;
     let service = test::init_service(app).await;
     let request = test::TestRequest::get().uri(path).to_request();
-    Ok(test::call_service(&service, request).await)
+    let response = test::call_service(&service, request).await;
+    drop(stubr);
+    Ok(response)
 }
 
 #[actix_rt::test]

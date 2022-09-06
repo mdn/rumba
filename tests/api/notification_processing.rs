@@ -14,13 +14,13 @@ use crate::helpers::{
 #[actix_rt::test]
 async fn test_receive_notification_subscribed_top_level() -> Result<(), Error> {
     let pool = reset()?;
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec![
             "tests/stubs",
             "tests/test_specific_stubs/notifications_processing",
         ],
         Config {
-            port: Some(4321),
+            port: Some(42321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -120,19 +120,20 @@ async fn test_receive_notification_subscribed_top_level() -> Result<(), Error> {
     );
     assert_eq!(sorted[3]["title"].as_str().unwrap(), "Navigator.vibrate");
 
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_receive_notification_subscribed_specific_path() -> Result<(), Error> {
     let pool = reset()?;
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec![
             "tests/stubs",
             "tests/test_specific_stubs/notifications_processing",
         ],
         Config {
-            port: Some(4321),
+            port: Some(42321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -204,19 +205,20 @@ async fn test_receive_notification_subscribed_specific_path() -> Result<(), Erro
         "Supported in Chrome 102, Chrome Android 102 and WebView Android 102"
     );
 
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_receive_notification_unknown() -> Result<(), Error> {
     let pool = reset()?;
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec![
             "tests/stubs",
             "tests/test_specific_stubs/notifications_processing",
         ],
         Config {
-            port: Some(4321),
+            port: Some(42321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -268,5 +270,6 @@ async fn test_receive_notification_unknown() -> Result<(), Error> {
         notifications[0]["title"].as_str().unwrap(),
         "Navigator.vibrate_more"
     );
+    drop(stubr);
     Ok(())
 }

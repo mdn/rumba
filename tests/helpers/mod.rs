@@ -25,7 +25,7 @@ pub async fn read_json<B: MessageBody + Unpin>(res: ServiceResponse<B>) -> Value
 
 pub async fn wait_for_stubr() -> Result<(), Error> {
     timeout(Duration::from_millis(10_000), async {
-        while let Err(_e) = TcpStream::connect(("127.0.0.1", 4321)).await {
+        while let Err(_e) = TcpStream::connect(("127.0.0.1", 42321)).await {
             sleep(Duration::from_millis(100)).await;
         }
         Ok::<(), Error>(())
