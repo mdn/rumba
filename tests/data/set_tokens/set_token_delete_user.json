@@ -4,7 +4,7 @@
     "https://schemas.accounts.firefox.com/event/delete-user": {}
   },
   "iat": 1654425318.762,
-  "iss": "http://localhost:42321",
+  "iss": "http://localhost:4321",
   "jti": "eeb9d9ae-90d5-499f-8056-94eaf635e09b",
   "sub": "TEST_SUB"
 }

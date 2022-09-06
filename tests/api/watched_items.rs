@@ -18,7 +18,7 @@ async fn test_create_get_watched_items() -> Result<(), Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -97,7 +97,7 @@ async fn test_unwatch_many() -> Result<(), Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -155,7 +155,7 @@ async fn test_single_item_operations() -> Result<(), Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -251,7 +251,7 @@ async fn test_watched_item_subscription_limit() -> Result<(), Error> {
             "tests/test_specific_stubs/watched_items",
         ],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),

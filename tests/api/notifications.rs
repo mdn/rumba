@@ -9,7 +9,7 @@ use rumba::db::{self, Pool};
 use serde_json::json;
 
 #[actix_rt::test]
-#[stubr::mock(port = 42321)]
+#[stubr::mock(port = 4321)]
 async fn test_get_notifications() -> Result<(), Error> {
     let pool = reset()?;
     wait_for_stubr().await?;
@@ -105,7 +105,7 @@ async fn test_get_notifications() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 42321)]
+#[stubr::mock(port = 4321)]
 async fn test_mark_all_read() -> Result<(), Error> {
     let pool = reset()?;
     wait_for_stubr().await?;
@@ -138,7 +138,7 @@ async fn test_mark_all_read() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 42321)]
+#[stubr::mock(port = 4321)]
 async fn test_mark_id_as_read() -> Result<(), Error> {
     let pool = reset()?;
     wait_for_stubr().await?;
@@ -176,7 +176,7 @@ async fn test_mark_id_as_read() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 42321)]
+#[stubr::mock(port = 4321)]
 
 async fn test_star_unstar_many() -> Result<(), Error> {
     let pool = reset()?;
@@ -233,7 +233,7 @@ async fn test_star_unstar_many() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 42321)]
+#[stubr::mock(port = 4321)]
 
 async fn test_toggle_starred() -> Result<(), Error> {
     let pool = reset()?;
@@ -283,7 +283,7 @@ async fn test_toggle_starred() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 42321)]
+#[stubr::mock(port = 4321)]
 
 async fn test_delete_and_undo() -> Result<(), Error> {
     let pool = reset()?;
@@ -330,7 +330,7 @@ async fn test_delete_and_undo() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 42321)]
+#[stubr::mock(port = 4321)]
 
 async fn test_delete_many() -> Result<(), Error> {
     let pool = reset()?;

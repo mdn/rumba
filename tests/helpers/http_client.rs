@@ -148,9 +148,9 @@ impl<T: Service<Request, Response = RumbaTestResponse, Error = Error>> TestHttpC
 }
 
 async fn check_stubr_initialized() -> Result<(), ()> {
-    //Hardcoded for now. We will 'always' spin stubr at localhost:42321.
+    //Hardcoded for now. We will 'always' spin stubr at localhost:4321.
     let res = Client::new()
-        .request(Method::GET, "http://localhost:42321/healthz")
+        .request(Method::GET, "http://localhost:4321/healthz")
         .send()
         .await;
     assert_eq!(res.unwrap().status(), StatusCode::OK);

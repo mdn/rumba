@@ -10,7 +10,7 @@ use crate::helpers::db::reset;
 use crate::helpers::wait_for_stubr;
 
 #[actix_rt::test]
-#[stubr::mock(port = 42321)]
+#[stubr::mock(port = 4321)]
 async fn basic() -> Result<(), Error> {
     let pool = reset()?;
 
@@ -55,7 +55,7 @@ async fn basic() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 42321)]
+#[stubr::mock(port = 4321)]
 async fn next() -> Result<(), Error> {
     let pool = reset()?;
     wait_for_stubr().await?;
@@ -101,7 +101,7 @@ async fn next() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 42321)]
+#[stubr::mock(port = 4321)]
 async fn no_prompt() -> Result<(), Error> {
     let pool = reset()?;
 

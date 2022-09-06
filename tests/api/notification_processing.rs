@@ -20,7 +20,7 @@ async fn test_receive_notification_subscribed_top_level() -> Result<(), Error> {
             "tests/test_specific_stubs/notifications_processing",
         ],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -133,7 +133,7 @@ async fn test_receive_notification_subscribed_specific_path() -> Result<(), Erro
             "tests/test_specific_stubs/notifications_processing",
         ],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -218,7 +218,7 @@ async fn test_receive_notification_unknown() -> Result<(), Error> {
             "tests/test_specific_stubs/notifications_processing",
         ],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),

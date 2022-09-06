@@ -13,7 +13,7 @@ use rumba::db::users::{create_or_update_user, root_set_is_admin};
 use serde_json::json;
 
 #[actix_rt::test]
-#[stubr::mock(port = 42321)]
+#[stubr::mock(port = 4321)]
 async fn find_user() -> Result<(), Error> {
     reset()?;
     wait_for_stubr().await?;

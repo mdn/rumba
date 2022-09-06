@@ -10,13 +10,13 @@
       "Content-Type": "application/json"
     },
     "jsonBody": {
-      "authorization_endpoint": "http://localhost:42321/authorization",
-      "introspection_endpoint": "http://localhost:42321/v1/introspect",
-      "issuer": "http://localhost:42321",
-      "jwks_uri": "http://localhost:42321/v1/jwks",
-      "revocation_endpoint": "http://localhost:42321/v1/destroy",
-      "token_endpoint": "http://localhost:42321/v1/token",
-      "userinfo_endpoint": "http://localhost:42321/v1/profile",
+      "authorization_endpoint": "http://localhost:4321/authorization",
+      "introspection_endpoint": "http://localhost:4321/v1/introspect",
+      "issuer": "http://localhost:4321",
+      "jwks_uri": "http://localhost:4321/v1/jwks",
+      "revocation_endpoint": "http://localhost:4321/v1/destroy",
+      "token_endpoint": "http://localhost:4321/v1/token",
+      "userinfo_endpoint": "http://localhost:4321/v1/profile",
       "claims_supported": [
         "aud",
         "exp",

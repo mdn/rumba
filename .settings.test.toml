@@ -6,7 +6,7 @@ host = "0.0.0.0"
 port = 8000
 
 [auth]
-issuer_url = "http://localhost:42321"
+issuer_url = "http://localhost:4321"
 redirect_url = "http://localhost:8000/users/fxa/login/callback/"
 scopes = "openid profile email profile:subscriptions"
 auth_cookie_name = "auth-cookie"
@@ -17,8 +17,8 @@ auth_cookie_key = "DUwIFZuUYzRhHPlhOm6DwTHSDUSyR5SyvZHIeHdx4DIanxm5/GD/4dqXROLvn
 admin_update_bearer_token="TEST_TOKEN"
 
 [application]
-document_base_url = "http://localhost:42321"
-notifications_update_base_url = "http://localhost:42321/notifications"
+document_base_url = "http://localhost:4321"
+notifications_update_base_url = "http://localhost:4321/notifications"
 subscriptions_limit_watched_items = 3
 subscriptions_limit_collections = 5
 

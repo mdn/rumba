@@ -19,7 +19,7 @@ async fn test_create_and_get_collection() -> Result<(), Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -65,7 +65,7 @@ async fn test_create_and_get_collection_with_empty_title() -> Result<(), Error> 
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -104,7 +104,7 @@ async fn test_create_get_delete_create_collection() -> Result<(), Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -168,7 +168,7 @@ async fn test_pagination_default_sort_by_created() -> Result<(), Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -279,7 +279,7 @@ async fn test_create_fails_404_no_index_found() -> Result<(), Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -315,7 +315,7 @@ async fn test_filters_by_custom_name_over_title() -> Result<(), Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -387,7 +387,7 @@ async fn test_query_finds_strings_in_notes() -> Result<(), Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -446,7 +446,7 @@ async fn test_delete_collection() -> Result<(), Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -487,7 +487,7 @@ async fn test_undelete_collection() -> Result<(), Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -545,7 +545,7 @@ async fn test_delete_collection_via_post() -> Result<(), Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -596,7 +596,7 @@ async fn test_collection_subscription_limits() -> Result<(), Error> {
             "tests/test_specific_stubs/collections_core_user",
         ],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),

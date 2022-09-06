@@ -13,7 +13,7 @@ async fn do_request(
     let stubr = Stubr::start_blocking_with(
         vec!["tests/test_specific_stubs/search"],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             verbose: Some(true),
             global_delay: None,
             latency: None,

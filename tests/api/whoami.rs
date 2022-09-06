@@ -8,7 +8,7 @@ use serde_json::json;
 use stubr::{Config, Stubr};
 
 #[actix_rt::test]
-#[stubr::mock(port = 42321)]
+#[stubr::mock(port = 4321)]
 async fn whoami_anonymous_test() -> Result<(), Error> {
     let pool = reset()?;
     wait_for_stubr().await?;
@@ -29,7 +29,7 @@ async fn whoami_anonymous_test() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 42321)]
+#[stubr::mock(port = 4321)]
 async fn whoami_logged_in_test() -> Result<(), Error> {
     let pool = reset()?;
     wait_for_stubr().await?;
@@ -63,7 +63,7 @@ async fn whoami_logged_in_test() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 42321)]
+#[stubr::mock(port = 4321)]
 async fn whoami_settings_test() -> Result<(), Error> {
     let pool = reset()?;
     wait_for_stubr().await?;
@@ -173,7 +173,7 @@ async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/whoami"],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),

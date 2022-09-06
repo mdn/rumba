@@ -62,7 +62,7 @@ fn assert_last_fxa_webhook_with_retry(
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 42321)]
+#[stubr::mock(port = 4321)]
 async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
     let set_token =
         include_str!("../data/set_tokens/set_token_subscription_state_change_to_10m.txt");
@@ -122,7 +122,7 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 42321)]
+#[stubr::mock(port = 4321)]
 async fn subscription_state_change_to_core_test_empty_subscription() -> Result<(), Error> {
     let set_token =
         include_str!("../data/set_tokens/set_token_subscription_state_change_to_core.txt");
@@ -130,7 +130,7 @@ async fn subscription_state_change_to_core_test_empty_subscription() -> Result<(
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 42321)]
+#[stubr::mock(port = 4321)]
 async fn subscription_state_change_to_core_test_inactive() -> Result<(), Error> {
     let set_token =
         include_str!("../data/set_tokens/set_token_subscription_state_change_to_core_inactive.txt");
@@ -189,7 +189,7 @@ async fn delete_user_test() -> Result<(), Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -249,7 +249,7 @@ async fn delete_user_test() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 42321)]
+#[stubr::mock(port = 4321)]
 async fn invalid_set_test() -> Result<(), Error> {
     let set_token = include_str!("../data/set_tokens/set_token_delete_user_invalid.txt");
     let pool = reset()?;
@@ -286,7 +286,7 @@ async fn change_profile_test() -> Result<(), Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs"],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
@@ -315,7 +315,7 @@ async fn change_profile_test() -> Result<(), Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/fxa_webhooks"],
         Config {
-            port: Some(42321),
+            port: Some(4321),
             latency: None,
             global_delay: None,
             verbose: Some(true),
