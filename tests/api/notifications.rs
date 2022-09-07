@@ -12,7 +12,7 @@ use serde_json::json;
 #[stubr::mock(port = 4321)]
 async fn test_get_notifications() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -100,6 +100,7 @@ async fn test_get_notifications() -> Result<(), Error> {
         .await;
     res_json = read_json(res).await;
     assert_eq!(res_json["items"].as_array().unwrap().len(), 0);
+    drop(stubr);
     Ok(())
 }
 
@@ -107,7 +108,7 @@ async fn test_get_notifications() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn test_mark_all_read() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -132,6 +133,7 @@ async fn test_mark_all_read() -> Result<(), Error> {
     items = res_json["items"].as_array().unwrap();
     assert_eq!(items.len(), 100);
     items.iter().for_each(|val| assert_eq!(val["read"], true));
+    drop(stubr);
     Ok(())
 }
 
@@ -139,7 +141,7 @@ async fn test_mark_all_read() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn test_mark_id_as_read() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -169,6 +171,7 @@ async fn test_mark_id_as_read() -> Result<(), Error> {
     assert_eq!(items[1]["read"], true);
     assert_eq!(items[2]["read"], false);
 
+    drop(stubr);
     Ok(())
 }
 
@@ -177,7 +180,7 @@ async fn test_mark_id_as_read() -> Result<(), Error> {
 
 async fn test_star_unstar_many() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -225,6 +228,7 @@ async fn test_star_unstar_many() -> Result<(), Error> {
     assert_eq!(items[0]["starred"], true);
     assert_eq!(items[1]["starred"], false);
     assert_eq!(items[2]["starred"], false);
+    drop(stubr);
     Ok(())
 }
 
@@ -233,7 +237,7 @@ async fn test_star_unstar_many() -> Result<(), Error> {
 
 async fn test_toggle_starred() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -274,6 +278,7 @@ async fn test_toggle_starred() -> Result<(), Error> {
     assert_eq!(items[0]["starred"], false);
     assert_eq!(items[1]["starred"], false);
     assert_eq!(items[2]["starred"], false);
+    drop(stubr);
     Ok(())
 }
 
@@ -282,7 +287,7 @@ async fn test_toggle_starred() -> Result<(), Error> {
 
 async fn test_delete_and_undo() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -320,6 +325,7 @@ async fn test_delete_and_undo() -> Result<(), Error> {
     assert_eq!(items[1]["id"], 9);
     assert_eq!(items[2]["id"], 8);
 
+    drop(stubr);
     Ok(())
 }
 
@@ -328,7 +334,7 @@ async fn test_delete_and_undo() -> Result<(), Error> {
 
 async fn test_delete_many() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -361,6 +367,7 @@ async fn test_delete_many() -> Result<(), Error> {
     assert_eq!(items[1]["id"], 6);
     assert_eq!(items[2]["id"], 5);
 
+    drop(stubr);
     Ok(())
 }
 

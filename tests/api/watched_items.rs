@@ -15,7 +15,7 @@ use stubr::{Config, Stubr};
 async fn test_create_get_watched_items() -> Result<(), Error> {
     let pool = reset()?;
 
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
             port: Some(4321),
@@ -24,7 +24,7 @@ async fn test_create_get_watched_items() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -86,6 +86,7 @@ async fn test_create_get_watched_items() -> Result<(), Error> {
         "docs.web.css.1.first.bcd.in.array"
     );
 
+    drop(stubr);
     Ok(())
 }
 
@@ -93,7 +94,7 @@ async fn test_create_get_watched_items() -> Result<(), Error> {
 async fn test_unwatch_many() -> Result<(), Error> {
     let pool = reset()?;
 
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
             port: Some(4321),
@@ -102,7 +103,7 @@ async fn test_unwatch_many() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -144,13 +145,14 @@ async fn test_unwatch_many() -> Result<(), Error> {
         .collect();
 
     to_unwatch.iter().for_each(|v| assert!(!vals.contains(v)));
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_single_item_operations() -> Result<(), Error> {
     let pool = reset()?;
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
             port: Some(4321),
@@ -159,7 +161,7 @@ async fn test_single_item_operations() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -215,6 +217,7 @@ async fn test_single_item_operations() -> Result<(), Error> {
     res_json = read_json(result).await;
     assert_eq!(res_json["status"].as_str().unwrap(), "unwatched");
 
+    drop(stubr);
     Ok(())
 }
 
@@ -241,7 +244,7 @@ async fn create_watched_items(
 async fn test_watched_item_subscription_limit() -> Result<(), Error> {
     let pool = reset()?;
 
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec![
             "tests/stubs",
             "tests/test_specific_stubs/collections",
@@ -254,7 +257,7 @@ async fn test_watched_item_subscription_limit() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -332,5 +335,6 @@ async fn test_watched_item_subscription_limit() -> Result<(), Error> {
     res_json = read_json(res).await;
     assert!(!res_json["subscription_limit_reached"].as_bool().unwrap(),);
 
+    drop(stubr);
     Ok(())
 }

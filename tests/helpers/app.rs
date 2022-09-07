@@ -121,7 +121,7 @@ pub async fn init_test(
     anyhow::Error,
 > {
     let pool = reset()?;
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         custom_stubs,
         Config {
             port: Some(4321),
@@ -133,5 +133,5 @@ pub async fn init_test(
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let logged_in_client = TestHttpClient::new(service).await;
-    Ok((logged_in_client, _stubr))
+    Ok((logged_in_client, stubr))
 }

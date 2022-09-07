@@ -16,7 +16,7 @@ use serde_json::json;
 #[stubr::mock(port = 4321)]
 async fn find_user() -> Result<(), Error> {
     reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let pool = get_pool();
     let mut conn = pool.get()?;
 
@@ -207,5 +207,6 @@ async fn find_user() -> Result<(), Error> {
         }),
     )
     .await;
+    drop(stubr);
     Ok(())
 }

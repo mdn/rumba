@@ -14,7 +14,7 @@ use serde_json::json;
 
 #[actix_rt::test]
 async fn test_adding_to_default_collection_updates_last_modifed() -> Result<(), Error> {
-    let (mut client, _stubr) =
+    let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
     let collections_base_url = "/api/v2/collections/";
     let whoamibase = "/api/v1/whoami";
@@ -67,12 +67,13 @@ async fn test_adding_to_default_collection_updates_last_modifed() -> Result<(), 
     )
     .await;
 
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_deleting_from_default_updates_last_modified() -> Result<(), Error> {
-    let (mut client, _stubr) =
+    let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
     let collections_base_url = "/api/v2/collections/";
     let whoamibase = "/api/v1/whoami";
@@ -122,12 +123,13 @@ async fn test_deleting_from_default_updates_last_modified() -> Result<(), Error>
     )
     .await;
 
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_adding_deleting_to_collections_v1_updates_last_modifed() -> Result<(), Error> {
-    let (mut client, _stubr) =
+    let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
     let base_url = "/api/v1/plus/collection/?url=/en-US/docs/Web/CSS";
     let whoamibase = "/api/v1/whoami";
@@ -199,12 +201,13 @@ async fn test_adding_deleting_to_collections_v1_updates_last_modifed() -> Result
     )
     .await;
 
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_operations_on_other_collections_not_update_last_modified() -> Result<(), Error> {
-    let (mut client, _stubr) =
+    let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
     let collections_base_url = "/api/v2/collections/";
     let whoamibase = "/api/v1/whoami";
@@ -241,5 +244,6 @@ async fn test_operations_on_other_collections_not_update_last_modified() -> Resu
     whoami = client.get(whoamibase, None).await;
     assert_ok_with_json_containing(whoami, json!({ "settings": null })).await;
 
+    drop(stubr);
     Ok(())
 }
