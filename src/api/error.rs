@@ -8,6 +8,7 @@ use serde::Serialize;
 use serde_json::json;
 use thiserror::Error;
 use uuid::Uuid;
+use validator::ValidationErrors;
 
 pub const ERROR_ID_HEADER_NAME_STR: &str = "error-id";
 static ERROR_ID_HEADER_NAME: HeaderName = HeaderName::from_static(ERROR_ID_HEADER_NAME_STR);
@@ -73,6 +74,8 @@ pub enum ApiError {
     BlockingError(#[from] actix_web::error::BlockingError),
     #[error("DB Error: {0}")]
     DbError(#[from] DbError),
+    #[error("Validation error: {0}")]
+    ValidationError(#[from] ValidationErrors),
 }
 
 impl ApiError {
@@ -94,6 +97,7 @@ impl ApiError {
             Self::BlockingError(_) => "Blocking error",
             Self::CollectionNotFound(_) => "Collection not found",
             Self::DbError(_) => "DB error",
+            Self::ValidationError(_) => "Validation Error",
         }
     }
 }
@@ -117,6 +121,7 @@ impl ResponseError for ApiError {
             Self::Search(SearchError::Query { .. }) => StatusCode::BAD_REQUEST,
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
             Self::CollectionNotFound(_) => StatusCode::BAD_REQUEST,
+            Self::ValidationError(_) => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -138,6 +143,11 @@ impl ResponseError for ApiError {
             ApiError::CollectionNotFound(id) => builder.json(ErrorResponse {
                 code: status_code.as_u16(),
                 message: format!("Collection with id {} not found", id).as_str(),
+                error: self.name(),
+            }),
+            ApiError::ValidationError(errors) => builder.json(ErrorResponse {
+                code: status_code.as_u16(),
+                message: format!("Error validating input {0}", errors).as_str(),
                 error: self.name(),
             }),
             _ if status_code == StatusCode::INTERNAL_SERVER_ERROR => builder.json(ErrorResponse {

@@ -20,9 +20,9 @@ use crate::helpers::to_utc;
 use actix_web::web::Data;
 use actix_web::{web, HttpRequest, HttpResponse};
 use chrono::NaiveDateTime;
-
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 
 #[derive(Deserialize)]
 pub struct CollectionItemQueryParams {
@@ -71,22 +71,44 @@ pub struct MultipleCollectionResponse {
     pub items: Vec<CollectionItem>,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Validate, Clone)]
 pub struct CollectionItemCreationRequest {
+    #[validate(length(
+        min = 1,
+        max = 1024,
+        message = "'title' must be between 1 and 1024 chars"
+    ))]
     pub title: String,
+    #[validate(length(min = 1, max = 1024))]
     pub url: String,
+    #[validate(length(max = 65536, message = "'notes' must not be longer than 65536 chars"))]
     pub notes: Option<String>,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Validate, Clone)]
 pub struct CollectionItemModificationRequest {
+    #[validate(length(
+        min = 1,
+        max = 1024,
+        message = "'title' must be between 1 and 1024 chars"
+    ))]
     pub title: String,
+    #[validate(length(max = 65536, message = "'notes' must not be longer than 65536 chars"))]
     pub notes: Option<String>,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Validate, Clone)]
 pub struct MultipleCollectionCreationRequest {
+    #[validate(length(
+        min = 1,
+        max = 1024,
+        message = "'name' must be between 1 and 1024 chars"
+    ))]
     pub name: String,
+    #[validate(length(
+        max = 65536,
+        message = "'description' must not be longer than 65536 chars"
+    ))]
     pub description: Option<String>,
 }
 
@@ -233,6 +255,7 @@ pub async fn create_multiple_collection(
     user_id: UserId,
     data: web::Json<MultipleCollectionCreationRequest>,
 ) -> Result<HttpResponse, ApiError> {
+    data.validate()?;
     let mut conn_pool = pool.get()?;
     let user = get_user(&mut conn_pool, user_id.id)?;
     let req = data.into_inner();
@@ -255,6 +278,7 @@ pub async fn modify_collection(
     collection_id: web::Path<i64>,
     data: web::Json<MultipleCollectionCreationRequest>,
 ) -> Result<HttpResponse, ApiError> {
+    data.validate()?;
     let mut conn_pool = pool.get()?;
     let user = get_user(&mut conn_pool, user_id.id)?;
     let req = data.into_inner();
@@ -287,6 +311,7 @@ pub async fn modify_collection_item_in_collection(
     params: web::Path<(i64, i64)>,
     data: web::Json<CollectionItemModificationRequest>,
 ) -> Result<HttpResponse, ApiError> {
+    data.validate()?;
     let mut conn_pool = pool.get()?;
     let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
     let (collection_id, item_id) = params.into_inner();
@@ -305,6 +330,7 @@ pub async fn add_collection_item_to_collection(
     collection_id: web::Path<i64>,
     data: web::Json<CollectionItemCreationRequest>,
 ) -> Result<HttpResponse, ApiError> {
+    data.validate()?;
     let mut conn_pool = pool.get()?;
     let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
     let c_id = collection_id.into_inner();
