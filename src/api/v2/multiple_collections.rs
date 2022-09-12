@@ -22,7 +22,7 @@ use actix_web::{web, HttpRequest, HttpResponse};
 use chrono::NaiveDateTime;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use validator::{Validate};
+use validator::Validate;
 
 #[derive(Deserialize)]
 pub struct CollectionItemQueryParams {
