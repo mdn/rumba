@@ -53,7 +53,7 @@ async fn find_user() -> Result<(), Error> {
         &mut conn,
         rumba::fxa::FxAUser {
             email: "test2@test.com".into(),
-            locale: "en".into(),
+            locale: None,
             display_name: None,
             avatar: None,
             avatar_default: true,
