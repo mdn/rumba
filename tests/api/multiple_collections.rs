@@ -1,6 +1,7 @@
 use crate::helpers::api_assertions::{
     assert_bad_request_with_json_containing, assert_conflict_with_json_containing, assert_created,
-    assert_created_with_json_containing, assert_ok, assert_ok_with_json_containing,
+    assert_created_returning_json, assert_created_with_json_containing, assert_ok,
+    assert_ok_with_json_containing,
 };
 use crate::helpers::app::init_test;
 use crate::helpers::http_client::PostPayload;
@@ -549,5 +550,140 @@ async fn test_no_modify_delete_default() -> Result<(), Error> {
     )
     .await;
 
+    Ok(())
+}
+
+#[actix_rt::test]
+async fn test_long_collection_name_is_bad_request() -> Result<(), Error> {
+    let (mut client, _stubr) =
+        init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+    let base_url = "/api/v2/collections/";
+    let two_hundred_twenty = "This is a really long title that has over 1024 characeters 5 times this is 1100. What were we thinking creeating such a long title really? 1024 really is a lot of character. To make this easier let's repeat this 5 times.".to_owned();
+    let mut one_thousand_one_hundred = "".to_owned();
+    for _ in 0..5 {
+        one_thousand_one_hundred.push_str(two_hundred_twenty.clone().as_str())
+    }
+    let res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": one_thousand_one_hundred,
+                "description": "Test description"
+            }))),
+        )
+        .await;
+    assert_bad_request_with_json_containing(res, json!({"code":400,"error":"Validation Error","message":"Error validating input name: 'name' must be between 1 and 1024 chars"})).await;
+    Ok(())
+}
+
+#[actix_rt::test]
+async fn test_very_long_collection_description_is_bad_request() -> Result<(), Error> {
+    let (mut client, _stubr) =
+        init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+    let base_url = "/api/v2/collections/";
+
+    let one_hundred_char = "This sentence is exactly one hundred characters long which isn't that long but long enough for this.".to_owned();
+    let mut sixty_six_thousand = "".to_owned();
+    for _ in 0..660 {
+        sixty_six_thousand.push_str(one_hundred_char.clone().as_str())
+    }
+
+    let res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "This name is short enough",
+                "description": sixty_six_thousand
+            }))),
+        )
+        .await;
+    assert_bad_request_with_json_containing(res, json!({"code":400,"error":"Validation Error","message":"Error validating input description: 'description' must not be longer than 65536 chars"})).await;
+    Ok(())
+}
+
+#[actix_rt::test]
+async fn test_long_collection_item_title_is_bad_request() -> Result<(), Error> {
+    let (mut client, _stubr) =
+        init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+    let base_url = "/api/v2/collections/";
+
+    let res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "This is a really nice title",
+                "description": "Test description"
+            }))),
+        )
+        .await;
+    let body = assert_created_returning_json(res).await;
+
+    let two_hundred_twenty = "This is a really long title that has over 1024 characeters 5 times this is 1100. What were we thinking creeating such a long title really? 1024 really is a lot of character. To make this easier let's repeat this 5 times.".to_owned();
+    let mut one_thousand_one_hundred = "".to_owned();
+    for _ in 0..5 {
+        one_thousand_one_hundred.push_str(two_hundred_twenty.clone().as_str())
+    }
+
+    let res = client
+        .post(
+            format!("{}{}/items/", base_url, body["id"].as_str().unwrap()).as_str(),
+            None,
+            Some(PostPayload::Json(json!({
+                "title" : one_thousand_one_hundred,
+                "url": "/en-US/docs/Web/CSS1"
+            }
+            ))),
+        )
+        .await;
+    assert_bad_request_with_json_containing(res, json!({"code":400,"error":"Validation Error","message":"Error validating input title: 'title' must be between 1 and 1024 chars"})).await;
+    Ok(())
+}
+
+#[actix_rt::test]
+async fn test_very_long_collection_item_notes_is_bad_request() -> Result<(), Error> {
+    let (mut client, _stubr) =
+        init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+    let base_url = "/api/v2/collections/";
+
+    let one_hundred_char = "This sentence is exactly one hundred characters long which isn't that long but long enough for this.".to_owned();
+    let mut sixty_six_thousand = "".to_owned();
+    for _ in 0..660 {
+        sixty_six_thousand.push_str(one_hundred_char.clone().as_str())
+    }
+
+    let res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "This name is short enough",
+                "description": "Short description"
+            }))),
+        )
+        .await;
+    let body = assert_created_returning_json(res).await;
+
+    let one_hundred_char = "This sentence is exactly one hundred characters long which isn't that long but long enough for this.".to_owned();
+    let mut sixty_six_thousand = "".to_owned();
+    for _ in 0..660 {
+        sixty_six_thousand.push_str(one_hundred_char.clone().as_str())
+    }
+
+    let res = client
+        .post(
+            format!("{}{}/items/", base_url, body["id"].as_str().unwrap()).as_str(),
+            None,
+            Some(PostPayload::Json(json!({
+                "title" : "Short and sweet",
+                "url": "/en-US/docs/Web/CSS1",
+                "notes": sixty_six_thousand
+            }
+            ))),
+        )
+        .await;
+    assert_bad_request_with_json_containing(res, json!({"code":400,"error":"Validation Error","message":"Error validating input notes: 'notes' must not be longer than 65536 chars"})).await;
     Ok(())
 }

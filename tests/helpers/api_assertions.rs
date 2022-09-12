@@ -18,6 +18,11 @@ pub fn assert_created(res: RumbaTestResponse) {
     assert_eq!(res.status(), StatusCode::CREATED);
 }
 
+pub async fn assert_created_returning_json(res: RumbaTestResponse) -> serde_json::Value {
+    assert_eq!(res.status(), StatusCode::CREATED);
+    read_json(res).await
+}
+
 pub fn assert_ok(res: RumbaTestResponse) {
     assert_eq!(res.status(), StatusCode::OK);
 }
