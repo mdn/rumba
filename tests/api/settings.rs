@@ -35,7 +35,7 @@ async fn test_adding_to_default_collection_updates_last_modifed() -> Result<(), 
     let pool = get_pool();
     let mut conn = pool.get()?;
     let created = schema::collections::table
-        .select(schema::collections::created_at)
+        .select(schema::collections::updated_at)
         .first::<NaiveDateTime>(&mut conn)?;
 
     whoami = client.get(whoamibase, None).await;
@@ -92,14 +92,14 @@ async fn test_deleting_from_default_updates_last_modified() -> Result<(), Error>
 
     let pool = get_pool();
     let mut conn = pool.get()?;
-    let (id, created) = schema::collections::table
-        .select((schema::collections::id, schema::collections::created_at))
+    let (id, updated) = schema::collections::table
+        .select((schema::collections::id, schema::collections::updated_at))
         .first::<(i64, NaiveDateTime)>(&mut conn)?;
 
     whoami = client.get(whoamibase, None).await;
     assert_ok_with_json_containing(
         whoami,
-        json!({"settings" : { "collections_last_modified_time" : naive_to_date_time_utc(created) }}),
+        json!({"settings" : { "collections_last_modified_time" : naive_to_date_time_utc(updated) }}),
     )
     .await;
 

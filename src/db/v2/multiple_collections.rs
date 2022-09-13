@@ -11,6 +11,7 @@ use crate::diesel::OptionalExtension;
 use crate::diesel::PgTextExpressionMethods;
 use crate::util::normalize_uri;
 
+use chrono::Utc;
 use diesel::dsl::count;
 use diesel::update;
 use diesel::QueryDsl;
@@ -66,6 +67,7 @@ pub fn create_multiple_collection_for_user(
         deleted_at: None,
         name: data.name.to_owned(),
         notes: data.description.to_owned(),
+        updated_at: Utc::now().naive_utc(),
         user_id,
     };
     //MultipleCollectionsQueryNoCount prevents type errors with returning all columns of the created object (as count of collection items is missing)
@@ -86,6 +88,7 @@ pub fn edit_multiple_collection_for_user(
         deleted_at: None,
         name: data.name.to_owned(),
         notes: data.description.to_owned(),
+        updated_at: Utc::now().naive_utc(),
         user_id,
     };
 
@@ -159,6 +162,7 @@ pub fn create_default_multiple_collection_for_user(
         deleted_at: None,
         name: "Default".to_string(),
         notes: None,
+        updated_at: Utc::now().naive_utc(),
         user_id,
     };
     let res = insert_into(schema::multiple_collections::table)
