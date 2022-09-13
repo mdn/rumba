@@ -26,6 +26,7 @@ pub struct MultipleCollectionInsert {
     pub deleted_at: Option<NaiveDateTime>,
     pub user_id: i64,
     pub notes: Option<String>,
+    pub updated_at: NaiveDateTime,
     pub name: String,
 }
 
@@ -37,6 +38,7 @@ pub struct CollectionItemInsert {
     pub user_id: i64,
     pub notes: Option<String>,
     pub multiple_collection_id: i64,
+    pub updated_at: NaiveDateTime,
 }
 
 #[derive(Identifiable, Serialize, Queryable, Associations, PartialEq, Eq, Debug)]

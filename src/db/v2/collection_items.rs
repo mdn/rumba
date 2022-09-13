@@ -207,6 +207,7 @@ pub fn create_collection_item(
         notes: form.notes.clone(),
         custom_name,
         user_id,
+        updated_at: Utc::now().naive_utc(),
         multiple_collection_id: collection_id,
     };
 
