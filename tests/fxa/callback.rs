@@ -7,13 +7,14 @@ use url::Url;
 
 use crate::helpers::app::test_app_with_login;
 use crate::helpers::db::reset;
+use crate::helpers::wait_for_stubr;
 
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn basic() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
-    let app = test_app_with_login().await.unwrap();
+    let app = test_app_with_login(&pool).await.unwrap();
     let app = test::init_service(app).await;
 
     let login_req = test::TestRequest::get()
@@ -49,15 +50,17 @@ async fn basic() -> Result<(), Error> {
     assert!(res.status().is_redirection());
     assert_eq!(res.headers().get("Location").unwrap(), "/");
 
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn next() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
+    wait_for_stubr().await?;
 
-    let app = test_app_with_login().await.unwrap();
+    let app = test_app_with_login(&pool).await.unwrap();
     let app = test::init_service(app).await;
 
     let login_req = test::TestRequest::get()
@@ -93,15 +96,16 @@ async fn next() -> Result<(), Error> {
     assert!(res.status().is_redirection());
     assert_eq!(res.headers().get("Location").unwrap(), "/foo");
 
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn no_prompt() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
-    let app = test_app_with_login().await.unwrap();
+    let app = test_app_with_login(&pool).await.unwrap();
     let app = test::init_service(app).await;
 
     let login_req = test::TestRequest::get()
@@ -144,5 +148,6 @@ async fn no_prompt() -> Result<(), Error> {
     assert!(res.status().is_redirection());
     assert_eq!(res.headers().get("Location").unwrap(), "/foo");
 
+    drop(stubr);
     Ok(())
 }

@@ -10,9 +10,9 @@ use stubr::{Config, Stubr};
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn whoami_anonymous_test() -> Result<(), Error> {
-    reset()?;
-    wait_for_stubr()?;
-    let app = test_app_with_login().await.unwrap();
+    let pool = reset()?;
+    wait_for_stubr().await?;
+    let app = test_app_with_login(&pool).await.unwrap();
     let service = test::init_service(app).await;
     let request = test::TestRequest::get()
         .uri("/api/v1/whoami")
@@ -24,16 +24,16 @@ async fn whoami_anonymous_test() -> Result<(), Error> {
 
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Iceland");
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn whoami_logged_in_test() -> Result<(), Error> {
-    reset()?;
-    wait_for_stubr()?;
-
-    let app = test_app_with_login().await?;
+    let pool = reset()?;
+    wait_for_stubr().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
@@ -58,16 +58,16 @@ async fn whoami_logged_in_test() -> Result<(), Error> {
         json["subscription_type"], "mdn_plus_5m",
         "Subscription type wrong"
     );
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn whoami_settings_test() -> Result<(), Error> {
-    reset()?;
-    wait_for_stubr()?;
-
-    let app = test_app_with_login().await?;
+    let pool = reset()?;
+    wait_for_stubr().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
@@ -162,14 +162,15 @@ async fn whoami_settings_test() -> Result<(), Error> {
     assert_eq!(json["settings"]["locale_override"], "zh-TW");
     assert_eq!(json["settings"]["multiple_collections"], false);
 
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/whoami"],
         Config {
             port: Some(4321),
@@ -178,9 +179,9 @@ async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
             verbose: Some(true),
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
@@ -202,5 +203,6 @@ async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
     );
     assert_eq!(json["is_subscriber"], true);
     assert_eq!(json["subscription_type"], "mdn_plus_5y");
+    drop(stubr);
     Ok(())
 }

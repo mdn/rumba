@@ -21,8 +21,8 @@ actix-identity = "0.4"
 actix-session = { version = "0.7", features = ["cookie-session"] }
 actix-web-httpauth = "0.6"
 
-diesel = { version = "2.0.0-rc.0", features = ["postgres", "uuid", "r2d2", "chrono", "serde_json"] }
-diesel_migrations = "2.0.0-rc.0"
+diesel = { version = "2", features = ["postgres", "uuid", "r2d2", "chrono", "serde_json"] }
+diesel_migrations = "2"
 diesel-derive-enum = { version = "2.0.0-rc.0", features = ["postgres"] }
 
 elasticsearch = "7.14.0-alpha.1"
