@@ -38,6 +38,7 @@ pub struct Application {
     pub notifications_update_base_url: String,
     pub subscriptions_limit_watched_items: i64,
     pub subscriptions_limit_collections: i64,
+    pub encoded_id_salt: String
 }
 
 #[derive(Deserialize)]

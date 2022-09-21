@@ -16,10 +16,12 @@ use crate::db::v2::multiple_collections::{
     is_default_collection, multiple_collection_exists,
 };
 use crate::db::Pool;
-use crate::helpers::to_utc;
+use crate::helpers::{to_utc};
+use crate::settings::SETTINGS;
 use actix_web::web::Data;
 use actix_web::{web, HttpRequest, HttpResponse};
 use chrono::NaiveDateTime;
+use harsh::Harsh;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -133,10 +135,53 @@ pub struct ConflictResponse {
     error: String,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct EncodedId {    
+    pub id: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct CollectionAndItemId {    
+    pub collection_id: String,
+    pub item_id: String
+}
+
+impl EncodedId {
+    pub fn get(&self) -> Result<i64,ApiError> {
+        let val = Harsh::builder()
+            .salt(SETTINGS.application.encoded_id_salt.to_owned())
+            .length(4)
+            .build()
+            .unwrap()
+            .decode(self.id.as_str()).map_err(|_| ApiError::Unauthorized)?;
+            Ok(val[0] as i64)
+    }
+
+    pub fn encode(val: i64) -> String {
+        Harsh::builder()
+        .salt(SETTINGS.application.encoded_id_salt.to_owned())
+        .length(4)
+        .build()
+        .unwrap()
+        .encode(&[val as u64])
+    }
+
+    pub fn decode(val: String) -> Result<i64,ApiError> {
+        let val = Harsh::builder()
+        .salt(SETTINGS.application.encoded_id_salt.to_owned())
+        .length(4)
+        .build()
+        .unwrap()
+        .decode(val).map_err(|_| ApiError::Unauthorized)?;
+
+        Ok(val[0] as i64)
+    }
+}
+
 impl From<&(i64, CollectionItemAndDocumentQuery)> for LookupEntry {
     fn from(val: &(i64, CollectionItemAndDocumentQuery)) -> Self {
         LookupEntry {
-            collection_id: val.0.to_string(),
+            collection_id: EncodedId::encode(val.0),
             item: val.1.to_owned().into(),
         }
     }
@@ -167,7 +212,7 @@ impl From<CollectionItemAndDocumentQuery> for CollectionItem {
             notes: collection_and_document.notes,
             url,
             title: title.unwrap_or_default(),
-            id: collection_and_document.id.to_string(),
+            id: EncodedId::encode(collection_and_document.id),
         }
     }
 }
@@ -179,7 +224,7 @@ impl From<MultipleCollectionsQuery> for MultipleCollectionInfo {
             created_at: collection.created_at,
             updated_at: collection.updated_at,
             description: collection.notes,
-            id: collection.id.to_string(),
+            id: EncodedId::encode(collection.id),
             article_count: collection.collection_item_count.unwrap_or(0),
         }
     }
@@ -203,20 +248,20 @@ pub async fn get_collections(
 pub async fn get_collection_by_id(
     user_id: UserId,
     pool: web::Data<Pool>,
-    id: web::Path<i64>,
+    id: web::Path<EncodedId>,
     query: web::Query<CollectionItemQueryParams>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
     let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
     let collection_id = id.into_inner();
     let collection_info =
-        get_multiple_collection_by_id_for_user(&user, &mut conn_pool, &collection_id)?;
+        get_multiple_collection_by_id_for_user(&user, &mut conn_pool, &collection_id.get()?)?;
     if let Some(info) = collection_info {
         let collections_query = &query.into_inner();
         let res = get_collection_items_for_user_multiple_collection(
             &user,
             &mut conn_pool,
-            &collection_id,
+            &collection_id.get()?,
             collections_query,
         )?;
         let items = res.into_iter().map(Into::<CollectionItem>::into).collect();
@@ -226,21 +271,22 @@ pub async fn get_collection_by_id(
         };
         Ok(HttpResponse::Ok().json(collection_response))
     } else {
-        Err(ApiError::CollectionNotFound(collection_id))
+        Err(ApiError::CollectionNotFound(collection_id.id))
     }
 }
 
 pub async fn get_collection_item_in_collection_by_id(
     user_id: UserId,
     pool: web::Data<Pool>,
-    params: web::Path<(i64, i64)>,
+    path: web::Path<CollectionAndItemId>
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
     let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
-    let (collection_id, item_id) = params.into_inner();
+    let ids = &path.into_inner();
+    let (collection_id,item_id) = (EncodedId::decode(ids.collection_id.to_owned())?, EncodedId::decode(ids.item_id.to_owned())?);        
     let collection_exists = multiple_collection_exists(&user, &collection_id, &mut conn_pool)?;
     if !collection_exists {
-        return Err(ApiError::CollectionNotFound(collection_id));
+        return Err(ApiError::CollectionNotFound(ids.collection_id.to_owned()));
     }
     let res = get_collection_item_by_id(&user, &mut conn_pool, item_id)?;
     if let Some(item) = res {
@@ -275,7 +321,7 @@ pub async fn create_multiple_collection(
 pub async fn modify_collection(
     pool: Data<Pool>,
     user_id: UserId,
-    collection_id: web::Path<i64>,
+    collection_id: web::Path<EncodedId>,
     data: web::Json<MultipleCollectionCreationRequest>,
 ) -> Result<HttpResponse, ApiError> {
     data.validate()?;
@@ -285,19 +331,19 @@ pub async fn modify_collection(
     let c_id = collection_id.into_inner();
 
     // REMOVE this once Migration to V2 is completed. Allow modification of notes but not name.
-    if is_default_collection(&mut conn_pool, &user, c_id)? && req.name != "Default" {
+    if is_default_collection(&mut conn_pool, &user, c_id.get()?)? && req.name != "Default" {
         return Ok(HttpResponse::BadRequest().json(ConflictResponse {
             error: "Cannot modify default collection".to_owned(),
         }));
     }
 
-    let updated = edit_multiple_collection_for_user(&mut conn_pool, user.id, c_id, &req);
+    let updated = edit_multiple_collection_for_user(&mut conn_pool, user.id, c_id.get()?, &req);
     if let Err(db_err) = updated {
         match db_err {
             DbError::Conflict(_) => Ok(HttpResponse::Conflict().json(ConflictResponse {
                 error: format!("Collection with name '{}' already exists", &req.name),
             })),
-            DbError::NotFound(_) => Err(ApiError::CollectionNotFound(c_id)),
+            DbError::NotFound(_) => Err(ApiError::CollectionNotFound(c_id.id)),
             _ => Err(ApiError::DbError(db_err)),
         }
     } else {
@@ -308,16 +354,17 @@ pub async fn modify_collection(
 pub async fn modify_collection_item_in_collection(
     pool: Data<Pool>,
     user_id: UserId,
-    params: web::Path<(i64, i64)>,
+    path: web::Path<CollectionAndItemId>,
     data: web::Json<CollectionItemModificationRequest>,
 ) -> Result<HttpResponse, ApiError> {
     data.validate()?;
     let mut conn_pool = pool.get()?;
     let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
-    let (collection_id, item_id) = params.into_inner();
+    let ids = &path.into_inner();
+    let (collection_id,item_id) = (EncodedId::decode(ids.collection_id.to_owned())?, EncodedId::decode(ids.item_id.to_owned())?);    
     let collection_exists = multiple_collection_exists(&user, &collection_id, &mut conn_pool)?;
     if !collection_exists {
-        return Err(ApiError::CollectionNotFound(collection_id));
+        return Err(ApiError::CollectionNotFound(ids.collection_id.to_owned()));
     }
     update_collection_item(item_id, user.id, &mut conn_pool, &data.into_inner())?;
     Ok(HttpResponse::Ok().finish())
@@ -327,16 +374,16 @@ pub async fn add_collection_item_to_collection(
     pool: Data<Pool>,
     http_client: Data<Client>,
     user_id: UserId,
-    collection_id: web::Path<i64>,
+    collection_id: web::Path<EncodedId>,
     data: web::Json<CollectionItemCreationRequest>,
 ) -> Result<HttpResponse, ApiError> {
     data.validate()?;
     let mut conn_pool = pool.get()?;
     let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
     let c_id = collection_id.into_inner();
-    let collection_exists = multiple_collection_exists(&user, &c_id, &mut conn_pool)?;
+    let collection_exists = multiple_collection_exists(&user, &c_id.get()?, &mut conn_pool)?;
     if !collection_exists {
-        return Err(ApiError::CollectionNotFound(c_id));
+        return Err(ApiError::CollectionNotFound(c_id.id));
     }
     let creation_data = data.into_inner();
 
@@ -347,7 +394,7 @@ pub async fn add_collection_item_to_collection(
         &creation_data.url,
         metadata,
         &creation_data.to_owned(),
-        c_id,
+        c_id.get()?,
     );
 
     if let Err(db_err) = res {
@@ -365,27 +412,28 @@ pub async fn add_collection_item_to_collection(
 pub async fn remove_collection_item_from_collection(
     pool: Data<Pool>,
     user_id: UserId,
-    params: web::Path<(i64, i64)>,
+    path: web::Path<CollectionAndItemId>,    
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
     let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
-    let (collection_id, item_id) = params.into_inner();
-    if multiple_collection_exists_for_user(&user, &mut conn_pool, collection_id)? {
+    let ids = &path.into_inner();
+    let (collection_id,item_id) = (EncodedId::decode(ids.collection_id.to_owned())?, EncodedId::decode(ids.item_id.to_owned())?);    
+        if multiple_collection_exists_for_user(&user, &mut conn_pool, collection_id)? {
         delete_collection_item_in_collection(&user, &mut conn_pool, item_id)?;
         Ok(HttpResponse::Ok().finish())
     } else {
-        Err(ApiError::CollectionNotFound(collection_id))
+        Err(ApiError::CollectionNotFound(ids.collection_id.to_string()))
     }
 }
 
 pub async fn delete_collection(
     pool: Data<Pool>,
     user_id: UserId,
-    collection_id: web::Path<i64>,
+    collection_id: web::Path<EncodedId>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
     let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
-    let collection_id = collection_id.into_inner();
+    let collection_id = collection_id.into_inner().get()?;
     // REMOVE this once Migration to V2 is completed.
     if is_default_collection(&mut conn_pool, &user, collection_id)? {
         return Ok(HttpResponse::BadRequest().json(ConflictResponse {
