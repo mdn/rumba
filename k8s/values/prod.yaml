@@ -35,4 +35,4 @@ settings:
   search__cache_max_age: 43200
   search__query_max_length: 200
 
-  metrics__statsd_label: "rumba_prod"
+  metrics__statsd_label: rumba_prod
