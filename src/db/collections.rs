@@ -65,24 +65,21 @@ pub fn get_collection_items_paginated(
         .into_boxed();
 
     if let Some(query) = &query_params.q {
-        collections_query = collections_query
-            .filter(
-                schema::collections::custom_name.is_not_null().and(
+        collections_query = collections_query.filter(
+            schema::collections::custom_name
+                .is_not_null()
+                .and(
                     schema::collections::custom_name
                         .nullable()
                         .ilike(format!("%{}%", query)),
-                ),
-            )
-            .or_filter(
-                schema::collections::custom_name
+                )
+                .or(schema::collections::custom_name
                     .is_null()
-                    .and(schema::documents::title.ilike(format!("%{}%", query))),
-            )
-            .or_filter(
-                schema::collections::notes
+                    .and(schema::documents::title.ilike(format!("%{}%", query))))
+                .or(schema::collections::notes
                     .nullable()
-                    .ilike(format!("%{}%", query)),
-            );
+                    .ilike(format!("%{}%", query))),
+        );
     }
 
     collections_query = match query_params.sort {
