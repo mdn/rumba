@@ -82,7 +82,7 @@ async fn test_deleting_from_default_updates_last_modified() -> Result<(), Error>
     assert_ok_with_json_containing(whoami, json!({ "settings": null })).await;
     client
         .post(
-            format!("{}{}/items/", collections_base_url,EncodedId::encode(1)).as_str(),
+            format!("{}{}/items/", collections_base_url, EncodedId::encode(1)).as_str(),
             None,
             Some(PostPayload::Json(json!({
                 "title" : "Interesting CSS1",
@@ -107,7 +107,13 @@ async fn test_deleting_from_default_updates_last_modified() -> Result<(), Error>
 
     client
         .delete(
-            format!("{}{}/items/{}/", collections_base_url, EncodedId::encode(1), EncodedId::encode(1)).as_str(),
+            format!(
+                "{}{}/items/{}/",
+                collections_base_url,
+                EncodedId::encode(1),
+                EncodedId::encode(1)
+            )
+            .as_str(),
             None,
         )
         .await;

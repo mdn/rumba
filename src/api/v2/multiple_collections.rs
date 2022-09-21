@@ -16,7 +16,7 @@ use crate::db::v2::multiple_collections::{
     is_default_collection, multiple_collection_exists,
 };
 use crate::db::Pool;
-use crate::helpers::{to_utc};
+use crate::helpers::to_utc;
 use crate::settings::SETTINGS;
 use actix_web::web::Data;
 use actix_web::{web, HttpRequest, HttpResponse};
@@ -136,43 +136,45 @@ pub struct ConflictResponse {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct EncodedId {    
+pub struct EncodedId {
     pub id: String,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct CollectionAndItemId {    
+pub struct CollectionAndItemId {
     pub collection_id: String,
-    pub item_id: String
+    pub item_id: String,
 }
 
 impl EncodedId {
-    pub fn get(&self) -> Result<i64,ApiError> {
+    pub fn get(&self) -> Result<i64, ApiError> {
         let val = Harsh::builder()
             .salt(SETTINGS.application.encoded_id_salt.to_owned())
             .length(4)
             .build()
             .unwrap()
-            .decode(self.id.as_str()).map_err(|_| ApiError::Unauthorized)?;
-            Ok(val[0] as i64)
+            .decode(self.id.as_str())
+            .map_err(|_| ApiError::Unauthorized)?;
+        Ok(val[0] as i64)
     }
 
     pub fn encode(val: i64) -> String {
         Harsh::builder()
-        .salt(SETTINGS.application.encoded_id_salt.to_owned())
-        .length(4)
-        .build()
-        .unwrap()
-        .encode(&[val as u64])
+            .salt(SETTINGS.application.encoded_id_salt.to_owned())
+            .length(4)
+            .build()
+            .unwrap()
+            .encode(&[val as u64])
     }
 
-    pub fn decode(val: String) -> Result<i64,ApiError> {
+    pub fn decode(val: String) -> Result<i64, ApiError> {
         let val = Harsh::builder()
-        .salt(SETTINGS.application.encoded_id_salt.to_owned())
-        .length(4)
-        .build()
-        .unwrap()
-        .decode(val).map_err(|_| ApiError::Unauthorized)?;
+            .salt(SETTINGS.application.encoded_id_salt.to_owned())
+            .length(4)
+            .build()
+            .unwrap()
+            .decode(val)
+            .map_err(|_| ApiError::Unauthorized)?;
 
         Ok(val[0] as i64)
     }
@@ -278,12 +280,15 @@ pub async fn get_collection_by_id(
 pub async fn get_collection_item_in_collection_by_id(
     user_id: UserId,
     pool: web::Data<Pool>,
-    path: web::Path<CollectionAndItemId>
+    path: web::Path<CollectionAndItemId>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
     let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
     let ids = &path.into_inner();
-    let (collection_id,item_id) = (EncodedId::decode(ids.collection_id.to_owned())?, EncodedId::decode(ids.item_id.to_owned())?);        
+    let (collection_id, item_id) = (
+        EncodedId::decode(ids.collection_id.to_owned())?,
+        EncodedId::decode(ids.item_id.to_owned())?,
+    );
     let collection_exists = multiple_collection_exists(&user, &collection_id, &mut conn_pool)?;
     if !collection_exists {
         return Err(ApiError::CollectionNotFound(ids.collection_id.to_owned()));
@@ -361,7 +366,10 @@ pub async fn modify_collection_item_in_collection(
     let mut conn_pool = pool.get()?;
     let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
     let ids = &path.into_inner();
-    let (collection_id,item_id) = (EncodedId::decode(ids.collection_id.to_owned())?, EncodedId::decode(ids.item_id.to_owned())?);    
+    let (collection_id, item_id) = (
+        EncodedId::decode(ids.collection_id.to_owned())?,
+        EncodedId::decode(ids.item_id.to_owned())?,
+    );
     let collection_exists = multiple_collection_exists(&user, &collection_id, &mut conn_pool)?;
     if !collection_exists {
         return Err(ApiError::CollectionNotFound(ids.collection_id.to_owned()));
@@ -412,13 +420,16 @@ pub async fn add_collection_item_to_collection(
 pub async fn remove_collection_item_from_collection(
     pool: Data<Pool>,
     user_id: UserId,
-    path: web::Path<CollectionAndItemId>,    
+    path: web::Path<CollectionAndItemId>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
     let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
     let ids = &path.into_inner();
-    let (collection_id,item_id) = (EncodedId::decode(ids.collection_id.to_owned())?, EncodedId::decode(ids.item_id.to_owned())?);    
-        if multiple_collection_exists_for_user(&user, &mut conn_pool, collection_id)? {
+    let (collection_id, item_id) = (
+        EncodedId::decode(ids.collection_id.to_owned())?,
+        EncodedId::decode(ids.item_id.to_owned())?,
+    );
+    if multiple_collection_exists_for_user(&user, &mut conn_pool, collection_id)? {
         delete_collection_item_in_collection(&user, &mut conn_pool, item_id)?;
         Ok(HttpResponse::Ok().finish())
     } else {

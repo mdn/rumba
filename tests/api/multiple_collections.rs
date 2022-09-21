@@ -404,7 +404,8 @@ async fn test_delete_item_in_collection() -> Result<(), Error> {
     res = client
         .get(format!("{}{}/", base_url, collection_1).as_str(), None)
         .await;
-    let body = assert_ok_with_json_containing(res, json!({"id":collection_1,"article_count": 1})).await;
+    let body =
+        assert_ok_with_json_containing(res, json!({"id":collection_1,"article_count": 1})).await;
     let item_id = body["items"][0]["id"].as_str().unwrap();
 
     res = client
@@ -417,7 +418,11 @@ async fn test_delete_item_in_collection() -> Result<(), Error> {
     res = client
         .get(format!("{}{}/", base_url, collection_1).as_str(), None)
         .await;
-    assert_ok_with_json_containing(res, json!({"id": collection_1,"article_count": 0, "items": []})).await;
+    assert_ok_with_json_containing(
+        res,
+        json!({"id": collection_1,"article_count": 0, "items": []}),
+    )
+    .await;
 
     drop(stubr);
     Ok(())
