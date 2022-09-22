@@ -77,7 +77,7 @@ pub enum ApiError {
     #[error("Validation error: {0}")]
     ValidationError(#[from] ValidationErrors),
     #[error("Subscription limit reached")]
-    MultipleCollectionSubscriptionLimitReached
+    MultipleCollectionSubscriptionLimitReached,
 }
 
 impl ApiError {
@@ -100,7 +100,7 @@ impl ApiError {
             Self::CollectionNotFound(_) => "Collection not found",
             Self::DbError(_) => "DB error",
             Self::ValidationError(_) => "Validation Error",
-            Self::MultipleCollectionSubscriptionLimitReached => "Subscription limit reached"
+            Self::MultipleCollectionSubscriptionLimitReached => "Subscription limit reached",
         }
     }
 }

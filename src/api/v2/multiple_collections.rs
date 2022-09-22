@@ -13,8 +13,8 @@ use crate::db::v2::model::{CollectionItemAndDocumentQuery, MultipleCollectionsQu
 use crate::db::v2::multiple_collections::{
     create_multiple_collection_for_user, edit_multiple_collection_for_user,
     get_collection_items_for_user_multiple_collection, get_collections_and_items_containing_url,
-    get_multiple_collection_by_id_for_user, get_multiple_collections_for_user,
-    is_default_collection, multiple_collection_exists, get_count_of_multiple_collections_for_user,
+    get_count_of_multiple_collections_for_user, get_multiple_collection_by_id_for_user,
+    get_multiple_collections_for_user, is_default_collection, multiple_collection_exists,
 };
 use crate::db::Pool;
 use crate::helpers::to_utc;
@@ -263,7 +263,7 @@ pub async fn create_multiple_collection(
     let count = get_count_of_multiple_collections_for_user(&user, &mut conn_pool)?;
     let core_sub = Some(Subscription::Core) == user.get_subscription_type();
     if (count >= 3) && core_sub {
-        return Err(ApiError::MultipleCollectionSubscriptionLimitReached)
+        return Err(ApiError::MultipleCollectionSubscriptionLimitReached);
     }
     let created = create_multiple_collection_for_user(&mut conn_pool, user.id, &req);
 
