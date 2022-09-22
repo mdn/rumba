@@ -1,7 +1,7 @@
 use crate::helpers::api_assertions::{
-    assert_bad_request_with_json_containing, assert_conflict_with_json_containing, assert_created,
-    assert_created_returning_json, assert_created_with_json_containing, assert_ok,
-    assert_ok_with_json_containing,
+    assert_bad_request, assert_bad_request_with_json_containing,
+    assert_conflict_with_json_containing, assert_created, assert_created_returning_json,
+    assert_created_with_json_containing, assert_ok, assert_ok_with_json_containing,
 };
 use crate::helpers::app::init_test;
 use crate::helpers::http_client::PostPayload;
@@ -698,5 +698,96 @@ async fn test_very_long_collection_item_notes_is_bad_request() -> Result<(), Err
         )
         .await;
     assert_bad_request_with_json_containing(res, json!({"code":400,"error":"Validation Error","message":"Error validating input notes: 'notes' must not be longer than 65536 chars"})).await;
+    Ok(())
+}
+
+#[actix_rt::test]
+async fn test_collection_subscription_limits() -> Result<(), Error> {
+    let (mut client, _stubr) = init_test(vec![
+        "tests/stubs",
+        "tests/test_specific_stubs/collections",
+        "tests/test_specific_stubs/collections_core_user",
+    ])
+    .await?;
+
+    let base_url = "/api/v2/collections/";
+    let mut res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Hello",
+                "description": "Notes"
+            }))),
+        )
+        .await;
+    assert_created(res);
+    res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Hello 2",
+                "description": "Notes"
+            }))),
+        )
+        .await;
+    let last_created = assert_created_returning_json(res).await;
+    res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Hello 3",
+                "description": "Notes"
+            }))),
+        )
+        .await;
+    // No more space.
+    assert_bad_request(res);
+    // Assert deleting one is success and subscription limit no more reached
+    res = client
+        .delete(
+            format!("{}{}/", base_url, last_created["id"].as_str().unwrap()).as_str(),
+            None,
+        )
+        .await;
+    assert_ok(res);
+    res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Hello 3",
+                "description": "Notes"
+            }))),
+        )
+        .await;
+    assert_created(res);
+    drop(_stubr);
+    Ok(())
+}
+
+#[actix_rt::test]
+async fn test_paying_user_no_collection_limit() -> Result<(), Error> {
+    let (mut client, _stubr) =
+        init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+
+    let base_url = "/api/v2/collections/";
+
+    for i in 0..10 {
+        let res = client
+            .post(
+                base_url,
+                None,
+                Some(PostPayload::Json(json!({
+                    "name": format!("Hello {}",i),
+                    "description": "Notes"
+                }))),
+            )
+            .await;
+        assert_created(res);
+    }
+    drop(_stubr);
     Ok(())
 }

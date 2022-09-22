@@ -47,6 +47,10 @@ pub async fn assert_bad_request_with_json_containing(
     body
 }
 
+pub fn assert_bad_request(res: RumbaTestResponse) {
+    assert_eq!(res.status(), StatusCode::BAD_REQUEST)
+}
+
 pub async fn assert_conflict_with_json_containing(
     res: RumbaTestResponse,
     expected_json: serde_json::Value,
