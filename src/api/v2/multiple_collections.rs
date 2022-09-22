@@ -141,7 +141,7 @@ pub struct EncodedId {
 
 impl EncodedId {
     pub fn get(&self) -> Result<i64, ApiError> {
-        let val = HARSH.decode(&self.id).map_err(|_| ApiError::Unauthorized)?;
+        let val = HARSH.decode(&self.id).map_err(|_| ApiError::MalformedUrl)?;
         Ok(val[0] as i64)
     }
 
@@ -150,7 +150,7 @@ impl EncodedId {
     }
 
     pub fn decode<T: AsRef<str>>(val: T) -> Result<i64, ApiError> {
-        let val = HARSH.decode(val).map_err(|_| ApiError::Unauthorized)?;
+        let val = HARSH.decode(val).map_err(|_| ApiError::MalformedUrl)?;
 
         Ok(val[0] as i64)
     }
