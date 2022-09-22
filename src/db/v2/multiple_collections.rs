@@ -138,6 +138,21 @@ pub fn get_multiple_collection_by_id_for_user(
     Ok(collection)
 }
 
+pub fn get_count_of_multiple_collections_for_user(
+    user: &UserQuery,
+    pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
+) -> Result<i64, DbError> {
+    let collection_count = schema::multiple_collections::table
+        .filter(
+            schema::multiple_collections::user_id
+                .eq(user.id)
+                .and(schema::multiple_collections::deleted_at.is_null())                
+        )
+        .count()
+        .get_result(pool)?;
+    Ok(collection_count)
+}
+
 pub fn multiple_collection_exists(
     user: &UserQuery,
     multiple_collection_id: &i64,

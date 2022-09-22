@@ -76,6 +76,8 @@ pub enum ApiError {
     DbError(#[from] DbError),
     #[error("Validation error: {0}")]
     ValidationError(#[from] ValidationErrors),
+    #[error("Subscription limit reached")]
+    MultipleCollectionSubscriptionLimitReached
 }
 
 impl ApiError {
@@ -98,6 +100,7 @@ impl ApiError {
             Self::CollectionNotFound(_) => "Collection not found",
             Self::DbError(_) => "DB error",
             Self::ValidationError(_) => "Validation Error",
+            Self::MultipleCollectionSubscriptionLimitReached => "Subscription limit reached"
         }
     }
 }
@@ -122,6 +125,7 @@ impl ResponseError for ApiError {
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
             Self::CollectionNotFound(_) => StatusCode::BAD_REQUEST,
             Self::ValidationError(_) => StatusCode::BAD_REQUEST,
+            Self::MultipleCollectionSubscriptionLimitReached => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -148,6 +152,11 @@ impl ResponseError for ApiError {
             ApiError::ValidationError(errors) => builder.json(ErrorResponse {
                 code: status_code.as_u16(),
                 message: format!("Error validating input {0}", errors).as_str(),
+                error: self.name(),
+            }),
+            ApiError::MultipleCollectionSubscriptionLimitReached => builder.json(ErrorResponse {
+                code: status_code.as_u16(),
+                message: "Subscription limit reached. Please upgrade",
                 error: self.name(),
             }),
             _ if status_code == StatusCode::INTERNAL_SERVER_ERROR => builder.json(ErrorResponse {
