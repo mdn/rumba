@@ -53,7 +53,7 @@ pub enum ApiError {
     #[error("Document Not found")]
     DocumentNotFound,
     #[error("Collection with id {0} not found")]
-    CollectionNotFound(i64),
+    CollectionNotFound(String),
     #[error("Notification Not found")]
     NotificationNotFound,
     #[error("Malformed Url")]

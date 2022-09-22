@@ -32,7 +32,7 @@ pub fn api_v2_service() -> impl HttpServiceFactory {
                 .route(web::post().to(add_collection_item_to_collection)),
         )
         .service(
-            web::resource("/collections/{id}/items/{item_id}/")
+            web::resource("/collections/{collection_id}/items/{item_id}/")
                 .route(web::get().to(get_collection_item_in_collection_by_id))
                 .route(web::post().to(modify_collection_item_in_collection))
                 .route(web::delete().to(remove_collection_item_from_collection)),
