@@ -22,6 +22,7 @@ settings:
   logging__human_logs: false
 
   metrics__statsd_port: 8125
+  metrics__statsd_host: telegraf.telegraf.svc.cluster.local
 
 podDisruptionBudget:
   enabled: false

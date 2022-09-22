@@ -18,7 +18,7 @@ deployment:
       memory: 512Mi  
 
 settings:
-  metrics__statsd_label: "rumba_stage"
+  metrics__statsd_label: rumba_stage
 
 podDisruptionBudget:
   enabled: true
