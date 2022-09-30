@@ -1,3 +1,4 @@
+use crate::api::common::get_document_metadata;
 use crate::db;
 use crate::db::model::NotificationDataInsert;
 use crate::db::Pool;
@@ -238,7 +239,7 @@ pub async fn process_notification_update(
     client: web::Data<Client>,
     body: web::Json<UpdateNotificationsRequest>,
 ) -> Result<HttpResponse, ApiError> {
-    let changes_json = get_update_json(client, &body).await?;
+    let changes_json = get_update_json(client.clone(), &body).await?;
     let mut bcd_notifications: Vec<BcdNotification> = vec![];
     let mut content_notifications: Vec<ContentNotification> = vec![];
 
@@ -325,15 +326,27 @@ pub async fn process_notification_update(
     for notification in bcd_notifications.iter() {
         let mut parts: Vec<&str> = notification.path.split('.').collect();
         let mut suffix: Vec<&str> = Vec::with_capacity(parts.len());
+        let mdn_url = match notification.data {
+            DocumentChangeEvent::AddedStable(event) => event.mdn_url.as_ref(),
+            _ => None
+        };
+        println!("{:?}", notification.data);
 
         while !parts.is_empty() {
             let subpath = parts.join(".");
+            if let Some(url) = mdn_url {
+                let path = url.replace("https://developer.mozilla.org", "");
+                let metadata = get_document_metadata(client.clone(), &path).await;
+                if let Ok(metadata) = metadata {
+                    db::documents::create_or_update_document(&mut conn_pool, metadata, url.to_string());
+                }
+            }
             let doc = db::documents::get_document_by_path(&mut conn_pool, subpath);
             suffix.push(parts.pop().unwrap());
 
+            suffix.reverse();
+            let title = suffix.join(".");
             if let Ok(document) = doc {
-                suffix.reverse();
-                let title = suffix.join(".");
                 let notification_data_id = create_notification_data(
                     &mut conn_pool,
                     NotificationDataInsert {
@@ -344,10 +357,20 @@ pub async fn process_notification_update(
                         type_: db::types::NotificationTypeEnum::Compat,
                         document_id: document.id,
                     },
-                )?;
-                create_notifications_for_users(&mut conn_pool, document.id, notification_data_id)?;
+                );
+                // create_notifications_for_users(&mut conn_pool, document.id, notification_data_id)?;
             } else {
-                continue;
+                create_notification_data(
+                    &mut conn_pool,
+                    NotificationDataInsert {
+                        text: notification.text.to_owned(),
+                        url: "".to_string(),
+                        data: serde_json::to_value(&notification.data).ok(),
+                        title,
+                        type_: db::types::NotificationTypeEnum::Compat,
+                        document_id: 0,
+                    },
+                );
             }
         }
     }

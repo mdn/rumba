@@ -6,7 +6,7 @@ use diesel::sql_types::{BigSerial, Bool};
 use r2d2::PooledConnection;
 
 use super::error::DbError;
-use super::model::UserQuery;
+use super::model::{UserQuery, AllNotificationsQuery};
 use super::model::{NotificationDataInsert, NotificationInsert, NotificationsQuery};
 use crate::api::common::Sorting;
 use crate::api::notifications::{NotificationIds, NotificationQueryParams};
@@ -84,6 +84,50 @@ pub fn get_notifications(
             schema::documents::uri,
         ))
         .get_results::<NotificationsQuery>(pool)?)
+}
+
+pub fn get_all_notifications(
+    pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
+    query: NotificationQueryParams,
+) -> Result<Vec<AllNotificationsQuery>, DbError> {
+    let mut notifications_query = schema::notification_data::table
+        .inner_join(
+            schema::documents::table
+                .on(schema::documents::id.eq(schema::notification_data::document_id)),
+        )
+        .into_boxed();
+
+    notifications_query = notifications_query.order_by(schema::notification_data::created_at.desc());
+
+    if let Some(limit) = query.limit {
+        notifications_query = notifications_query.limit(limit.into())
+    } else {
+        notifications_query = notifications_query.limit(10)
+    }
+
+    if let Some(offset) = query.offset {
+        notifications_query = notifications_query.offset(offset.into())
+    }
+
+    if let Some(q) = query.q {
+        for browser in q.split(',') {
+            notifications_query = notifications_query.or_filter(
+                schema::notification_data::data.contains(serde_json::json!({"browsers":[{"browser":browser}]}))
+            )
+        }
+    }
+
+    Ok(notifications_query
+        .select((
+            schema::notification_data::id,
+            schema::notification_data::created_at,
+            schema::notification_data::updated_at,
+            schema::notification_data::title,
+            schema::notification_data::text,
+            schema::notification_data::data,
+            schema::documents::uri,
+        ))
+        .get_results::<AllNotificationsQuery>(pool)?)
 }
 
 pub fn mark_all_as_read(

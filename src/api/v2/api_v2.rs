@@ -1,4 +1,4 @@
-use crate::api::user_middleware::AddUser;
+use crate::{api::{user_middleware::AddUser, notifications::NotificationQueryParams}, db::notifications::get_all_notifications};
 use actix_web::dev::HttpServiceFactory;
 use actix_web::web;
 
@@ -37,4 +37,19 @@ pub fn api_v2_service() -> impl HttpServiceFactory {
                 .route(web::post().to(modify_collection_item_in_collection))
                 .route(web::delete().to(remove_collection_item_from_collection)),
         )
+        .service(
+            web::resource("/notifications/")
+                .route(web::get().to(get_notifications))
+        )
+}
+
+pub async fn get_notifications(
+    _req: actix_web::HttpRequest,
+    pool: web::Data<crate::db::Pool>,
+    query: web::Query<NotificationQueryParams>,
+) -> Result<actix_web::HttpResponse, crate::api::error::ApiError> {
+    let mut conn_pool = pool.get()?;
+    let res =
+        get_all_notifications(&mut conn_pool, query.into_inner())?;
+    Ok(actix_web::HttpResponse::Ok().json(res))
 }

@@ -131,6 +131,17 @@ pub struct NotificationsQuery {
     pub text: String,
     pub url: String,
 }
+
+#[derive(Queryable, Clone, Serialize)]
+pub struct AllNotificationsQuery {
+    pub id: i64,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+    pub title: String,
+    pub text: String,
+    pub data: Option<Value>,
+    pub url: String,
+}
 #[derive(AsChangeset, Insertable)]
 #[diesel(table_name = notifications)]
 pub struct NotificationInsert {
