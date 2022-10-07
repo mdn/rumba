@@ -1,6 +1,6 @@
 #![warn(clippy::all)]
 
-use std::sync::Arc;
+use std::{rc::Rc, sync::Arc};
 
 use actix_identity::IdentityMiddleware;
 use actix_rt::Arbiter;
@@ -18,7 +18,10 @@ use elasticsearch::Elasticsearch;
 use reqwest::Client as HttpClient;
 use rumba::{
     add_services,
-    api::error::{error_handler, ERROR_ID_HEADER_NAME_STR},
+    api::{
+        error::{error_handler, ERROR_ID_HEADER_NAME_STR},
+        session_migration_middleware::{CookieConfig, MigrateSessionCookie},
+    },
     db,
     fxa::LoginManager,
     logging::{self, init_logging},
@@ -87,6 +90,12 @@ async fn main() -> anyhow::Result<()> {
                 .cookie_same_site(SameSite::Strict)
                 .build(),
             )
+            .wrap(MigrateSessionCookie {
+                config: Rc::new(CookieConfig {
+                    cookie_name: SETTINGS.auth.auth_cookie_name.clone(),
+                    cookie_key: session_cookie_key.clone(),
+                }),
+            })
             .wrap(Logger::default().exclude("/healthz"))
             .app_data(Data::clone(&metrics))
             .app_data(Data::clone(&pool))
