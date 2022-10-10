@@ -26,7 +26,6 @@ use stubr::{Config, Stubr};
 use super::db::get_pool;
 use super::db::reset;
 use super::http_client::TestHttpClient;
-use super::identity::TestIdentityPolicy;
 use super::RumbaTestResponse;
 
 pub async fn test_app(
@@ -41,7 +40,7 @@ pub async fn test_app(
     >,
 > {
     let pool = get_pool();
-    let app = App::new().app_data(pool);
+    let app = App::new().app_data(pool.clone());
     add_services(app)
 }
 
@@ -94,7 +93,8 @@ pub async fn test_app_only_search() -> App<
     let elastic_transport = Transport::single_node("http://localhost:4321").unwrap();
     let elastic_client = Elasticsearch::new(elastic_transport);
 
-    let app = App::new().app_data(Data::new(elastic_client));
+    let app = App::new()
+    .app_data(Data::new(elastic_client));
     add_services(app)
 }
 
