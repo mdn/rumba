@@ -1,6 +1,6 @@
 #![warn(clippy::all)]
 
-use std::{rc::Rc, sync::Arc};
+use std::sync::Arc;
 
 use actix_identity::IdentityMiddleware;
 use actix_rt::Arbiter;
@@ -18,10 +18,7 @@ use elasticsearch::Elasticsearch;
 use reqwest::Client as HttpClient;
 use rumba::{
     add_services,
-    api::{
-        error::{error_handler, ERROR_ID_HEADER_NAME_STR},
-        session_migration_middleware::{CookieConfig, MigrateSessionCookie},
-    },
+    api::error::{error_handler, ERROR_ID_HEADER_NAME_STR},
     db,
     fxa::LoginManager,
     logging::{self, init_logging},
@@ -29,6 +26,8 @@ use rumba::{
     settings::{Sentry, SETTINGS},
 };
 use slog_scope::{debug, info};
+
+mod session_migration_middleware;
 
 const MIGRATIONS: diesel_migrations::EmbeddedMigrations = diesel_migrations::embed_migrations!();
 
@@ -77,9 +76,9 @@ async fn main() -> anyhow::Result<()> {
     HttpServer::new(move || {
         let app = App::new()
             .wrap(error_handler())
-            .wrap(Logger::new(LOG_FMT).exclude("/healthz"))
             .wrap(sentry_actix::Sentry::new())
             .wrap(IdentityMiddleware::default())
+            .wrap(session_migration_middleware::SessionMigration)
             .wrap(
                 SessionMiddleware::builder(
                     CookieSessionStore::default(),
@@ -90,13 +89,7 @@ async fn main() -> anyhow::Result<()> {
                 .cookie_same_site(SameSite::Strict)
                 .build(),
             )
-            .wrap(MigrateSessionCookie {
-                config: Rc::new(CookieConfig {
-                    cookie_name: SETTINGS.auth.auth_cookie_name.clone(),
-                    cookie_key: session_cookie_key.clone(),
-                }),
-            })
-            .wrap(Logger::default().exclude("/healthz"))
+            .wrap(Logger::new(LOG_FMT).exclude("/healthz"))
             .app_data(Data::clone(&metrics))
             .app_data(Data::clone(&pool))
             .app_data(Data::clone(&arbiter_handle))

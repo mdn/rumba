@@ -10,7 +10,6 @@ pub mod healthz;
 pub mod notifications;
 pub mod root;
 pub mod search;
-pub mod session_migration_middleware;
 pub mod settings;
 pub mod v2;
 pub mod watched_items;
