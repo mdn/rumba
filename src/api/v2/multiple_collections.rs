@@ -448,7 +448,7 @@ pub async fn delete_collection(
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
     let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
-    let collection_id = collection_id.into_inner().get()?;    
+    let collection_id = collection_id.into_inner().get()?;
     // REMOVE this once Migration to V2 is completed.
     if is_default_collection(&mut conn_pool, &user, collection_id)? {
         return Ok(HttpResponse::BadRequest().json(ConflictResponse {

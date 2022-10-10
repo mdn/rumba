@@ -37,7 +37,7 @@ pub async fn test_app(
         Config = (),
         InitError = (),
     >,
-> {    
+> {
     let app = App::new().app_data(pool.clone());
     add_services(app)
 }
@@ -91,8 +91,7 @@ pub async fn test_app_only_search() -> App<
     let elastic_transport = Transport::single_node("http://localhost:4321").unwrap();
     let elastic_client = Elasticsearch::new(elastic_transport);
 
-    let app = App::new()
-    .app_data(Data::new(elastic_client));
+    let app = App::new().app_data(Data::new(elastic_client));
     add_services(app)
 }
 

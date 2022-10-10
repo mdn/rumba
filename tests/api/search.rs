@@ -5,12 +5,7 @@ use actix_web::{http::header, test};
 use anyhow::Error;
 use stubr::{Config, Stubr};
 
-async fn do_request(
-    path: &str,
-) -> Result<
-    actix_web::dev::ServiceResponse<BoxBody>,
-    Error,
-> {
+async fn do_request(path: &str) -> Result<actix_web::dev::ServiceResponse<BoxBody>, Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/test_specific_stubs/search"],
         Config {
