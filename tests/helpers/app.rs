@@ -23,7 +23,6 @@ use rumba::settings::SETTINGS;
 use slog::{slog_o, Drain};
 use stubr::{Config, Stubr};
 
-use super::db::get_pool;
 use super::db::reset;
 use super::http_client::TestHttpClient;
 use super::RumbaTestResponse;
@@ -38,8 +37,7 @@ pub async fn test_app(
         Config = (),
         InitError = (),
     >,
-> {
-    let pool = get_pool();
+> {    
     let app = App::new().app_data(pool.clone());
     add_services(app)
 }
