@@ -31,12 +31,12 @@ pub struct WhoamiResponse {
 const CLOUDFRONT_COUNTRY_HEADER: &str = "CloudFront-Viewer-Country-Name";
 
 pub async fn whoami(
-    _req: HttpRequest,
+    req: HttpRequest,
     id: Option<Identity>,
     pool: web::Data<Pool>,
     metrics: Metrics,
 ) -> Result<HttpResponse, ApiError> {
-    let header_info = _req.headers().get(CLOUDFRONT_COUNTRY_HEADER);
+    let header_info = req.headers().get(CLOUDFRONT_COUNTRY_HEADER);
 
     let country = header_info.map(|header| GeoInfo {
         country: String::from(header.to_str().unwrap_or("Unknown")),

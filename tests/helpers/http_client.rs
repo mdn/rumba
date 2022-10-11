@@ -1,8 +1,9 @@
 use actix_http::Request;
-use actix_web::cookie::CookieJar;
+use actix_web::cookie::{Cookie, CookieJar, Key};
 use actix_web::dev::Service;
 use actix_web::test::TestRequest;
 use actix_web::{test, Error};
+use rumba::settings::SETTINGS;
 use std::collections::HashMap;
 
 use reqwest::{Client, Method, StatusCode};
@@ -13,8 +14,8 @@ use url::Url;
 use super::RumbaTestResponse;
 
 pub struct TestHttpClient<T: Service<Request, Response = RumbaTestResponse, Error = Error>> {
-    service: T,
-    cookies: CookieJar,
+    pub service: T,
+    pub cookies: CookieJar,
 }
 
 pub enum PostPayload {
@@ -62,6 +63,18 @@ impl<T: Service<Request, Response = RumbaTestResponse, Error = Error>> TestHttpC
         for cookie in cookies {
             cookie_jar.add(cookie.into_owned());
         }
+        Self {
+            service,
+            cookies: cookie_jar,
+        }
+    }
+
+    pub fn with_legacy_session(service: T, id: &'static str) -> Self {
+        let mut cookie_jar = CookieJar::new();
+        cookie_jar
+            .private_mut(&Key::derive_from(&SETTINGS.auth.auth_cookie_key))
+            .add(Cookie::new("auth-cookie", id));
+
         Self {
             service,
             cookies: cookie_jar,

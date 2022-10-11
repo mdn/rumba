@@ -1,5 +1,5 @@
+use crate::{metrics::Metrics, settings::SETTINGS};
 use actix_session::SessionExt;
-use rumba::{metrics::Metrics, settings::SETTINGS};
 use std::future::{ready, Ready};
 
 use actix_web::{

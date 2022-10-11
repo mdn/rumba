@@ -19,6 +19,7 @@ use rumba::add_services;
 use rumba::api::error::error_handler;
 use rumba::db::Pool;
 use rumba::fxa::LoginManager;
+use rumba::session_migration_middleware::SessionMigration;
 use rumba::settings::SETTINGS;
 use slog::{slog_o, Drain};
 use stubr::{Config, Stubr};
@@ -61,11 +62,12 @@ pub async fn test_app_with_login(
     init_logging();
     let arbiter = Arbiter::new();
     let arbiter_handle = Data::new(arbiter.handle());
-    let session_cookie_key = Key::derive_from(&[0; 32]);
+    let session_cookie_key = Key::derive_from(&SETTINGS.auth.auth_cookie_key);
 
     let app = App::new()
         .wrap(error_handler())
         .wrap(IdentityMiddleware::default())
+        .wrap(SessionMigration)
         .wrap(
             SessionMiddleware::builder(CookieSessionStore::default(), session_cookie_key)
                 .cookie_name(SETTINGS.auth.auth_cookie_name.clone())

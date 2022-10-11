@@ -23,11 +23,10 @@ use rumba::{
     fxa::LoginManager,
     logging::{self, init_logging},
     metrics::{metrics_from_opts, MetricsData},
+    session_migration_middleware::SessionMigration,
     settings::{Sentry, SETTINGS},
 };
 use slog_scope::{debug, info};
-
-mod session_migration_middleware;
 
 const MIGRATIONS: diesel_migrations::EmbeddedMigrations = diesel_migrations::embed_migrations!();
 
@@ -78,7 +77,7 @@ async fn main() -> anyhow::Result<()> {
             .wrap(error_handler())
             .wrap(sentry_actix::Sentry::new())
             .wrap(IdentityMiddleware::default())
-            .wrap(session_migration_middleware::SessionMigration)
+            .wrap(SessionMigration)
             .wrap(
                 SessionMiddleware::builder(
                     CookieSessionStore::default(),

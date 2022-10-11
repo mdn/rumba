@@ -93,9 +93,7 @@ pub static SETTINGS: Lazy<Settings> = Lazy::new(|| {
     let settings = Settings::new();
     match settings {
         Ok(settings) => settings,
-        Err(err) => {
-            panic!("{:?}", err);
-        }
+        Err(err) => panic!("{:?}", err),
     }
 });
 
