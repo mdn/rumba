@@ -102,12 +102,11 @@ impl<T: Service<Request, Response = RumbaTestResponse, Error = Error>> TestHttpC
         payload: Option<PostPayload>,
     ) -> RumbaTestResponse {
         let mut base = test::TestRequest::post().uri(uri);
-        match payload {
-            Some(payload) => match payload {
-                PostPayload::FormData(form) => base = base.set_form(form),
-                PostPayload::Json(val) => base = base.set_json(val),
-            },
-            None => (),
+        if let Some(payload) = payload {
+            match payload {
+            PostPayload::FormData(form) => base = base.set_form(form),
+            PostPayload::Json(val) => base = base.set_json(val),
+        }
         }
 
         base = self.add_cookies_and_headers(headers, base);
@@ -145,13 +144,10 @@ impl<T: Service<Request, Response = RumbaTestResponse, Error = Error>> TestHttpC
         headers: Option<Vec<(&str, &str)>>,
         mut base: TestRequest,
     ) -> TestRequest {
-        match headers {
-            Some(headers) => {
-                for header in headers {
-                    base = base.insert_header(header);
-                }
+        if let Some(headers) = headers {
+            for header in headers {
+                base = base.insert_header(header);
             }
-            None => (),
         }
         for cookie in self.cookies.iter() {
             base = base.cookie(cookie.clone());

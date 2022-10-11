@@ -215,14 +215,11 @@ pub async fn update_watched_item(
     let url = query.into_inner().url;
     let res = watched_items::get_watched_item(&mut conn_pool, user.id, &normalize_uri(&url))?;
 
-    match form_data.unwatch {
-        Some(val) => {
-            if val {
-                let res = handle_unwatch(res, &mut conn_pool, &user)?;
-                return Ok(res);
-            }
+    if let Some(val) = form_data.unwatch {
+        if val {
+            let res = handle_unwatch(res, &mut conn_pool, &user)?;
+            return Ok(res);
         }
-        None => (),
     }
 
     let subscription_info = watched_items_subscription_info_for_user(&user, &mut conn_pool)?;
