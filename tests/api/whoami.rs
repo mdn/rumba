@@ -68,7 +68,10 @@ async fn whoami_legacy_logged_in_test() -> Result<(), Error> {
         .private(&Key::derive_from(&SETTINGS.auth.auth_cookie_key))
         .get(&SETTINGS.auth.auth_cookie_name)
         .unwrap();
-    assert_eq!(cookie.value(), "{\"actix_identity.user_id\":\"\\\"TEST_SUB\\\"\"}");
+    assert_eq!(
+        cookie.value(),
+        "{\"actix_identity.user_id\":\"\\\"TEST_SUB\\\"\"}"
+    );
 
     let json = read_json(whoami).await;
 
