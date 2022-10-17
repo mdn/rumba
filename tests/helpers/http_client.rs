@@ -156,7 +156,7 @@ impl<T: Service<Request, Response = RumbaTestResponse, Error = Error>> TestHttpC
     }
 }
 
-async fn check_stubr_initialized() -> Result<(), ()> {
+pub async fn check_stubr_initialized() -> Result<(), ()> {
     //Hardcoded for now. We will 'always' spin stubr at localhost:4321.
     let res = Client::new()
         .request(Method::GET, "http://localhost:4321/healthz")

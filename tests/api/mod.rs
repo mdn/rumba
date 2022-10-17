@@ -1,3 +1,4 @@
+mod auth;
 mod collections;
 mod fxa_webhooks;
 pub mod healthz;

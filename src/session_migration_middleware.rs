@@ -59,7 +59,8 @@ where
                     if let Some(metrics) = req.app_data::<Data<Metrics>>().cloned() {
                         match res {
                             Ok(_) => metrics.incr("auth_cookie.migration_success"),
-                            Err(_) => {
+                            Err(e) => {
+                                error!("error inserting session cookie after migration: {}", e);
                                 metrics.incr("auth_cookie.migration_error");
                             }
                         }

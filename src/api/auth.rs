@@ -18,6 +18,7 @@ use crate::{
 pub struct LoginCookie {
     csrf_token: CsrfToken,
     nonce: Nonce,
+    next: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -88,7 +89,6 @@ impl TryFrom<LoginCookie> for Cookie<'static> {
 async fn login_no_prompt(
     query: web::Query<NoPromptQuery>,
     id: Option<Identity>,
-    session: Session,
     login_manager: web::Data<LoginManager>,
 ) -> Result<HttpResponse, Error> {
     if let Some(id) = id {
@@ -96,10 +96,11 @@ async fn login_no_prompt(
     }
     let NoPromptQuery { next, email } = query.into_inner();
     let (url, csrf_token, nonce) = login_manager.login(email);
-    let login_cookie = LoginCookie { csrf_token, nonce };
-    if let Some(next) = next {
-        session.insert("next", next)?;
-    }
+    let login_cookie = LoginCookie {
+        csrf_token,
+        nonce,
+        next,
+    };
     let cookie = login_cookie.try_into()?;
     Ok(HttpResponse::TemporaryRedirect()
         .cookie(cookie)
@@ -110,17 +111,17 @@ async fn login_no_prompt(
 async fn login(
     query: web::Query<LoginQuery>,
     id: Option<Identity>,
-    session: Session,
     login_manager: web::Data<LoginManager>,
 ) -> Result<HttpResponse, Error> {
     if let Some(id) = id {
         id.logout();
     }
     let (url, csrf_token, nonce) = login_manager.login(None);
-    let login_cookie = LoginCookie { csrf_token, nonce };
-    if let Some(next) = query.into_inner().next {
-        session.insert("next", next)?;
-    }
+    let login_cookie = LoginCookie {
+        csrf_token,
+        nonce,
+        next: query.into_inner().next,
+    };
 
     let cookie = login_cookie.try_into()?;
     Ok(HttpResponse::TemporaryRedirect()
@@ -148,15 +149,16 @@ async fn logout(
 async fn callback(
     req: HttpRequest,
     pool: web::Data<Pool>,
-    session: Session,
     web::Query(q): web::Query<AuthResponse>,
     login_manager: web::Data<LoginManager>,
 ) -> Result<HttpResponse, Error> {
     if let Some(login_cookie) = req.cookie(&SETTINGS.auth.login_cookie_name) {
-        let LoginCookie { csrf_token, nonce } = login_cookie.try_into()?;
+        let LoginCookie {
+            csrf_token,
+            nonce,
+            next,
+        } = login_cookie.try_into()?;
         if csrf_token.secret() == &q.state {
-            debug!("callback");
-            let next: String = session.get("next")?.unwrap_or_else(|| String::from("/"));
             let uid = login_manager
                 .callback(q.code, nonce, &pool)
                 .await
@@ -173,7 +175,7 @@ async fn callback(
 
             return Ok(HttpResponse::TemporaryRedirect()
                 .cookie(cookie)
-                .append_header((http::header::LOCATION, next))
+                .append_header((http::header::LOCATION, next.unwrap_or_else(|| "/".into())))
                 .finish());
         }
     }
