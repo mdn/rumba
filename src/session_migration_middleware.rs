@@ -62,6 +62,7 @@ where
                             Err(e) => {
                                 error!("error inserting session cookie after migration: {}", e);
                                 metrics.incr("auth_cookie.migration_error");
+                                sentry::capture_error(&e);
                             }
                         }
                     }
