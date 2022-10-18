@@ -1,8 +1,9 @@
 use actix_http::Request;
-use actix_web::cookie::CookieJar;
+use actix_web::cookie::{Cookie, CookieJar, Key};
 use actix_web::dev::Service;
 use actix_web::test::TestRequest;
 use actix_web::{test, Error};
+use rumba::settings::SETTINGS;
 use std::collections::HashMap;
 
 use reqwest::{Client, Method, StatusCode};
@@ -13,8 +14,8 @@ use url::Url;
 use super::RumbaTestResponse;
 
 pub struct TestHttpClient<T: Service<Request, Response = RumbaTestResponse, Error = Error>> {
-    service: T,
-    cookies: CookieJar,
+    pub service: T,
+    pub cookies: CookieJar,
 }
 
 pub enum PostPayload {
@@ -68,6 +69,18 @@ impl<T: Service<Request, Response = RumbaTestResponse, Error = Error>> TestHttpC
         }
     }
 
+    pub fn with_legacy_session(service: T, id: &'static str) -> Self {
+        let mut cookie_jar = CookieJar::new();
+        cookie_jar
+            .private_mut(&Key::derive_from(&SETTINGS.auth.auth_cookie_key))
+            .add(Cookie::new("auth-cookie", id));
+
+        Self {
+            service,
+            cookies: cookie_jar,
+        }
+    }
+
     pub async fn get(
         &mut self,
         uri: &str,
@@ -89,12 +102,11 @@ impl<T: Service<Request, Response = RumbaTestResponse, Error = Error>> TestHttpC
         payload: Option<PostPayload>,
     ) -> RumbaTestResponse {
         let mut base = test::TestRequest::post().uri(uri);
-        match payload {
-            Some(payload) => match payload {
+        if let Some(payload) = payload {
+            match payload {
                 PostPayload::FormData(form) => base = base.set_form(form),
                 PostPayload::Json(val) => base = base.set_json(val),
-            },
-            None => (),
+            }
         }
 
         base = self.add_cookies_and_headers(headers, base);
@@ -132,13 +144,10 @@ impl<T: Service<Request, Response = RumbaTestResponse, Error = Error>> TestHttpC
         headers: Option<Vec<(&str, &str)>>,
         mut base: TestRequest,
     ) -> TestRequest {
-        match headers {
-            Some(headers) => {
-                for header in headers {
-                    base = base.insert_header(header);
-                }
+        if let Some(headers) = headers {
+            for header in headers {
+                base = base.insert_header(header);
             }
-            None => (),
         }
         for cookie in self.cookies.iter() {
             base = base.cookie(cookie.clone());
@@ -147,7 +156,7 @@ impl<T: Service<Request, Response = RumbaTestResponse, Error = Error>> TestHttpC
     }
 }
 
-async fn check_stubr_initialized() -> Result<(), ()> {
+pub async fn check_stubr_initialized() -> Result<(), ()> {
     //Hardcoded for now. We will 'always' spin stubr at localhost:4321.
     let res = Client::new()
         .request(Method::GET, "http://localhost:4321/healthz")

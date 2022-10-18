@@ -2,8 +2,10 @@ use crate::helpers::db::reset;
 use crate::helpers::http_client::TestHttpClient;
 use crate::helpers::{app::test_app_with_login, http_client::PostPayload};
 use crate::helpers::{read_json, wait_for_stubr};
+use actix_web::cookie::{Cookie, CookieJar, Key};
 use actix_web::test;
 use anyhow::Error;
+use rumba::settings::SETTINGS;
 use serde_json::json;
 use stubr::{Config, Stubr};
 
@@ -24,6 +26,68 @@ async fn whoami_anonymous_test() -> Result<(), Error> {
 
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Iceland");
+    drop(stubr);
+    Ok(())
+}
+
+#[actix_rt::test]
+#[stubr::mock(port = 4321)]
+async fn whoami_legacy_logged_in_test() -> Result<(), Error> {
+    let pool = reset()?;
+    wait_for_stubr().await?;
+    let app = test_app_with_login(&pool).await?;
+    let service = test::init_service(app).await;
+    let mut logged_in_client = TestHttpClient::new(service).await;
+    let whoami = logged_in_client
+        .get(
+            "/api/v1/whoami",
+            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+        )
+        .await;
+    assert!(whoami.response().status().is_success());
+    let json = read_json(whoami).await;
+    assert_eq!(json["geo"]["country"], "Iceland");
+
+    assert_eq!(json["username"], "TEST_SUB");
+
+    // create a legacy client with a cookie from an old session
+    let mut legacy_client =
+        TestHttpClient::with_legacy_session(logged_in_client.service, "TEST_SUB");
+    let whoami = legacy_client
+        .get(
+            "/api/v1/whoami",
+            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+        )
+        .await;
+    assert!(whoami.response().status().is_success());
+
+    let set_cookie = whoami.headers().get("Set-Cookie").unwrap();
+    let mut cookies = CookieJar::new();
+    cookies.add(Cookie::parse_encoded(set_cookie.to_str()?.to_owned())?);
+    let cookie = cookies
+        .private(&Key::derive_from(&SETTINGS.auth.auth_cookie_key))
+        .get(&SETTINGS.auth.auth_cookie_name)
+        .unwrap();
+    assert_eq!(
+        cookie.value(),
+        "{\"actix_identity.user_id\":\"\\\"TEST_SUB\\\"\"}"
+    );
+
+    let json = read_json(whoami).await;
+
+    assert_eq!(json["geo"]["country"], "Iceland");
+    assert_eq!(json["username"], "TEST_SUB");
+    assert_eq!(json["is_authenticated"], true);
+    assert_eq!(json["email"], "test@test.com");
+    assert_eq!(
+        json["avatar_url"],
+        "https://i1.sndcdn.com/avatars-000460644402-0iiiub-t500x500.jpg"
+    );
+    assert_eq!(json["is_subscriber"], true);
+    assert_eq!(
+        json["subscription_type"], "mdn_plus_5m",
+        "Subscription type wrong"
+    );
     drop(stubr);
     Ok(())
 }

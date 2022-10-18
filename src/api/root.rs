@@ -1,3 +1,4 @@
+use actix_identity::Identity;
 use actix_web::{
     dev::HttpServiceFactory,
     web::{self, Data},
@@ -6,7 +7,7 @@ use actix_web::{
 use serde::Deserialize;
 
 use crate::{
-    api::{error::ApiError, user_middleware::UserId},
+    api::error::ApiError,
     db::{
         model::UserQuery,
         types::Subscription,
@@ -35,10 +36,10 @@ pub struct RootSetIsAdminQuery {
 async fn set_enforce_plus(
     pool: Data<Pool>,
     query: web::Json<RootSetEnforcePlusQuery>,
-    user_id: UserId,
+    user_id: Identity,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let me: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let me: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     if !me.is_admin {
         return Ok(HttpResponse::Forbidden().finish());
     }
@@ -53,10 +54,10 @@ async fn set_enforce_plus(
 async fn set_is_admin(
     pool: Data<Pool>,
     query: web::Json<RootSetIsAdminQuery>,
-    user_id: UserId,
+    user_id: Identity,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let me: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let me: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     if !me.is_admin {
         return Ok(HttpResponse::Forbidden().finish());
     }
@@ -71,10 +72,10 @@ async fn set_is_admin(
 async fn user_by_email(
     pool: Data<Pool>,
     query: web::Query<RootQuery>,
-    user_id: UserId,
+    user_id: Identity,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let me: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let me: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     if !me.is_admin {
         return Ok(HttpResponse::Forbidden().finish());
     }

@@ -1,11 +1,10 @@
 use crate::helpers::maybe_to_utc;
-use crate::{
-    api::user_middleware::UserId,
-    db::{self, error::DbError, model::Settings, types::Locale, Pool},
-};
+use actix_identity::Identity;
 use actix_web::{web, HttpRequest, HttpResponse};
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+
+use crate::db::{self, error::DbError, model::Settings, types::Locale, Pool};
 
 use super::error::ApiError;
 
@@ -38,12 +37,12 @@ impl From<Settings> for SettingsResponse {
 
 pub async fn update_settings(
     _req: HttpRequest,
-    user_id: UserId,
+    user_id: Identity,
     pool: web::Data<Pool>,
     payload: web::Json<SettingUpdateRequest>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user = db::users::get_user(&mut conn_pool, user_id.id);
+    let user = db::users::get_user(&mut conn_pool, user_id.id().unwrap());
 
     let settings_update = payload.into_inner();
     if let Ok(user) = user {

@@ -27,6 +27,7 @@ pub struct Auth {
     pub scopes: String,
     pub redirect_url: Url,
     pub auth_cookie_name: String,
+    pub login_cookie_name: String,
     pub auth_cookie_secure: bool,
     #[serde_as(as = "Base64")]
     pub auth_cookie_key: [u8; 64],
@@ -92,9 +93,7 @@ pub static SETTINGS: Lazy<Settings> = Lazy::new(|| {
     let settings = Settings::new();
     match settings {
         Ok(settings) => settings,
-        Err(err) => {
-            panic!("{:?}", err);
-        }
+        Err(err) => panic!("{:?}", err),
     }
 });
 

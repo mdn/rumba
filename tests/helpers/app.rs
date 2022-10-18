@@ -1,7 +1,10 @@
-use actix_http::body::{BoxBody, EitherBody};
+use actix_http::body::BoxBody;
 use actix_http::Request;
-use actix_identity::{CookieIdentityPolicy, IdentityService};
+use actix_identity::IdentityMiddleware;
 use actix_rt::Arbiter;
+use actix_session::storage::CookieSessionStore;
+use actix_session::SessionMiddleware;
+use actix_web::cookie::Key;
 use actix_web::dev::Service;
 use actix_web::test;
 use actix_web::web::Data;
@@ -16,13 +19,13 @@ use rumba::add_services;
 use rumba::api::error::error_handler;
 use rumba::db::Pool;
 use rumba::fxa::LoginManager;
+use rumba::session_migration_middleware::SessionMigration;
 use rumba::settings::SETTINGS;
 use slog::{slog_o, Drain};
 use stubr::{Config, Stubr};
 
 use super::db::reset;
 use super::http_client::TestHttpClient;
-use super::identity::TestIdentityPolicy;
 use super::RumbaTestResponse;
 
 pub async fn test_app(
@@ -30,15 +33,13 @@ pub async fn test_app(
 ) -> App<
     impl ServiceFactory<
         ServiceRequest,
-        Response = ServiceResponse<EitherBody<BoxBody>>,
+        Response = ServiceResponse<BoxBody>,
         Error = Error,
         Config = (),
         InitError = (),
     >,
 > {
-    let app = App::new()
-        .wrap(IdentityService::new(TestIdentityPolicy::new()))
-        .app_data(pool.clone());
+    let app = App::new().app_data(pool.clone());
     add_services(app)
 }
 
@@ -59,15 +60,20 @@ pub async fn test_app_with_login(
     let login_manager = Data::new(LoginManager::init().await?);
     let client = Data::new(Client::new());
     init_logging();
-    let policy = CookieIdentityPolicy::new(&[0; 32])
-        .name(&SETTINGS.auth.auth_cookie_name)
-        .secure(SETTINGS.auth.auth_cookie_secure);
     let arbiter = Arbiter::new();
     let arbiter_handle = Data::new(arbiter.handle());
+    let session_cookie_key = Key::derive_from(&SETTINGS.auth.auth_cookie_key);
 
     let app = App::new()
         .wrap(error_handler())
-        .wrap(IdentityService::new(policy))
+        .wrap(IdentityMiddleware::default())
+        .wrap(SessionMigration)
+        .wrap(
+            SessionMiddleware::builder(CookieSessionStore::default(), session_cookie_key)
+                .cookie_name(SETTINGS.auth.auth_cookie_name.clone())
+                .cookie_secure(false)
+                .build(),
+        )
         .app_data(Data::clone(&arbiter_handle))
         .app_data(Data::clone(&pool))
         .app_data(Data::clone(&client))
@@ -78,7 +84,7 @@ pub async fn test_app_with_login(
 pub async fn test_app_only_search() -> App<
     impl ServiceFactory<
         ServiceRequest,
-        Response = ServiceResponse<EitherBody<BoxBody>>,
+        Response = ServiceResponse<BoxBody>,
         Error = Error,
         Config = (),
         InitError = (),
@@ -87,9 +93,7 @@ pub async fn test_app_only_search() -> App<
     let elastic_transport = Transport::single_node("http://localhost:4321").unwrap();
     let elastic_client = Elasticsearch::new(elastic_transport);
 
-    let app = App::new()
-        .wrap(IdentityService::new(TestIdentityPolicy::new()))
-        .app_data(Data::new(elastic_client));
+    let app = App::new().app_data(Data::new(elastic_client));
     add_services(app)
 }
 

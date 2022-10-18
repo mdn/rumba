@@ -1,15 +1,11 @@
 use crate::helpers::read_json;
 use crate::helpers::{app::test_app_only_search, wait_for_stubr};
+use actix_http::body::BoxBody;
 use actix_web::{http::header, test};
 use anyhow::Error;
 use stubr::{Config, Stubr};
 
-async fn do_request(
-    path: &str,
-) -> Result<
-    actix_web::dev::ServiceResponse<actix_web::body::EitherBody<actix_web::body::BoxBody>>,
-    Error,
-> {
+async fn do_request(path: &str) -> Result<actix_web::dev::ServiceResponse<BoxBody>, Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/test_specific_stubs/search"],
         Config {

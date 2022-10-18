@@ -10,6 +10,7 @@ issuer_url = "https://accounts.stage.mozaws.net"
 redirect_url = "http://localhost:8000/users/fxa/login/callback/"
 scopes = "openid profile email profile:subscriptions"
 auth_cookie_name = "auth-cookie"
+login_cookie_name = "login-cookie"
 auth_cookie_secure = false
 auth_cookie_key = "DUwIFZuUYzRhHPlhOm6DwTHSDUSyR5SyvZHIeHdx4DIanxm5/GD/4dqXROLvn5vMofOYUq37HhhivjCyMCWP4w=="
 admin_update_bearer_token="TEST_TOKEN"

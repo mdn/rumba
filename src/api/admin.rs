@@ -207,11 +207,11 @@ pub struct BrowserItem {
 pub async fn validator(
     req: ServiceRequest,
     credentials: BearerAuth,
-) -> Result<ServiceRequest, Error> {
+) -> Result<ServiceRequest, (Error, ServiceRequest)> {
     if credentials.token() == SETTINGS.auth.admin_update_bearer_token {
         Ok(req)
     } else {
-        Err(Error::from(ApiError::InvalidBearer))
+        Err((Error::from(ApiError::InvalidBearer), req))
     }
 }
 #[derive(Debug)]
