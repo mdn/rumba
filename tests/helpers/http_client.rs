@@ -72,7 +72,7 @@ impl<T: Service<Request, Response = RumbaTestResponse, Error = Error>> TestHttpC
     pub fn with_legacy_session(service: T, id: &'static str) -> Self {
         let mut cookie_jar = CookieJar::new();
         cookie_jar
-            .private_mut(&Key::derive_from(&SETTINGS.auth.auth_cookie_key))
+            .private_mut(&Key::derive_from(&SETTINGS.auth.cookie_key))
             .add(Cookie::new("auth-cookie", id));
 
         Self {

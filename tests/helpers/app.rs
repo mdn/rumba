@@ -62,7 +62,7 @@ pub async fn test_app_with_login(
     init_logging();
     let arbiter = Arbiter::new();
     let arbiter_handle = Data::new(arbiter.handle());
-    let session_cookie_key = Key::derive_from(&SETTINGS.auth.auth_cookie_key);
+    let session_cookie_key = Key::derive_from(&SETTINGS.auth.cookie_key);
 
     let app = App::new()
         .wrap(error_handler())

@@ -70,7 +70,7 @@ async fn main() -> anyhow::Result<()> {
         })
     };
 
-    let session_cookie_key = Key::derive_from(&SETTINGS.auth.auth_cookie_key);
+    let session_cookie_key = Key::derive_from(&SETTINGS.auth.cookie_key);
 
     HttpServer::new(move || {
         let app = App::new()

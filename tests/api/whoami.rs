@@ -65,7 +65,7 @@ async fn whoami_legacy_logged_in_test() -> Result<(), Error> {
     let mut cookies = CookieJar::new();
     cookies.add(Cookie::parse_encoded(set_cookie.to_str()?.to_owned())?);
     let cookie = cookies
-        .private(&Key::derive_from(&SETTINGS.auth.auth_cookie_key))
+        .private(&Key::derive_from(&SETTINGS.auth.cookie_key))
         .get(&SETTINGS.auth.auth_cookie_name)
         .unwrap();
     assert_eq!(
