@@ -279,12 +279,13 @@ pub fn get_collections_and_items_containing_url(
 ) -> Result<Vec<(i64, CollectionItemAndDocumentQuery)>, DbError> {
     Ok(schema::collection_items::table
         .inner_join(schema::documents::table)
+        .inner_join(schema::multiple_collections::table)
         .filter(
-            schema::documents::uri.eq(normalize_uri(url)).and(
-                schema::collection_items::deleted_at
-                    .is_null()
-                    .and(schema::collection_items::user_id.eq(user.id)),
-            ),
+            schema::documents::uri
+                .eq(normalize_uri(url))
+                .and(schema::collection_items::user_id.eq(user.id))
+                .and(schema::collection_items::deleted_at.is_null())
+                .and(schema::multiple_collections::deleted_at.is_null()),
         )
         .select((
             (schema::collection_items::multiple_collection_id),
