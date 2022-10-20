@@ -290,5 +290,12 @@ pub async fn unwatch_many(
         .map(|v| normalize_uri(v))
         .collect();
     watched_items::delete_watched_items(&mut conn_pool, user.id, normalized_urls)?;
-    Ok(HttpResponse::Ok().finish())
+    let subscription_limit_reached =
+        watched_items_subscription_info_for_user(&user, &mut conn_pool)?.limit_reached;
+    Ok(HttpResponse::Ok().json(WatchedItemUpdateResponse {
+        ok: true,
+        subscription_limit_reached,
+        error: None,
+        info: None,
+    }))
 }

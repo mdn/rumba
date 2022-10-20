@@ -123,13 +123,16 @@ async fn test_unwatch_many() -> Result<(), Error> {
         res_json["items"][3]["url"].as_str().unwrap(),
     ];
 
-    logged_in_client
+    let res = logged_in_client
         .post(
             "/api/v1/plus/unwatch-many/",
             None,
             Some(PostPayload::Json(json!({ "unwatch": to_unwatch }))),
         )
         .await;
+    assert_eq!(res.response().status(), 200);
+    let res_json = read_json(res).await;
+    assert_eq!(res_json["ok"], true);
 
     let res = logged_in_client
         .get("/api/v1/plus/watching/?limit=20", None)
