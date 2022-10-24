@@ -449,7 +449,7 @@ async fn get_update_json(
         .json()
         .await
         .map_err(|err| {
-            println!("{:1}", err);
+            error!("{:1}", err);
             ApiError::DocumentNotFound
         })?;
     Ok(res)
