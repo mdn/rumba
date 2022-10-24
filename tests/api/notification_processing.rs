@@ -23,7 +23,8 @@ async fn test_receive_notification_subscribed_top_level() -> Result<(), Error> {
             port: Some(4321),
             latency: None,
             global_delay: None,
-            verbose: Some(true),
+            verbose: true,
+            verify: false,
         },
     );
     wait_for_stubr().await?;
@@ -136,7 +137,8 @@ async fn test_receive_notification_subscribed_specific_path() -> Result<(), Erro
             port: Some(4321),
             latency: None,
             global_delay: None,
-            verbose: Some(true),
+            verbose: true,
+            verify: false,
         },
     );
     wait_for_stubr().await?;
@@ -221,7 +223,8 @@ async fn test_receive_notification_unknown() -> Result<(), Error> {
             port: Some(4321),
             latency: None,
             global_delay: None,
-            verbose: Some(true),
+            verbose: true,
+            verify: false,
         },
     );
     wait_for_stubr().await?;

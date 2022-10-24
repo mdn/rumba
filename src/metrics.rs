@@ -280,6 +280,5 @@ mod tests {
 
         let tags = Tags::from_request_head(&rh);
         assert!(!tags.tags.contains_key("ua.os.ver"));
-        println!("{:?}", tags);
     }
 }

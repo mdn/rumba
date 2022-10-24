@@ -240,7 +240,8 @@ async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
             port: Some(4321),
             latency: None,
             global_delay: None,
-            verbose: Some(true),
+            verbose: true,
+            verify: false,
         },
     );
     wait_for_stubr().await?;

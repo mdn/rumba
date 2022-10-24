@@ -163,7 +163,7 @@ async fn callback(
                 .callback(q.code, nonce, &pool)
                 .await
                 .map_err(|err| {
-                    println!("{:?}", err);
+                    error!("{:?}", err);
                     actix_web::error::ErrorInternalServerError(err)
                 })?;
             Identity::login(&req.extensions(), uid).map_err(|err| {
