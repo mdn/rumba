@@ -9,6 +9,7 @@ use crate::helpers::read_json;
 
 use actix_http::StatusCode;
 use anyhow::Error;
+use chrono::DateTime;
 use serde_json::json;
 
 #[actix_rt::test]
@@ -789,5 +790,128 @@ async fn test_paying_user_no_collection_limit() -> Result<(), Error> {
         assert_created(res);
     }
     drop(_stubr);
+    Ok(())
+}
+#[actix_rt::test]
+async fn test_delete_collection_items_also_deleted() -> Result<(), Error> {
+    let (mut client, stubr) =
+        init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+    let base_url = "/api/v2/collections/";
+
+    let mut res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Test",
+                "description": "Test description"
+            }))),
+        )
+        .await;
+    let res_1 = assert_created_with_json_containing(res, json!({"name":"Test"})).await;
+    let collection_1 = res_1["id"].as_str().unwrap();
+
+    res = client
+        .post(
+            format!("{}{}/items/", base_url, collection_1).as_str(),
+            None,
+            Some(PostPayload::Json(json!({
+                "title" : "Interesting CSS1",
+                "url": "/en-US/docs/Web/CSS1"
+            }
+            ))),
+        )
+        .await;
+
+    assert_created(res);
+    res = client
+        .get(format!("{}{}/", base_url, collection_1).as_str(), None)
+        .await;
+    assert_ok_with_json_containing(res, json!({"id":collection_1,"article_count": 1})).await;
+
+    //Delete collection
+    res = client
+        .delete(format!("{}{}/", base_url, collection_1).as_str(), None)
+        .await;
+    assert_ok(res);
+    res = client
+        .get(format!("{}{}/", base_url, collection_1).as_str(), None)
+        .await;
+    assert_bad_request_with_json_containing(
+        res,
+        json!({
+            "code": 400,
+            "error": "Collection not found",
+            "message": format!("Collection with id {} not found",collection_1)
+        }),
+    )
+    .await;
+
+    res = client
+        .get(
+            format!("{}lookup/?url={}", base_url, "/en-US/docs/Web/CSS1").as_str(),
+            None,
+        )
+        .await;
+    assert_ok_with_json_containing(res, json!({"results": [] })).await;
+    drop(stubr);
+    Ok(())
+}
+
+#[actix_rt::test]
+async fn test_create_and_get_many_collections() -> Result<(), Error> {
+    let (mut client, stubr) =
+        init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+    let base_url = "/api/v2/collections/";
+
+    let mut _res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Test",
+                "description": "Test description"
+            }))),
+        )
+        .await;
+
+    _res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "A collection",
+                "description": "Test description"
+            }))),
+        )
+        .await;
+    _res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Z A collection",
+                "description": "Test description"
+            }))),
+        )
+        .await;
+
+    let get_res = client.get(base_url, None).await;
+
+    let body = read_json(get_res).await;
+    //assert first returned value is "Default".
+    assert_eq!(body.as_array().unwrap()[0]["name"], "Default");
+    //Assert that ordered by created_at ASC
+    body.as_array().unwrap().iter().reduce(|acc, next| {
+        let t1 = DateTime::parse_from_rfc3339(acc["created_at"].as_str().unwrap())
+            .unwrap()
+            .timestamp_nanos();
+        let t2 = DateTime::parse_from_rfc3339(next["created_at"].as_str().unwrap())
+            .unwrap()
+            .timestamp_nanos();
+        assert!(t1 < t2);
+        next
+    });
+    drop(stubr);
     Ok(())
 }
