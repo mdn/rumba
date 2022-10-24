@@ -21,7 +21,8 @@ async fn test_create_get_watched_items() -> Result<(), Error> {
             port: Some(4321),
             latency: None,
             global_delay: None,
-            verbose: Some(true),
+            verbose: true,
+            verify: false,
         },
     );
     wait_for_stubr().await?;
@@ -100,7 +101,8 @@ async fn test_unwatch_many() -> Result<(), Error> {
             port: Some(4321),
             latency: None,
             global_delay: None,
-            verbose: Some(true),
+            verbose: true,
+            verify: false,
         },
     );
     wait_for_stubr().await?;
@@ -161,7 +163,8 @@ async fn test_single_item_operations() -> Result<(), Error> {
             port: Some(4321),
             latency: None,
             global_delay: None,
-            verbose: Some(true),
+            verbose: true,
+            verify: false,
         },
     );
     wait_for_stubr().await?;
@@ -257,7 +260,8 @@ async fn test_watched_item_subscription_limit() -> Result<(), Error> {
             port: Some(4321),
             latency: None,
             global_delay: None,
-            verbose: Some(true),
+            verbose: true,
+            verify: false,
         },
     );
     wait_for_stubr().await?;

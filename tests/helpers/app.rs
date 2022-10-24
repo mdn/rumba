@@ -131,7 +131,8 @@ pub async fn init_test(
             port: Some(4321),
             latency: None,
             global_delay: None,
-            verbose: Some(true),
+            verbose: true,
+            verify: false,
         },
     );
     let app = test_app_with_login(&pool).await?;

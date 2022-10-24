@@ -10,7 +10,8 @@ async fn do_request(path: &str) -> Result<actix_web::dev::ServiceResponse<BoxBod
         vec!["tests/test_specific_stubs/search"],
         Config {
             port: Some(4321),
-            verbose: Some(true),
+            verbose: true,
+            verify: false,
             global_delay: None,
             latency: None,
         },
