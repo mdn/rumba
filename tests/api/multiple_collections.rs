@@ -9,7 +9,7 @@ use crate::helpers::read_json;
 
 use actix_http::StatusCode;
 use anyhow::Error;
-use chrono::{DateTime};
+use chrono::DateTime;
 use serde_json::json;
 
 #[actix_rt::test]
