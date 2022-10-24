@@ -53,6 +53,7 @@ pub fn get_multiple_collections_for_user(
             schema::multiple_collections::name,
             count(schema::collection_items::id).nullable(),
         ))
+        .order_by(schema::multiple_collections::created_at.asc())
         .get_results::<MultipleCollectionsQuery>(pool)?;
 
     Ok(collections)
