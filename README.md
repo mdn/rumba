@@ -19,6 +19,8 @@ Before you can start working with Rumba, you need to:
    - Docker: `docker run --name elastic -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" -d elasticsearch:8.3.3`
 5. Copy `.settings.dev.toml` to `.settings.toml`.
 6. Run `cargo run`.
+7. To create an authenticated session navigate to http://localhost:8000/users/fxa/login/authenticate/?next=%2F and login with your firefox staging account
+8. To check you are logged in and ready to go navigate to http://localhost:8000/api/v1/whoami you should see your logged in user information.
 
 ## Testing
 
