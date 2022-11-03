@@ -30,7 +30,7 @@ pub struct Auth {
     pub login_cookie_name: String,
     pub auth_cookie_secure: bool,
     #[serde_as(as = "Base64")]
-    pub auth_cookie_key: [u8; 64],
+    pub cookie_key: [u8; 64],
     pub admin_update_bearer_token: String,
 }
 

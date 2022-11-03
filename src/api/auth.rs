@@ -50,7 +50,7 @@ impl TryFrom<Cookie<'static>> for LoginCookie {
         let mut jar = CookieJar::new();
         jar.add_original(cookie);
         match jar
-            .private_mut(&Key::derive_from(&SETTINGS.auth.auth_cookie_key))
+            .private_mut(&Key::derive_from(&SETTINGS.auth.cookie_key))
             .get(&SETTINGS.auth.login_cookie_name)
         {
             Some(cookie) => {
@@ -77,7 +77,7 @@ impl TryFrom<LoginCookie> for Cookie<'static> {
         .path("/")
         .finish();
         let mut jar = CookieJar::new();
-        jar.private_mut(&Key::derive_from(&SETTINGS.auth.auth_cookie_key))
+        jar.private_mut(&Key::derive_from(&SETTINGS.auth.cookie_key))
             .add(cookie);
         match jar.get(&SETTINGS.auth.login_cookie_name) {
             Some(cookie) => Ok(cookie.to_owned()),

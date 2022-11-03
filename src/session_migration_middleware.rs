@@ -50,7 +50,7 @@ where
             let mut jar = CookieJar::new();
             jar.add_original(auth_cookie);
             if let Some(verified_decoded) = jar
-                .private(&Key::derive_from(&SETTINGS.auth.auth_cookie_key))
+                .private(&Key::derive_from(&SETTINGS.auth.cookie_key))
                 .get(&SETTINGS.auth.auth_cookie_name)
             {
                 let session = req.get_session();
