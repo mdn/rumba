@@ -15,7 +15,6 @@ pub mod fxa;
 mod helpers;
 pub mod logging;
 pub mod metrics;
-pub mod session_migration_middleware;
 pub mod settings;
 pub mod tags;
 pub mod util;
