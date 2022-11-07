@@ -4,9 +4,9 @@ use std::sync::Arc;
 
 use actix_identity::IdentityMiddleware;
 use actix_rt::Arbiter;
-use actix_session::{storage::CookieSessionStore, SessionMiddleware};
+use actix_session::{config::PersistentSession, storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{
-    cookie::{Key, SameSite},
+    cookie::{time::Duration, Key, SameSite},
     middleware::Logger,
     web::Data,
     App, HttpServer,
@@ -23,7 +23,6 @@ use rumba::{
     fxa::LoginManager,
     logging::{self, init_logging},
     metrics::{metrics_from_opts, MetricsData},
-    session_migration_middleware::SessionMigration,
     settings::{Sentry, SETTINGS},
 };
 use slog_scope::{debug, info};
@@ -77,7 +76,6 @@ async fn main() -> anyhow::Result<()> {
             .wrap(error_handler())
             .wrap(sentry_actix::Sentry::new())
             .wrap(IdentityMiddleware::default())
-            .wrap(SessionMigration)
             .wrap(
                 SessionMiddleware::builder(
                     CookieSessionStore::default(),
@@ -86,6 +84,7 @@ async fn main() -> anyhow::Result<()> {
                 .cookie_name(SETTINGS.auth.auth_cookie_name.clone())
                 .cookie_secure(SETTINGS.auth.auth_cookie_secure)
                 .cookie_same_site(SameSite::Strict)
+                .session_lifecycle(PersistentSession::default().session_ttl(Duration::days(365)))
                 .build(),
             )
             .wrap(Logger::new(LOG_FMT).exclude("/healthz"))
