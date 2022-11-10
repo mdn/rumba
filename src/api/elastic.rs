@@ -65,7 +65,7 @@ pub enum Locale {
     PortugueseBrazilian,
     #[serde(rename = "ru")]
     Russian,
-    #[serde(rename = "zn-cn")]
+    #[serde(rename = "zh-cn")]
     ChineseSimplified,
     #[serde(rename = "zh-tw")]
     ChineseTraditional,
