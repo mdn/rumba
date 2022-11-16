@@ -339,7 +339,7 @@ pub async fn process_notification_update(
                     NotificationDataInsert {
                         text: notification.text.to_owned(),
                         url: document.uri,
-                        data: serde_json::to_value(&notification.data).ok(),
+                        data: serde_json::to_value(notification.data).ok(),
                         title,
                         type_: db::types::NotificationTypeEnum::Compat,
                         document_id: document.id,

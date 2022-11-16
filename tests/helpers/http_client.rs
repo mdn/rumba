@@ -48,7 +48,7 @@ impl<T: Service<Request, Response = RumbaTestResponse, Error = Error>> TestHttpC
             .into_owned()
             .collect();
         let state = params.get("state").to_owned().unwrap().clone();
-        let mut base = test::TestRequest::get().uri(&*format!(
+        let mut base = test::TestRequest::get().uri(&format!(
             "/users/fxa/login/callback/?code={:1}&state={:2}",
             "ABC123", state
         ));
