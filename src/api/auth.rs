@@ -172,10 +172,14 @@ async fn callback(
             })?;
 
             let cookie = LoginCookie::removal();
+            let next = match next {
+                Some(next) if next.starts_with('/') => next,
+                _ => String::from("/"),
+            };
 
             return Ok(HttpResponse::TemporaryRedirect()
                 .cookie(cookie)
-                .append_header((http::header::LOCATION, next.unwrap_or_else(|| "/".into())))
+                .append_header((http::header::LOCATION, next))
                 .finish());
         }
     }
