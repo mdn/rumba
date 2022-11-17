@@ -144,8 +144,10 @@ mod test {
     fn test_utc_milliseconds() -> Result<(), Error> {
         let json = json!({ "dt": 1655312049699001i64 });
         let dt_serde: Millis = serde_json::from_value(json.clone())?;
-        let dt =
-            DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(1655312049699, 1_000_000), Utc);
+        let dt = DateTime::<Utc>::from_utc(
+            NaiveDateTime::from_timestamp_opt(1655312049699, 1_000_000).unwrap(),
+            Utc,
+        );
         assert_eq!(dt, dt_serde.dt);
 
         let millis = Millis { dt };
@@ -160,7 +162,7 @@ mod test {
         let json = json!({ "dt": 1655312049699.1f64 });
         let dt_serde: SecondsF = serde_json::from_value(json)?;
         let dt = DateTime::<Utc>::from_utc(
-            NaiveDateTime::from_timestamp(1655312049699, 100_000_000),
+            NaiveDateTime::from_timestamp_opt(1655312049699, 100_000_000).unwrap(),
             Utc,
         );
         assert_eq!(dt, dt_serde.dt);
@@ -177,7 +179,7 @@ mod test {
         }
 
         let d = DateWrapper {
-            date: NaiveDateTime::from_timestamp(0, 0),
+            date: NaiveDateTime::from_timestamp_opt(0, 0).unwrap(),
         };
         let v = serde_json::to_string(&d)?;
         assert_eq!(v, r#"{"date":"1970-01-01T00:00:00Z"}"#);
@@ -193,7 +195,7 @@ mod test {
         }
 
         let d = DateWrapper {
-            date: Some(NaiveDateTime::from_timestamp(0, 0)),
+            date: Some(NaiveDateTime::from_timestamp_opt(0, 0).unwrap()),
         };
         let v = serde_json::to_string(&d)?;
         assert_eq!(v, r#"{"date":"1970-01-01T00:00:00Z"}"#);
