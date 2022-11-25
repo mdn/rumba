@@ -162,3 +162,67 @@ pub enum NotificationTypeEnum {
     #[serde(rename(serialize = "compat"))]
     Compat,
 }
+
+#[derive(
+    Copy,
+    Clone,
+    diesel_derive_enum::DbEnum,
+    Debug,
+    Deserialize,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+)]
+
+#[DieselTypePath = "crate::db::schema::sql_types::BcdEventType"]
+pub enum BcdUpdateEvent {
+    #[serde(rename = "added_stable")]
+    AddedStable,
+    #[serde(rename = "added_preview")]
+    AddedPreview,
+    #[serde(rename = "added_subfeatures")]
+    AddedSubFeatures,
+    #[serde(rename = "added_nonnull")]
+    AddedNonNull,
+    #[serde(rename = "removed_stable")]
+    RemovedStable,
+    #[serde(other)]
+    Unknown,
+}
+
+#[derive(
+    Copy,
+    Clone,
+    diesel_derive_enum::DbEnum,
+    Debug,
+    Deserialize,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+)]
+
+#[DieselTypePath = "crate::db::schema::sql_types::BrowserType"]
+pub enum Browser {
+    Chrome,
+    ChromeAndroid,
+    Deno,
+    Edge,
+    Firefox,
+    FirefoxAndroid,
+    #[serde(rename = "ie")]
+    InternetExplorer,
+    #[serde(rename = "nodejs")]
+    NodeJs,
+    Opera,
+    OperaAndroid,
+    Safari,
+    SafariIos,
+    SamsungInternetAndroid,
+    WebviewAndroid,
+    #[serde(other)]
+    Unknown,
+}

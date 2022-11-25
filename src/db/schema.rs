@@ -2,6 +2,14 @@
 
 pub mod sql_types {
     #[derive(diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "bcd_event_type"))]
+    pub struct BcdEventType;
+
+    #[derive(diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "browser_type"))]
+    pub struct BrowserType;
+
+    #[derive(diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "fxa_event_status_type"))]
     pub struct FxaEventStatusType;
 
@@ -20,6 +28,38 @@ pub mod sql_types {
     #[derive(diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "subscription_type"))]
     pub struct SubscriptionType;
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+
+    bcd_update_history (id) {
+        id -> Int8,
+        created_at -> Timestamp,
+        version_identifier -> Nullable<Text>,
+        status -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+    use super::sql_types::BrowserType;
+    use super::sql_types::BcdEventType;
+
+    bcd_updates (id) {
+        id -> Int8,
+        bcd_path -> Nullable<Text>,
+        browser -> BrowserType,
+        created_at -> Timestamp,
+        bcd_update_version -> Int8,
+        description -> Nullable<Text>,
+        mdn_url -> Nullable<Text>,
+        document_id -> Int8,
+        spec_url -> Nullable<Text>,
+        event_type -> BcdEventType,
+    }
 }
 
 diesel::table! {
@@ -193,6 +233,8 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(bcd_updates -> bcd_update_history (bcd_update_version));
+diesel::joinable!(bcd_updates -> documents (document_id));
 diesel::joinable!(collection_items -> documents (document_id));
 diesel::joinable!(collection_items -> multiple_collections (multiple_collection_id));
 diesel::joinable!(collection_items -> users (user_id));
@@ -207,6 +249,8 @@ diesel::joinable!(watched_items -> documents (document_id));
 diesel::joinable!(watched_items -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
+    bcd_update_history,
+    bcd_updates,
     collection_items,
     collections,
     documents,

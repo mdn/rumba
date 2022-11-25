@@ -1854,6 +1854,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "map-macro"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0dffbf44bae6c3f2c0befb25f800b092eea36d55bcba28226038fe3d29b29d25"
+
+[[package]]
 name = "match_cfg"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2646,6 +2652,7 @@ dependencies = [
  "harsh",
  "hostname",
  "jsonwebtoken",
+ "map-macro",
  "once_cell",
  "openidconnect",
  "r2d2",

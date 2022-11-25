@@ -88,3 +88,7 @@ pub struct MultipleCollectionsQueryNoCount {
     pub notes: Option<String>,
     pub name: String,
 }
+
+pub struct BcdUpdateQuery { 
+
+}
