@@ -32,7 +32,7 @@ async fn test_basic() -> Result<(), Error> {
     assert!(search.status().is_success());
     assert_eq!(
         search.headers().get(header::CACHE_CONTROL).unwrap(),
-        "max-age=43200"
+        "max-age=86400"
     );
 
     let json = read_json(search).await;
@@ -79,7 +79,7 @@ async fn test_sort_relevance() -> Result<(), Error> {
     assert!(search.status().is_success());
     assert_eq!(
         search.headers().get(header::CACHE_CONTROL).unwrap(),
-        "max-age=43200"
+        "max-age=86400"
     );
 
     let json = read_json(search).await;
@@ -95,7 +95,7 @@ async fn test_sort_popularity() -> Result<(), Error> {
     assert!(search.status().is_success());
     assert_eq!(
         search.headers().get(header::CACHE_CONTROL).unwrap(),
-        "max-age=43200"
+        "max-age=86400"
     );
 
     let json = read_json(search).await;
@@ -124,7 +124,7 @@ async fn test_locale_multiple() -> Result<(), Error> {
     assert!(search.status().is_success());
     assert_eq!(
         search.headers().get(header::CACHE_CONTROL).unwrap(),
-        "max-age=43200"
+        "max-age=86400"
     );
 
     let json = read_json(search).await;
@@ -154,7 +154,7 @@ async fn test_locale_none() -> Result<(), Error> {
     assert!(search.status().is_success());
     assert_eq!(
         search.headers().get(header::CACHE_CONTROL).unwrap(),
-        "max-age=43200"
+        "max-age=86400"
     );
 
     let json = read_json(search).await;
@@ -170,7 +170,7 @@ async fn test_page_2() -> Result<(), Error> {
     assert!(search.status().is_success());
     assert_eq!(
         search.headers().get(header::CACHE_CONTROL).unwrap(),
-        "max-age=43200"
+        "max-age=86400"
     );
 
     let json = read_json(search).await;
@@ -231,7 +231,7 @@ async fn test_suggestion() -> Result<(), Error> {
     assert!(search.status().is_success());
     assert_eq!(
         search.headers().get(header::CACHE_CONTROL).unwrap(),
-        "max-age=43200"
+        "max-age=86400"
     );
 
     let json = read_json(search).await;
@@ -249,7 +249,7 @@ async fn test_no_results() -> Result<(), Error> {
     assert!(search.status().is_success());
     assert_eq!(
         search.headers().get(header::CACHE_CONTROL).unwrap(),
-        "max-age=43200"
+        "max-age=86400"
     );
 
     let json = read_json(search).await;
