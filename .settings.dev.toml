@@ -24,7 +24,7 @@ subscriptions_limit_collections = 5
 
 [search]
 url = "http://localhost:9200"
-cache_max_age = 43200
+cache_max_age = 86400
 query_max_length = 200
 
 [logging]

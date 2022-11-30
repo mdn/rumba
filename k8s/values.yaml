@@ -18,7 +18,7 @@ settings:
   application__subscriptions_limit_watched_items: 3
   application__subscriptions_limit_collections: 5
 
-  search__cache_max_age: 43200
+  search__cache_max_age: 86400
   search__query_max_length: 200
 
   logging__human_logs: false
