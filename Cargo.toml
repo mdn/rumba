@@ -68,5 +68,5 @@ sentry-actix = "0.29"
 
 [dev-dependencies]
 stubr = "0.5.0-rc.2"
-stubr-attributes = "0.5.0-rc.2"
+stubr-attributes = "0.5.0"
 assert-json-diff = "2"
