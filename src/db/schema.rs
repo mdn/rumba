@@ -6,10 +6,6 @@ pub mod sql_types {
     pub struct BcdEventType;
 
     #[derive(diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "browser_type"))]
-    pub struct BrowserType;
-
-    #[derive(diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "fxa_event_status_type"))]
     pub struct FxaEventStatusType;
 
@@ -33,11 +29,42 @@ pub mod sql_types {
 diesel::table! {
     use diesel::sql_types::*;
     use crate::db::types::*;
+    use super::sql_types::BcdEventType;
 
-    bcd_update_history (id) {
+    bcd_updates (id) {
         id -> Int8,
+        browser_release -> Int8,
         created_at -> Timestamp,
-        version_identifier -> Nullable<Text>,
+        description -> Nullable<Text>,
+        document_id -> Int8,
+        event_type -> BcdEventType,
+        feature -> Int8,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+    use super::sql_types::BcdEventType;
+
+    bcd_updates_view (id) {
+        id -> Int8,
+        browser -> Text,
+        deprecated -> Nullable<Bool>,
+        description -> Nullable<Text>,
+        document_id -> Int8,
+        engine -> Text,
+        engine_version -> Text,
+        event_type -> BcdEventType,
+        experimental -> Nullable<Bool>,
+        mdn_url -> Nullable<Text>,
+        path -> Text,
+        release_date -> Date,
+        release_id -> Text,
+        release_notes -> Nullable<Text>,
+        source_file -> Text,
+        spec_url -> Nullable<Text>,
+        standard_track -> Nullable<Bool>,
         status -> Nullable<Text>,
     }
 }
@@ -45,20 +72,29 @@ diesel::table! {
 diesel::table! {
     use diesel::sql_types::*;
     use crate::db::types::*;
-    use super::sql_types::BrowserType;
-    use super::sql_types::BcdEventType;
 
-    bcd_updates (id) {
+    browser_releases (id) {
         id -> Int8,
-        bcd_path -> Nullable<Text>,
-        browser -> BrowserType,
-        created_at -> Timestamp,
-        bcd_update_version -> Int8,
-        description -> Nullable<Text>,
-        mdn_url -> Nullable<Text>,
-        document_id -> Int8,
-        spec_url -> Nullable<Text>,
-        event_type -> BcdEventType,
+        browser -> Text,
+        engine -> Text,
+        engine_version -> Text,
+        release_id -> Text,
+        release_date -> Date,
+        release_notes -> Nullable<Text>,
+        status -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+
+    browsers (name) {
+        name -> Text,
+        accepts_flags -> Nullable<Bool>,
+        accepts_webextensions -> Nullable<Bool>,
+        pref_url -> Nullable<Text>,
+        preview_name -> Nullable<Text>,
     }
 }
 
@@ -108,6 +144,22 @@ diesel::table! {
         metadata -> Nullable<Jsonb>,
         title -> Text,
         paths -> Array<Nullable<Text>>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+
+    features (id) {
+        id -> Int8,
+        deprecated -> Nullable<Bool>,
+        experimental -> Nullable<Bool>,
+        mdn_url -> Nullable<Text>,
+        path -> Text,
+        source_file -> Text,
+        spec_url -> Nullable<Text>,
+        standard_track -> Nullable<Bool>,
     }
 }
 
@@ -233,8 +285,12 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(bcd_updates -> bcd_update_history (bcd_update_version));
+diesel::joinable!(bcd_updates -> browser_releases (browser_release));
 diesel::joinable!(bcd_updates -> documents (document_id));
+diesel::joinable!(bcd_updates -> features (feature));
+diesel::joinable!(bcd_updates_view -> browsers (browser));
+diesel::joinable!(bcd_updates_view -> documents (document_id));
+diesel::joinable!(browser_releases -> browsers (browser));
 diesel::joinable!(collection_items -> documents (document_id));
 diesel::joinable!(collection_items -> multiple_collections (multiple_collection_id));
 diesel::joinable!(collection_items -> users (user_id));
@@ -249,11 +305,14 @@ diesel::joinable!(watched_items -> documents (document_id));
 diesel::joinable!(watched_items -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
-    bcd_update_history,
     bcd_updates,
+    bcd_updates_view,
+    browser_releases,
+    browsers,
     collection_items,
     collections,
     documents,
+    features,
     multiple_collections,
     notification_data,
     notifications,

@@ -1,10 +1,15 @@
 #![allow(clippy::extra_unused_lifetimes)] /* https://github.com/rust-lang/rust-clippy/issues/9014 */
 use crate::db::model::User;
 use crate::db::schema::*;
+use crate::db::types::BcdUpdateEventType;
 use crate::helpers::{maybe_to_utc, to_utc};
-use chrono::NaiveDateTime;
-use serde::Serialize;
+use chrono::{NaiveDate, NaiveDateTime};
+use diesel::deserialize::{FromSql, FromSqlRow};
+use diesel::pg::Pg;
+use diesel::sql_types::{Date, Text, Jsonb};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::str;
 
 #[derive(Queryable, Clone)]
 pub struct CollectionItemAndDocumentQuery {
@@ -29,7 +34,6 @@ pub struct MultipleCollectionInsert {
     pub updated_at: NaiveDateTime,
     pub name: String,
 }
-
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = collection_items)]
 pub struct CollectionItemInsert {
@@ -89,6 +93,64 @@ pub struct MultipleCollectionsQueryNoCount {
     pub name: String,
 }
 
-pub struct BcdUpdateQuery { 
+#[derive(Queryable, Deserialize, PartialEq)]
+#[serde(transparent)]
+pub struct Events {
+    pub events: Vec<Event>,
+}
 
+#[derive(FromSqlRow, Debug, Serialize, Deserialize,PartialEq)]
+pub struct Event {
+    pub path: String,
+    pub mdn_url: Option<String>,
+    pub source_file: Option<String>,
+    pub spec_url: Option<String>,
+    pub status: Option<Status>,
+    pub event_type: BcdUpdateEventType,
+}
+
+#[derive(Queryable, Debug,Deserialize, PartialEq, Serialize)]
+pub struct Status {
+    pub deprecated: bool,
+    pub experimental: bool,
+    pub standard_track: bool,
+}
+
+#[derive(QueryableByName, Deserialize, PartialEq)]
+pub struct BcdUpdateQuery {
+    #[diesel(sql_type = Text)]
+    pub browser: String,
+    #[diesel(sql_type = Text)]
+    pub engine: String,
+    #[diesel(sql_type = Text)]
+    pub engine_version: String,
+    #[diesel(sql_type = Text)]
+    pub release_id: String,
+    #[diesel(sql_type = Date)]
+    pub release_date: NaiveDate,
+    #[diesel(sql_type = Jsonb)]
+    pub compat: Events,
+}
+
+impl FromSql<Jsonb, Pg> for Events {
+    fn from_sql(bytes: diesel::backend::RawValue<'_, Pg>) -> diesel::deserialize::Result<Self> {
+        info!("{:}", str::from_utf8(bytes.as_bytes()).unwrap());
+        let value = <serde_json::Value as FromSql<Jsonb, Pg>>::from_sql(bytes)?;
+        Ok(serde_json::from_value(value)?)
+    }
+
+    fn from_nullable_sql(
+        bytes: Option<diesel::backend::RawValue<'_, Pg>>,
+    ) -> diesel::deserialize::Result<Self> {
+        match bytes {
+            Some(bytes) => Self::from_sql(bytes),
+            None => Err(Box::new(diesel::result::UnexpectedNullError)),
+        }
+    }
+}
+
+#[derive(Serialize, Queryable, PartialEq, Eq, Debug)]
+#[diesel(table_name = bcd_update_history)]
+pub struct BcdUpdateVersionLatestQuery {
+    pub version: String,
 }

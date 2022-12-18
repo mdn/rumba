@@ -1,126 +1,183 @@
 use std::collections::HashMap;
 
-use actix_web::{HttpRequest, web, HttpResponse};
-use chrono::{NaiveDateTime, Utc, Datelike};
-use serde::{Serialize, Deserialize};
-use serde_json::{Map, Value};
-use map_macro::map;
-use crate::{db::{Pool}, api::error::ApiError};
-use crate::helpers::to_utc;
+use crate::db::types::BcdUpdateEventType;
+use crate::db::v2::bcd_updates::get_bcd_updates_paginated;
+use crate::db::v2::model::{BcdUpdateQuery, Event, Status};
+use crate::{api::error::ApiError, db::Pool};
+use actix_web::{web, HttpRequest, HttpResponse};
+use chrono::{NaiveDate};
+use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 pub struct BcdUpdatesQueryParams {
     pub q: Option<String>,
-    pub limit: Option<u32>,
-    pub offset: Option<u32>,
+    pub limit: Option<i32>,
+    pub offset: Option<i32>,
 }
 
 #[derive(Serialize, Hash, Eq, PartialEq)]
-pub enum UpdateType { 
+pub enum UpdateType {
+    #[serde(rename(serialize = "browser_grouping"))]
     BrowserGrouping,
+    #[serde(rename(serialize = "added_missing"))]
     AddedMissing,
-    SubfeatureAdded
+    #[serde(rename(serialize = "added_subfeatures"))]
+    SubfeatureAdded,
 }
 
-pub type UpdateMap = HashMap<UpdateType,BcdUpdate>;
+pub type UpdateMap = HashMap<UpdateType, BcdUpdate>;
 
 #[derive(Serialize)]
 pub struct BcdUpdatesPaginatedResponse {
-    pub updates: Vec<UpdateMap>,
+    pub data: Vec<BcdUpdate>,
     pub query: String,
-}
-
-#[derive(Serialize, Clone)]
-pub struct BcdUpdateEvent {
-    #[serde(rename(serialize = "type"))]
-    pub _type: String,    
-    pub label: String,
-    pub deprecated: Option<bool>,
-    pub preview: Option<bool>,
-    pub supported_engines: Option<i16>,
-    pub mdn_url: Option<String>,
-    pub bcd_path: String
+    pub last: u32,
 }
 
 #[derive(Serialize)]
+pub struct BcdUpdateEvent {
+    pub added: Vec<FeatureInfo>,
+    pub removed: Vec<FeatureInfo>,
+}
+
+#[derive(Serialize)]
+pub struct FeatureInfo {
+    pub path: String,
+    pub compat: CompatInfo,
+}
+
+#[derive(Serialize)]
+pub struct StatusInfo {
+    deprecated: bool,
+    experimental: bool,
+    standard_track: bool,
+}
+
+#[derive(Serialize)]
+pub struct CompatInfo {
+    pub mdn_url: Option<String>,
+    pub source_file: Option<String>,
+    pub spec_url: Option<String>,
+    pub status: Option<StatusInfo>,
+    pub engines: Vec<String>,
+}
+#[derive(Serialize)]
 pub struct BrowserInfo {
-    pub display_name: String, 
-    pub version: i8,
+    pub browser: String,
+    pub version: String,
+    pub name: String,
+    pub engine: String,
+    pub engine_version: String,
+    pub release_notes: String,
 }
 
 #[derive(Serialize)]
 pub struct BcdUpdate {
-    pub browser: Option<BrowserInfo>, 
-    pub events: Vec<BcdUpdateEvent>,
-    #[serde(serialize_with = "to_utc")]
-    pub published_at: NaiveDateTime,
+    #[serde(rename(serialize = "type"))]
+    pub _type: UpdateType,
+    #[serde(flatten)]
+    pub browser: Option<BrowserInfo>,
+    pub events: BcdUpdateEvent,
+    pub date: NaiveDate,
 }
 
 pub async fn get_updates(
-    _req: HttpRequest,    
+    _req: HttpRequest,
     pool: web::Data<Pool>,
     query: web::Query<BcdUpdatesQueryParams>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    // get_bcd_updates_paginated(&mut conn_pool,&query.into_inner()).await;
-
-let mut mockUpdates = vec![
-    BcdUpdateEvent { 
-    _type: "support_added".to_string(), 
-    label: ":modal".to_string(), 
-    deprecated: None, 
-    preview: None, 
-    supported_engines: Some(2), 
-    mdn_url: Some("https://developer.allizom.org/en-US/docs/Web/CSS/:modal".to_string()), 
-    bcd_path: "css.selectors.modal".to_string()
-},
-BcdUpdateEvent { 
-    _type: "support_added".to_string(), 
-    label: "translate()".to_string(), 
-    deprecated: None, 
-    preview: None, 
-    supported_engines: Some(1), 
-    mdn_url: Some("https://developer.allizom.org/en-US/docs/Web/CSS/transform-function/translate".to_string()), 
-    bcd_path: "css.types.transform-function.translate".to_string()
-},
-BcdUpdateEvent { 
-    _type: "preview_added".to_string(), 
-    label: "MIDIInput".to_string(), 
-    deprecated: None, 
-    preview: Some(true), 
-    supported_engines: None, 
-    mdn_url: Some("https://developer.allizom.org/en-US/docs/Web/API/MIDIInput".to_string()), 
-    bcd_path: "api.MIDIInput".to_string()
-}];
-
-    let update_one = (UpdateType::BrowserGrouping, BcdUpdate {
-        browser: Some(BrowserInfo { display_name: "Opera".to_string(), version: 91 }),
-        published_at:  Utc::now().naive_utc(),
-        events: mockUpdates.iter_mut().map(|all| all.to_owned()).collect(),
-    });
-    let update_two = (UpdateType::BrowserGrouping, BcdUpdate {
-        browser: Some(BrowserInfo { display_name: "Firefox".to_string(), version: 93 }),
-        published_at:  Utc::now().naive_utc().with_month(10).unwrap(),
-        events: mockUpdates,
-    });
-    let update_three = (UpdateType::SubfeatureAdded, BcdUpdate {
-        browser: None,
-        events: vec![BcdUpdateEvent { 
-            _type: "Subfeature Added".to_string(), 
-            label: "translate()".to_string(), 
-            deprecated: None, 
-            preview: None, 
-            supported_engines: None, 
-            mdn_url: None, 
-            bcd_path: "some.path".to_string() }],
-        published_at: Utc::now().naive_utc().with_month(9).unwrap(),
-    });
-    
+    let updates = get_bcd_updates_paginated(&mut conn_pool, &query.into_inner())?;
+    let mapped_updates = updates
+        .into_iter()
+        .group_by(|key| {
+            (
+                key.browser.clone(),
+                key.release_id.clone(),
+                key.engine.clone(),
+                key.engine_version.clone(),
+                key.release_date.clone(),
+            )
+        })
+        .into_iter()
+        .map(|(key, group)| {
+            let collected = group.collect::<Vec<BcdUpdateQuery>>();
+            BcdUpdate {
+                _type: UpdateType::BrowserGrouping,
+                browser: Some(BrowserInfo {
+                    version: key.1,
+                    name: key.0.to_string(),
+                    browser: key.0.to_string(),
+                    engine_version: key.3,
+                    engine: key.2,
+                    release_notes: "".to_string(),
+                }),
+                date: key.4,
+                events: BcdUpdateEvent {
+                    added: collected
+                        .iter()
+                        .map(|val| {
+                            val.compat
+                                .events
+                                .iter()
+                                .filter(|to_filter| {
+                                    to_filter.event_type.eq(&BcdUpdateEventType::AddedStable)
+                                })
+                                .map(|hello| hello.into())
+                        })
+                        .flatten()
+                        .collect(),
+                    removed: collected
+                        .iter()
+                        .map(|val| {
+                            val.compat.events
+                                .iter()
+                                .filter(|to_filter| {
+                                    to_filter.event_type.eq(&BcdUpdateEventType::RemovedStable)
+                                })
+                                .map(|hello| hello.into())
+                        })
+                        .flatten()
+                        .collect(),
+                },
+            }
+        })
+        .collect();
     let response = BcdUpdatesPaginatedResponse {
-        updates: vec![map! {update_one.0 => update_one.1} ,    
-        map! {update_two.0 => update_two.1},
-        map! {update_three.0 => update_three.1}],
-        query: "We'll pass back the query context here for filters".to_string()
+        data: mapped_updates,
+        query: "We'll pass back the query context here for filters".to_string(),
+        last: 40,
     };
     Ok(HttpResponse::Ok().json(response))
+}
+
+impl From<&Event> for FeatureInfo {
+    fn from(val: &Event) -> Self {
+        FeatureInfo {
+            path: val.path.clone(),
+            compat: CompatInfo {
+                mdn_url: val.mdn_url.clone(),
+                source_file: val.source_file.clone(),
+                spec_url: val.spec_url.clone(),
+                status: val
+                    .status
+                    .as_ref()
+                    .map_or(Option::<StatusInfo>::None, |val| {
+                        Some(Into::<StatusInfo>::into(&*val))
+                    }),
+                engines: vec![],
+            },
+        }
+    }
+}
+
+impl From<&Status> for StatusInfo {
+    fn from(val: &Status) -> Self {
+        StatusInfo {
+            deprecated: val.deprecated,
+            experimental: val.experimental,
+            standard_track: val.standard_track,
+        }
+    }
 }

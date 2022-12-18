@@ -336,7 +336,7 @@ pub async fn process_notification_update(
                 let title = suffix.join(".");
                 let notification_data_id = create_notification_data(
                     &mut conn_pool,
-                    NotificationDataInsert   {
+                    NotificationDataInsert {
                         text: notification.text.to_owned(),
                         url: document.uri,
                         data: serde_json::to_value(notification.data).ok(),
