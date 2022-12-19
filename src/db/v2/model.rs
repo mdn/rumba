@@ -4,9 +4,7 @@ use crate::db::schema::*;
 use crate::db::types::BcdUpdateEventType;
 use crate::helpers::{maybe_to_utc, to_utc};
 use chrono::{NaiveDate, NaiveDateTime};
-use diesel::deserialize::{FromSql, FromSqlRow};
-use diesel::pg::Pg;
-use diesel::sql_types::{Date, Text, Jsonb};
+use diesel::sql_types::{Date, Json, Text};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::str;
@@ -93,13 +91,13 @@ pub struct MultipleCollectionsQueryNoCount {
     pub name: String,
 }
 
-#[derive(Queryable, Deserialize, PartialEq)]
+#[derive(Clone, Deserialize, Eq, PartialEq)]
 #[serde(transparent)]
 pub struct Events {
     pub events: Vec<Event>,
 }
 
-#[derive(FromSqlRow, Debug, Serialize, Deserialize,PartialEq)]
+#[derive(Clone, Deserialize, Eq, PartialEq)]
 pub struct Event {
     pub path: String,
     pub mdn_url: Option<String>,
@@ -109,14 +107,14 @@ pub struct Event {
     pub event_type: BcdUpdateEventType,
 }
 
-#[derive(Queryable, Debug,Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Eq, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Status {
     pub deprecated: bool,
     pub experimental: bool,
     pub standard_track: bool,
 }
 
-#[derive(QueryableByName, Deserialize, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Queryable, QueryableByName)]
 pub struct BcdUpdateQuery {
     #[diesel(sql_type = Text)]
     pub browser: String,
@@ -128,29 +126,34 @@ pub struct BcdUpdateQuery {
     pub release_id: String,
     #[diesel(sql_type = Date)]
     pub release_date: NaiveDate,
-    #[diesel(sql_type = Jsonb)]
-    pub compat: Events,
+    #[diesel(sql_type = Json)]
+    pub compat: Value,
 }
 
-impl FromSql<Jsonb, Pg> for Events {
-    fn from_sql(bytes: diesel::backend::RawValue<'_, Pg>) -> diesel::deserialize::Result<Self> {
-        info!("{:}", str::from_utf8(bytes.as_bytes()).unwrap());
-        let value = <serde_json::Value as FromSql<Jsonb, Pg>>::from_sql(bytes)?;
-        Ok(serde_json::from_value(value)?)
-    }
+pub struct BcdUpdate {
+    pub browser: String,
+    pub engine: String,
+    pub engine_version: String,
+    pub release_id: String,
+    pub release_date: NaiveDate,
+    pub compat: Vec<Event>,
+}
 
-    fn from_nullable_sql(
-        bytes: Option<diesel::backend::RawValue<'_, Pg>>,
-    ) -> diesel::deserialize::Result<Self> {
-        match bytes {
-            Some(bytes) => Self::from_sql(bytes),
-            None => Err(Box::new(diesel::result::UnexpectedNullError)),
+impl From<&BcdUpdateQuery> for BcdUpdate {
+    fn from(val: &BcdUpdateQuery) -> Self {
+        BcdUpdate {
+            browser: val.browser.clone(),
+            engine: val.engine.clone(),
+            engine_version: val.engine_version.clone(),
+            release_id: val.release_id.clone(),
+            release_date: val.release_date,
+            compat: serde_json::from_value::<Vec<Event>>(val.compat.clone()).unwrap(),
         }
     }
 }
 
-#[derive(Serialize, Queryable, PartialEq, Eq, Debug)]
-#[diesel(table_name = bcd_update_history)]
-pub struct BcdUpdateVersionLatestQuery {
-    pub version: String,
+#[derive(Debug, Clone, PartialEq, Eq, QueryableByName)]
+pub struct TestStructQuery {
+    #[diesel(sql_type = Text)]
+    engine_name: String,
 }

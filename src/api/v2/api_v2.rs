@@ -1,7 +1,7 @@
 use actix_web::dev::HttpServiceFactory;
 use actix_web::web;
 
-use crate::api::updates::update_bcd;
+use crate::db::v2::synchronize_bcd_updates_db::update_bcd;
 
 use super::{
     multiple_collections::{

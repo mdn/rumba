@@ -1,19 +1,33 @@
 use std::collections::HashMap;
+use std::str::FromStr;
 
 use crate::db::types::BcdUpdateEventType;
 use crate::db::v2::bcd_updates::get_bcd_updates_paginated;
-use crate::db::v2::model::{BcdUpdateQuery, Event, Status};
+use crate::db::v2::model::{Event, Status};
 use crate::{api::error::ApiError, db::Pool};
 use actix_web::{web, HttpRequest, HttpResponse};
-use chrono::{NaiveDate};
+use chrono::NaiveDate;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize)]
+fn array_like<'de, D, S>(deserializer: D) -> Result<S, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    S: std::iter::FromIterator<std::string::String>,
+{
+    let s = <&str as serde::Deserialize>::deserialize(deserializer)?;
+    Ok(s.split(',')
+        .map(|val| String::from_str(val).unwrap())
+        .collect())
+}
+
+#[derive(Deserialize, Serialize)]
 pub struct BcdUpdatesQueryParams {
     pub q: Option<String>,
-    pub limit: Option<i32>,
-    pub offset: Option<i32>,
+    pub page: Option<i64>,
+    pub live_since: Option<NaiveDate>,
+    #[serde(deserialize_with = "array_like")]
+    pub browsers: Vec<String>,
 }
 
 #[derive(Serialize, Hash, Eq, PartialEq)]
@@ -31,8 +45,8 @@ pub type UpdateMap = HashMap<UpdateType, BcdUpdate>;
 #[derive(Serialize)]
 pub struct BcdUpdatesPaginatedResponse {
     pub data: Vec<BcdUpdate>,
-    pub query: String,
-    pub last: u32,
+    pub query: BcdUpdatesQueryParams,
+    pub last: i64,
 }
 
 #[derive(Serialize)]
@@ -88,8 +102,9 @@ pub async fn get_updates(
     query: web::Query<BcdUpdatesQueryParams>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let updates = get_bcd_updates_paginated(&mut conn_pool, &query.into_inner())?;
+    let updates = get_bcd_updates_paginated(&mut conn_pool, &query)?;
     let mapped_updates = updates
+        .0
         .into_iter()
         .group_by(|key| {
             (
@@ -97,12 +112,12 @@ pub async fn get_updates(
                 key.release_id.clone(),
                 key.engine.clone(),
                 key.engine_version.clone(),
-                key.release_date.clone(),
+                key.release_date,
             )
         })
         .into_iter()
         .map(|(key, group)| {
-            let collected = group.collect::<Vec<BcdUpdateQuery>>();
+            let collected = group.collect::<Vec<crate::db::v2::model::BcdUpdate>>();
             BcdUpdate {
                 _type: UpdateType::BrowserGrouping,
                 browser: Some(BrowserInfo {
@@ -117,28 +132,25 @@ pub async fn get_updates(
                 events: BcdUpdateEvent {
                     added: collected
                         .iter()
-                        .map(|val| {
+                        .flat_map(|val| {
                             val.compat
-                                .events
                                 .iter()
                                 .filter(|to_filter| {
                                     to_filter.event_type.eq(&BcdUpdateEventType::AddedStable)
                                 })
                                 .map(|hello| hello.into())
                         })
-                        .flatten()
                         .collect(),
                     removed: collected
                         .iter()
-                        .map(|val| {
-                            val.compat.events
+                        .flat_map(|val| {
+                            val.compat
                                 .iter()
                                 .filter(|to_filter| {
                                     to_filter.event_type.eq(&BcdUpdateEventType::RemovedStable)
                                 })
                                 .map(|hello| hello.into())
                         })
-                        .flatten()
                         .collect(),
                 },
             }
@@ -146,8 +158,8 @@ pub async fn get_updates(
         .collect();
     let response = BcdUpdatesPaginatedResponse {
         data: mapped_updates,
-        query: "We'll pass back the query context here for filters".to_string(),
-        last: 40,
+        query: query.into_inner(),
+        last: updates.1,
     };
     Ok(HttpResponse::Ok().json(response))
 }
@@ -160,12 +172,7 @@ impl From<&Event> for FeatureInfo {
                 mdn_url: val.mdn_url.clone(),
                 source_file: val.source_file.clone(),
                 spec_url: val.spec_url.clone(),
-                status: val
-                    .status
-                    .as_ref()
-                    .map_or(Option::<StatusInfo>::None, |val| {
-                        Some(Into::<StatusInfo>::into(&*val))
-                    }),
+                status: val.status.as_ref().map(Into::<StatusInfo>::into),
                 engines: vec![],
             },
         }

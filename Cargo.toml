@@ -27,9 +27,9 @@ diesel-derive-enum = { version = "2.0.0-rc.0", features = ["postgres"] }
 
 elasticsearch = "7.14.0-alpha.1"
 harsh = "0.2"
+itertools = "0.10.5"
 r2d2 = "0.8"
 
-map-macro = "0.2.4"
 openidconnect = "2"
 jsonwebtoken = "8"
 

@@ -2,30 +2,30 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use std::{fs::File, io::BufReader};
 
-use crate::db::schema::*;
+use crate::api::error::ApiError;
+use crate::db::schema::{self, *};
 use crate::db::types::BcdUpdateEventType;
 use crate::db::Pool;
 use crate::diesel::ExpressionMethods;
 use crate::diesel::QueryDsl;
 use crate::diesel::RunQueryDsl;
-use actix_web::{
-    web::{self, Data},
-    HttpRequest, HttpResponse,
-};
+use actix_http::StatusCode;
+use actix_web::{web::Data, HttpResponse};
 use chrono::NaiveDate;
-use diesel::PgConnection;
+use diesel::{update, PgConnection};
 use reqwest::Client;
+use serde_json::Value;
 
-use super::error::ApiError;
 use crate::diesel::BoolExpressionMethods;
 
-pub async fn update_bcd(
-    pool: Data<Pool>,
-) -> Result<HttpResponse, ApiError> {
+pub async fn update_bcd(pool: Data<Pool>, client: Data<Client>) -> Result<HttpResponse, ApiError> {
     let mut conn = pool.get()?;
-
+    info!("Synchronize browsers");
     synchronize_browers_and_releases(&mut conn).await?;
+    info!("Synchronize features");
     synchronize_features(&mut conn).await?;
+    info!("Synchronize paths + bcd mappings");
+    synchronize_path_mappings(&mut conn, client).await?;
     synchronize_updates(&mut conn).await?;
 
     Ok(HttpResponse::Accepted().finish())
@@ -76,21 +76,35 @@ async fn synchronize_browers_and_releases(pool: &mut PgConnection) -> Result<(),
         }
     });
 
-    diesel::insert_into(crate::db::schema::browsers::table)
+    let mut res = diesel::insert_into(crate::db::schema::browsers::table)
         .values(browser_values)
         .execute(pool)
-        .map_err(|e| error!("{:?}", e));
+        .map_err(|e| {
+            warn!("{:?}", e);
+            e
+        });
 
-    diesel::insert_into(crate::db::schema::browser_releases::table)
+    if let Err(val) = res {
+        warn!("Error adding browsers : {:?}", val);
+    }
+
+    res = diesel::insert_into(crate::db::schema::browser_releases::table)
         .values(releases)
         .execute(pool)
-        .map_err(|e| error!("{:?}", e));
+        .map_err(|e| {
+            warn!("{:?}", e);
+            e
+        });
+
+    if let Err(val) = res {
+        warn!("Error adding browser releases : {:?}", val);
+    }
 
     Ok(())
 }
 
 async fn synchronize_features(pool: &mut PgConnection) -> Result<(), ApiError> {
-    let file = File::open("features_3.json").map_err(|_| ApiError::Unknown)?;
+    let file = File::open("features.json").expect("Error reading features.json");
     let reader = BufReader::new(file);
     let json: serde_json::Value =
         serde_json::from_reader(reader).expect("Error reading features.json");
@@ -102,32 +116,37 @@ async fn synchronize_features(pool: &mut PgConnection) -> Result<(), ApiError> {
             return;
         }
         features.push((
+            features::document_id.eq(1),
             features::path.eq(val["path"].as_str().unwrap()),
             features::mdn_url.eq(val["mdn_url"].as_str()),
             features::source_file.eq(val["source_file"].as_str().unwrap()),
             features::spec_url.eq(val["spec_url"].as_str()),
             features::deprecated.eq(val["status"]
                 .as_object()
-                .map_or(None, |v| v["deprecated"].as_bool())),
+                .and_then(|v| v["deprecated"].as_bool())),
             features::experimental.eq(val["status"]
                 .as_object()
-                .map_or(None, |v| v["experimental"].as_bool())),
+                .and_then(|v| v["experimental"].as_bool())),
             features::standard_track.eq(val["status"]
                 .as_object()
-                .map_or(None, |v| v["standard_track"].as_bool())),
+                .and_then(|v| v["standard_track"].as_bool())),
         ));
     });
 
-    while features.len() > 0 {
+    while !features.is_empty() {
         let mut batch_size = 1000;
         if batch_size > features.len() {
             batch_size = features.len();
         }
         let drained: Vec<_> = features.drain(0..batch_size).collect();
-        diesel::insert_into(features::table)
+        let res = diesel::insert_into(features::table)
             .values(drained)
             .execute(pool)
             .map_err(|e| error!("{:?}", e));
+
+        if let Err(val) = res {
+            warn!("Error adding features {:?}", val);
+        }
     }
 
     Ok(())
@@ -158,14 +177,14 @@ async fn synchronize_updates(pool: &mut PgConnection) -> Result<(), ApiError> {
             .as_array()
             .unwrap()
             .iter()
-            .find(|x| x["added"].as_array().is_some() && x["added"].as_array().unwrap().len() > 0)
+            .find(|x| x["added"].as_array().is_some() && !x["added"].as_array().unwrap().is_empty())
             .map(|v| &v["added"]);
         let removed = val
             .as_array()
             .unwrap()
             .iter()
             .find(|x| {
-                x["removed"].as_array().is_some() && x["removed"].as_array().unwrap().len() > 0
+                x["removed"].as_array().is_some() && !x["removed"].as_array().unwrap().is_empty()
             })
             .map(|v| &v["removed"]);
 
@@ -175,7 +194,7 @@ async fn synchronize_updates(pool: &mut PgConnection) -> Result<(), ApiError> {
             return;
         }
         let mut _browser_release_id = match release_versions_cached.get(&key) {
-            Some(val) => val.clone(),
+            Some(val) => *val,
             None => {
                 let _release_id: Result<i64, diesel::result::Error> = browser_releases::table
                     .select(browser_releases::id)
@@ -197,15 +216,15 @@ async fn synchronize_updates(pool: &mut PgConnection) -> Result<(), ApiError> {
                 }
                 let unwrapped = _release_id.unwrap();
 
-                release_versions_cached.insert(key, unwrapped.clone());
-                unwrapped.clone()
+                release_versions_cached.insert(key, unwrapped);
+                unwrapped
             }
         };
 
         if let Some(val) = added {
             for path in val.as_array().unwrap() {
                 let feature_id = match feature_info_cached.get(path.as_str().unwrap()) {
-                    Some(val) => val.clone(),
+                    Some(val) => *val,
                     None => {
                         let _feature_id: Result<i64, diesel::result::Error> = features::table
                             .select(features::id)
@@ -216,14 +235,12 @@ async fn synchronize_updates(pool: &mut PgConnection) -> Result<(), ApiError> {
                         }
                         let unwrapped = _feature_id.unwrap();
 
-                        feature_info_cached
-                            .insert(path.as_str().unwrap().to_owned(), unwrapped.clone());
-                        unwrapped.clone()
+                        feature_info_cached.insert(path.as_str().unwrap().to_owned(), unwrapped);
+                        unwrapped
                     }
                 };
                 _added_.push((
                     bcd_updates::browser_release.eq(_browser_release_id),
-                    bcd_updates::document_id.eq(1),
                     bcd_updates::event_type.eq(BcdUpdateEventType::AddedStable),
                     bcd_updates::feature.eq(feature_id),
                 ));
@@ -233,7 +250,7 @@ async fn synchronize_updates(pool: &mut PgConnection) -> Result<(), ApiError> {
         if let Some(val) = removed {
             for path in val.as_array().unwrap() {
                 let feature_id = match feature_info_cached.get(path.as_str().unwrap()) {
-                    Some(val) => val.clone(),
+                    Some(val) => *val,
                     None => {
                         let _feature_id: Result<i64, diesel::result::Error> = features::table
                             .select(features::id)
@@ -242,29 +259,149 @@ async fn synchronize_updates(pool: &mut PgConnection) -> Result<(), ApiError> {
 
                         let unwrapped = _feature_id.unwrap();
 
-                        feature_info_cached
-                            .insert(path.as_str().unwrap().to_owned(), unwrapped.clone());
-                        unwrapped.clone()
+                        feature_info_cached.insert(path.as_str().unwrap().to_owned(), unwrapped);
+                        unwrapped
                     }
                 };
                 _removed_.push((
                     bcd_updates::browser_release.eq(_browser_release_id),
-                    bcd_updates::document_id.eq(1),
                     bcd_updates::event_type.eq(BcdUpdateEventType::RemovedStable),
                     bcd_updates::feature.eq(feature_id),
                 ));
             }
         }
 
-        diesel::insert_into(bcd_updates::table)
+        let added_results = diesel::insert_into(bcd_updates::table)
             .values(_added_)
             .execute(pool)
-            .map_err(|e| error!("{:?} \n {:?}, {:?}", e, added, _browser_release_id));
-
-        diesel::insert_into(bcd_updates::table)
+            .map_err(|e| {
+                error!("{:?} \n {:?}, {:?}", e, added, _browser_release_id);
+                e
+            });
+        if added_results.is_err() {
+            warn!("Error creating feature added bcd updates")
+        }
+        let remove_results = diesel::insert_into(bcd_updates::table)
             .values(_removed_)
             .execute(pool)
-            .map_err(|e| error!("{:?} \n {:?} , {:?}", e, removed, _browser_release_id));
+            .map_err(|e| {
+                error!("{:?} \n {:?} , {:?}", e, removed, _browser_release_id);
+                e
+            });
+        if remove_results.is_err() {
+            warn!("Error creating feature removed bcd updates")
+        }
     });
+    Ok(())
+}
+
+async fn synchronize_path_mappings(
+    pool: &mut PgConnection,
+    client: Data<Client>,
+) -> Result<(), ApiError> {
+    let metadata_url = "https://developer.mozilla.org/en-US/metadata.json";
+    let values = client.get(metadata_url.to_owned()).send().await.map_err(
+        |err: reqwest::Error| match err.status() {
+            Some(StatusCode::NOT_FOUND) => {
+                warn!("Error NOT_FOUND fetching all metadata {} ", &metadata_url);
+                ApiError::DocumentNotFound
+            }
+            _ => {
+                warn!("Error Unknown fetching all metadata {} ", &metadata_url);
+                ApiError::Unknown
+            }
+        },
+    )?;
+
+    let json: Value = values
+        .json()
+        .await
+        .map_err(|_| ApiError::DocumentNotFound)?;
+
+    struct PathAndShortTitle {
+        path: String,
+        mdn_url: String,
+        short_title: String,
+    }
+
+    //1. Get all values with a bcd path, extract path, mdn_url, short title.
+    let mut path_map: HashMap<String, (String, String)> = HashMap::new();
+
+    let extract: Vec<PathAndShortTitle> = json
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|val| val["browserCompat"].as_array().is_some())
+        .map(|filtered| {
+            let paths = filtered["browserCompat"].as_array().unwrap();
+            if paths.len() > 1 {
+                warn!("Multiple paths detected for {:?}", paths);
+            }
+
+            for path in paths {
+                path_map.insert(
+                    path.as_str().unwrap().try_into().unwrap(),
+                    (
+                        String::from_str(filtered["mdn_url"].as_str().unwrap()).unwrap(),
+                        String::from_str(filtered["short_title"].as_str().unwrap()).unwrap(),
+                    ),
+                );
+            }
+
+            PathAndShortTitle {
+                path: String::from_str(paths[0].as_str().unwrap()).unwrap(),
+                mdn_url: String::from_str(filtered["mdn_url"].as_str().unwrap()).unwrap(),
+                short_title: String::from_str(filtered["short_title"].as_str().unwrap()).unwrap(),
+            }
+        })
+        .collect();
+
+    extract.iter().for_each(|path_and_title| {
+        let res = update(schema::features::table.filter(features::path.eq(&path_and_title.path)))
+            .set((
+                features::mdn_url.eq(&path_and_title.mdn_url),
+                features::short_title.eq(&path_and_title.short_title),
+            ))
+            .execute(pool);
+        if let Err(err) = res {
+            warn!("Error updating {:}, {:?}", &path_and_title.path, err);
+        }
+    });
+
+    //2. Find paths with missing info and patch them to the next higher subpath.
+    let null_vals: Vec<String> = schema::features::table
+        .select(schema::features::path)
+        .filter(features::mdn_url.is_null())
+        .get_results::<String>(pool)?;
+    //Let's find all the features without a
+    for val in null_vals {
+        let mut parts: Vec<&str> = val.split('.').collect();
+        parts.pop();
+        while !parts.is_empty() {
+            let subpath = parts.join(".");
+            info!("checking subpath {:} for {:}", subpath, val);
+            if let Some(replacement) = path_map.get(&subpath) {
+                info!(
+                    "Replacing missing url + title for path {:} with {:}'s ({:},{:})",
+                    val, subpath, &replacement.0, &replacement.1
+                );
+                let res = update(schema::features::table.filter(schema::features::path.eq(&val)))
+                    .set((
+                        schema::features::mdn_url.eq(&replacement.0),
+                        schema::features::short_title.eq(&replacement.1),
+                    ))
+                    .execute(pool);
+                if let Err(err) = res {
+                    warn!(
+                        "Error updating {:} with metadata from {:}, {:?}",
+                        val, subpath, err
+                    );
+                }
+                break;
+            }
+            parts.pop();
+        }
+    }
+
     Ok(())
 }

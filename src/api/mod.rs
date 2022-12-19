@@ -11,7 +11,6 @@ pub mod notifications;
 pub mod root;
 pub mod search;
 pub mod settings;
-pub mod updates;
 pub mod v2;
 pub mod watched_items;
 pub mod whoami;

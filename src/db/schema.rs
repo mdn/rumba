@@ -36,7 +36,6 @@ diesel::table! {
         browser_release -> Int8,
         created_at -> Timestamp,
         description -> Nullable<Text>,
-        document_id -> Int8,
         event_type -> BcdEventType,
         feature -> Int8,
     }
@@ -47,7 +46,7 @@ diesel::table! {
     use crate::db::types::*;
     use super::sql_types::BcdEventType;
 
-    bcd_updates_view (id) {
+    bcd_updates_read_table (id) {
         id -> Int8,
         browser -> Text,
         deprecated -> Nullable<Bool>,
@@ -58,6 +57,7 @@ diesel::table! {
         event_type -> BcdEventType,
         experimental -> Nullable<Bool>,
         mdn_url -> Nullable<Text>,
+        short_title -> Nullable<Text>,
         path -> Text,
         release_date -> Date,
         release_id -> Text,
@@ -154,9 +154,11 @@ diesel::table! {
     features (id) {
         id -> Int8,
         deprecated -> Nullable<Bool>,
+        document_id -> Int8,
         experimental -> Nullable<Bool>,
         mdn_url -> Nullable<Text>,
         path -> Text,
+        short_title -> Nullable<Text>,
         source_file -> Text,
         spec_url -> Nullable<Text>,
         standard_track -> Nullable<Bool>,
@@ -286,16 +288,16 @@ diesel::table! {
 }
 
 diesel::joinable!(bcd_updates -> browser_releases (browser_release));
-diesel::joinable!(bcd_updates -> documents (document_id));
 diesel::joinable!(bcd_updates -> features (feature));
-diesel::joinable!(bcd_updates_view -> browsers (browser));
-diesel::joinable!(bcd_updates_view -> documents (document_id));
+diesel::joinable!(bcd_updates_read_table -> browsers (browser));
+diesel::joinable!(bcd_updates_read_table -> documents (document_id));
 diesel::joinable!(browser_releases -> browsers (browser));
 diesel::joinable!(collection_items -> documents (document_id));
 diesel::joinable!(collection_items -> multiple_collections (multiple_collection_id));
 diesel::joinable!(collection_items -> users (user_id));
 diesel::joinable!(collections -> documents (document_id));
 diesel::joinable!(collections -> users (user_id));
+diesel::joinable!(features -> documents (document_id));
 diesel::joinable!(multiple_collections -> users (user_id));
 diesel::joinable!(notification_data -> documents (document_id));
 diesel::joinable!(notifications -> notification_data (notification_data_id));
@@ -306,7 +308,7 @@ diesel::joinable!(watched_items -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     bcd_updates,
-    bcd_updates_view,
+    bcd_updates_read_table,
     browser_releases,
     browsers,
     collection_items,
