@@ -98,7 +98,7 @@ pub struct BcdUpdate {
     #[serde(flatten)]
     pub browser: Option<BrowserInfo>,
     pub events: BcdUpdateEvent,
-    pub date: NaiveDate,
+    pub release_date: NaiveDate,
 }
 
 pub async fn get_updates(
@@ -134,7 +134,7 @@ pub async fn get_updates(
                     release_notes: "".to_string(),
                     version: key.5,
                 }),
-                date: key.4,
+                release_date: key.4,
                 events: BcdUpdateEvent {
                     added: collected
                         .iter()

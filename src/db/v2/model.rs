@@ -145,7 +145,7 @@ pub struct BcdUpdate {
 impl From<&BcdUpdateQuery> for BcdUpdate {
     fn from(val: &BcdUpdateQuery) -> Self {
         BcdUpdate {
-            browser: val.browser_name.clone(),
+            browser: val.browser.clone(),
             engine: val.engine.clone(),
             name: val.browser_name.clone(),
             engine_version: val.engine_version.clone(),
