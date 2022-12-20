@@ -64,7 +64,7 @@ pub fn get_bcd_updates_paginated(
     }
 
     if let Some(browsers) = &query_params.browsers {
-        query = query.filter(schema::bcd_updates_read_table::browser_name.eq_any(browsers));
+        query = query.filter(schema::bcd_updates_read_table::browser.eq_any(browsers));
     }
 
     let offset = (query_params.page.map_or(1, |val| {
@@ -137,7 +137,7 @@ schema::bcd_updates_read_table::release_date))
     }
 
     if let Some(browsers) = &query_params.browsers {
-        query = query.filter(schema::bcd_updates_read_table::browser_name.eq_any(browsers));
+        query = query.filter(schema::bcd_updates_read_table::browser.eq_any(browsers));
     }
 
     let pags = query.paginate().per_page(5);

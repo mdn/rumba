@@ -32,11 +32,10 @@ CREATE TABLE browser_releases
     UNIQUE(browser, engine, release_date)
 );
 
-CREATE TABLE features 
+CREATE TABLE bcd_features 
 (
     id BIGSERIAL   PRIMARY KEY,
-    deprecated     BOOLEAN,
-    document_id    BIGSERIAL REFERENCES documents(id),
+    deprecated     BOOLEAN,    
     experimental   BOOLEAN,
     mdn_url        TEXT,
     path           TEXT NOT NULL UNIQUE,
@@ -53,7 +52,7 @@ CREATE TABLE bcd_updates
     created_at         TIMESTAMP NOT NULL DEFAULT now(),
     description        TEXT, 
     event_type         bcd_event_type NOT NULL,
-    feature       BIGSERIAL REFERENCES features,
+    feature       BIGSERIAL REFERENCES bcd_features,
     UNIQUE(browser_release, feature)
 );
 
@@ -64,7 +63,6 @@ CREATE TABLE bcd_updates_read_table
     browser        TEXT           NOT NULL,
     deprecated     BOOLEAN,
     description    TEXT,
-    document_id    BIGSERIAL REFERENCES documents (id),
     engine         TEXT           NOT NULL,
     engine_version TEXT           NOT NULL,
     event_type     bcd_event_type NOT NULL,
@@ -95,7 +93,6 @@ BEGIN
                 b.name,
                 f.deprecated,
                 NEW.description,
-                f.document_id,
                 br.engine,
                 br.engine_version,
                 NEW.event_type,
@@ -111,7 +108,7 @@ BEGIN
                 f.standard_track,
                 br.status
          FROM browser_releases br
-                  left join features f on f.id = NEW.feature
+                  left join bcd_features f on f.id = NEW.feature
                   left join browsers b on br.browser = b.name
          where f.id = NEW.feature and NEW.browser_release = br.id);
     RETURN NEW;

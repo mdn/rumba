@@ -14,8 +14,8 @@ fn array_like<'de, D>(deserializer: D) -> Result<Option<Vec<String>>, D::Error>
 where
     D: serde::Deserializer<'de>,
 {
-    let s: Option<&str> = Option::deserialize(deserializer)?;
-    if let Some(res) = s {
+    let s: Option<String> = Option::deserialize(deserializer)?;
+    if let Some(res) = s {        
         let collected: Vec<String> = res
             .split(',')
             .map(|val| String::from_str(val).unwrap())

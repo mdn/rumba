@@ -116,19 +116,18 @@ async fn synchronize_features(pool: &mut PgConnection) -> Result<(), ApiError> {
             error!("No source file found for path. {:?}", val);
             return;
         }
-        features.push((
-            features::document_id.eq(1),
-            features::path.eq(val["path"].as_str().unwrap()),
-            features::mdn_url.eq(val["mdn_url"].as_str()),
-            features::source_file.eq(val["source_file"].as_str().unwrap()),
-            features::spec_url.eq(val["spec_url"].as_str()),
-            features::deprecated.eq(val["status"]
+        features.push((            
+            bcd_features::path.eq(val["path"].as_str().unwrap()),
+            bcd_features::mdn_url.eq(val["mdn_url"].as_str()),
+            bcd_features::source_file.eq(val["source_file"].as_str().unwrap()),
+            bcd_features::spec_url.eq(val["spec_url"].as_str()),
+            bcd_features::deprecated.eq(val["status"]
                 .as_object()
                 .and_then(|v| v["deprecated"].as_bool())),
-            features::experimental.eq(val["status"]
+                bcd_features::experimental.eq(val["status"]
                 .as_object()
                 .and_then(|v| v["experimental"].as_bool())),
-            features::standard_track.eq(val["status"]
+                bcd_features::standard_track.eq(val["status"]
                 .as_object()
                 .and_then(|v| v["standard_track"].as_bool())),
         ));
@@ -140,7 +139,7 @@ async fn synchronize_features(pool: &mut PgConnection) -> Result<(), ApiError> {
             batch_size = features.len();
         }
         let drained: Vec<_> = features.drain(0..batch_size).collect();
-        let res = diesel::insert_into(features::table)
+        let res = diesel::insert_into(bcd_features::table)
             .values(drained)
             .execute(pool)
             .map_err(|e| error!("{:?}", e));
@@ -227,9 +226,9 @@ async fn synchronize_updates(pool: &mut PgConnection) -> Result<(), ApiError> {
                 let feature_id = match feature_info_cached.get(path.as_str().unwrap()) {
                     Some(val) => *val,
                     None => {
-                        let _feature_id: Result<i64, diesel::result::Error> = features::table
-                            .select(features::id)
-                            .filter(features::path.eq(path.as_str().unwrap()))
+                        let _feature_id: Result<i64, diesel::result::Error> = bcd_features::table
+                            .select(bcd_features::id)
+                            .filter(bcd_features::path.eq(path.as_str().unwrap()))
                             .first(pool);
                         if _feature_id.is_err() {
                             error!("Error {:}", path.as_str().unwrap());
@@ -253,9 +252,9 @@ async fn synchronize_updates(pool: &mut PgConnection) -> Result<(), ApiError> {
                 let feature_id = match feature_info_cached.get(path.as_str().unwrap()) {
                     Some(val) => *val,
                     None => {
-                        let _feature_id: Result<i64, diesel::result::Error> = features::table
-                            .select(features::id)
-                            .filter(features::path.eq(path.as_str().unwrap()))
+                        let _feature_id: Result<i64, diesel::result::Error> = bcd_features::table
+                            .select(bcd_features::id)
+                            .filter(bcd_features::path.eq(path.as_str().unwrap()))
                             .first(pool);
 
                         let unwrapped = _feature_id.unwrap();
@@ -358,10 +357,10 @@ async fn synchronize_path_mappings(
         .collect();
 
     extract.iter().for_each(|path_and_title| {
-        let res = update(schema::features::table.filter(features::path.eq(&path_and_title.path)))
+        let res = update(schema::bcd_features::table.filter(bcd_features::path.eq(&path_and_title.path)))
             .set((
-                features::mdn_url.eq(&path_and_title.mdn_url),
-                features::short_title.eq(&path_and_title.short_title),
+                bcd_features::mdn_url.eq(&path_and_title.mdn_url),
+                bcd_features::short_title.eq(&path_and_title.short_title),
             ))
             .execute(pool);
         if let Err(err) = res {
@@ -370,9 +369,9 @@ async fn synchronize_path_mappings(
     });
 
     //2. Find paths with missing info and patch them to the next higher subpath.
-    let null_vals: Vec<String> = schema::features::table
-        .select(schema::features::path)
-        .filter(features::mdn_url.is_null())
+    let null_vals: Vec<String> = schema::bcd_features::table
+        .select(schema::bcd_features::path)
+        .filter(bcd_features::mdn_url.is_null())
         .get_results::<String>(pool)?;
     //Let's find all the features without a
     for val in null_vals {
@@ -386,10 +385,10 @@ async fn synchronize_path_mappings(
                     "Replacing missing url + title for path {:} with {:}'s ({:},{:})",
                     val, subpath, &replacement.0, &replacement.1
                 );
-                let res = update(schema::features::table.filter(schema::features::path.eq(&val)))
+                let res = update(schema::bcd_features::table.filter(schema::bcd_features::path.eq(&val)))
                     .set((
-                        schema::features::mdn_url.eq(&replacement.0),
-                        schema::features::short_title.eq(&replacement.1),
+                        schema::bcd_features::mdn_url.eq(&replacement.0),
+                        schema::bcd_features::short_title.eq(&replacement.1),
                     ))
                     .execute(pool);
                 if let Err(err) = res {
