@@ -56,7 +56,7 @@ pub fn get_bcd_updates_paginated(
         )).into_boxed();
 
     if let Some(search) = &query_params.q {
-        query = query.filter(schema::bcd_updates_read_table::path.ilike(format!("%{:}", search)));
+        query = query.filter(schema::bcd_updates_read_table::path.ilike(format!("%{:}%", search)));
     }
 
     if let Some(since) = &query_params.live_since {
@@ -129,7 +129,7 @@ schema::bcd_updates_read_table::release_date))
     )).into_boxed();
 
     if let Some(search) = &query_params.q {
-        query = query.filter(schema::bcd_updates_read_table::path.ilike(format!("%{:}", search)))
+        query = query.filter(schema::bcd_updates_read_table::path.ilike(format!("%{:}%", search)))
     }
 
     if let Some(since) = &query_params.live_since {
@@ -141,8 +141,5 @@ schema::bcd_updates_read_table::release_date))
     }
 
     let pags = query.paginate().per_page(5);
-
-    // let debug = diesel::debug_query::<diesel::pg::Pg, _>(&pags);
-    // info!("{:}", debug);
     pags.count_pages::<BcdUpdateQuery>(pool).unwrap()
 }
