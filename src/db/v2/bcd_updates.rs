@@ -67,7 +67,13 @@ pub fn get_bcd_updates_paginated(
         query = query.filter(schema::bcd_updates_read_table::browser_name.eq_any(browsers));
     }
 
-    let offset = (query_params.page.unwrap_or(1) - 1) * 5;
+    let offset = (query_params.page.map_or(1, |val| {
+        if val <= 0 {
+            return 1;
+        }
+        val
+    }) - 1)
+        * 5;
 
     let res = query
         .order_by((
