@@ -48,6 +48,7 @@ diesel::table! {
 
     bcd_updates_read_table (id) {
         id -> Int8,
+        browser_name -> Text,
         browser -> Text,
         deprecated -> Nullable<Bool>,
         description -> Nullable<Text>,
@@ -91,6 +92,7 @@ diesel::table! {
 
     browsers (name) {
         name -> Text,
+        display_name -> Text,
         accepts_flags -> Nullable<Bool>,
         accepts_webextensions -> Nullable<Bool>,
         pref_url -> Nullable<Text>,
@@ -289,7 +291,6 @@ diesel::table! {
 
 diesel::joinable!(bcd_updates -> browser_releases (browser_release));
 diesel::joinable!(bcd_updates -> features (feature));
-diesel::joinable!(bcd_updates_read_table -> browsers (browser));
 diesel::joinable!(bcd_updates_read_table -> documents (document_id));
 diesel::joinable!(browser_releases -> browsers (browser));
 diesel::joinable!(collection_items -> documents (document_id));

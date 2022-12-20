@@ -8,7 +8,7 @@ pub trait PaginationStats: Sized {
     fn paginate(self) -> Paginated<Self>;
 }
 
-const DEFAULT_PER_PAGE: i64 = 10;
+const DEFAULT_PER_PAGE: i64 = 5;
 
 impl<T> PaginationStats for T {
     fn paginate(self) -> Paginated<Self> {
@@ -36,7 +36,6 @@ impl<T> Paginated<T> {
     {
         let per_page = self.per_page;
         let results = self.load::<(U, i64)>(conn)?;
-        info!("RESULTS {:?}", results.get(0).map(|x| x.1));
         let total = results.get(0).map(|x| x.1).unwrap_or(0);
         let total_pages = (total as f64 / per_page as f64).ceil() as i64;
         Ok(total_pages)
@@ -54,7 +53,7 @@ where
     T: QueryFragment<Pg>,
 {
     fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Pg>) -> QueryResult<()> {
-        out.push_sql("SELECT browser, engine, engine_version, release_id, release_date,'[]'::json as compat,  COUNT(*) OVER () FROM (");
+        out.push_sql("SELECT browser, browser_name, engine, engine_version, release_id, release_date,'[]'::json as compat,  COUNT(*) OVER () FROM (");
         self.query.walk_ast(out.reborrow())?;
         out.push_sql(") t LIMIT ");
         out.push_bind_param::<BigInt, _>(&self.per_page)?;

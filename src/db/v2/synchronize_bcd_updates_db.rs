@@ -42,6 +42,7 @@ async fn synchronize_browers_and_releases(pool: &mut PgConnection) -> Result<(),
     json.as_object().unwrap().iter().for_each(|(k, v)| {
         browser_values.push((
             browsers::name.eq(k.as_str()),
+            browsers::display_name.eq(v["name"].as_str().unwrap()),
             browsers::accepts_flags.eq(v["accepts_flags"].as_bool().unwrap()),
             browsers::accepts_webextensions.eq(v["accepts_webextensions"].as_bool().unwrap()),
             browsers::pref_url.eq(v["pref_url"].as_str()),
@@ -112,7 +113,7 @@ async fn synchronize_features(pool: &mut PgConnection) -> Result<(), ApiError> {
     let mut features = Vec::new();
     json.as_array().unwrap().iter().for_each(|val| {
         if val["source_file"].as_str().is_none() {
-            error!("No source file found for path. Much confuse {:?}", val);
+            error!("No source file found for path. {:?}", val);
             return;
         }
         features.push((
@@ -279,7 +280,7 @@ async fn synchronize_updates(pool: &mut PgConnection) -> Result<(), ApiError> {
                 e
             });
         if added_results.is_err() {
-            warn!("Error creating feature added bcd updates")
+            warn!("Error creating added bcd updates")
         }
         let remove_results = diesel::insert_into(bcd_updates::table)
             .values(_removed_)

@@ -119,6 +119,8 @@ pub struct BcdUpdateQuery {
     #[diesel(sql_type = Text)]
     pub browser: String,
     #[diesel(sql_type = Text)]
+    pub browser_name: String,
+    #[diesel(sql_type = Text)]
     pub engine: String,
     #[diesel(sql_type = Text)]
     pub engine_version: String,
@@ -132,6 +134,7 @@ pub struct BcdUpdateQuery {
 
 pub struct BcdUpdate {
     pub browser: String,
+    pub name: String,
     pub engine: String,
     pub engine_version: String,
     pub release_id: String,
@@ -142,8 +145,9 @@ pub struct BcdUpdate {
 impl From<&BcdUpdateQuery> for BcdUpdate {
     fn from(val: &BcdUpdateQuery) -> Self {
         BcdUpdate {
-            browser: val.browser.clone(),
+            browser: val.browser_name.clone(),
             engine: val.engine.clone(),
+            name: val.browser_name.clone(),
             engine_version: val.engine_version.clone(),
             release_id: val.release_id.clone(),
             release_date: val.release_date,

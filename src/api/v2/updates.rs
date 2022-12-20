@@ -10,15 +10,19 @@ use chrono::NaiveDate;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-fn array_like<'de, D, S>(deserializer: D) -> Result<S, D::Error>
+fn array_like<'de, D>(deserializer: D) -> Result<Option<Vec<String>>, D::Error>
 where
     D: serde::Deserializer<'de>,
-    S: std::iter::FromIterator<std::string::String>,
 {
-    let s = <&str as serde::Deserialize>::deserialize(deserializer)?;
-    Ok(s.split(',')
-        .map(|val| String::from_str(val).unwrap())
-        .collect())
+    let s: Option<&str> = Option::deserialize(deserializer)?;
+    if let Some(res) = s {
+        let collected: Vec<String> = res
+            .split(',')
+            .map(|val| String::from_str(val).unwrap())
+            .collect();
+        return Ok(Some(collected));
+    }
+    Ok(None)
 }
 
 #[derive(Deserialize, Serialize)]
@@ -26,8 +30,9 @@ pub struct BcdUpdatesQueryParams {
     pub q: Option<String>,
     pub page: Option<i64>,
     pub live_since: Option<NaiveDate>,
+    #[serde(default)]
     #[serde(deserialize_with = "array_like")]
-    pub browsers: Vec<String>,
+    pub browsers: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Hash, Eq, PartialEq)]
@@ -109,10 +114,11 @@ pub async fn get_updates(
         .group_by(|key| {
             (
                 key.browser.clone(),
-                key.release_id.clone(),
-                key.engine.clone(),
                 key.engine_version.clone(),
+                key.engine.clone(),
+                key.name.clone(),
                 key.release_date,
+                key.release_id.clone(),
             )
         })
         .into_iter()
@@ -121,12 +127,12 @@ pub async fn get_updates(
             BcdUpdate {
                 _type: UpdateType::BrowserGrouping,
                 browser: Some(BrowserInfo {
-                    version: key.1,
-                    name: key.0.to_string(),
                     browser: key.0.to_string(),
-                    engine_version: key.3,
+                    engine_version: key.1,
                     engine: key.2,
+                    name: key.3.to_string(),
                     release_notes: "".to_string(),
+                    version: key.5,
                 }),
                 date: key.4,
                 events: BcdUpdateEvent {

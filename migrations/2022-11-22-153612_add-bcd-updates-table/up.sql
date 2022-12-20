@@ -12,6 +12,7 @@ CREATE TYPE bcd_event_type AS ENUM
 CREATE TABLE browsers 
 (
     name                  TEXT PRIMARY KEY,
+    display_name          TEXT NOT NULL,
     accepts_flags         BOOLEAN,
     accepts_webextensions BOOLEAN,
     pref_url              TEXT,
@@ -58,8 +59,9 @@ CREATE TABLE bcd_updates
 
 CREATE TABLE bcd_updates_read_table
 (
-    id             BIGSERIAL PRIMARY KEY,
-    browser        TEXT           NOT NULL references browsers (name),
+    id             BIGSERIAL PRIMARY KEY,    
+    browser_name   TEXT           NOT NULL,
+    browser        TEXT           NOT NULL,
     deprecated     BOOLEAN,
     description    TEXT,
     document_id    BIGSERIAL REFERENCES documents (id),
@@ -89,7 +91,8 @@ BEGIN
     INSERT INTO bcd_updates_read_table
          (SELECT
                 NEXTVAL('bcd_updates_read_table_id_seq'),
-                br.browser,
+                b.display_name,
+                b.name,
                 f.deprecated,
                 NEW.description,
                 f.document_id,
@@ -109,6 +112,7 @@ BEGIN
                 br.status
          FROM browser_releases br
                   left join features f on f.id = NEW.feature
+                  left join browsers b on br.browser = b.name
          where f.id = NEW.feature and NEW.browser_release = br.id);
     RETURN NEW;
 END;

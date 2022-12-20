@@ -22,13 +22,17 @@ pub fn get_bcd_updates_paginated(
     let count = get_count_for_query(pool, query_params);
 
     let mut query = schema::bcd_updates_read_table::table
-        .group_by((schema::bcd_updates_read_table::browser,
-    schema::bcd_updates_read_table::engine,
-    schema::bcd_updates_read_table::engine_version,
-    schema::bcd_updates_read_table::release_id,
-    schema::bcd_updates_read_table::release_date))
+        .group_by((
+            schema::bcd_updates_read_table::browser,
+            schema::bcd_updates_read_table::browser_name,
+            schema::bcd_updates_read_table::engine,
+            schema::bcd_updates_read_table::engine_version,
+            schema::bcd_updates_read_table::release_id,
+            schema::bcd_updates_read_table::release_date
+        ))
         .select((
             schema::bcd_updates_read_table::browser,
+            schema::bcd_updates_read_table::browser_name,
             schema::bcd_updates_read_table::engine,
             schema::bcd_updates_read_table::engine_version,
             schema::bcd_updates_read_table::release_id,
@@ -59,19 +63,18 @@ pub fn get_bcd_updates_paginated(
         query = query.filter(schema::bcd_updates_read_table::release_date.ge(since));
     }
 
-    if !query_params.browsers.is_empty() {
-        query =
-            query.filter(schema::bcd_updates_read_table::browser.eq_any(&query_params.browsers));
+    if let Some(browsers) = &query_params.browsers {
+        query = query.filter(schema::bcd_updates_read_table::browser_name.eq_any(browsers));
     }
 
-    let offset = (query_params.page.unwrap_or(1) - 1) * 10;
+    let offset = (query_params.page.unwrap_or(1) - 1) * 5;
 
     let res = query
         .order_by((
             schema::bcd_updates_read_table::release_date.desc(),
-            schema::bcd_updates_read_table::browser,
+            schema::bcd_updates_read_table::browser_name,
         ))
-        .limit(10)
+        .limit(5)
         .offset(offset)
         .get_results::<BcdUpdateQuery>(pool)?;
 
@@ -87,13 +90,16 @@ pub fn get_count_for_query(
     query_params: &BcdUpdatesQueryParams,
 ) -> i64 {
     let mut query = schema::bcd_updates_read_table::table
-    .group_by((schema::bcd_updates_read_table::browser,
+    .group_by((
+        schema::bcd_updates_read_table::browser,
+        schema::bcd_updates_read_table::browser_name,
 schema::bcd_updates_read_table::engine,
 schema::bcd_updates_read_table::engine_version,
 schema::bcd_updates_read_table::release_id,
 schema::bcd_updates_read_table::release_date))
     .select((
         schema::bcd_updates_read_table::browser,
+        schema::bcd_updates_read_table::browser_name,
         schema::bcd_updates_read_table::engine,
         schema::bcd_updates_read_table::engine_version,
         schema::bcd_updates_read_table::release_id,
@@ -124,15 +130,13 @@ schema::bcd_updates_read_table::release_date))
         query = query.filter(schema::bcd_updates_read_table::release_date.ge(since));
     }
 
-    if !query_params.browsers.is_empty() {
-        query =
-            query.filter(schema::bcd_updates_read_table::browser.eq_any(&query_params.browsers));
+    if let Some(browsers) = &query_params.browsers {
+        query = query.filter(schema::bcd_updates_read_table::browser_name.eq_any(browsers));
     }
 
-    let pags = query.paginate().per_page(10);
+    let pags = query.paginate().per_page(5);
 
     // let debug = diesel::debug_query::<diesel::pg::Pg, _>(&pags);
     // info!("{:}", debug);
-
     pags.count_pages::<BcdUpdateQuery>(pool).unwrap()
 }
