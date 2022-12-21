@@ -33,6 +33,18 @@ pub struct WatchedItemQueryParams {
     pub sort: Option<Sorting>,
 }
 
+impl Default for WatchedItemQueryParams {
+    fn default() -> Self {
+        Self {
+            url: None,
+            limit: Some(1000),
+            offset: None,
+            q: None,
+            sort: None,
+        }
+    }
+}
+
 #[derive(Deserialize)]
 pub struct UpdateWatchedItemFormData {
     pub unwatch: Option<bool>,

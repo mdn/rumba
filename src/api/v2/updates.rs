@@ -38,6 +38,7 @@ pub struct BcdUpdatesQueryParams {
     #[serde(default)]
     #[serde(deserialize_with = "array_like")]
     pub browsers: Option<Vec<String>>,
+    pub content_area: Option<String>,
     pub live_since: Option<NaiveDate>,
     pub page: Option<i64>,
     pub q: Option<String>,
@@ -130,7 +131,7 @@ pub async fn get_updates(
     }
 
     let mut conn_pool = pool.get()?;
-    let updates = get_bcd_updates_paginated(&mut conn_pool, &query)?;
+    let updates = get_bcd_updates_paginated(&mut conn_pool, &query, user_id)?;
     let mapped_updates = updates
         .0
         .into_iter()

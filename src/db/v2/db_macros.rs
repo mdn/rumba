@@ -39,7 +39,7 @@ macro_rules! bcd_updates_read_table_group_by_select {
 
 #[macro_export]
 macro_rules! apply_filters {
-    ($query: expr, $query_params: expr) => {{
+    ($query: expr, $query_params: expr, $user_id: expr, $conn_pool: expr) => {{
         let mut query = $query;
 
         query = query.filter(schema::bcd_updates_read_table::standard_track.eq(true));
@@ -56,6 +56,14 @@ macro_rules! apply_filters {
         if let Some(browsers) = &$query_params.browsers {
             query = query.filter(schema::bcd_updates_read_table::browser.eq_any(browsers));
         }
+        // if let (Some(show),Some(user)) = (&$query_params.show,$user_id) {
+        //     if show.eq("watched") {
+        //         let watched_pages: Vec<String> = schema::watched_items::table.select(schema::watched_items::uri).filter(schema::watched_items::user_id.eq(user.)).get_results::<String>($conn_pool);
+        //         sql_function!(lower, lower_t, (a: types::VarChar) -> types::VarChar);
+        //         query = query.filter(lower(schema::bcd_updates_read_table::mdn_url).eq_any(watched_pages));
+        //     }
+        // }
+
 
         query
     }};
