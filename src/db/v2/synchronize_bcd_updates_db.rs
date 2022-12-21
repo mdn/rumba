@@ -32,10 +32,10 @@ pub async fn update_bcd(pool: Data<Pool>, client: Data<Client>) -> Result<HttpRe
 }
 
 async fn synchronize_browers_and_releases(pool: &mut PgConnection) -> Result<(), ApiError> {
-    let file = File::open("browsers.json").map_err(|_| ApiError::Unknown)?;
+    let file = File::open("browsers.json").map_err(|err| ApiError::Generic(format!("Error loading browsers.json: {:}", err)))?;
     let reader = BufReader::new(file);
     let json: serde_json::Value =
-        serde_json::from_reader(reader).expect("Error reading browsers.json");
+        serde_json::from_reader(reader).map_err(|err| ApiError::Generic(format!("Error deserializing data from browsers.json: {:}", err)))?;
 
     let mut browser_values = Vec::new();
     let mut releases = Vec::new();
@@ -105,11 +105,10 @@ async fn synchronize_browers_and_releases(pool: &mut PgConnection) -> Result<(),
 }
 
 async fn synchronize_features(pool: &mut PgConnection) -> Result<(), ApiError> {
-    let file = File::open("features.json").expect("Error reading features.json");
+    let file = File::open("features.json").map_err(|err| ApiError::Generic(format!("Error loading features.json: {:}", err)))?;
     let reader = BufReader::new(file);
     let json: serde_json::Value =
-        serde_json::from_reader(reader).expect("Error reading features.json");
-
+        serde_json::from_reader(reader).map_err(|err| ApiError::Generic(format!("Error deserializing features.json: {:}", err)))?;
     let mut features = Vec::new();
     json.as_array().unwrap().iter().for_each(|val| {
         if val["source_file"].as_str().is_none() {
@@ -153,10 +152,10 @@ async fn synchronize_features(pool: &mut PgConnection) -> Result<(), ApiError> {
 }
 
 async fn synchronize_updates(pool: &mut PgConnection) -> Result<(), ApiError> {
-    let file = File::open("added_removed.json").map_err(|_| ApiError::Unknown)?;
+    let file = File::open("added_removed.json").map_err(|err| ApiError::Generic(format!("Error loading added_removed.json: {:}", err)))?;
     let reader = BufReader::new(file);
     let json: serde_json::Value =
-        serde_json::from_reader(reader).expect("Error reading added_removed.json");
+        serde_json::from_reader(reader).map_err(|err| ApiError::Generic(format!("Error Deserializing features.json: {:}", err)))?;
 
     let mut release_versions_cached = HashMap::<String, i64>::new();
     let mut feature_info_cached = HashMap::<String, i64>::new();

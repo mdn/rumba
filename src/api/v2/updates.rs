@@ -26,9 +26,12 @@ where
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub enum AscOrDesc {
-    asc,
-    desc,
+    #[serde(alias = "asc")]
+    Asc,
+    #[serde(alias = "desc")]
+    Desc,
 }
+
 #[derive(Deserialize, Serialize)]
 pub struct BcdUpdatesQueryParams {
     pub q: Option<String>,

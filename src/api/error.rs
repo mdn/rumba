@@ -78,6 +78,8 @@ pub enum ApiError {
     ValidationError(#[from] ValidationErrors),
     #[error("Subscription limit reached")]
     MultipleCollectionSubscriptionLimitReached,
+    #[error("Unknown error: {0}")]
+    Generic(String),
 }
 
 impl ApiError {
@@ -101,6 +103,7 @@ impl ApiError {
             Self::DbError(_) => "DB error",
             Self::ValidationError(_) => "Validation Error",
             Self::MultipleCollectionSubscriptionLimitReached => "Subscription limit reached",
+            Self::Generic(err) => err
         }
     }
 }

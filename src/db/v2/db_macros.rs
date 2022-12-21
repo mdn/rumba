@@ -33,7 +33,7 @@ macro_rules! bcd_updates_read_table_group_by_select {
                                                 'spec_url', spec_url
          )) as compat",
                 ),
-            )).into_boxed();
+            )).into_boxed()
     }
 }
 

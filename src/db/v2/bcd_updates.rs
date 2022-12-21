@@ -33,20 +33,24 @@ pub fn get_bcd_updates_paginated(
     }) - 1)
         * 5;
 
-    if let Some(sort) =&query_params.sort {
+    if let Some(sort) = &query_params.sort {
         match sort {
-            crate::api::v2::updates::AscOrDesc::asc => query = query.order_by((
-                schema::bcd_updates_read_table::release_date.asc(),
-                schema::bcd_updates_read_table::browser_name,
-            )),
-            crate::api::v2::updates::AscOrDesc::desc => query = query.order_by((
-                schema::bcd_updates_read_table::release_date.desc(),
-                schema::bcd_updates_read_table::browser_name)),
+            crate::api::v2::updates::AscOrDesc::Asc => {
+                query = query.order_by((
+                    schema::bcd_updates_read_table::release_date.asc(),
+                    schema::bcd_updates_read_table::browser_name,
+                ))
+            }
+            crate::api::v2::updates::AscOrDesc::Desc => {
+                query = query.order_by((
+                    schema::bcd_updates_read_table::release_date.desc(),
+                    schema::bcd_updates_read_table::browser_name,
+                ))
+            }
         }
     }
 
     let res = query
-        
         .limit(5)
         .offset(offset)
         .get_results::<BcdUpdateQuery>(pool)?;

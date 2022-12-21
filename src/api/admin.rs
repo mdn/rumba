@@ -1,6 +1,7 @@
 use crate::db;
 use crate::db::model::NotificationDataInsert;
 use crate::db::Pool;
+use crate::db::v2::synchronize_bcd_updates_db::update_bcd;
 use crate::settings::SETTINGS;
 use crate::util::normalize_uri;
 use actix_web::dev::{HttpServiceFactory, ServiceRequest};
@@ -459,4 +460,5 @@ pub fn admin_service() -> impl HttpServiceFactory {
     web::scope("/admin-api")
         .wrap(HttpAuthentication::bearer(validator))
         .service(web::resource("/update/").route(web::post().to(process_notification_update)))
+        .service(web::resource("/v2/updates/").route(web::post().to(update_bcd)))
 }
