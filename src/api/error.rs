@@ -106,7 +106,7 @@ impl ApiError {
             Self::ValidationError(_) => "Validation Error",
             Self::MultipleCollectionSubscriptionLimitReached => "Subscription limit reached",
             Self::Generic(err) => err,
-            Self::LoginRequiredForFeature(feature) => "Login Required",
+            Self::LoginRequiredForFeature(_) => "Login Required",
         }
     }
 }

@@ -49,9 +49,9 @@ macro_rules! apply_filters {
                 query.filter(schema::bcd_updates_read_table::path.ilike(format!("%{:}%", search)));
         }
 
-        if let Some(content_area) = &$query_params.content_area {
+        if let Some(category) = &$query_params.category {
             query =
-                query.filter(schema::bcd_updates_read_table::content_area.eq_any(content_area));
+                query.filter(schema::bcd_updates_read_table::category.eq_any(category));
         }
 
         if let Some(since) = &$query_params.live_since {

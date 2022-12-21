@@ -67,6 +67,7 @@ diesel::table! {
         id -> Int8,
         browser_name -> Text,
         browser -> Text,
+        category -> Text,
         deprecated -> Nullable<Bool>,
         description -> Nullable<Text>,
         engine -> Text,

@@ -38,7 +38,7 @@ pub struct BcdUpdatesQueryParams {
     #[serde(default, deserialize_with = "array_like")]
     pub browsers: Option<Vec<String>>,
     #[serde(default, deserialize_with = "array_like")]
-    pub content_area: Option<Vec<String>>,
+    pub category: Option<Vec<String>>,
     pub live_since: Option<NaiveDate>,
     pub page: Option<i64>,
     pub q: Option<String>,
@@ -117,7 +117,7 @@ fn query_contains_restricted_filters(query: &BcdUpdatesQueryParams) -> bool {
         || query.live_since.is_some()
         || query.q.is_some()
         || query.sort.is_some()
-        || query.content_area.is_some()
+        || query.category.is_some()
         || query.show.is_some();
 }
 
@@ -127,7 +127,7 @@ pub async fn get_updates(
     user_id: Option<Identity>,
     query: web::Query<BcdUpdatesQueryParams>,
 ) -> Result<HttpResponse, ApiError> {
-    if !user_id.is_some() && query_contains_restricted_filters(&query) {
+    if user_id.is_none() && query_contains_restricted_filters(&query) {
         return Err(ApiError::LoginRequiredForFeature(format!("BCD Filters")));
     }
 

@@ -1,13 +1,11 @@
 use super::model::BcdUpdate;
 use super::model::BcdUpdateQuery;
 use crate::api::v2::updates::BcdUpdatesQueryParams;
-use crate::api::watched_items::WatchedItemQueryParams;
 use crate::apply_filters;
 use crate::bcd_updates_read_table_group_by_select;
 use crate::db::error::DbError;
 use crate::db::schema;
 use crate::db::users::get_user;
-use crate::db::watched_items::get_watched_item;
 use crate::db::watched_items::get_watched_items;
 use crate::diesel::ExpressionMethods;
 use crate::diesel::QueryDsl;
@@ -16,7 +14,7 @@ use actix_identity::Identity;
 use diesel::dsl::sql;
 
 use crate::db::v2::pagination::PaginationStats;
-use crate::diesel::JoinOnDsl;
+
 use crate::diesel::PgTextExpressionMethods;
 use diesel::r2d2::ConnectionManager;
 use diesel::sql_types::Json;
