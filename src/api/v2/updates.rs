@@ -5,6 +5,7 @@ use crate::db::types::BcdUpdateEventType;
 use crate::db::v2::bcd_updates::get_bcd_updates_paginated;
 use crate::db::v2::model::{Event, Status};
 use crate::{api::error::ApiError, db::Pool};
+use actix_identity::Identity;
 use actix_web::{web, HttpRequest, HttpResponse};
 use chrono::NaiveDate;
 use itertools::Itertools;
@@ -34,14 +35,13 @@ pub enum AscOrDesc {
 
 #[derive(Deserialize, Serialize)]
 pub struct BcdUpdatesQueryParams {
-    pub q: Option<String>,
-    pub page: Option<i64>,
-    #[serde(default)]
-    pub watching: bool,
-    pub live_since: Option<NaiveDate>,
     #[serde(default)]
     #[serde(deserialize_with = "array_like")]
     pub browsers: Option<Vec<String>>,
+    pub live_since: Option<NaiveDate>,
+    pub page: Option<i64>,
+    pub q: Option<String>,
+    pub show: Option<String>,
     pub sort: Option<AscOrDesc>,
 }
 
@@ -111,11 +111,24 @@ pub struct BcdUpdate {
     pub release_date: NaiveDate,
 }
 
+fn query_contains_restricted_filters(query: &BcdUpdatesQueryParams) -> bool {
+    return query.browsers.is_some()
+        || query.live_since.is_some()
+        || query.q.is_some()
+        || query.sort.is_some()
+        || query.show.is_some();
+}
+
 pub async fn get_updates(
     _req: HttpRequest,
     pool: web::Data<Pool>,
+    user_id: Option<Identity>,
     query: web::Query<BcdUpdatesQueryParams>,
 ) -> Result<HttpResponse, ApiError> {
+    if !user_id.is_some() && query_contains_restricted_filters(&query) {
+        return Err(ApiError::LoginRequiredForFeature(format!("BCD Filters")));
+    }
+
     let mut conn_pool = pool.get()?;
     let updates = get_bcd_updates_paginated(&mut conn_pool, &query)?;
     let mapped_updates = updates

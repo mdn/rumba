@@ -1,8 +1,3 @@
-use actix_web::dev::HttpServiceFactory;
-use actix_web::web;
-
-use crate::db::v2::synchronize_bcd_updates_db::update_bcd;
-
 use super::{
     multiple_collections::{
         add_collection_item_to_collection, create_multiple_collection, delete_collection,
@@ -12,13 +7,12 @@ use super::{
     },
     updates::get_updates,
 };
+use actix_web::dev::HttpServiceFactory;
+use actix_web::web;
 
 pub fn api_v2_service() -> impl HttpServiceFactory {
     web::scope("/api/v2")
-        .service(
-            web::resource("/updates/")
-                .route(web::get().to(get_updates))                            
-        )
+        .service(web::resource("/updates/").route(web::get().to(get_updates)))
         .service(
             web::resource("/collections/")
                 .route(web::get().to(get_collections))

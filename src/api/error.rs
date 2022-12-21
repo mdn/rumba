@@ -78,6 +78,8 @@ pub enum ApiError {
     ValidationError(#[from] ValidationErrors),
     #[error("Subscription limit reached")]
     MultipleCollectionSubscriptionLimitReached,
+    #[error("Login Required")]
+    LoginRequiredForFeature(String),
     #[error("Unknown error: {0}")]
     Generic(String),
 }
@@ -103,7 +105,8 @@ impl ApiError {
             Self::DbError(_) => "DB error",
             Self::ValidationError(_) => "Validation Error",
             Self::MultipleCollectionSubscriptionLimitReached => "Subscription limit reached",
-            Self::Generic(err) => err
+            Self::Generic(err) => err,
+            Self::LoginRequiredForFeature(feature) => "Login Required",
         }
     }
 }
@@ -129,6 +132,7 @@ impl ResponseError for ApiError {
             Self::CollectionNotFound(_) => StatusCode::BAD_REQUEST,
             Self::ValidationError(_) => StatusCode::BAD_REQUEST,
             Self::MultipleCollectionSubscriptionLimitReached => StatusCode::BAD_REQUEST,
+            Self::LoginRequiredForFeature(_) => StatusCode::UNAUTHORIZED,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -160,6 +164,11 @@ impl ResponseError for ApiError {
             ApiError::MultipleCollectionSubscriptionLimitReached => builder.json(ErrorResponse {
                 code: status_code.as_u16(),
                 message: "Subscription limit reached. Please upgrade",
+                error: self.name(),
+            }),
+            ApiError::LoginRequiredForFeature(feature) => builder.json(ErrorResponse {
+                code: status_code.as_u16(),
+                message: format!("Please login to use feature: {0}", feature).as_str(),
                 error: self.name(),
             }),
             _ if status_code == StatusCode::INTERNAL_SERVER_ERROR => builder.json(ErrorResponse {

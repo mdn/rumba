@@ -32,10 +32,15 @@ pub async fn update_bcd(pool: Data<Pool>, client: Data<Client>) -> Result<HttpRe
 }
 
 async fn synchronize_browers_and_releases(pool: &mut PgConnection) -> Result<(), ApiError> {
-    let file = File::open("browsers.json").map_err(|err| ApiError::Generic(format!("Error loading browsers.json: {:}", err)))?;
+    let file = File::open("browsers.json")
+        .map_err(|err| ApiError::Generic(format!("Error loading browsers.json: {:}", err)))?;
     let reader = BufReader::new(file);
-    let json: serde_json::Value =
-        serde_json::from_reader(reader).map_err(|err| ApiError::Generic(format!("Error deserializing data from browsers.json: {:}", err)))?;
+    let json: serde_json::Value = serde_json::from_reader(reader).map_err(|err| {
+        ApiError::Generic(format!(
+            "Error deserializing data from browsers.json: {:}",
+            err
+        ))
+    })?;
 
     let mut browser_values = Vec::new();
     let mut releases = Vec::new();
@@ -79,20 +84,23 @@ async fn synchronize_browers_and_releases(pool: &mut PgConnection) -> Result<(),
 
     let mut res = diesel::insert_into(crate::db::schema::browsers::table)
         .values(browser_values)
-        .on_conflict_do_nothing()        
-        .execute(pool).map_err(|e| ApiError::Generic(e.to_string()))?;        
+        .on_conflict_do_nothing()
+        .execute(pool)
+        .map_err(|e| ApiError::Generic(e.to_string()))?;
 
     res = diesel::insert_into(crate::db::schema::browser_releases::table)
         .values(releases)
-        .execute(pool).map_err(|e| ApiError::Generic(e.to_string()))?;        
+        .execute(pool)
+        .map_err(|e| ApiError::Generic(e.to_string()))?;
     Ok(())
 }
 
 async fn synchronize_features(pool: &mut PgConnection) -> Result<(), ApiError> {
-    let file = File::open("features.json").map_err(|err| ApiError::Generic(format!("Error loading features.json: {:}", err)))?;
+    let file = File::open("features.json")
+        .map_err(|err| ApiError::Generic(format!("Error loading features.json: {:}", err)))?;
     let reader = BufReader::new(file);
-    let json: serde_json::Value =
-        serde_json::from_reader(reader).map_err(|err| ApiError::Generic(format!("Error deserializing features.json: {:}", err)))?;
+    let json: serde_json::Value = serde_json::from_reader(reader)
+        .map_err(|err| ApiError::Generic(format!("Error deserializing features.json: {:}", err)))?;
     let mut features = Vec::new();
     json.as_array().unwrap().iter().for_each(|val| {
         if val["source_file"].as_str().is_none() {
@@ -136,10 +144,11 @@ async fn synchronize_features(pool: &mut PgConnection) -> Result<(), ApiError> {
 }
 
 async fn synchronize_updates(pool: &mut PgConnection) -> Result<(), ApiError> {
-    let file = File::open("added_removed.json").map_err(|err| ApiError::Generic(format!("Error loading added_removed.json: {:}", err)))?;
+    let file = File::open("added_removed.json")
+        .map_err(|err| ApiError::Generic(format!("Error loading added_removed.json: {:}", err)))?;
     let reader = BufReader::new(file);
-    let json: serde_json::Value =
-        serde_json::from_reader(reader).map_err(|err| ApiError::Generic(format!("Error Deserializing features.json: {:}", err)))?;
+    let json: serde_json::Value = serde_json::from_reader(reader)
+        .map_err(|err| ApiError::Generic(format!("Error Deserializing features.json: {:}", err)))?;
 
     let mut release_versions_cached = HashMap::<String, i64>::new();
     let mut feature_info_cached = HashMap::<String, i64>::new();
@@ -257,7 +266,7 @@ async fn synchronize_updates(pool: &mut PgConnection) -> Result<(), ApiError> {
         let added_results = diesel::insert_into(bcd_updates::table)
             .values(_added_)
             .on_conflict_do_nothing()
-            .execute(pool)            
+            .execute(pool)
             .map_err(|e| {
                 error!("{:?} \n {:?}, {:?}", e, added, _browser_release_id);
                 e
