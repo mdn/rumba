@@ -35,10 +35,10 @@ pub enum AscOrDesc {
 
 #[derive(Deserialize, Serialize)]
 pub struct BcdUpdatesQueryParams {
-    #[serde(default)]
-    #[serde(deserialize_with = "array_like")]
+    #[serde(default, deserialize_with = "array_like")]
     pub browsers: Option<Vec<String>>,
-    pub content_area: Option<String>,
+    #[serde(default, deserialize_with = "array_like")]
+    pub content_area: Option<Vec<String>>,
     pub live_since: Option<NaiveDate>,
     pub page: Option<i64>,
     pub q: Option<String>,
@@ -117,6 +117,7 @@ fn query_contains_restricted_filters(query: &BcdUpdatesQueryParams) -> bool {
         || query.live_since.is_some()
         || query.q.is_some()
         || query.sort.is_some()
+        || query.content_area.is_some()
         || query.show.is_some();
 }
 

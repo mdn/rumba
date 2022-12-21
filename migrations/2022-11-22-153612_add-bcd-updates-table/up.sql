@@ -61,6 +61,7 @@ CREATE TABLE bcd_updates_read_table
     id             BIGSERIAL PRIMARY KEY,    
     browser_name   TEXT           NOT NULL,
     browser        TEXT           NOT NULL,
+    content_area   TEXT           NOT NULL,
     deprecated     BOOLEAN,
     description    TEXT,
     engine         TEXT           NOT NULL,
@@ -81,6 +82,7 @@ CREATE TABLE bcd_updates_read_table
 
 CREATE INDEX release_date_idx ON bcd_updates_read_table ((release_date::DATE));
 CREATE INDEX browser_name_idx ON bcd_updates_read_table ((browser::TEXT));
+CREATE INDEX content_area_idx ON bcd_updates_read_table ((content_area::TEXT));
 
 CREATE OR REPLACE FUNCTION update_bcd_update_view()
     RETURNS TRIGGER AS
@@ -91,6 +93,7 @@ BEGIN
                 NEXTVAL('bcd_updates_read_table_id_seq'),
                 b.display_name,
                 b.name,
+                SPLIT_PART(f.path,'.',1),
                 f.deprecated,
                 NEW.description,
                 br.engine,
