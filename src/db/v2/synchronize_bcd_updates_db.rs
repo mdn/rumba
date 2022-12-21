@@ -79,28 +79,12 @@ async fn synchronize_browers_and_releases(pool: &mut PgConnection) -> Result<(),
 
     let mut res = diesel::insert_into(crate::db::schema::browsers::table)
         .values(browser_values)
-        .execute(pool)
-        .map_err(|e| {
-            warn!("{:?}", e);
-            e
-        });
-
-    if let Err(val) = res {
-        warn!("Error adding browsers : {:?}", val);
-    }
+        .on_conflict_do_nothing()        
+        .execute(pool).map_err(|e| ApiError::Generic(e.to_string()))?;        
 
     res = diesel::insert_into(crate::db::schema::browser_releases::table)
         .values(releases)
-        .execute(pool)
-        .map_err(|e| {
-            warn!("{:?}", e);
-            e
-        });
-
-    if let Err(val) = res {
-        warn!("Error adding browser releases : {:?}", val);
-    }
-
+        .execute(pool).map_err(|e| ApiError::Generic(e.to_string()))?;        
     Ok(())
 }
 
@@ -272,7 +256,8 @@ async fn synchronize_updates(pool: &mut PgConnection) -> Result<(), ApiError> {
 
         let added_results = diesel::insert_into(bcd_updates::table)
             .values(_added_)
-            .execute(pool)
+            .on_conflict_do_nothing()
+            .execute(pool)            
             .map_err(|e| {
                 error!("{:?} \n {:?}, {:?}", e, added, _browser_release_id);
                 e
@@ -282,6 +267,7 @@ async fn synchronize_updates(pool: &mut PgConnection) -> Result<(), ApiError> {
         }
         let remove_results = diesel::insert_into(bcd_updates::table)
             .values(_removed_)
+            .on_conflict_do_nothing()
             .execute(pool)
             .map_err(|e| {
                 error!("{:?} \n {:?} , {:?}", e, removed, _browser_release_id);

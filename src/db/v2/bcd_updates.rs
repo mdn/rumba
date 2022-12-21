@@ -48,6 +48,10 @@ pub fn get_bcd_updates_paginated(
                 ))
             }
         }
+    } else { 
+        query = query.order_by((
+            schema::bcd_updates_read_table::release_date.desc(),
+            schema::bcd_updates_read_table::browser_name))
     }
 
     let res = query

@@ -17,9 +17,7 @@ pub fn api_v2_service() -> impl HttpServiceFactory {
     web::scope("/api/v2")
         .service(
             web::resource("/updates/")
-                .route(web::get().to(get_updates))
-                .route(web::post().to(update_bcd))
-                .route(web::delete().to(remove_collection_item_from_collection)),
+                .route(web::get().to(get_updates))                            
         )
         .service(
             web::resource("/collections/")

@@ -29,7 +29,7 @@ CREATE TABLE browser_releases
     release_date   DATE NOT NULL,
     release_notes  TEXT,
     status         TEXT,
-    UNIQUE(browser, engine, release_date)
+    UNIQUE(browser, engine, release_date, release_id)
 );
 
 CREATE TABLE bcd_features 
