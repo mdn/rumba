@@ -15,7 +15,7 @@ where
     D: serde::Deserializer<'de>,
 {
     let s: Option<String> = Option::deserialize(deserializer)?;
-    if let Some(res) = s {        
+    if let Some(res) = s {
         let collected: Vec<String> = res
             .split(',')
             .map(|val| String::from_str(val).unwrap())
@@ -24,15 +24,22 @@ where
     }
     Ok(None)
 }
-
+#[derive(Debug, Serialize, Deserialize)]
+pub enum AscOrDesc {
+    asc,
+    desc,
+}
 #[derive(Deserialize, Serialize)]
 pub struct BcdUpdatesQueryParams {
     pub q: Option<String>,
     pub page: Option<i64>,
+    #[serde(default)]
+    pub watching: bool,
     pub live_since: Option<NaiveDate>,
     #[serde(default)]
     #[serde(deserialize_with = "array_like")]
     pub browsers: Option<Vec<String>>,
+    pub sort: Option<AscOrDesc>,
 }
 
 #[derive(Serialize, Hash, Eq, PartialEq)]

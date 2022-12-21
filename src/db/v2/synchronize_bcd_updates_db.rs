@@ -116,7 +116,7 @@ async fn synchronize_features(pool: &mut PgConnection) -> Result<(), ApiError> {
             error!("No source file found for path. {:?}", val);
             return;
         }
-        features.push((            
+        features.push((
             bcd_features::path.eq(val["path"].as_str().unwrap()),
             bcd_features::mdn_url.eq(val["mdn_url"].as_str()),
             bcd_features::source_file.eq(val["source_file"].as_str().unwrap()),
@@ -124,10 +124,10 @@ async fn synchronize_features(pool: &mut PgConnection) -> Result<(), ApiError> {
             bcd_features::deprecated.eq(val["status"]
                 .as_object()
                 .and_then(|v| v["deprecated"].as_bool())),
-                bcd_features::experimental.eq(val["status"]
+            bcd_features::experimental.eq(val["status"]
                 .as_object()
                 .and_then(|v| v["experimental"].as_bool())),
-                bcd_features::standard_track.eq(val["status"]
+            bcd_features::standard_track.eq(val["status"]
                 .as_object()
                 .and_then(|v| v["standard_track"].as_bool())),
         ));
@@ -357,12 +357,13 @@ async fn synchronize_path_mappings(
         .collect();
 
     extract.iter().for_each(|path_and_title| {
-        let res = update(schema::bcd_features::table.filter(bcd_features::path.eq(&path_and_title.path)))
-            .set((
-                bcd_features::mdn_url.eq(&path_and_title.mdn_url),
-                bcd_features::short_title.eq(&path_and_title.short_title),
-            ))
-            .execute(pool);
+        let res =
+            update(schema::bcd_features::table.filter(bcd_features::path.eq(&path_and_title.path)))
+                .set((
+                    bcd_features::mdn_url.eq(&path_and_title.mdn_url),
+                    bcd_features::short_title.eq(&path_and_title.short_title),
+                ))
+                .execute(pool);
         if let Err(err) = res {
             warn!("Error updating {:}, {:?}", &path_and_title.path, err);
         }
@@ -385,12 +386,13 @@ async fn synchronize_path_mappings(
                     "Replacing missing url + title for path {:} with {:}'s ({:},{:})",
                     val, subpath, &replacement.0, &replacement.1
                 );
-                let res = update(schema::bcd_features::table.filter(schema::bcd_features::path.eq(&val)))
-                    .set((
-                        schema::bcd_features::mdn_url.eq(&replacement.0),
-                        schema::bcd_features::short_title.eq(&replacement.1),
-                    ))
-                    .execute(pool);
+                let res =
+                    update(schema::bcd_features::table.filter(schema::bcd_features::path.eq(&val)))
+                        .set((
+                            schema::bcd_features::mdn_url.eq(&replacement.0),
+                            schema::bcd_features::short_title.eq(&replacement.1),
+                        ))
+                        .execute(pool);
                 if let Err(err) = res {
                     warn!(
                         "Error updating {:} with metadata from {:}, {:?}",
