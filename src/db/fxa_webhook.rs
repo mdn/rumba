@@ -120,7 +120,7 @@ pub async fn update_profile_from_webhook(
         issue_time: issue_time.naive_utc(),
         typ: FxaEvent::ProfileChange,
         status: FxaEventStatus::Pending,
-        payload: serde_json::value::to_value(&update).unwrap_or_default(),
+        payload: serde_json::value::to_value(update).unwrap_or_default(),
     };
     if let Some(user) = user {
         let id = insert_into(schema::webhook_events::table)

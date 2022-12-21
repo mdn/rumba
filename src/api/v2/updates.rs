@@ -113,12 +113,12 @@ pub struct BcdUpdate {
 }
 
 fn query_contains_restricted_filters(query: &BcdUpdatesQueryParams) -> bool {
-    return query.browsers.is_some()
+    query.browsers.is_some()
         || query.live_since.is_some()
         || query.q.is_some()
         || query.sort.is_some()
         || query.category.is_some()
-        || query.show.is_some();
+        || query.show.is_some()
 }
 
 pub async fn get_updates(
@@ -128,7 +128,7 @@ pub async fn get_updates(
     query: web::Query<BcdUpdatesQueryParams>,
 ) -> Result<HttpResponse, ApiError> {
     if user_id.is_none() && query_contains_restricted_filters(&query) {
-        return Err(ApiError::LoginRequiredForFeature(format!("BCD Filters")));
+        return Err(ApiError::LoginRequiredForFeature("BCD Filters".to_string()));
     }
 
     let mut conn_pool = pool.get()?;

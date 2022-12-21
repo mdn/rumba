@@ -81,14 +81,17 @@ pub fn get_bcd_updates_paginated(
         .offset(offset)
         .get_results::<BcdUpdateQuery>(pool)?;
 
-    Ok((res.iter().map(BcdUpdate::from).collect(), count.ok().unwrap()))
+    Ok((
+        res.iter().map(BcdUpdate::from).collect(),
+        count.ok().unwrap(),
+    ))
 }
 
 pub fn get_count_for_query(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     query_params: &BcdUpdatesQueryParams,
     user_id: &Option<Identity>,
-) -> Result<i64,DbError> {
+) -> Result<i64, DbError> {
     let mut query = bcd_updates_read_table_group_by_select!();
     query = apply_filters!(query, query_params, user_id, pool);
     if let (Some(show), Some(user)) = (&query_params.show, user_id) {

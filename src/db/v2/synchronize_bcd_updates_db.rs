@@ -88,7 +88,7 @@ async fn synchronize_browers_and_releases(pool: &mut PgConnection) -> Result<(),
         .execute(pool)
         .map_err(|e| ApiError::Generic(e.to_string()))?;
 
-    diesel::insert_into(crate::db::schema::browser_releases::table)    
+    diesel::insert_into(crate::db::schema::browser_releases::table)
         .values(releases)
         .on_conflict_do_nothing()
         .execute(pool)
