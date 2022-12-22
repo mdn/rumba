@@ -49,10 +49,6 @@ pub struct BcdUpdatesQueryParams {
 pub enum UpdateType {
     #[serde(rename(serialize = "browser_grouping"))]
     BrowserGrouping,
-    #[serde(rename(serialize = "added_missing"))]
-    AddedMissing,
-    #[serde(rename(serialize = "added_subfeatures"))]
-    SubfeatureAdded,
 }
 
 pub type UpdateMap = HashMap<UpdateType, BcdUpdate>;
