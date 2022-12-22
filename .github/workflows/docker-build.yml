@@ -2,7 +2,7 @@ name: docker-build
 
 on:
   push:
-    branches: [ main, MP-176-add-bupdates-api ]
+    branches: [ main ]
 
 env:
   REGISTRY: ghcr.io
