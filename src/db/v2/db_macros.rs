@@ -42,8 +42,6 @@ macro_rules! apply_filters {
     ($query: expr, $query_params: expr, $user_id: expr, $conn_pool: expr) => {{
         let mut query = $query;
 
-        query = query.filter(schema::bcd_updates_read_table::standard_track.eq(true));
-
         if let Some(search) = &$query_params.q {
             query =
                 query.filter(schema::bcd_updates_read_table::path.ilike(format!("%{:}%", search)));
