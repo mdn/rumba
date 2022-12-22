@@ -35,6 +35,8 @@ pub fn get_bcd_updates_paginated(
 
     if let (Some(show), Some(user)) = (&query_params.show, user_id) {
         if show.eq("watched") {
+            info!("Watched");
+
             let id = user.id().unwrap();
             let user_db_id = get_user(pool, id)?;
             let watched_pages = get_watched_items(pool, user_db_id.id, &Default::default())?;

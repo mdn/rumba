@@ -5,7 +5,7 @@ use super::{
         lookup_collections_containing_article, modify_collection,
         modify_collection_item_in_collection, remove_collection_item_from_collection,
     },
-    updates::get_updates,
+    updates::{get_updates, get_updates_watched},
 };
 use actix_web::dev::HttpServiceFactory;
 use actix_web::web;
@@ -13,6 +13,7 @@ use actix_web::web;
 pub fn api_v2_service() -> impl HttpServiceFactory {
     web::scope("/api/v2")
         .service(web::resource("/updates/").route(web::get().to(get_updates)))
+        .service(web::resource("/updates/watched/").route(web::get().to(get_updates_watched)))
         .service(
             web::resource("/collections/")
                 .route(web::get().to(get_collections))
