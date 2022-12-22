@@ -175,6 +175,8 @@ pub enum NotificationTypeEnum {
     PartialOrd,
     Serialize,
 )]
+
+// We only currently (22-12-2022) support added/removed stable.
 #[DieselTypePath = "crate::db::schema::sql_types::BcdEventType"]
 pub enum BcdUpdateEventType {
     #[serde(rename = "added_stable")]
@@ -190,38 +192,3 @@ pub enum BcdUpdateEventType {
     #[serde(other)]
     Unknown,
 }
-
-// #[derive(
-//     Copy,
-//     Clone,
-//     diesel_derive_enum::DbEnum,
-//     Debug,
-//     Deserialize,
-//     Eq,
-//     Ord,
-//     PartialEq,
-//     PartialOrd,
-//     Serialize,
-// )]
-
-// #[DieselTypePath = "crate::db::schema::sql_types::BrowserType"]
-// pub enum Browser {
-//     Chrome,
-//     ChromeAndroid,
-//     Deno,
-//     Edge,
-//     Firefox,
-//     FirefoxAndroid,
-//     #[serde(rename = "ie")]
-//     InternetExplorer,
-//     #[serde(rename = "nodejs")]
-//     NodeJs,
-//     Opera,
-//     OperaAndroid,
-//     Safari,
-//     SafariIos,
-//     SamsungInternetAndroid,
-//     WebviewAndroid,
-//     #[serde(other)]
-//     Unknown,
-// }

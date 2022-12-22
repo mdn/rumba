@@ -32,6 +32,7 @@ pub struct MultipleCollectionInsert {
     pub updated_at: NaiveDateTime,
     pub name: String,
 }
+
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = collection_items)]
 pub struct CollectionItemInsert {
@@ -154,10 +155,4 @@ impl From<&BcdUpdateQuery> for BcdUpdate {
             compat: serde_json::from_value::<Vec<Event>>(val.compat.clone()).unwrap(),
         }
     }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, QueryableByName)]
-pub struct TestStructQuery {
-    #[diesel(sql_type = Text)]
-    engine_name: String,
 }
