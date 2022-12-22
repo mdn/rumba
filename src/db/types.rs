@@ -175,7 +175,6 @@ pub enum NotificationTypeEnum {
     PartialOrd,
     Serialize,
 )]
-
 // We only currently (22-12-2022) support added/removed stable.
 #[DieselTypePath = "crate::db::schema::sql_types::BcdEventType"]
 pub enum BcdUpdateEventType {
