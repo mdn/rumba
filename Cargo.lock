@@ -2645,6 +2645,7 @@ dependencies = [
  "futures-util",
  "harsh",
  "hostname",
+ "itertools",
  "jsonwebtoken",
  "once_cell",
  "openidconnect",

@@ -1,10 +1,13 @@
 #![allow(clippy::extra_unused_lifetimes)] /* https://github.com/rust-lang/rust-clippy/issues/9014 */
 use crate::db::model::User;
 use crate::db::schema::*;
+use crate::db::types::BcdUpdateEventType;
 use crate::helpers::{maybe_to_utc, to_utc};
-use chrono::NaiveDateTime;
-use serde::Serialize;
+use chrono::{NaiveDate, NaiveDateTime};
+use diesel::sql_types::{Date, Json, Text};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::str;
 
 #[derive(Queryable, Clone)]
 pub struct CollectionItemAndDocumentQuery {
@@ -87,4 +90,69 @@ pub struct MultipleCollectionsQueryNoCount {
     pub user_id: i64,
     pub notes: Option<String>,
     pub name: String,
+}
+
+#[derive(Clone, Deserialize, Eq, PartialEq)]
+#[serde(transparent)]
+pub struct Events {
+    pub events: Vec<Event>,
+}
+
+#[derive(Clone, Deserialize, Eq, PartialEq)]
+pub struct Event {
+    pub path: String,
+    pub mdn_url: Option<String>,
+    pub source_file: Option<String>,
+    pub spec_url: Option<String>,
+    pub status: Option<Status>,
+    pub event_type: BcdUpdateEventType,
+}
+
+#[derive(Clone, Eq, Debug, Deserialize, PartialEq, Serialize)]
+pub struct Status {
+    pub deprecated: bool,
+    pub experimental: bool,
+    pub standard_track: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Queryable, QueryableByName)]
+pub struct BcdUpdateQuery {
+    #[diesel(sql_type = Text)]
+    pub browser: String,
+    #[diesel(sql_type = Text)]
+    pub browser_name: String,
+    #[diesel(sql_type = Text)]
+    pub engine: String,
+    #[diesel(sql_type = Text)]
+    pub engine_version: String,
+    #[diesel(sql_type = Text)]
+    pub release_id: String,
+    #[diesel(sql_type = Date)]
+    pub release_date: NaiveDate,
+    #[diesel(sql_type = Json)]
+    pub compat: Value,
+}
+
+pub struct BcdUpdate {
+    pub browser: String,
+    pub name: String,
+    pub engine: String,
+    pub engine_version: String,
+    pub release_id: String,
+    pub release_date: NaiveDate,
+    pub compat: Vec<Event>,
+}
+
+impl From<&BcdUpdateQuery> for BcdUpdate {
+    fn from(val: &BcdUpdateQuery) -> Self {
+        BcdUpdate {
+            browser: val.browser.clone(),
+            engine: val.engine.clone(),
+            name: val.browser_name.clone(),
+            engine_version: val.engine_version.clone(),
+            release_id: val.release_id.clone(),
+            release_date: val.release_date,
+            compat: serde_json::from_value::<Vec<Event>>(val.compat.clone()).unwrap(),
+        }
+    }
 }

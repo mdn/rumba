@@ -1,15 +1,19 @@
+use super::{
+    multiple_collections::{
+        add_collection_item_to_collection, create_multiple_collection, delete_collection,
+        get_collection_by_id, get_collection_item_in_collection_by_id, get_collections,
+        lookup_collections_containing_article, modify_collection,
+        modify_collection_item_in_collection, remove_collection_item_from_collection,
+    },
+    updates::{get_updates, get_updates_watched},
+};
 use actix_web::dev::HttpServiceFactory;
 use actix_web::web;
 
-use super::multiple_collections::{
-    add_collection_item_to_collection, create_multiple_collection, delete_collection,
-    get_collection_by_id, get_collection_item_in_collection_by_id, get_collections,
-    lookup_collections_containing_article, modify_collection, modify_collection_item_in_collection,
-    remove_collection_item_from_collection,
-};
-
 pub fn api_v2_service() -> impl HttpServiceFactory {
     web::scope("/api/v2")
+        .service(web::resource("/updates/").route(web::get().to(get_updates)))
+        .service(web::resource("/updates/watched/").route(web::get().to(get_updates_watched)))
         .service(
             web::resource("/collections/")
                 .route(web::get().to(get_collections))
