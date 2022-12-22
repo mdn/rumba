@@ -127,7 +127,7 @@ pub async fn get_updates_watched(
     mut query: web::Query<BcdUpdatesQueryParams>,
 ) -> Result<HttpResponse, ApiError> {
     query.show = Some("watched".to_string());
-    get_updates(_req,pool,user_id,query).await
+    get_updates(_req, pool, user_id, query).await
 }
 
 pub async fn get_updates(
