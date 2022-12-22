@@ -39,7 +39,6 @@ pub struct BcdUpdatesQueryParams {
     pub browsers: Option<Vec<String>>,
     #[serde(default, deserialize_with = "array_like")]
     pub category: Option<Vec<String>>,
-    pub live_since: Option<NaiveDate>,
     pub page: Option<i64>,
     pub q: Option<String>,
     pub show: Option<String>,
@@ -114,7 +113,6 @@ pub struct BcdUpdate {
 
 fn query_contains_restricted_filters(query: &BcdUpdatesQueryParams) -> bool {
     query.browsers.is_some()
-        || query.live_since.is_some()
         || query.q.is_some()
         || query.sort.is_some()
         || query.category.is_some()

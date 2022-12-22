@@ -48,26 +48,27 @@ macro_rules! apply_filters {
         }
 
         if let Some(category) = &$query_params.category {
-            query =
-                query.filter(schema::bcd_updates_read_table::category.eq_any(category));
-        }
-
-        if let Some(since) = &$query_params.live_since {
-            query = query.filter(schema::bcd_updates_read_table::release_date.ge(since));
+            query = query.filter(schema::bcd_updates_read_table::category.eq_any(category));
         }
 
         if let Some(browsers) = &$query_params.browsers {
             query = query.filter(schema::bcd_updates_read_table::browser.eq_any(browsers));
         }
-        // if let (Some(show),Some(user)) = (&$query_params.show,$user_id) {
-        //     if show.eq("watched") {
-        //         let watched_pages: Vec<String> = schema::watched_items::table.select(schema::watched_items::uri).filter(schema::watched_items::user_id.eq(user.)).get_results::<String>($conn_pool);
-        //         sql_function!(lower, lower_t, (a: types::VarChar) -> types::VarChar);
-        //         query = query.filter(lower(schema::bcd_updates_read_table::mdn_url).eq_any(watched_pages));
-        //     }
-        // }
 
-
+        if let (Some(show), Some(user)) = (&$query_params.show, $user_id) {
+            if show.eq("watched") {
+                let id = user.id().unwrap();
+                let user_db_id = get_user($conn_pool, id)?;
+                let watched_pages =
+                    get_watched_items($conn_pool, user_db_id.id, &Default::default())?;
+                let user_uris: Vec<String> = watched_pages
+                    .iter()
+                    .map(|query| query.uri.to_owned())
+                    .collect();
+                query =
+                    query.filter(lower(schema::bcd_updates_read_table::mdn_url).eq_any(user_uris));
+            }
+        }
         query
     }};
 }

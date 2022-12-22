@@ -33,19 +33,6 @@ pub fn get_bcd_updates_paginated(
     let mut query = bcd_updates_read_table_group_by_select!();
     query = apply_filters!(query, query_params, user_id, pool);
 
-    if let (Some(show), Some(user)) = (&query_params.show, user_id) {
-        if show.eq("watched") {
-            let id = user.id().unwrap();
-            let user_db_id = get_user(pool, id)?;
-            let watched_pages = get_watched_items(pool, user_db_id.id, &Default::default())?;
-            let user_uris: Vec<String> = watched_pages
-                .iter()
-                .map(|query| query.uri.to_owned())
-                .collect();
-            query = query.filter(lower(schema::bcd_updates_read_table::mdn_url).eq_any(user_uris));
-        }
-    }
-
     let offset = (query_params.page.map_or(1, |val| {
         if val <= 0 {
             return 1;
@@ -94,18 +81,6 @@ pub fn get_count_for_query(
 ) -> Result<i64, DbError> {
     let mut query = bcd_updates_read_table_group_by_select!();
     query = apply_filters!(query, query_params, user_id, pool);
-    if let (Some(show), Some(user)) = (&query_params.show, user_id) {
-        if show.eq("watched") {
-            let id = user.id().unwrap();
-            let user_db_id = get_user(pool, id)?;
-            let watched_pages = get_watched_items(pool, user_db_id.id, &Default::default())?;
-            let user_uris: Vec<String> = watched_pages
-                .iter()
-                .map(|query| query.uri.to_owned())
-                .collect();
-            query = query.filter(lower(schema::bcd_updates_read_table::mdn_url).eq_any(user_uris));
-        }
-    }
     let pags = query.paginate().per_page(5);
     Ok(pags.count_pages::<BcdUpdateQuery>(pool).unwrap())
 }
