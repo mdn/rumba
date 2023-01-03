@@ -37,14 +37,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER trigger_update_collections_last_modified
+CREATE TRIGGER trigger_update_collections_last_modified
     AFTER INSERT OR UPDATE
     ON collections
     FOR EACH ROW
     WHEN (pg_trigger_depth() < 2) -- Either recurisve from collection_item update or direct
 EXECUTE PROCEDURE update_last_modified();
 
--- Your SQL goes here
+
 -- Trigger and function to update collection_items + default collections when old API is used.
 CREATE OR REPLACE FUNCTION update_collection_item()
     RETURNS TRIGGER AS
