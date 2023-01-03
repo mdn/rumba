@@ -102,11 +102,9 @@ impl<T: Service<Request, Response = RumbaTestResponse, Error = Error>> TestHttpC
     ) -> RumbaTestResponse {
         let mut base = test::TestRequest::post().uri(uri);
 
-        if let Some(val) = payload {
-            match val {
-                //#TODO refactor this into just a single 'Value'.
-                PostPayload::Json(json) => base = base.set_json(json),
-            }
+        // TODO: refactor this into just a single 'Value'.
+        if let Some(PostPayload::Json(json)) = payload {
+            base = base.set_json(json);
         };
 
         base = self.add_cookies_and_headers(headers, base);

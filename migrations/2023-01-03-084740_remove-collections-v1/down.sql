@@ -1,4 +1,5 @@
--- This file should undo anything in `up.sql`ALTER TABLE settings
+-- This migration drops the data from the original collections table. 
+-- It is no longer used in the API.
 ALTER TABLE settings
     ADD COLUMN collections_last_modified_time TIMESTAMP DEFAULT NULL;    
 

@@ -3,6 +3,7 @@ use std::time::Duration;
 
 use crate::helpers::app::test_app_with_login;
 use crate::helpers::db::reset;
+use crate::helpers::http_client::PostPayload;
 use crate::helpers::http_client::TestHttpClient;
 use crate::helpers::read_json;
 use crate::helpers::wait_for_stubr;
@@ -210,6 +211,36 @@ async fn delete_user_test() -> Result<(), Error> {
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Iceland");
     assert_eq!(json["is_authenticated"], true);
+
+    /*
+    // Let's check the cascade delete. This will create a multiple collection item that is tied to the user.
+    // When the set token is sent to delete the user it should cascade and thus not violate the fk ref:
+        multiple_collections (
+            ...
+            user_id    BIGSERIAL references users (id) ON DELETE CASCADE,
+            ...
+        )
+    */
+    let payload = serde_json::json!({
+        "title" : "Interesting CSS",
+        "url": "/en-US/docs/Web/CSS"
+    });
+
+    let base_url = "/api/v2/collections/";
+
+    let default_collection = read_json(logged_in_client.get(base_url, None).await).await;
+    let default_collection_id = default_collection.as_array().unwrap()[0]["id"]
+        .as_str()
+        .unwrap();
+
+    let create_res = logged_in_client
+        .post(
+            format!("{:1}{:2}/items/", base_url, default_collection_id).as_str(),
+            None,
+            Some(PostPayload::Json(payload)),
+        )
+        .await;
+    assert_eq!(create_res.status(), 201);
 
     let res = logged_in_client.trigger_webhook(set_token).await;
     assert!(res.response().status().is_success());
