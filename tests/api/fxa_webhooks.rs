@@ -212,21 +212,6 @@ async fn delete_user_test() -> Result<(), Error> {
     assert_eq!(json["geo"]["country"], "Iceland");
     assert_eq!(json["is_authenticated"], true);
 
-    let base_url = "/api/v1/plus/collection/?url=/en-US/docs/Web/CSS";
-    let payload = serde_json::json!({
-        "name": "CSS: Cascading Style Sheets",
-        "notes": "Notes notes notes",
-    });
-    let create_res = logged_in_client
-        .post(base_url, None, Some(PostPayload::FormData(payload)))
-        .await;
-    assert_eq!(create_res.status(), 201);
-    let collection_res = logged_in_client.get(base_url, None).await;
-    let collection_json = read_json(collection_res).await;
-
-    let bookmarked = &collection_json["bookmarked"];
-    assert!(!bookmarked.is_null());
-
     let res = logged_in_client.trigger_webhook(set_token).await;
     assert!(res.response().status().is_success());
 

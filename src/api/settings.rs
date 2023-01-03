@@ -1,7 +1,5 @@
-use crate::helpers::maybe_to_utc;
 use actix_identity::Identity;
 use actix_web::{web, HttpRequest, HttpResponse};
-use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
 use crate::db::{self, error::DbError, model::Settings, types::Locale, Pool};
@@ -19,9 +17,7 @@ pub struct SettingUpdateRequest {
 pub struct SettingsResponse {
     pub col_in_search: Option<bool>,
     pub locale_override: Option<Option<Locale>>,
-    pub multiple_collections: Option<bool>,
-    #[serde(serialize_with = "maybe_to_utc")]
-    pub collections_last_modified_time: Option<NaiveDateTime>,
+    pub multiple_collections: Option<bool>,    
 }
 
 impl From<Settings> for SettingsResponse {
@@ -29,8 +25,7 @@ impl From<Settings> for SettingsResponse {
         SettingsResponse {
             col_in_search: Some(val.col_in_search),
             locale_override: Some(val.locale_override),
-            multiple_collections: Some(val.multiple_collections),
-            collections_last_modified_time: val.collections_last_modified_time,
+            multiple_collections: Some(val.multiple_collections),            
         }
     }
 }

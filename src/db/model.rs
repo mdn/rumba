@@ -72,15 +72,6 @@ pub struct CollectionParent {
 }
 
 #[derive(Insertable, AsChangeset)]
-#[diesel(table_name = collections)]
-pub struct CollectionInsert {
-    pub document_id: i64,
-    pub custom_name: Option<String>,
-    pub user_id: i64,
-    pub notes: Option<String>,
-}
-
-#[derive(Insertable, AsChangeset)]
 #[diesel(table_name = documents)]
 pub struct DocumentInsert {
     pub absolute_uri: String,
@@ -99,7 +90,6 @@ pub struct Settings {
     pub col_in_search: bool,
     pub locale_override: Option<Locale>,
     pub multiple_collections: bool,
-    pub collections_last_modified_time: Option<NaiveDateTime>,
 }
 
 #[derive(Insertable, AsChangeset)]
