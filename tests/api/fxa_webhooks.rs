@@ -3,7 +3,6 @@ use std::time::Duration;
 
 use crate::helpers::app::test_app_with_login;
 use crate::helpers::db::reset;
-use crate::helpers::http_client::PostPayload;
 use crate::helpers::http_client::TestHttpClient;
 use crate::helpers::read_json;
 use crate::helpers::wait_for_stubr;

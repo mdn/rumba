@@ -14,7 +14,7 @@ use super::watched_items::{get_watched_items, unwatch_many, update_watched_item}
 pub fn api_v1_service() -> impl HttpServiceFactory {
     web::scope("/api/v1")
         .service(
-            web::scope("/plus")               
+            web::scope("/plus")
                 .service(web::resource("/settings/").route(web::post().to(update_settings)))
                 .service(
                     web::scope("/notifications")
