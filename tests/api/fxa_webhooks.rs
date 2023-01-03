@@ -212,20 +212,35 @@ async fn delete_user_test() -> Result<(), Error> {
     assert_eq!(json["geo"]["country"], "Iceland");
     assert_eq!(json["is_authenticated"], true);
 
-    let base_url = "/api/v1/plus/collection/?url=/en-US/docs/Web/CSS";
+    /*
+    // Let's check the cascade delete. This will create a multiple collection item that is tied to the user.
+    // When the set token is sent to delete the user it should cascade and thus not violate the fk ref:
+        multiple_collections (
+            ...
+            user_id    BIGSERIAL references users (id) ON DELETE CASCADE,
+            ...
+        )
+    */
     let payload = serde_json::json!({
-        "name": "CSS: Cascading Style Sheets",
-        "notes": "Notes notes notes",
+        "title" : "Interesting CSS",
+        "url": "/en-US/docs/Web/CSS"
     });
+
+    let base_url = "/api/v2/collections/";
+
+    let default_collection = read_json(logged_in_client.get(base_url, None).await).await;
+    let default_collection_id = default_collection.as_array().unwrap()[0]["id"]
+        .as_str()
+        .unwrap();
+
     let create_res = logged_in_client
-        .post(base_url, None, Some(PostPayload::FormData(payload)))
+        .post(
+            format!("{:1}{:2}/items/", base_url, default_collection_id).as_str(),
+            None,
+            Some(PostPayload::Json(payload)),
+        )
         .await;
     assert_eq!(create_res.status(), 201);
-    let collection_res = logged_in_client.get(base_url, None).await;
-    let collection_json = read_json(collection_res).await;
-
-    let bookmarked = &collection_json["bookmarked"];
-    assert!(!bookmarked.is_null());
 
     let res = logged_in_client.trigger_webhook(set_token).await;
     assert!(res.response().status().is_success());

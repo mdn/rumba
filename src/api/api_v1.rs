@@ -1,6 +1,3 @@
-use crate::api::collections::{
-    collections, create_or_update_collection_item, delete_collection_item,
-};
 use crate::api::root::root_service;
 use crate::api::search::search;
 use crate::api::settings::update_settings;
@@ -18,12 +15,6 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
     web::scope("/api/v1")
         .service(
             web::scope("/plus")
-                .service(
-                    web::resource("/collection/")
-                        .route(web::get().to(collections))
-                        .route(web::post().to(create_or_update_collection_item))
-                        .route(web::delete().to(delete_collection_item)),
-                )
                 .service(web::resource("/settings/").route(web::post().to(update_settings)))
                 .service(
                     web::scope("/notifications")

@@ -138,22 +138,6 @@ diesel::table! {
     use diesel::sql_types::*;
     use crate::db::types::*;
 
-    collections (id) {
-        id -> Int8,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
-        deleted_at -> Nullable<Timestamp>,
-        document_id -> Int8,
-        notes -> Nullable<Text>,
-        custom_name -> Nullable<Text>,
-        user_id -> Int8,
-    }
-}
-
-diesel::table! {
-    use diesel::sql_types::*;
-    use crate::db::types::*;
-
     documents (id) {
         id -> Int8,
         created_at -> Timestamp,
@@ -237,7 +221,6 @@ diesel::table! {
         col_in_search -> Bool,
         locale_override -> Nullable<Locale>,
         multiple_collections -> Bool,
-        collections_last_modified_time -> Nullable<Timestamp>,
     }
 }
 
@@ -294,8 +277,6 @@ diesel::joinable!(browser_releases -> browsers (browser));
 diesel::joinable!(collection_items -> documents (document_id));
 diesel::joinable!(collection_items -> multiple_collections (multiple_collection_id));
 diesel::joinable!(collection_items -> users (user_id));
-diesel::joinable!(collections -> documents (document_id));
-diesel::joinable!(collections -> users (user_id));
 diesel::joinable!(multiple_collections -> users (user_id));
 diesel::joinable!(notification_data -> documents (document_id));
 diesel::joinable!(notifications -> notification_data (notification_data_id));
@@ -311,7 +292,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     browser_releases,
     browsers,
     collection_items,
-    collections,
     documents,
     multiple_collections,
     notification_data,
