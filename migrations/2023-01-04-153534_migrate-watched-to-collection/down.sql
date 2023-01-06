@@ -1,2 +1,2 @@
 -- This file should undo anything in `up.sql`
-select now() from watched_items;
+DROP INDEX bcd_updates_lower_case_url_idx;

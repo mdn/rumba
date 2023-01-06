@@ -1,5 +1,5 @@
 -- Optimize for Collections queries.
-CREATE INDEX lower_case_url ON bcd_updates_read_table ((lower(mdn_url)));
+CREATE INDEX bcd_updates_lower_case_url_idx ON bcd_updates_read_table ((lower(mdn_url)));
 
 -- Get all unique user id's in wathcing and create them a 'Watched items collection'
 WITH users_watching AS (
