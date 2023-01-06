@@ -1,3 +1,4 @@
+use crate::api::newsletter::{is_subscribed, subscribe, unsubscribe};
 use crate::api::root::root_service;
 use crate::api::search::search;
 use crate::api::settings::update_settings;
@@ -16,6 +17,12 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
         .service(
             web::scope("/plus")
                 .service(web::resource("/settings/").route(web::post().to(update_settings)))
+                .service(
+                    web::resource("/newsletter/")
+                        .route(web::get().to(is_subscribed))
+                        .route(web::delete().to(unsubscribe))
+                        .route(web::post().to(subscribe)),
+                )
                 .service(
                     web::scope("/notifications")
                         .service(web::resource("/").route(web::get().to(notifications)))

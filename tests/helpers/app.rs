@@ -12,6 +12,7 @@ use actix_web::{
     dev::{ServiceFactory, ServiceRequest, ServiceResponse},
     App, Error,
 };
+use basket::Basket;
 use elasticsearch::http::transport::Transport;
 use elasticsearch::Elasticsearch;
 use reqwest::Client;
@@ -62,6 +63,12 @@ pub async fn test_app_with_login(
     let arbiter = Arbiter::new();
     let arbiter_handle = Data::new(arbiter.handle());
     let session_cookie_key = Key::derive_from(&SETTINGS.auth.cookie_key);
+    let basket_client = Data::new(
+        SETTINGS
+            .basket
+            .as_ref()
+            .map(|b| Basket::new(&b.api_key, b.basket_url.clone())),
+    );
 
     let app = App::new()
         .wrap(error_handler())
@@ -75,6 +82,7 @@ pub async fn test_app_with_login(
         .app_data(Data::clone(&arbiter_handle))
         .app_data(Data::clone(&pool))
         .app_data(Data::clone(&client))
+        .app_data(Data::clone(&basket_client))
         .app_data(Data::clone(&login_manager));
     Ok(add_services(app))
 }

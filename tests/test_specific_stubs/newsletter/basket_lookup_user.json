@@ -1,0 +1,19 @@
+{
+  "uuid": "basket_lookup_user",
+  "priority": 1,
+  "request": {
+    "method": "GET",
+    "url": "/news/lookup-user/"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "status": "ok",
+      "email": "test@test.com",
+      "newsletters": ["app-dev"]
+    }
+  }
+}

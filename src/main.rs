@@ -11,6 +11,7 @@ use actix_web::{
     web::Data,
     App, HttpServer,
 };
+use basket::Basket;
 use const_format::formatcp;
 use diesel_migrations::MigrationHarness;
 use elasticsearch::http::transport::Transport;
@@ -71,6 +72,13 @@ async fn main() -> anyhow::Result<()> {
 
     let session_cookie_key = Key::derive_from(&SETTINGS.auth.cookie_key);
 
+    let basket_client = Data::new(
+        SETTINGS
+            .basket
+            .as_ref()
+            .map(|b| Basket::new(&b.api_key, b.basket_url.clone())),
+    );
+
     HttpServer::new(move || {
         let app = App::new()
             .wrap(error_handler())
@@ -88,6 +96,7 @@ async fn main() -> anyhow::Result<()> {
                 .build(),
             )
             .wrap(Logger::new(LOG_FMT).exclude("/healthz"))
+            .app_data(Data::clone(&basket_client))
             .app_data(Data::clone(&metrics))
             .app_data(Data::clone(&pool))
             .app_data(Data::clone(&arbiter_handle))
