@@ -37,7 +37,7 @@ macro_rules! bcd_updates_read_table_get_updates_for_collections {
             ),
         ))
         .inner_join(
-            schema::documents::table.on(lower(schema::documents::uri.nullable()).eq(lower(schema::bcd_updates_read_table::mdn_url)))
+            schema::documents::table.on(schema::documents::uri.nullable().eq(lower(schema::bcd_updates_read_table::mdn_url)))
         )
         .inner_join(
             schema::collection_items::table.on(schema::documents::id.eq(schema::collection_items::document_id))
