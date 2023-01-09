@@ -49,7 +49,7 @@ pub async fn ping(
                                 .eq(activity_pings::activity.concat(activity_data)),
                         )
                         .execute(&mut conn_pool)?;
-                    Ok(HttpResponse::Ok().body(""))
+                    Ok(HttpResponse::Created().finish())
                 }
                 Err(_err) => Err(ApiError::InvalidSession),
             }

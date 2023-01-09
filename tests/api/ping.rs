@@ -21,7 +21,7 @@ async fn test_empty() -> Result<(), Error> {
     let res = logged_in_client
         .post("/api/v1/ping", None, Some(PostPayload::Form(json!({}))))
         .await;
-    assert_eq!(res.response().status(), 200);
+    assert_eq!(res.response().status(), 201);
 
     let mut conn = pool.get()?;
     let activity_data = schema::activity_pings::table
@@ -50,7 +50,7 @@ async fn test_garbage() -> Result<(), Error> {
             Some(PostPayload::Form(json!({ "foobar": "barfoo" }))),
         )
         .await;
-    assert_eq!(res.response().status(), 200);
+    assert_eq!(res.response().status(), 201);
 
     let mut conn = pool.get()?;
     let activity_data = schema::activity_pings::table
@@ -79,7 +79,7 @@ async fn test_offline_disabled() -> Result<(), Error> {
             Some(PostPayload::Form(json!({ "offline": false }))),
         )
         .await;
-    assert_eq!(res.response().status(), 200);
+    assert_eq!(res.response().status(), 201);
 
     let mut conn = pool.get()?;
     let activity_data = schema::activity_pings::table
@@ -108,7 +108,7 @@ async fn test_offline_enabled() -> Result<(), Error> {
             Some(PostPayload::Form(json!({ "offline": true }))),
         )
         .await;
-    assert_eq!(res.response().status(), 200);
+    assert_eq!(res.response().status(), 201);
 
     let mut conn = pool.get()?;
     let activity_data = schema::activity_pings::table
@@ -140,7 +140,7 @@ async fn test_offline_upsert() -> Result<(), Error> {
             Some(PostPayload::Form(json!({ "offline": false }))),
         )
         .await;
-    assert_eq!(res1.response().status(), 200);
+    assert_eq!(res1.response().status(), 201);
 
     let mut conn = pool.get()?;
     let activity_data1 = schema::activity_pings::table
@@ -158,7 +158,7 @@ async fn test_offline_upsert() -> Result<(), Error> {
             Some(PostPayload::Form(json!({ "offline": true }))),
         )
         .await;
-    assert_eq!(res2.response().status(), 200);
+    assert_eq!(res2.response().status(), 201);
 
     let activity_data2 = schema::activity_pings::table
         .select(schema::activity_pings::activity)
@@ -175,7 +175,7 @@ async fn test_offline_upsert() -> Result<(), Error> {
             Some(PostPayload::Form(json!({ "offline": false }))),
         )
         .await;
-    assert_eq!(res3.response().status(), 200);
+    assert_eq!(res3.response().status(), 201);
 
     let activity_data3 = schema::activity_pings::table
         .select(schema::activity_pings::activity)

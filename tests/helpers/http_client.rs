@@ -104,7 +104,6 @@ impl<T: Service<Request, Response = RumbaTestResponse, Error = Error>> TestHttpC
         let mut base = test::TestRequest::post().uri(uri);
 
         base = match payload {
-            // TODO: refactor this into just a single 'Value'.
             Some(PostPayload::Json(json)) => base.set_json(json),
             Some(PostPayload::Form(data)) => base.set_form(data),
             None => base,
