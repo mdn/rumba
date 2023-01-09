@@ -8,7 +8,7 @@ use crate::{
     db::{users::get_user, Pool},
 };
 
-const MDN_PLUS_LIST: &str = "app-dev"; //"mdn-plus";
+const MDN_PLUS_LIST: &str = "mdnplus";
 
 #[derive(Deserialize, Serialize)]
 struct UserLookup {

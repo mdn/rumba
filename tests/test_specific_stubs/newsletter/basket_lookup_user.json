@@ -13,7 +13,7 @@
     "jsonBody": {
       "status": "ok",
       "email": "test@test.com",
-      "newsletters": ["app-dev"]
+      "newsletters": ["mdnplus"]
     }
   }
 }
