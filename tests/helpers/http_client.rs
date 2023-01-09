@@ -20,6 +20,7 @@ pub struct TestHttpClient<T: Service<Request, Response = RumbaTestResponse, Erro
 
 pub enum PostPayload {
     Json(Value),
+    Form(Value),
 }
 
 impl<T: Service<Request, Response = RumbaTestResponse, Error = Error>> TestHttpClient<T> {
@@ -102,9 +103,11 @@ impl<T: Service<Request, Response = RumbaTestResponse, Error = Error>> TestHttpC
     ) -> RumbaTestResponse {
         let mut base = test::TestRequest::post().uri(uri);
 
-        // TODO: refactor this into just a single 'Value'.
-        if let Some(PostPayload::Json(json)) = payload {
-            base = base.set_json(json);
+        base = match payload {
+            // TODO: refactor this into just a single 'Value'.
+            Some(PostPayload::Json(json)) => base.set_json(json),
+            Some(PostPayload::Form(data)) => base.set_form(data),
+            None => base,
         };
 
         base = self.add_cookies_and_headers(headers, base);
