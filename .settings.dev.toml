@@ -20,6 +20,7 @@ admin_update_bearer_token = "TEST_TOKEN"
 [application]
 document_base_url = "https://developer.allizom.org"
 notifications_update_base_url = "https://updates.developer.allizom.org/notifications"
+bcd_updates_base_url = "https://updates.developer.allizom.org/rumba-bcd-updates"
 subscriptions_limit_watched_items = 3
 subscriptions_limit_collections = 5
 encoded_id_salt = "saltymcsalt"
