@@ -1,4 +1,5 @@
- #[macro_export]
+
+#[macro_export]
 macro_rules! bcd_updates_read_table_get_updates_for_collections {
     ($collections: expr, $user_id: expr, $conn_pool: expr) => {{
 
