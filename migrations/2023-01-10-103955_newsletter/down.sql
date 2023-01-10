@@ -1,0 +1,3 @@
+ALTER TABLE settings DROP COLUMN mdnplus_newsletter;
+ALTER TABLE settings ADD COLUMN multiple_collections BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE settings ADD COLUMN col_in_search BOOLEAN NOT NULL DEFAULT FALSE;
