@@ -160,7 +160,7 @@ pub async fn get_updates(
 
     let mut conn_pool = pool.get()?;
 
-    let updates = if query.collections.is_some() {
+    let updates = if query.collections.is_some() {        
         get_bcd_updates_for_collection(&mut conn_pool, &query, user_id)?
     } else {
         get_bcd_updates_paginated(&mut conn_pool, &query, user_id)?

@@ -5,14 +5,18 @@ use super::{
         lookup_collections_containing_article, modify_collection,
         modify_collection_item_in_collection, remove_collection_item_from_collection,
     },
-    updates::{get_updates, get_updates_watched},
+    updates::{get_updates, get_updates_watched },
 };
 use actix_web::dev::HttpServiceFactory;
 use actix_web::web;
 
 pub fn api_v2_service() -> impl HttpServiceFactory {
     web::scope("/api/v2")
-        .service(web::resource("/updates/").route(web::get().to(get_updates)))
+    //We can cache /updates/    
+    .service(web::resource("/updates/").route(web::get().to(get_updates)))
+        /* We cannot cache /updates/collections/ **/
+        .service(web::resource("/updates/collections/").route(web::get().to(get_updates)))
+        /* * /watched/ is now Deprecated 2023/01/10 **/
         .service(web::resource("/updates/watched/").route(web::get().to(get_updates_watched)))
         .service(
             web::resource("/collections/")
