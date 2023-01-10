@@ -59,6 +59,16 @@ async fn whoami_settings_test() -> Result<(), Error> {
     let json = read_json(newsletter).await;
     assert_eq!(json["subscribed"], true);
 
+    let whoami = logged_in_client
+        .get(
+            "/api/v1/whoami",
+            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+        )
+        .await;
+    assert!(whoami.response().status().is_success());
+    let json = read_json(whoami).await;
+    assert_eq!(json["settings"]["mdnplus_newsletter"], true);
+
     drop(stubr);
     Ok(())
 }

@@ -1,11 +1,12 @@
 use actix_identity::Identity;
 use actix_web::{web::Data, HttpResponse};
 use basket::{Basket, YesNo};
+use diesel::PgConnection;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    api::error::ApiError,
-    db::{users::get_user, Pool},
+    api::{error::ApiError, settings::SettingUpdateRequest},
+    db::{self, model::UserQuery, users::get_user, Pool},
 };
 
 const MDN_PLUS_LIST: &str = "mdnplus";
@@ -21,45 +22,77 @@ struct Subscribed {
     pub subscribed: bool,
 }
 
-pub async fn subscribe(
+pub async fn subscribe_handler(
     pool: Data<Pool>,
     user_id: Identity,
     basket: Data<Option<Basket>>,
 ) -> Result<HttpResponse, ApiError> {
-    let mut conn_pool = pool.get()?;
-    let user = get_user(&mut conn_pool, user_id.id().unwrap())?;
+    let mut conn = pool.get()?;
+    let user = get_user(&mut conn, user_id.id().unwrap())?;
     if let Some(basket) = &**basket {
-        basket
-            .subscribe_private(&user.email, vec![MDN_PLUS_LIST.into()], None)
-            .await?;
-        return Ok(HttpResponse::Created().json(Subscribed { subscribed: true }));
+        return subscribe(&mut conn, &user, basket).await;
+    }
+    Ok(HttpResponse::NotImplemented().finish())
+}
+
+pub async fn subscribe(
+    conn: &mut PgConnection,
+    user: &UserQuery,
+    basket: &Basket,
+) -> Result<HttpResponse, ApiError> {
+    basket
+        .subscribe_private(&user.email, vec![MDN_PLUS_LIST.into()], None)
+        .await?;
+    db::settings::create_or_update_settings(
+        conn,
+        user,
+        SettingUpdateRequest {
+            mdnplus_newsletter: Some(true),
+            ..Default::default()
+        },
+    )?;
+    Ok(HttpResponse::Created().json(Subscribed { subscribed: true }))
+}
+
+pub async fn unsubscribe_handler(
+    pool: Data<Pool>,
+    user_id: Identity,
+    basket: Data<Option<Basket>>,
+) -> Result<HttpResponse, ApiError> {
+    let mut conn = pool.get()?;
+    let user = get_user(&mut conn, user_id.id().unwrap())?;
+    if let Some(basket) = &**basket {
+        return unsubscribe(&mut conn, &user, basket).await;
     }
     Ok(HttpResponse::NotImplemented().finish())
 }
 
 pub async fn unsubscribe(
-    pool: Data<Pool>,
-    user_id: Identity,
-    basket: Data<Option<Basket>>,
+    conn: &mut PgConnection,
+    user: &UserQuery,
+    basket: &Basket,
 ) -> Result<HttpResponse, ApiError> {
-    let mut conn_pool = pool.get()?;
-    let user = get_user(&mut conn_pool, user_id.id().unwrap())?;
-    if let Some(basket) = &**basket {
-        let value = basket.lookup_user(&user.email).await;
-        let token = match &value {
-            Ok(j) if j["token"].is_string() => j["token"].as_str().unwrap_or_default(),
-            Ok(_) => {
-                error!("Invalid JSON when retrieving token for {}", &user.email);
-                return Err(ApiError::JsonProcessingError);
-            }
-            Err(_) => return Ok(HttpResponse::NotFound().finish()),
-        };
-        basket
-            .unsubscribe(token, vec![MDN_PLUS_LIST.into()], YesNo::N)
-            .await?;
-        return Ok(HttpResponse::Created().json(Subscribed { subscribed: false }));
-    }
-    Ok(HttpResponse::NotImplemented().finish())
+    let value = basket.lookup_user(&user.email).await;
+    let token = match &value {
+        Ok(j) if j["token"].is_string() => j["token"].as_str().unwrap_or_default(),
+        Ok(_) => {
+            error!("Invalid JSON when retrieving token for {}", &user.email);
+            return Err(ApiError::JsonProcessingError);
+        }
+        Err(_) => return Ok(HttpResponse::NotFound().finish()),
+    };
+    basket
+        .unsubscribe(token, vec![MDN_PLUS_LIST.into()], YesNo::N)
+        .await?;
+    db::settings::create_or_update_settings(
+        conn,
+        user,
+        SettingUpdateRequest {
+            mdnplus_newsletter: Some(false),
+            ..Default::default()
+        },
+    )?;
+    Ok(HttpResponse::Created().json(Subscribed { subscribed: false }))
 }
 
 pub async fn is_subscribed(
@@ -67,8 +100,8 @@ pub async fn is_subscribed(
     user_id: Identity,
     basket: Data<Option<Basket>>,
 ) -> Result<HttpResponse, ApiError> {
-    let mut conn_pool = pool.get()?;
-    let user = get_user(&mut conn_pool, user_id.id().unwrap())?;
+    let mut conn = pool.get()?;
+    let user = get_user(&mut conn, user_id.id().unwrap())?;
     if let Some(basket) = &**basket {
         let value = basket.lookup_user(&user.email).await;
         let subscribed = match value {
@@ -79,6 +112,17 @@ pub async fn is_subscribed(
             }
             Err(_) => false,
         };
+        let settings = db::settings::get_settings(&mut conn, &user)?;
+        if subscribed != settings.map(|s| s.mdnplus_newsletter).unwrap_or_default() {
+            db::settings::create_or_update_settings(
+                &mut conn,
+                &user,
+                SettingUpdateRequest {
+                    mdnplus_newsletter: Some(subscribed),
+                    ..Default::default()
+                },
+            )?;
+        }
         return Ok(HttpResponse::Created().json(Subscribed { subscribed }));
     };
     Ok(HttpResponse::NotImplemented().finish())

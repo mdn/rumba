@@ -27,9 +27,8 @@ pub fn create_or_update_settings(
 ) -> QueryResult<usize> {
     let settings = SettingsInsert {
         user_id: user.id,
-        col_in_search: settings_update.col_in_search,
         locale_override: settings_update.locale_override,
-        multiple_collections: settings_update.multiple_collections,
+        mdnplus_newsletter: settings_update.mdnplus_newsletter,
     };
     insert_into(schema::settings::table)
         .values(&settings)
