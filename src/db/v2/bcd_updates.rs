@@ -7,6 +7,7 @@ use crate::bcd_updates_read_table_group_by_select;
 use crate::db::error::DbError;
 use crate::db::schema;
 use crate::db::users::get_user;
+use crate::db::v2::pagination::PaginationStats;
 use crate::db::watched_items::get_watched_items;
 use crate::diesel::BoolExpressionMethods;
 use crate::diesel::ExpressionMethods;
@@ -16,16 +17,13 @@ use crate::diesel::QueryDsl;
 use crate::diesel::RunQueryDsl;
 
 use actix_identity::Identity;
-use diesel::debug_query;
 use diesel::dsl::sql;
 
-use crate::db::v2::pagination::PaginationStats;
-
-use crate::diesel::PgTextExpressionMethods;
 use diesel::r2d2::ConnectionManager;
 use diesel::sql_types::Json;
 use diesel::sql_types::{Nullable, Text};
 use diesel::PgConnection;
+use diesel::PgTextExpressionMethods;
 use r2d2::PooledConnection;
 sql_function!(fn lower(a: Nullable<Text>) -> Nullable<Text>);
 
@@ -36,7 +34,7 @@ pub fn get_bcd_updates_paginated(
 ) -> Result<(Vec<BcdUpdate>, i64), DbError> {
     let user_option = user_id.and_then(|val| val.id().ok());
     let count = get_count_for_query(pool, query_params, &user_option);
-    let mut query = bcd_updates_read_table_group_by_select!();
+    let mut query = bcd_updates_read_table_group_by_select!().into_boxed();
     query = apply_filters!(query, query_params, user_option, pool);
 
     let offset = (query_params.page.map_or(1, |val| {
@@ -83,17 +81,23 @@ pub fn get_bcd_updates_paginated(
 pub fn get_bcd_updates_for_collection(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     query_params: &BcdUpdatesQueryParams,
-    user_id: Option<Identity>,
+    user_id: &Identity,
 ) -> Result<(Vec<BcdUpdate>, i64), DbError> {
-    let user_option = user_id.and_then(|val| val.id().ok());
+    if let Some(collections) = &query_params.collections {
+        let count = get_count_for_collections_query(
+            pool,
+            query_params,
+            collections,
+            &user_id.id().unwrap(),
+        )?;
 
-    if let (Some(collections), Some(user)) = (&query_params.collections, user_option) {
-        let count = get_count_for_collections_query(pool, query_params, collections, &user)?;
+        let mut query = bcd_updates_read_table_get_updates_for_collections!(
+            collections,
+            &user_id.id().unwrap(),
+            pool
+        );
 
-        let mut query =
-            bcd_updates_read_table_get_updates_for_collections!(collections, &user, pool);
-
-        query = apply_filters!(query, query_params, Some(user), pool);
+        query = apply_filters!(query, query_params, Some(user_id.id().unwrap()), pool);
 
         let offset = (query_params.page.map_or(1, |val| {
             if val <= 0 {
@@ -125,8 +129,6 @@ pub fn get_bcd_updates_for_collection(
             ))
         }
 
-        let res: diesel::query_builder::DebugQuery<_, diesel::pg::Pg> = debug_query(&query);
-        info!("{:}", res);
         let res = query
             .limit(5)
             .offset(offset)
@@ -143,7 +145,7 @@ pub fn get_count_for_query(
     query_params: &BcdUpdatesQueryParams,
     user_id: &Option<String>,
 ) -> Result<i64, DbError> {
-    let mut query = bcd_updates_read_table_group_by_select!();
+    let mut query = bcd_updates_read_table_group_by_select!().into_boxed();
     query = apply_filters!(query, query_params, user_id, pool);
     let pags = query.paginate().per_page(5);
     Ok(pags.count_pages::<BcdUpdateQuery>(pool).unwrap())
