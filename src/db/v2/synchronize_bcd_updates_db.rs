@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::str::FromStr;
-use std::{fs::File, io::BufReader};
 
 use crate::api::error::ApiError;
 use crate::db::schema::{self, *};
@@ -9,39 +8,59 @@ use crate::db::Pool;
 use crate::diesel::ExpressionMethods;
 use crate::diesel::QueryDsl;
 use crate::diesel::RunQueryDsl;
+use crate::settings::SETTINGS;
 use actix_http::StatusCode;
 use actix_web::{web::Data, HttpResponse};
 use chrono::NaiveDate;
 use diesel::{update, PgConnection};
 use reqwest::Client;
 use serde_json::Value;
+use url::Url;
 
 use crate::diesel::BoolExpressionMethods;
 
+async fn get_bcd_updates(client: &Data<Client>) -> Result<Value, ApiError> {
+    let update_url = Url::parse(&format!(
+        "{}/bcd-updates.json",
+        SETTINGS.application.bcd_updates_base_url
+    ))
+    .map_err(|_| ApiError::MalformedUrl)?;
+
+    let res = client
+        .get(update_url)
+        .send()
+        .await
+        .map_err(|err: reqwest::Error| match err.status() {
+            Some(StatusCode::NOT_FOUND) => ApiError::DocumentNotFound,
+            _ => ApiError::Unknown,
+        })?
+        .json()
+        .await
+        .map_err(|err| {
+            error!("{:1}", err);
+            ApiError::DocumentNotFound
+        })?;
+    Ok(res)
+}
+
 pub async fn update_bcd(pool: Data<Pool>, client: Data<Client>) -> Result<HttpResponse, ApiError> {
     let mut conn = pool.get()?;
+    let mut json = get_bcd_updates(&client).await?;
     info!("Synchronize browsers");
-    synchronize_browers_and_releases(&mut conn).await?;
+    synchronize_browers_and_releases(&mut conn, json["browsers"].take()).await?;
     info!("Synchronize features");
-    synchronize_features(&mut conn).await?;
+    synchronize_features(&mut conn, json["features"].take()).await?;
     info!("Synchronize paths + bcd mappings");
     synchronize_path_mappings(&mut conn, client).await?;
-    synchronize_updates(&mut conn).await?;
+    synchronize_updates(&mut conn, json["added_removed"].take()).await?;
 
     Ok(HttpResponse::Accepted().finish())
 }
 
-async fn synchronize_browers_and_releases(pool: &mut PgConnection) -> Result<(), ApiError> {
-    let file = File::open("browsers.json")
-        .map_err(|err| ApiError::Generic(format!("Error loading browsers.json: {:}", err)))?;
-    let reader = BufReader::new(file);
-    let json: serde_json::Value = serde_json::from_reader(reader).map_err(|err| {
-        ApiError::Generic(format!(
-            "Error deserializing data from browsers.json: {:}",
-            err
-        ))
-    })?;
-
+async fn synchronize_browers_and_releases(
+    pool: &mut PgConnection,
+    json: Value,
+) -> Result<(), ApiError> {
     let mut browser_values = Vec::new();
     let mut releases = Vec::new();
     json.as_object().unwrap().iter().for_each(|(k, v)| {
@@ -96,12 +115,7 @@ async fn synchronize_browers_and_releases(pool: &mut PgConnection) -> Result<(),
     Ok(())
 }
 
-async fn synchronize_features(pool: &mut PgConnection) -> Result<(), ApiError> {
-    let file = File::open("features.json")
-        .map_err(|err| ApiError::Generic(format!("Error loading features.json: {:}", err)))?;
-    let reader = BufReader::new(file);
-    let json: serde_json::Value = serde_json::from_reader(reader)
-        .map_err(|err| ApiError::Generic(format!("Error deserializing features.json: {:}", err)))?;
+async fn synchronize_features(pool: &mut PgConnection, json: Value) -> Result<(), ApiError> {
     let mut features = Vec::new();
     json.as_array().unwrap().iter().for_each(|val| {
         if val["source_file"].as_str().is_none() {
@@ -144,13 +158,7 @@ async fn synchronize_features(pool: &mut PgConnection) -> Result<(), ApiError> {
     Ok(())
 }
 
-async fn synchronize_updates(pool: &mut PgConnection) -> Result<(), ApiError> {
-    let file = File::open("added_removed.json")
-        .map_err(|err| ApiError::Generic(format!("Error loading added_removed.json: {:}", err)))?;
-    let reader = BufReader::new(file);
-    let json: serde_json::Value = serde_json::from_reader(reader)
-        .map_err(|err| ApiError::Generic(format!("Error Deserializing features.json: {:}", err)))?;
-
+async fn synchronize_updates(pool: &mut PgConnection, json: Value) -> Result<(), ApiError> {
     let mut release_versions_cached = HashMap::<String, i64>::new();
     let mut feature_info_cached = HashMap::<String, i64>::new();
 
