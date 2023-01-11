@@ -68,6 +68,12 @@ pub struct Sentry {
     pub dsn: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct Basket {
+    pub api_key: String,
+    pub basket_url: Url,
+}
+
 #[derive(Deserialize)]
 pub struct Settings {
     pub db: DB,
@@ -78,6 +84,7 @@ pub struct Settings {
     pub logging: Logging,
     pub metrics: Metrics,
     pub sentry: Option<Sentry>,
+    pub basket: Option<Basket>,
 }
 
 impl Settings {

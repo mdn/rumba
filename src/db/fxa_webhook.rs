@@ -1,4 +1,5 @@
 use crate::api::fxa_webhook::{ProfileChange, SubscriptionStateChange};
+use crate::api::newsletter;
 use crate::db::error::DbError;
 use crate::db::model::{RawWebHookEventsTokenInsert, UserQuery, WebHookEventInsert};
 use crate::db::types::FxaEvent;
@@ -7,6 +8,7 @@ use crate::db::{schema, Pool};
 use crate::fxa::LoginManager;
 use actix_rt::ArbiterHandle;
 use actix_web::web;
+use basket::Basket;
 use chrono::{DateTime, Utc};
 use diesel::insert_into;
 use diesel::prelude::*;
@@ -144,11 +146,12 @@ pub async fn update_profile_from_webhook(
     }
 }
 
-pub fn update_subscription_state_from_webhook(
+pub async fn update_subscription_state_from_webhook(
     pool: web::Data<Pool>,
     fxa_uid: String,
     update: SubscriptionStateChange,
     issue_time: DateTime<Utc>,
+    basket: web::Data<Option<Basket>>,
 ) -> Result<(), DbError> {
     let mut conn = pool.get()?;
     let user: Option<UserQuery> = get_user_opt(&mut conn, &fxa_uid)?;
@@ -183,6 +186,13 @@ pub fn update_subscription_state_from_webhook(
                 (true, Some(c)) => Subscription::from(*c),
                 (true, None) => Subscription::Core,
             };
+            if let Some(basket) = &**basket {
+                if subscription == Subscription::Core {
+                    if let Err(e) = newsletter::unsubscribe(&mut conn, &user, basket).await {
+                        error!("error unsubscribing user: {}", e);
+                    }
+                }
+            }
             match diesel::update(schema::users::table.filter(schema::users::id.eq(user.id)))
                 .set(schema::users::subscription_type.eq(subscription))
                 .execute(&mut conn)
