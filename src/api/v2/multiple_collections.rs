@@ -17,7 +17,7 @@ use crate::db::v2::multiple_collections::{
 };
 use crate::db::Pool;
 use crate::helpers::to_utc;
-use crate::settings::HARSH;
+use crate::ids::EncodedId;
 use actix_identity::Identity;
 use actix_web::web::Data;
 use actix_web::{web, HttpRequest, HttpResponse};
@@ -133,28 +133,6 @@ pub struct MultipleCollectionLookupQueryResponse {
 #[derive(Serialize)]
 pub struct ConflictResponse {
     error: String,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct EncodedId {
-    pub id: String,
-}
-
-impl EncodedId {
-    pub fn get(&self) -> Result<i64, ApiError> {
-        let val = HARSH.decode(&self.id).map_err(|_| ApiError::MalformedUrl)?;
-        Ok(val[0] as i64)
-    }
-
-    pub fn encode(val: i64) -> String {
-        HARSH.encode(&[val as u64])
-    }
-
-    pub fn decode<T: AsRef<str>>(val: T) -> Result<i64, ApiError> {
-        let val = HARSH.decode(val).map_err(|_| ApiError::MalformedUrl)?;
-
-        Ok(val[0] as i64)
-    }
 }
 
 pub struct CollectionAndItemId {
