@@ -27,6 +27,8 @@ settings:
   metrics__statsd_port: 8125
   metrics__statsd_host: telegraf.telegraf.svc.cluster.local
 
+  basket__basket_url: https://basket.mozilla.org
+
 podDisruptionBudget:
   enabled: false
 
