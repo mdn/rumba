@@ -1,10 +1,9 @@
 use actix_identity::Identity;
 use actix_web::{web, HttpResponse};
-use diesel::{insert_into, ExpressionMethods, PgJsonbExpressionMethods, RunQueryDsl};
 use serde::Deserialize;
 use serde_json::{json, Value};
 
-use crate::db::{self, model::ActivityPingInsert, schema::activity_pings, Pool};
+use crate::db::{ping::upsert_activity_ping, users::get_user, Pool};
 
 use super::error::ApiError;
 
@@ -21,7 +20,7 @@ pub async fn ping(
     match id {
         Some(id) => {
             let mut conn_pool = pool.get()?;
-            let user = db::users::get_user(&mut conn_pool, id.id().unwrap());
+            let user = get_user(&mut conn_pool, id.id().unwrap());
             match user {
                 Ok(found) => {
                     let mut activity_data = json!({
@@ -37,18 +36,8 @@ pub async fn ping(
                         activity_data["offline"] = Value::Bool(true);
                     }
 
-                    insert_into(activity_pings::table)
-                        .values(ActivityPingInsert {
-                            user_id: found.id,
-                            activity: activity_data.clone(),
-                        })
-                        .on_conflict((activity_pings::user_id, activity_pings::ping_at))
-                        .do_update()
-                        .set(
-                            activity_pings::activity
-                                .eq(activity_pings::activity.concat(activity_data)),
-                        )
-                        .execute(&mut conn_pool)?;
+                    upsert_activity_ping(&mut conn_pool, found, activity_data)?;
+
                     Ok(HttpResponse::Created().finish())
                 }
                 Err(_err) => Err(ApiError::InvalidSession),
