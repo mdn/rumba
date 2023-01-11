@@ -4,6 +4,7 @@ use actix_rt::ArbiterHandle;
 use actix_web::{dev::HttpServiceFactory, web, HttpRequest, HttpResponse};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 use base64;
+use basket::Basket;
 use chrono::{DateTime, Utc};
 use openidconnect::{
     core::{CoreJsonWebKey, CoreJwsSigningAlgorithm},
@@ -121,6 +122,7 @@ async fn process_event(
     payload: FxASetTokenPayload,
     login_manager: web::Data<LoginManager>,
     arbiter: web::Data<ArbiterHandle>,
+    basket: web::Data<Option<Basket>>,
 ) -> Result<(), DbError> {
     if payload.events.password_change.is_some() {
         debug!("skipped password change event for {}", payload.fxa_uid);
@@ -142,7 +144,9 @@ async fn process_event(
             payload.fxa_uid.clone(),
             subscription_state_change,
             payload.issue_time,
-        )?;
+            basket,
+        )
+        .await?;
     }
     if payload.events.delete_user.is_some() {
         delete_profile_from_webhook(
@@ -160,6 +164,7 @@ async fn set_token(
     login_manager: web::Data<LoginManager>,
     arbiter: web::Data<ArbiterHandle>,
     pool: web::Data<Pool>,
+    basket: web::Data<Option<Basket>>,
 ) -> HttpResponse {
     let mut error = None;
     let mut fail = false;
@@ -167,7 +172,9 @@ async fn set_token(
         match verify(auth.token(), key) {
             Ok(payload) => {
                 let fxa_uid = payload.fxa_uid.clone();
-                return match process_event(pool.clone(), payload, login_manager, arbiter).await {
+                return match process_event(pool.clone(), payload, login_manager, arbiter, basket)
+                    .await
+                {
                     Ok(_) => HttpResponse::Ok().finish(),
                     Err(e) => {
                         // This means either our db connections has issues or our worker thread.

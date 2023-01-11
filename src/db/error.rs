@@ -14,6 +14,8 @@ pub enum DbError {
     R2D2Error(r2d2::Error),
     #[error(transparent)]
     FxAError(#[from] FxaError),
+    #[error("Json error")]
+    JsonProcessingError,
 }
 
 impl From<r2d2::Error> for DbError {

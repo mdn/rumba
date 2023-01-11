@@ -6,26 +6,23 @@ use crate::db::{self, error::DbError, model::Settings, types::Locale, Pool};
 
 use super::error::ApiError;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct SettingUpdateRequest {
-    pub col_in_search: Option<bool>,
     pub locale_override: Option<Option<Locale>>,
-    pub multiple_collections: Option<bool>,
+    pub mdnplus_newsletter: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct SettingsResponse {
-    pub col_in_search: Option<bool>,
     pub locale_override: Option<Option<Locale>>,
-    pub multiple_collections: Option<bool>,
+    pub mdnplus_newsletter: Option<bool>,
 }
 
 impl From<Settings> for SettingsResponse {
     fn from(val: Settings) -> Self {
         SettingsResponse {
-            col_in_search: Some(val.col_in_search),
             locale_override: Some(val.locale_override),
-            multiple_collections: Some(val.multiple_collections),
+            mdnplus_newsletter: Some(val.mdnplus_newsletter),
         }
     }
 }
