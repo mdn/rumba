@@ -1,49 +1,40 @@
-use crate::helpers::maybe_to_utc;
-use crate::{
-    api::user_middleware::UserId,
-    db::{self, error::DbError, model::Settings, types::Locale, Pool},
-};
+use actix_identity::Identity;
 use actix_web::{web, HttpRequest, HttpResponse};
-use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+
+use crate::db::{self, error::DbError, model::Settings, types::Locale, Pool};
 
 use super::error::ApiError;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct SettingUpdateRequest {
-    pub col_in_search: Option<bool>,
     pub locale_override: Option<Option<Locale>>,
-    pub multiple_collections: Option<bool>,
+    pub mdnplus_newsletter: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct SettingsResponse {
-    pub col_in_search: Option<bool>,
     pub locale_override: Option<Option<Locale>>,
-    pub multiple_collections: Option<bool>,
-    #[serde(serialize_with = "maybe_to_utc")]
-    pub collections_last_modified_time: Option<NaiveDateTime>,
+    pub mdnplus_newsletter: Option<bool>,
 }
 
 impl From<Settings> for SettingsResponse {
     fn from(val: Settings) -> Self {
         SettingsResponse {
-            col_in_search: Some(val.col_in_search),
             locale_override: Some(val.locale_override),
-            multiple_collections: Some(val.multiple_collections),
-            collections_last_modified_time: val.collections_last_modified_time,
+            mdnplus_newsletter: Some(val.mdnplus_newsletter),
         }
     }
 }
 
 pub async fn update_settings(
     _req: HttpRequest,
-    user_id: UserId,
+    user_id: Identity,
     pool: web::Data<Pool>,
     payload: web::Json<SettingUpdateRequest>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user = db::users::get_user(&mut conn_pool, user_id.id);
+    let user = db::users::get_user(&mut conn_pool, user_id.id().unwrap());
 
     let settings_update = payload.into_inner();
     if let Ok(user) = user {

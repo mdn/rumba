@@ -97,24 +97,21 @@ pub fn get_collection_items_paginated(
         .into_boxed();
 
     if let Some(query) = &query_params.q {
-        collections_query = collections_query
-            .filter(
-                schema::collection_items::custom_name.is_not_null().and(
+        collections_query = collections_query.filter(
+            schema::collection_items::custom_name
+                .is_not_null()
+                .and(
                     schema::collection_items::custom_name
                         .nullable()
                         .ilike(format!("%{}%", query)),
-                ),
-            )
-            .or_filter(
-                schema::collection_items::custom_name
+                )
+                .or(schema::collection_items::custom_name
                     .is_null()
-                    .and(schema::documents::title.ilike(format!("%{}%", query))),
-            )
-            .or_filter(
-                schema::collection_items::notes
+                    .and(schema::documents::title.ilike(format!("%{}%", query))))
+                .or(schema::collection_items::notes
                     .nullable()
-                    .ilike(format!("%{}%", query)),
-            );
+                    .ilike(format!("%{}%", query))),
+        );
     }
 
     collections_query = match query_params.sort {
@@ -207,6 +204,7 @@ pub fn create_collection_item(
         notes: form.notes.clone(),
         custom_name,
         user_id,
+        updated_at: Utc::now().naive_utc(),
         multiple_collection_id: collection_id,
     };
 

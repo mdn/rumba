@@ -5,8 +5,8 @@ use crate::helpers::{app::test_app, db::reset};
 
 #[actix_rt::test]
 async fn basic() -> Result<(), Error> {
-    reset()?;
-    let app = test_app().await;
+    let pool = reset()?;
+    let app = test_app(&pool).await;
     let app = test::init_service(app).await;
     let req = test::TestRequest::get().uri("/healthz").to_request();
     let res = test::call_service(&app, req).await;

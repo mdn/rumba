@@ -1,5 +1,6 @@
 use config::{Config, ConfigError, Environment, File};
 
+use harsh::Harsh;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde_with::{base64::Base64, serde_as};
@@ -26,9 +27,10 @@ pub struct Auth {
     pub scopes: String,
     pub redirect_url: Url,
     pub auth_cookie_name: String,
+    pub login_cookie_name: String,
     pub auth_cookie_secure: bool,
     #[serde_as(as = "Base64")]
-    pub auth_cookie_key: [u8; 64],
+    pub cookie_key: [u8; 64],
     pub admin_update_bearer_token: String,
 }
 
@@ -36,8 +38,10 @@ pub struct Auth {
 pub struct Application {
     pub document_base_url: String,
     pub notifications_update_base_url: String,
+    pub bcd_updates_base_url: String,
     pub subscriptions_limit_watched_items: i64,
     pub subscriptions_limit_collections: i64,
+    pub encoded_id_salt: String,
 }
 
 #[derive(Deserialize)]
@@ -64,6 +68,12 @@ pub struct Sentry {
     pub dsn: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct Basket {
+    pub api_key: String,
+    pub basket_url: Url,
+}
+
 #[derive(Deserialize)]
 pub struct Settings {
     pub db: DB,
@@ -74,6 +84,7 @@ pub struct Settings {
     pub logging: Logging,
     pub metrics: Metrics,
     pub sentry: Option<Sentry>,
+    pub basket: Option<Basket>,
 }
 
 impl Settings {
@@ -90,6 +101,17 @@ pub static SETTINGS: Lazy<Settings> = Lazy::new(|| {
     let settings = Settings::new();
     match settings {
         Ok(settings) => settings,
+        Err(err) => panic!("{:?}", err),
+    }
+});
+
+pub static HARSH: Lazy<Harsh> = Lazy::new(|| {
+    let harsh = Harsh::builder()
+        .salt(SETTINGS.application.encoded_id_salt.clone())
+        .length(4)
+        .build();
+    match harsh {
+        Ok(harsh) => harsh,
         Err(err) => {
             panic!("{:?}", err);
         }

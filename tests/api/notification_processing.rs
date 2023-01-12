@@ -13,8 +13,8 @@ use crate::helpers::{
 
 #[actix_rt::test]
 async fn test_receive_notification_subscribed_top_level() -> Result<(), Error> {
-    reset()?;
-    let _stubr = Stubr::start_blocking_with(
+    let pool = reset()?;
+    let stubr = Stubr::start_blocking_with(
         vec![
             "tests/stubs",
             "tests/test_specific_stubs/notifications_processing",
@@ -23,12 +23,13 @@ async fn test_receive_notification_subscribed_top_level() -> Result<(), Error> {
             port: Some(4321),
             latency: None,
             global_delay: None,
-            verbose: Some(true),
+            verbose: true,
+            verify: false,
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     //Given a user is watching API/Navigator
@@ -120,13 +121,14 @@ async fn test_receive_notification_subscribed_top_level() -> Result<(), Error> {
     );
     assert_eq!(sorted[3]["title"].as_str().unwrap(), "Navigator.vibrate");
 
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_receive_notification_subscribed_specific_path() -> Result<(), Error> {
-    reset()?;
-    let _stubr = Stubr::start_blocking_with(
+    let pool = reset()?;
+    let stubr = Stubr::start_blocking_with(
         vec![
             "tests/stubs",
             "tests/test_specific_stubs/notifications_processing",
@@ -135,12 +137,13 @@ async fn test_receive_notification_subscribed_specific_path() -> Result<(), Erro
             port: Some(4321),
             latency: None,
             global_delay: None,
-            verbose: Some(true),
+            verbose: true,
+            verify: false,
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     //Given a user is watching API/Navigator/vibrate
@@ -204,13 +207,14 @@ async fn test_receive_notification_subscribed_specific_path() -> Result<(), Erro
         "Supported in Chrome 102, Chrome Android 102 and WebView Android 102"
     );
 
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_receive_notification_unknown() -> Result<(), Error> {
-    reset()?;
-    let _stubr = Stubr::start_blocking_with(
+    let pool = reset()?;
+    let stubr = Stubr::start_blocking_with(
         vec![
             "tests/stubs",
             "tests/test_specific_stubs/notifications_processing",
@@ -219,12 +223,13 @@ async fn test_receive_notification_unknown() -> Result<(), Error> {
             port: Some(4321),
             latency: None,
             global_delay: None,
-            verbose: Some(true),
+            verbose: true,
+            verify: false,
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     //Given a user is watching API/Navigator
@@ -268,5 +273,6 @@ async fn test_receive_notification_unknown() -> Result<(), Error> {
         notifications[0]["title"].as_str().unwrap(),
         "Navigator.vibrate_more"
     );
+    drop(stubr);
     Ok(())
 }

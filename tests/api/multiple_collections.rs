@@ -1,5 +1,6 @@
 use crate::helpers::api_assertions::{
-    assert_bad_request_with_json_containing, assert_conflict_with_json_containing, assert_created,
+    assert_bad_request, assert_bad_request_with_json_containing,
+    assert_conflict_with_json_containing, assert_created, assert_created_returning_json,
     assert_created_with_json_containing, assert_ok, assert_ok_with_json_containing,
 };
 use crate::helpers::app::init_test;
@@ -8,11 +9,12 @@ use crate::helpers::read_json;
 
 use actix_http::StatusCode;
 use anyhow::Error;
+use chrono::DateTime;
 use serde_json::json;
 
 #[actix_rt::test]
 async fn test_create_and_get_collection() -> Result<(), Error> {
-    let (mut client, _) =
+    let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
     let base_url = "/api/v2/collections/";
 
@@ -59,12 +61,13 @@ async fn test_create_and_get_collection() -> Result<(), Error> {
         ),
     )
     .await;
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_add_items_to_collection() -> Result<(), Error> {
-    let (mut client, _stubr) =
+    let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
     let base_url = "/api/v2/collections/";
 
@@ -150,12 +153,13 @@ async fn test_add_items_to_collection() -> Result<(), Error> {
     )
     .await;
 
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_collection_name_conflicts() -> Result<(), Error> {
-    let (mut client, _stubr) =
+    let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
     let base_url = "/api/v2/collections/";
 
@@ -212,12 +216,13 @@ async fn test_collection_name_conflicts() -> Result<(), Error> {
         )
         .await;
     assert_created_with_json_containing(res, json!({"name":"Test 2"})).await;
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_collection_item_conflicts() -> Result<(), Error> {
-    let (mut client, _stubr) =
+    let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
     let base_url = "/api/v2/collections/";
 
@@ -292,12 +297,13 @@ async fn test_collection_item_conflicts() -> Result<(), Error> {
         }),
     )
     .await;
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_edit_item_in_collection() -> Result<(), Error> {
-    let (mut client, _stubr) =
+    let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
     let base_url = "/api/v2/collections/";
 
@@ -360,12 +366,13 @@ async fn test_edit_item_in_collection() -> Result<(), Error> {
         }),
     )
     .await;
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_delete_item_in_collection() -> Result<(), Error> {
-    let (mut client, _stubr) =
+    let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
     let base_url = "/api/v2/collections/";
 
@@ -398,7 +405,8 @@ async fn test_delete_item_in_collection() -> Result<(), Error> {
     res = client
         .get(format!("{}{}/", base_url, collection_1).as_str(), None)
         .await;
-    let body = assert_ok_with_json_containing(res, json!({"id":"2","article_count": 1})).await;
+    let body =
+        assert_ok_with_json_containing(res, json!({"id":collection_1,"article_count": 1})).await;
     let item_id = body["items"][0]["id"].as_str().unwrap();
 
     res = client
@@ -411,14 +419,19 @@ async fn test_delete_item_in_collection() -> Result<(), Error> {
     res = client
         .get(format!("{}{}/", base_url, collection_1).as_str(), None)
         .await;
-    assert_ok_with_json_containing(res, json!({"id":"2","article_count": 0, "items": []})).await;
+    assert_ok_with_json_containing(
+        res,
+        json!({"id": collection_1,"article_count": 0, "items": []}),
+    )
+    .await;
 
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_delete_collection() -> Result<(), Error> {
-    let (mut client, _stubr) =
+    let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
     let base_url = "/api/v2/collections/";
 
@@ -451,7 +464,7 @@ async fn test_delete_collection() -> Result<(), Error> {
     res = client
         .get(format!("{}{}/", base_url, collection_1).as_str(), None)
         .await;
-    assert_ok_with_json_containing(res, json!({"id":"2","article_count": 1})).await;
+    assert_ok_with_json_containing(res, json!({"id":collection_1,"article_count": 1})).await;
 
     //Delete collection
     res = client
@@ -466,7 +479,7 @@ async fn test_delete_collection() -> Result<(), Error> {
         json!({
             "code": 400,
             "error": "Collection not found",
-            "message": "Collection with id 2 not found"
+            "message": format!("Collection with id {} not found",collection_1)
         }),
     )
     .await;
@@ -497,12 +510,13 @@ async fn test_delete_collection() -> Result<(), Error> {
         .await;
 
     assert_created(res);
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_no_modify_delete_default() -> Result<(), Error> {
-    let (mut client, _stubr) =
+    let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
     let base_url = "/api/v2/collections/";
 
@@ -549,5 +563,355 @@ async fn test_no_modify_delete_default() -> Result<(), Error> {
     )
     .await;
 
+    drop(stubr);
+    Ok(())
+}
+
+#[actix_rt::test]
+async fn test_long_collection_name_is_bad_request() -> Result<(), Error> {
+    let (mut client, _stubr) =
+        init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+    let base_url = "/api/v2/collections/";
+    let two_hundred_twenty = "This is a really long title that has over 1024 characeters 5 times this is 1100. What were we thinking creeating such a long title really? 1024 really is a lot of character. To make this easier let's repeat this 5 times.".to_owned();
+    let mut one_thousand_one_hundred = "".to_owned();
+    for _ in 0..5 {
+        one_thousand_one_hundred.push_str(two_hundred_twenty.clone().as_str())
+    }
+    let res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": one_thousand_one_hundred,
+                "description": "Test description"
+            }))),
+        )
+        .await;
+    assert_bad_request_with_json_containing(res, json!({"code":400,"error":"Validation Error","message":"Error validating input name: 'name' must be between 1 and 1024 chars"})).await;
+    Ok(())
+}
+
+#[actix_rt::test]
+async fn test_very_long_collection_description_is_bad_request() -> Result<(), Error> {
+    let (mut client, _stubr) =
+        init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+    let base_url = "/api/v2/collections/";
+
+    let one_hundred_char = "This sentence is exactly one hundred characters long which isn't that long but long enough for this.".to_owned();
+    let mut sixty_six_thousand = "".to_owned();
+    for _ in 0..660 {
+        sixty_six_thousand.push_str(one_hundred_char.clone().as_str())
+    }
+
+    let res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "This name is short enough",
+                "description": sixty_six_thousand
+            }))),
+        )
+        .await;
+    assert_bad_request_with_json_containing(res, json!({"code":400,"error":"Validation Error","message":"Error validating input description: 'description' must not be longer than 65536 chars"})).await;
+    Ok(())
+}
+
+#[actix_rt::test]
+async fn test_long_collection_item_title_is_bad_request() -> Result<(), Error> {
+    let (mut client, _stubr) =
+        init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+    let base_url = "/api/v2/collections/";
+
+    let res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "This is a really nice title",
+                "description": "Test description"
+            }))),
+        )
+        .await;
+    let body = assert_created_returning_json(res).await;
+
+    let two_hundred_twenty = "This is a really long title that has over 1024 characeters 5 times this is 1100. What were we thinking creeating such a long title really? 1024 really is a lot of character. To make this easier let's repeat this 5 times.".to_owned();
+    let mut one_thousand_one_hundred = "".to_owned();
+    for _ in 0..5 {
+        one_thousand_one_hundred.push_str(two_hundred_twenty.clone().as_str())
+    }
+
+    let res = client
+        .post(
+            format!("{}{}/items/", base_url, body["id"].as_str().unwrap()).as_str(),
+            None,
+            Some(PostPayload::Json(json!({
+                "title" : one_thousand_one_hundred,
+                "url": "/en-US/docs/Web/CSS1"
+            }
+            ))),
+        )
+        .await;
+    assert_bad_request_with_json_containing(res, json!({"code":400,"error":"Validation Error","message":"Error validating input title: 'title' must be between 1 and 1024 chars"})).await;
+    Ok(())
+}
+
+#[actix_rt::test]
+async fn test_very_long_collection_item_notes_is_bad_request() -> Result<(), Error> {
+    let (mut client, _stubr) =
+        init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+    let base_url = "/api/v2/collections/";
+
+    let one_hundred_char = "This sentence is exactly one hundred characters long which isn't that long but long enough for this.".to_owned();
+    let mut sixty_six_thousand = "".to_owned();
+    for _ in 0..660 {
+        sixty_six_thousand.push_str(one_hundred_char.clone().as_str())
+    }
+
+    let res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "This name is short enough",
+                "description": "Short description"
+            }))),
+        )
+        .await;
+    let body = assert_created_returning_json(res).await;
+
+    let one_hundred_char = "This sentence is exactly one hundred characters long which isn't that long but long enough for this.".to_owned();
+    let mut sixty_six_thousand = "".to_owned();
+    for _ in 0..660 {
+        sixty_six_thousand.push_str(one_hundred_char.clone().as_str())
+    }
+
+    let res = client
+        .post(
+            format!("{}{}/items/", base_url, body["id"].as_str().unwrap()).as_str(),
+            None,
+            Some(PostPayload::Json(json!({
+                "title" : "Short and sweet",
+                "url": "/en-US/docs/Web/CSS1",
+                "notes": sixty_six_thousand
+            }
+            ))),
+        )
+        .await;
+    assert_bad_request_with_json_containing(res, json!({"code":400,"error":"Validation Error","message":"Error validating input notes: 'notes' must not be longer than 65536 chars"})).await;
+    Ok(())
+}
+
+#[actix_rt::test]
+async fn test_collection_subscription_limits() -> Result<(), Error> {
+    let (mut client, _stubr) = init_test(vec![
+        "tests/stubs",
+        "tests/test_specific_stubs/collections",
+        "tests/test_specific_stubs/collections_core_user",
+    ])
+    .await?;
+
+    let base_url = "/api/v2/collections/";
+    let mut res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Hello",
+                "description": "Notes"
+            }))),
+        )
+        .await;
+    assert_created(res);
+    res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Hello 2",
+                "description": "Notes"
+            }))),
+        )
+        .await;
+    let last_created = assert_created_returning_json(res).await;
+    res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Hello 3",
+                "description": "Notes"
+            }))),
+        )
+        .await;
+    // No more space.
+    assert_bad_request(res);
+    // Assert deleting one is success and subscription limit no more reached
+    res = client
+        .delete(
+            format!("{}{}/", base_url, last_created["id"].as_str().unwrap()).as_str(),
+            None,
+        )
+        .await;
+    assert_ok(res);
+    res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Hello 3",
+                "description": "Notes"
+            }))),
+        )
+        .await;
+    assert_created(res);
+    drop(_stubr);
+    Ok(())
+}
+
+#[actix_rt::test]
+async fn test_paying_user_no_collection_limit() -> Result<(), Error> {
+    let (mut client, _stubr) =
+        init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+
+    let base_url = "/api/v2/collections/";
+
+    for i in 0..10 {
+        let res = client
+            .post(
+                base_url,
+                None,
+                Some(PostPayload::Json(json!({
+                    "name": format!("Hello {}",i),
+                    "description": "Notes"
+                }))),
+            )
+            .await;
+        assert_created(res);
+    }
+    drop(_stubr);
+    Ok(())
+}
+#[actix_rt::test]
+async fn test_delete_collection_items_also_deleted() -> Result<(), Error> {
+    let (mut client, stubr) =
+        init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+    let base_url = "/api/v2/collections/";
+
+    let mut res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Test",
+                "description": "Test description"
+            }))),
+        )
+        .await;
+    let res_1 = assert_created_with_json_containing(res, json!({"name":"Test"})).await;
+    let collection_1 = res_1["id"].as_str().unwrap();
+
+    res = client
+        .post(
+            format!("{}{}/items/", base_url, collection_1).as_str(),
+            None,
+            Some(PostPayload::Json(json!({
+                "title" : "Interesting CSS1",
+                "url": "/en-US/docs/Web/CSS1"
+            }
+            ))),
+        )
+        .await;
+
+    assert_created(res);
+    res = client
+        .get(format!("{}{}/", base_url, collection_1).as_str(), None)
+        .await;
+    assert_ok_with_json_containing(res, json!({"id":collection_1,"article_count": 1})).await;
+
+    //Delete collection
+    res = client
+        .delete(format!("{}{}/", base_url, collection_1).as_str(), None)
+        .await;
+    assert_ok(res);
+    res = client
+        .get(format!("{}{}/", base_url, collection_1).as_str(), None)
+        .await;
+    assert_bad_request_with_json_containing(
+        res,
+        json!({
+            "code": 400,
+            "error": "Collection not found",
+            "message": format!("Collection with id {} not found",collection_1)
+        }),
+    )
+    .await;
+
+    res = client
+        .get(
+            format!("{}lookup/?url={}", base_url, "/en-US/docs/Web/CSS1").as_str(),
+            None,
+        )
+        .await;
+    assert_ok_with_json_containing(res, json!({"results": [] })).await;
+    drop(stubr);
+    Ok(())
+}
+
+#[actix_rt::test]
+async fn test_create_and_get_many_collections() -> Result<(), Error> {
+    let (mut client, stubr) =
+        init_test(vec!["tests/stubs", "tests/test_specific_stubs/collections"]).await?;
+    let base_url = "/api/v2/collections/";
+
+    let mut _res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Test",
+                "description": "Test description"
+            }))),
+        )
+        .await;
+
+    _res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "A collection",
+                "description": "Test description"
+            }))),
+        )
+        .await;
+    _res = client
+        .post(
+            base_url,
+            None,
+            Some(PostPayload::Json(json!({
+                "name": "Z A collection",
+                "description": "Test description"
+            }))),
+        )
+        .await;
+
+    let get_res = client.get(base_url, None).await;
+
+    let body = read_json(get_res).await;
+    //assert first returned value is "Default".
+    assert_eq!(body.as_array().unwrap()[0]["name"], "Default");
+    //Assert that ordered by created_at ASC
+    body.as_array().unwrap().iter().reduce(|acc, next| {
+        let t1 = DateTime::parse_from_rfc3339(acc["created_at"].as_str().unwrap())
+            .unwrap()
+            .timestamp_nanos();
+        let t2 = DateTime::parse_from_rfc3339(next["created_at"].as_str().unwrap())
+            .unwrap()
+            .timestamp_nanos();
+        assert!(t1 < t2);
+        next
+    });
+    drop(stubr);
     Ok(())
 }

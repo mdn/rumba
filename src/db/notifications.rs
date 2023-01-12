@@ -39,9 +39,11 @@ pub fn get_notifications(
         .into_boxed();
 
     if let Some(query) = &query.q {
-        notifications_query = notifications_query
-            .filter(schema::notification_data::text.ilike(format!("%{}%", query)))
-            .or_filter(schema::notification_data::title.ilike(format!("%{}%", query)))
+        notifications_query = notifications_query.filter(
+            schema::notification_data::text
+                .ilike(format!("%{}%", query))
+                .or(schema::notification_data::title.ilike(format!("%{}%", query))),
+        )
     }
 
     if let Some(unread) = query.unread {

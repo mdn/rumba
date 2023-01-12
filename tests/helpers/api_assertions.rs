@@ -18,6 +18,11 @@ pub fn assert_created(res: RumbaTestResponse) {
     assert_eq!(res.status(), StatusCode::CREATED);
 }
 
+pub async fn assert_created_returning_json(res: RumbaTestResponse) -> serde_json::Value {
+    assert_eq!(res.status(), StatusCode::CREATED);
+    read_json(res).await
+}
+
 pub fn assert_ok(res: RumbaTestResponse) {
     assert_eq!(res.status(), StatusCode::OK);
 }
@@ -40,6 +45,10 @@ pub async fn assert_bad_request_with_json_containing(
     let body = read_json(res).await;
     assert_json_include!(actual: body, expected: expected_json);
     body
+}
+
+pub fn assert_bad_request(res: RumbaTestResponse) {
+    assert_eq!(res.status(), StatusCode::BAD_REQUEST)
 }
 
 pub async fn assert_conflict_with_json_containing(

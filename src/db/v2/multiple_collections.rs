@@ -11,6 +11,7 @@ use crate::diesel::OptionalExtension;
 use crate::diesel::PgTextExpressionMethods;
 use crate::util::normalize_uri;
 
+use chrono::Utc;
 use diesel::dsl::count;
 use diesel::update;
 use diesel::QueryDsl;
@@ -52,6 +53,7 @@ pub fn get_multiple_collections_for_user(
             schema::multiple_collections::name,
             count(schema::collection_items::id).nullable(),
         ))
+        .order_by(schema::multiple_collections::created_at.asc())
         .get_results::<MultipleCollectionsQuery>(pool)?;
 
     Ok(collections)
@@ -66,6 +68,7 @@ pub fn create_multiple_collection_for_user(
         deleted_at: None,
         name: data.name.to_owned(),
         notes: data.description.to_owned(),
+        updated_at: Utc::now().naive_utc(),
         user_id,
     };
     //MultipleCollectionsQueryNoCount prevents type errors with returning all columns of the created object (as count of collection items is missing)
@@ -86,6 +89,7 @@ pub fn edit_multiple_collection_for_user(
         deleted_at: None,
         name: data.name.to_owned(),
         notes: data.description.to_owned(),
+        updated_at: Utc::now().naive_utc(),
         user_id,
     };
 
@@ -135,6 +139,21 @@ pub fn get_multiple_collection_by_id_for_user(
     Ok(collection)
 }
 
+pub fn get_count_of_multiple_collections_for_user(
+    user: &UserQuery,
+    pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
+) -> Result<i64, DbError> {
+    let collection_count = schema::multiple_collections::table
+        .filter(
+            schema::multiple_collections::user_id
+                .eq(user.id)
+                .and(schema::multiple_collections::deleted_at.is_null()),
+        )
+        .count()
+        .get_result(pool)?;
+    Ok(collection_count)
+}
+
 pub fn multiple_collection_exists(
     user: &UserQuery,
     multiple_collection_id: &i64,
@@ -159,6 +178,7 @@ pub fn create_default_multiple_collection_for_user(
         deleted_at: None,
         name: "Default".to_string(),
         notes: None,
+        updated_at: Utc::now().naive_utc(),
         user_id,
     };
     let res = insert_into(schema::multiple_collections::table)
@@ -185,24 +205,21 @@ pub fn get_collection_items_for_user_multiple_collection(
         .into_boxed();
 
     if let Some(query) = &query_params.q {
-        collections_query = collections_query
-            .filter(
-                schema::collection_items::custom_name.is_not_null().and(
+        collections_query = collections_query.filter(
+            schema::collection_items::custom_name
+                .is_not_null()
+                .and(
                     schema::collection_items::custom_name
                         .nullable()
                         .ilike(format!("%{}%", query)),
-                ),
-            )
-            .or_filter(
-                schema::collection_items::custom_name
+                )
+                .or(schema::collection_items::custom_name
                     .is_null()
-                    .and(schema::documents::title.ilike(format!("%{}%", query))),
-            )
-            .or_filter(
-                schema::collection_items::notes
+                    .and(schema::documents::title.ilike(format!("%{}%", query))))
+                .or(schema::collection_items::notes
                     .nullable()
-                    .ilike(format!("%{}%", query)),
-            );
+                    .ilike(format!("%{}%", query))),
+        );
     }
 
     collections_query = match query_params.sort {
@@ -263,12 +280,13 @@ pub fn get_collections_and_items_containing_url(
 ) -> Result<Vec<(i64, CollectionItemAndDocumentQuery)>, DbError> {
     Ok(schema::collection_items::table
         .inner_join(schema::documents::table)
+        .inner_join(schema::multiple_collections::table)
         .filter(
-            schema::documents::uri.eq(normalize_uri(url)).and(
-                schema::collection_items::deleted_at
-                    .is_null()
-                    .and(schema::collection_items::user_id.eq(user.id)),
-            ),
+            schema::documents::uri
+                .eq(normalize_uri(url))
+                .and(schema::collection_items::user_id.eq(user.id))
+                .and(schema::collection_items::deleted_at.is_null())
+                .and(schema::multiple_collections::deleted_at.is_null()),
         )
         .select((
             (schema::collection_items::multiple_collection_id),

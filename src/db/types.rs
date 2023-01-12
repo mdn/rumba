@@ -162,3 +162,32 @@ pub enum NotificationTypeEnum {
     #[serde(rename(serialize = "compat"))]
     Compat,
 }
+
+#[derive(
+    Copy,
+    Clone,
+    diesel_derive_enum::DbEnum,
+    Debug,
+    Deserialize,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+)]
+// We only currently (22-12-2022) support added/removed stable.
+#[DieselTypePath = "crate::db::schema::sql_types::BcdEventType"]
+pub enum BcdUpdateEventType {
+    #[serde(rename = "added_stable")]
+    AddedStable,
+    #[serde(rename = "added_preview")]
+    AddedPreview,
+    #[serde(rename = "added_subfeatures")]
+    AddedSubFeatures,
+    #[serde(rename = "added_nonnull")]
+    AddedNonNull,
+    #[serde(rename = "removed_stable")]
+    RemovedStable,
+    #[serde(other)]
+    Unknown,
+}

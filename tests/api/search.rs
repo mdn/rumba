@@ -1,29 +1,28 @@
 use crate::helpers::read_json;
 use crate::helpers::{app::test_app_only_search, wait_for_stubr};
+use actix_http::body::BoxBody;
 use actix_web::{http::header, test};
 use anyhow::Error;
 use stubr::{Config, Stubr};
 
-async fn do_request(
-    path: &str,
-) -> Result<
-    actix_web::dev::ServiceResponse<actix_web::body::EitherBody<actix_web::body::BoxBody>>,
-    Error,
-> {
-    let _stubr = Stubr::start_blocking_with(
+async fn do_request(path: &str) -> Result<actix_web::dev::ServiceResponse<BoxBody>, Error> {
+    let stubr = Stubr::start_blocking_with(
         vec!["tests/test_specific_stubs/search"],
         Config {
             port: Some(4321),
-            verbose: Some(true),
+            verbose: true,
+            verify: false,
             global_delay: None,
             latency: None,
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let app = test_app_only_search().await;
     let service = test::init_service(app).await;
     let request = test::TestRequest::get().uri(path).to_request();
-    Ok(test::call_service(&service, request).await)
+    let response = test::call_service(&service, request).await;
+    drop(stubr);
+    Ok(response)
 }
 
 #[actix_rt::test]
@@ -33,7 +32,7 @@ async fn test_basic() -> Result<(), Error> {
     assert!(search.status().is_success());
     assert_eq!(
         search.headers().get(header::CACHE_CONTROL).unwrap(),
-        "max-age=43200"
+        "max-age=86400"
     );
 
     let json = read_json(search).await;
@@ -80,7 +79,7 @@ async fn test_sort_relevance() -> Result<(), Error> {
     assert!(search.status().is_success());
     assert_eq!(
         search.headers().get(header::CACHE_CONTROL).unwrap(),
-        "max-age=43200"
+        "max-age=86400"
     );
 
     let json = read_json(search).await;
@@ -96,7 +95,7 @@ async fn test_sort_popularity() -> Result<(), Error> {
     assert!(search.status().is_success());
     assert_eq!(
         search.headers().get(header::CACHE_CONTROL).unwrap(),
-        "max-age=43200"
+        "max-age=86400"
     );
 
     let json = read_json(search).await;
@@ -125,7 +124,7 @@ async fn test_locale_multiple() -> Result<(), Error> {
     assert!(search.status().is_success());
     assert_eq!(
         search.headers().get(header::CACHE_CONTROL).unwrap(),
-        "max-age=43200"
+        "max-age=86400"
     );
 
     let json = read_json(search).await;
@@ -155,7 +154,7 @@ async fn test_locale_none() -> Result<(), Error> {
     assert!(search.status().is_success());
     assert_eq!(
         search.headers().get(header::CACHE_CONTROL).unwrap(),
-        "max-age=43200"
+        "max-age=86400"
     );
 
     let json = read_json(search).await;
@@ -171,7 +170,7 @@ async fn test_page_2() -> Result<(), Error> {
     assert!(search.status().is_success());
     assert_eq!(
         search.headers().get(header::CACHE_CONTROL).unwrap(),
-        "max-age=43200"
+        "max-age=86400"
     );
 
     let json = read_json(search).await;
@@ -232,7 +231,7 @@ async fn test_suggestion() -> Result<(), Error> {
     assert!(search.status().is_success());
     assert_eq!(
         search.headers().get(header::CACHE_CONTROL).unwrap(),
-        "max-age=43200"
+        "max-age=86400"
     );
 
     let json = read_json(search).await;
@@ -250,7 +249,7 @@ async fn test_no_results() -> Result<(), Error> {
     assert!(search.status().is_success());
     assert_eq!(
         search.headers().get(header::CACHE_CONTROL).unwrap(),
-        "max-age=43200"
+        "max-age=86400"
     );
 
     let json = read_json(search).await;

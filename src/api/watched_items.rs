@@ -1,3 +1,4 @@
+use actix_identity::Identity;
 use actix_web::{web, HttpRequest, HttpResponse};
 use diesel::r2d2::ConnectionManager;
 use diesel::PgConnection;
@@ -7,7 +8,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 use crate::{
-    api::user_middleware::UserId,
     db::{
         self,
         model::{UserQuery, WatchedItemsQuery},
@@ -31,6 +31,18 @@ pub struct WatchedItemQueryParams {
     pub offset: Option<u32>,
     pub q: Option<String>,
     pub sort: Option<Sorting>,
+}
+
+impl Default for WatchedItemQueryParams {
+    fn default() -> Self {
+        Self {
+            url: None,
+            limit: Some(1000),
+            offset: None,
+            q: None,
+            sort: None,
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -104,12 +116,12 @@ impl From<WatchedItemsQuery> for WatchedItem {
 
 pub async fn get_watched_items(
     _req: HttpRequest,
-    user_id: UserId,
+    user_id: Identity,
     pool: web::Data<Pool>,
     query: web::Query<WatchedItemQueryParams>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     let query = query.into_inner();
     if let Some(url) = query.url {
         handle_single_item_query(&mut conn_pool, &user, &url).await
@@ -204,25 +216,22 @@ fn watched_items_subscription_info_for_user(
 
 pub async fn update_watched_item(
     _req: HttpRequest,
-    user_id: UserId,
+    user_id: Identity,
     pool: web::Data<Pool>,
     http_client: web::Data<Client>,
     query: web::Query<UpdateWatchedItemQueryParams>,
     form_data: web::Json<UpdateWatchedItemFormData>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     let url = query.into_inner().url;
     let res = watched_items::get_watched_item(&mut conn_pool, user.id, &normalize_uri(&url))?;
 
-    match form_data.unwatch {
-        Some(val) => {
-            if val {
-                let res = handle_unwatch(res, &mut conn_pool, &user)?;
-                return Ok(res);
-            }
+    if let Some(val) = form_data.unwatch {
+        if val {
+            let res = handle_unwatch(res, &mut conn_pool, &user)?;
+            return Ok(res);
         }
-        None => (),
     }
 
     let subscription_info = watched_items_subscription_info_for_user(&user, &mut conn_pool)?;
@@ -280,12 +289,12 @@ pub struct UnwatchManyRequest {
 
 pub async fn unwatch_many(
     _req: HttpRequest,
-    user_id: UserId,
+    user_id: Identity,
     pool: web::Data<Pool>,
     urls: web::Json<UnwatchManyRequest>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     let normalized_urls = urls
         .into_inner()
         .unwatch
@@ -293,5 +302,12 @@ pub async fn unwatch_many(
         .map(|v| normalize_uri(v))
         .collect();
     watched_items::delete_watched_items(&mut conn_pool, user.id, normalized_urls)?;
-    Ok(HttpResponse::Ok().finish())
+    let subscription_limit_reached =
+        watched_items_subscription_info_for_user(&user, &mut conn_pool)?.limit_reached;
+    Ok(HttpResponse::Ok().json(WatchedItemUpdateResponse {
+        ok: true,
+        subscription_limit_reached,
+        error: None,
+        info: None,
+    }))
 }

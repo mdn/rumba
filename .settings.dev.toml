@@ -1,0 +1,38 @@
+[db]
+uri = "postgres://rumba:rumba@127.0.0.1:5432/mdn"
+
+[server]
+host = "localhost"
+port = 8000
+
+[auth]
+issuer_url = "https://accounts.stage.mozaws.net"
+redirect_url = "http://localhost:8000/users/fxa/login/callback/"
+scopes = "openid profile email profile:subscriptions"
+auth_cookie_name = "auth-cookie"
+login_cookie_name = "login-cookie"
+auth_cookie_secure = false
+client_id = "TEST_CLIENT_ID"
+client_secret = "TEST_CLIENT_SECRET"
+cookie_key = "DUwIFZuUYzRhHPlhOm6DwTHSDUSyR5SyvZHIeHdx4DIanxm5/GD/4dqXROLvn5vMofOYUq37HhhivjCyMCWP4w=="
+admin_update_bearer_token = "TEST_TOKEN"
+
+[application]
+document_base_url = "https://developer.allizom.org"
+notifications_update_base_url = "https://updates.developer.allizom.org/notifications"
+bcd_updates_base_url = "https://updates.developer.allizom.org/rumba-bcd-updates"
+subscriptions_limit_watched_items = 3
+subscriptions_limit_collections = 5
+encoded_id_salt = "saltymcsalt"
+
+[search]
+url = "http://localhost:9200"
+cache_max_age = 86400
+query_max_length = 200
+
+[logging]
+human_logs = true
+
+[metrics]
+statsd_label = "rumba"
+statsd_port = 8125

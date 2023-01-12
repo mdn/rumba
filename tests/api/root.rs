@@ -16,11 +16,11 @@ use serde_json::json;
 #[stubr::mock(port = 4321)]
 async fn find_user() -> Result<(), Error> {
     reset()?;
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
     let pool = get_pool();
     let mut conn = pool.get()?;
 
-    let app = test_app_with_login().await.unwrap();
+    let app = test_app_with_login(&pool).await.unwrap();
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
 
@@ -53,7 +53,7 @@ async fn find_user() -> Result<(), Error> {
         &mut conn,
         rumba::fxa::FxAUser {
             email: "test2@test.com".into(),
-            locale: "en".into(),
+            locale: None,
             display_name: None,
             avatar: None,
             avatar_default: true,
@@ -207,5 +207,6 @@ async fn find_user() -> Result<(), Error> {
         }),
     )
     .await;
+    drop(stubr);
     Ok(())
 }

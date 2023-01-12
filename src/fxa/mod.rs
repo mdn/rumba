@@ -40,7 +40,7 @@ pub struct FxAClaims {
 #[serde(rename_all = "camelCase")]
 pub struct FxAUser {
     pub email: String,
-    pub locale: String,
+    pub locale: Option<String>,
     pub display_name: Option<String>,
     pub avatar: Option<String>,
     pub avatar_default: bool,
@@ -55,7 +55,7 @@ impl From<UserInfoClaims<FxAClaims, CoreGenderClaim>> for FxAUser {
         let fxa_claims = claims.additional_claims().clone();
         Self {
             email: claims.email().map(|e| e.to_string()).unwrap_or_default(),
-            locale: claims.locale().map(|l| l.to_string()).unwrap_or_default(),
+            locale: claims.locale().map(|l| l.to_string()),
             display_name: fxa_claims.display_name,
             avatar: fxa_claims.avatar,
             avatar_default: fxa_claims.avatar_default,

@@ -10,9 +10,9 @@ use stubr::{Config, Stubr};
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn whoami_anonymous_test() -> Result<(), Error> {
-    reset()?;
-    wait_for_stubr()?;
-    let app = test_app_with_login().await.unwrap();
+    let pool = reset()?;
+    wait_for_stubr().await?;
+    let app = test_app_with_login(&pool).await.unwrap();
     let service = test::init_service(app).await;
     let request = test::TestRequest::get()
         .uri("/api/v1/whoami")
@@ -24,16 +24,57 @@ async fn whoami_anonymous_test() -> Result<(), Error> {
 
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Iceland");
+    drop(stubr);
+    Ok(())
+}
+
+#[actix_rt::test]
+#[stubr::mock(port = 4321)]
+async fn whoami_legacy_logged_in_test() -> Result<(), Error> {
+    let pool = reset()?;
+    wait_for_stubr().await?;
+    let app = test_app_with_login(&pool).await?;
+    let service = test::init_service(app).await;
+    let mut logged_in_client = TestHttpClient::new(service).await;
+    let whoami = logged_in_client
+        .get(
+            "/api/v1/whoami",
+            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+        )
+        .await;
+    assert!(whoami.response().status().is_success());
+    let json = read_json(whoami).await;
+    assert_eq!(json["geo"]["country"], "Iceland");
+
+    assert_eq!(json["username"], "TEST_SUB");
+
+    // create a legacy client with a cookie from an old session
+    let mut legacy_client =
+        TestHttpClient::with_legacy_session(logged_in_client.service, "TEST_SUB");
+    let whoami = legacy_client
+        .get(
+            "/api/v1/whoami",
+            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+        )
+        .await;
+    assert!(whoami.response().status().is_success());
+
+    let json = read_json(whoami).await;
+
+    assert_eq!(json["geo"]["country"], "Iceland");
+    // old sessions do not work anymore
+    assert!(json["username"].is_null());
+
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn whoami_logged_in_test() -> Result<(), Error> {
-    reset()?;
-    wait_for_stubr()?;
-
-    let app = test_app_with_login().await?;
+    let pool = reset()?;
+    wait_for_stubr().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
@@ -58,16 +99,16 @@ async fn whoami_logged_in_test() -> Result<(), Error> {
         json["subscription_type"], "mdn_plus_5m",
         "Subscription type wrong"
     );
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn whoami_settings_test() -> Result<(), Error> {
-    reset()?;
-    wait_for_stubr()?;
-
-    let app = test_app_with_login().await?;
+    let pool = reset()?;
+    wait_for_stubr().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
@@ -93,36 +134,12 @@ async fn whoami_settings_test() -> Result<(), Error> {
         "Subscription type wrong"
     );
     assert_eq!(json["settings"], json!(null));
-    let settings = logged_in_client
-        .post(
-            "/api/v1/plus/settings/",
-            None,
-            Some(PostPayload::Json(
-                json!({"col_in_search": true, "multiple_collections": true}),
-            )),
-        )
-        .await;
-
-    assert_eq!(settings.status(), 201);
-    let whoami = logged_in_client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
-        .await;
-    assert!(whoami.response().status().is_success());
-    let json = read_json(whoami).await;
-    assert_eq!(json["settings"]["col_in_search"], true);
-    assert_eq!(json["settings"]["locale_override"], serde_json::Value::Null);
-    assert_eq!(json["settings"]["multiple_collections"], true);
 
     let settings = logged_in_client
         .post(
             "/api/v1/plus/settings/",
             None,
-            Some(PostPayload::Json(
-                json!({"col_in_search": false, "locale_override": "zh-TW"}),
-            )),
+            Some(PostPayload::Json(json!({"locale_override": "zh-TW"}))),
         )
         .await;
 
@@ -136,51 +153,30 @@ async fn whoami_settings_test() -> Result<(), Error> {
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
-    assert_eq!(json["settings"]["col_in_search"], false);
     assert_eq!(json["settings"]["locale_override"], "zh-TW");
-    assert_eq!(json["settings"]["multiple_collections"], true);
+    assert_eq!(json["settings"]["mdnplus_newsletter"], false);
 
-    let settings = logged_in_client
-        .post(
-            "/api/v1/plus/settings/",
-            None,
-            Some(PostPayload::Json(json!({"multiple_collections": false}))),
-        )
-        .await;
-
-    assert_eq!(settings.status(), 201);
-
-    let whoami = logged_in_client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
-        .await;
-    assert!(whoami.response().status().is_success());
-    let json = read_json(whoami).await;
-    assert_eq!(json["settings"]["col_in_search"], false);
-    assert_eq!(json["settings"]["locale_override"], "zh-TW");
-    assert_eq!(json["settings"]["multiple_collections"], false);
-
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/whoami"],
         Config {
             port: Some(4321),
             latency: None,
             global_delay: None,
-            verbose: Some(true),
+            verbose: true,
+            verify: false,
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
@@ -202,5 +198,6 @@ async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
     );
     assert_eq!(json["is_subscriber"], true);
     assert_eq!(json["subscription_type"], "mdn_plus_5y");
+    drop(stubr);
     Ok(())
 }

@@ -7,13 +7,14 @@ use url::Url;
 
 use crate::helpers::app::test_app_with_login;
 use crate::helpers::db::reset;
+use crate::helpers::wait_for_stubr;
 
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn basic() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
-    let app = test_app_with_login().await.unwrap();
+    let app = test_app_with_login(&pool).await.unwrap();
     let app = test::init_service(app).await;
 
     let login_req = test::TestRequest::get()
@@ -37,7 +38,7 @@ async fn basic() -> Result<(), Error> {
         .collect();
     let state = params.get("state").to_owned().unwrap().clone();
 
-    let mut base = test::TestRequest::get().uri(&*format!(
+    let mut base = test::TestRequest::get().uri(&format!(
         "/users/fxa/login/callback/?code={:1}&state={:2}",
         "ABC123", state
     ));
@@ -49,15 +50,17 @@ async fn basic() -> Result<(), Error> {
     assert!(res.status().is_redirection());
     assert_eq!(res.headers().get("Location").unwrap(), "/");
 
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn next() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
+    wait_for_stubr().await?;
 
-    let app = test_app_with_login().await.unwrap();
+    let app = test_app_with_login(&pool).await.unwrap();
     let app = test::init_service(app).await;
 
     let login_req = test::TestRequest::get()
@@ -81,7 +84,7 @@ async fn next() -> Result<(), Error> {
         .collect();
     let state = params.get("state").to_owned().unwrap().clone();
 
-    let mut base = test::TestRequest::get().uri(&*format!(
+    let mut base = test::TestRequest::get().uri(&format!(
         "/users/fxa/login/callback/?code={:1}&state={:2}",
         "ABC123", state
     ));
@@ -93,15 +96,62 @@ async fn next() -> Result<(), Error> {
     assert!(res.status().is_redirection());
     assert_eq!(res.headers().get("Location").unwrap(), "/foo");
 
+    drop(stubr);
+    Ok(())
+}
+
+#[actix_rt::test]
+#[stubr::mock(port = 4321)]
+async fn next_absolute() -> Result<(), Error> {
+    let pool = reset()?;
+    wait_for_stubr().await?;
+
+    let app = test_app_with_login(&pool).await.unwrap();
+    let app = test::init_service(app).await;
+
+    let login_req = test::TestRequest::get()
+        .uri("/users/fxa/login/authenticate/?next=https://foo.com/bar")
+        .to_request();
+    let login_res = test::call_service(&app, login_req).await;
+
+    let location_header = login_res
+        .response()
+        .headers()
+        .get("Location")
+        .unwrap()
+        .to_str()
+        .unwrap();
+    let cookies = login_res.response().cookies();
+
+    let params: HashMap<_, _> = Url::parse(location_header)
+        .unwrap()
+        .query_pairs()
+        .into_owned()
+        .collect();
+    let state = params.get("state").to_owned().unwrap().clone();
+
+    let mut base = test::TestRequest::get().uri(&format!(
+        "/users/fxa/login/callback/?code={:1}&state={:2}",
+        "ABC123", state
+    ));
+    for cookie in cookies {
+        base = base.cookie(cookie);
+    }
+
+    let res = test::call_service(&app, base.to_request()).await;
+    assert!(res.status().is_redirection());
+    assert_eq!(res.headers().get("Location").unwrap(), "/");
+
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn no_prompt() -> Result<(), Error> {
-    reset()?;
+    let pool = reset()?;
 
-    let app = test_app_with_login().await.unwrap();
+    let app = test_app_with_login(&pool).await.unwrap();
     let app = test::init_service(app).await;
 
     let login_req = test::TestRequest::get()
@@ -132,7 +182,7 @@ async fn no_prompt() -> Result<(), Error> {
 
     let state = params.get("state").to_owned().unwrap().clone();
 
-    let mut base = test::TestRequest::get().uri(&*format!(
+    let mut base = test::TestRequest::get().uri(&format!(
         "/users/fxa/login/callback/?code={:1}&state={:2}",
         "ABC123", state
     ));
@@ -144,5 +194,6 @@ async fn no_prompt() -> Result<(), Error> {
     assert!(res.status().is_redirection());
     assert_eq!(res.headers().get("Location").unwrap(), "/foo");
 
+    drop(stubr);
     Ok(())
 }

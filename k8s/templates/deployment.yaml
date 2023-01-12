@@ -52,7 +52,7 @@ spec:
             - name: MDN__{{ $key | upper }}
               value: "{{ $value }}"
             {{- end }}
-            {{- range list "db__uri" "auth__admin_update_bearer_token" "auth__auth_cookie_key" "auth__client_secret" "search__url" "sentry__dsn"}}
+            {{- range list "db__uri" "auth__admin_update_bearer_token" "auth__cookie_key" "auth__client_secret" "basket__api_key" "search__url" "sentry__dsn"}}
             - name: MDN__{{ . }}
               valueFrom:
                 secretKeyRef:

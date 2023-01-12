@@ -103,7 +103,7 @@ impl Tags {
                 insert_if_not_empty("ua.os.family", metrics_os, &mut tags);
                 insert_if_not_empty("ua.browser.family", metrics_browser, &mut tags);
                 insert_if_not_empty("ua.name", ua_result.name, &mut tags);
-                insert_if_not_empty("ua.os.ver", &ua_result.os_version.to_owned(), &mut tags);
+                insert_if_not_empty("ua.os.ver", &ua_result.os_version, &mut tags);
                 insert_if_not_empty("ua.browser.ver", ua_result.version, &mut tags);
                 extra.insert("ua".to_owned(), uas.to_string());
             }

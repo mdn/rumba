@@ -72,15 +72,6 @@ pub struct CollectionParent {
 }
 
 #[derive(Insertable, AsChangeset)]
-#[diesel(table_name = collections)]
-pub struct CollectionInsert {
-    pub document_id: i64,
-    pub custom_name: Option<String>,
-    pub user_id: i64,
-    pub notes: Option<String>,
-}
-
-#[derive(Insertable, AsChangeset)]
 #[diesel(table_name = documents)]
 pub struct DocumentInsert {
     pub absolute_uri: String,
@@ -96,19 +87,16 @@ pub struct DocumentInsert {
 pub struct Settings {
     pub id: i64,
     pub user_id: i64,
-    pub col_in_search: bool,
     pub locale_override: Option<Locale>,
-    pub multiple_collections: bool,
-    pub collections_last_modified_time: Option<NaiveDateTime>,
+    pub mdnplus_newsletter: bool,
 }
 
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = settings)]
 pub struct SettingsInsert {
     pub user_id: i64,
-    pub col_in_search: Option<bool>,
     pub locale_override: Option<Option<Locale>>,
-    pub multiple_collections: Option<bool>,
+    pub mdnplus_newsletter: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -228,4 +216,11 @@ pub struct WebHookEventQuery {
 pub struct RawWebHookEventsTokenInsert {
     pub token: String,
     pub error: String,
+}
+
+#[derive(Insertable, Serialize)]
+#[diesel(table_name = activity_pings)]
+pub struct ActivityPingInsert {
+    pub user_id: i64,
+    pub activity: Value,
 }

@@ -2,7 +2,6 @@ use std::thread;
 use std::time::Duration;
 
 use crate::helpers::app::test_app_with_login;
-use crate::helpers::db::get_pool;
 use crate::helpers::db::reset;
 use crate::helpers::http_client::PostPayload;
 use crate::helpers::http_client::TestHttpClient;
@@ -17,16 +16,17 @@ use rumba::db::model::WebHookEventQuery;
 use rumba::db::schema;
 use rumba::db::types::FxaEvent;
 use rumba::db::types::FxaEventStatus;
+use rumba::db::Pool;
 use stubr::{Config, Stubr};
 
 const TEN_MS: std::time::Duration = Duration::from_millis(10);
 
 fn assert_last_fxa_webhook(
+    pool: &Pool,
     fxa_uid: &str,
     typ: FxaEvent,
     status: FxaEventStatus,
 ) -> Result<(), Error> {
-    let pool = get_pool();
     let mut conn = pool.get()?;
 
     let rows = schema::webhook_events::table.get_results::<WebHookEventQuery>(&mut conn)?;
@@ -45,13 +45,14 @@ fn assert_last_fxa_webhook(
 }
 
 fn assert_last_fxa_webhook_with_retry(
+    pool: &Pool,
     fxa_uid: &str,
     typ: FxaEvent,
     status: FxaEventStatus,
 ) -> Result<(), Error> {
     let mut tries = 10;
     while tries > 0 {
-        if assert_last_fxa_webhook(fxa_uid, typ, status).is_ok() {
+        if assert_last_fxa_webhook(pool, fxa_uid, typ, status).is_ok() {
             return Ok(());
         }
         tries -= 1;
@@ -65,10 +66,9 @@ fn assert_last_fxa_webhook_with_retry(
 async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
     let set_token =
         include_str!("../data/set_tokens/set_token_subscription_state_change_to_10m.txt");
-    reset()?;
-    wait_for_stubr()?;
-
-    let app = test_app_with_login().await?;
+    let pool = reset()?;
+    wait_for_stubr().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
@@ -100,6 +100,7 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
     assert_eq!(json["subscription_type"], "mdn_plus_10m");
 
     assert_last_fxa_webhook(
+        &pool,
         "TEST_SUB",
         FxaEvent::SubscriptionStateChange,
         FxaEventStatus::Processed,
@@ -110,11 +111,13 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
 
     // The second event must be ignored.
     assert_last_fxa_webhook(
+        &pool,
         "TEST_SUB",
         FxaEvent::SubscriptionStateChange,
         FxaEventStatus::Ignored,
     )?;
 
+    drop(stubr);
     Ok(())
 }
 
@@ -135,10 +138,9 @@ async fn subscription_state_change_to_core_test_inactive() -> Result<(), Error> 
 }
 
 async fn subscription_state_change_to_core_test(set_token: &str) -> Result<(), Error> {
-    reset()?;
-    wait_for_stubr()?;
-
-    let app = test_app_with_login().await?;
+    let pool = reset()?;
+    wait_for_stubr().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
@@ -171,6 +173,7 @@ async fn subscription_state_change_to_core_test(set_token: &str) -> Result<(), E
     assert_eq!(json["is_subscriber"], false);
 
     assert_last_fxa_webhook(
+        &pool,
         "TEST_SUB",
         FxaEvent::SubscriptionStateChange,
         FxaEventStatus::Processed,
@@ -182,19 +185,20 @@ async fn subscription_state_change_to_core_test(set_token: &str) -> Result<(), E
 #[actix_rt::test]
 async fn delete_user_test() -> Result<(), Error> {
     let set_token = include_str!("../data/set_tokens/set_token_delete_user.txt");
-    reset()?;
-    let _stubr = Stubr::start_blocking_with(
+    let pool = reset()?;
+    let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
             port: Some(4321),
             latency: None,
             global_delay: None,
-            verbose: Some(true),
+            verbose: true,
+            verify: false,
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
-    let app = test_app_with_login().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
@@ -208,20 +212,35 @@ async fn delete_user_test() -> Result<(), Error> {
     assert_eq!(json["geo"]["country"], "Iceland");
     assert_eq!(json["is_authenticated"], true);
 
-    let base_url = "/api/v1/plus/collection/?url=/en-US/docs/Web/CSS";
+    /*
+    // Let's check the cascade delete. This will create a multiple collection item that is tied to the user.
+    // When the set token is sent to delete the user it should cascade and thus not violate the fk ref:
+        multiple_collections (
+            ...
+            user_id    BIGSERIAL references users (id) ON DELETE CASCADE,
+            ...
+        )
+    */
     let payload = serde_json::json!({
-        "name": "CSS: Cascading Style Sheets",
-        "notes": "Notes notes notes",
+        "title" : "Interesting CSS",
+        "url": "/en-US/docs/Web/CSS"
     });
+
+    let base_url = "/api/v2/collections/";
+
+    let default_collection = read_json(logged_in_client.get(base_url, None).await).await;
+    let default_collection_id = default_collection.as_array().unwrap()[0]["id"]
+        .as_str()
+        .unwrap();
+
     let create_res = logged_in_client
-        .post(base_url, None, Some(PostPayload::FormData(payload)))
+        .post(
+            format!("{:1}{:2}/items/", base_url, default_collection_id).as_str(),
+            None,
+            Some(PostPayload::Json(payload)),
+        )
         .await;
     assert_eq!(create_res.status(), 201);
-    let collection_res = logged_in_client.get(base_url, None).await;
-    let collection_json = read_json(collection_res).await;
-
-    let bookmarked = &collection_json["bookmarked"];
-    assert!(!bookmarked.is_null());
 
     let res = logged_in_client.trigger_webhook(set_token).await;
     assert!(res.response().status().is_success());
@@ -234,8 +253,14 @@ async fn delete_user_test() -> Result<(), Error> {
         .await;
     assert!(!whoami.response().status().is_success());
 
-    assert_last_fxa_webhook("TEST_SUB", FxaEvent::DeleteUser, FxaEventStatus::Processed)?;
+    assert_last_fxa_webhook(
+        &pool,
+        "TEST_SUB",
+        FxaEvent::DeleteUser,
+        FxaEventStatus::Processed,
+    )?;
 
+    drop(stubr);
     Ok(())
 }
 
@@ -243,10 +268,9 @@ async fn delete_user_test() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn invalid_set_test() -> Result<(), Error> {
     let set_token = include_str!("../data/set_tokens/set_token_delete_user_invalid.txt");
-    reset()?;
-    wait_for_stubr()?;
-
-    let app = test_app_with_login().await?;
+    let pool = reset()?;
+    wait_for_stubr().await?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
@@ -264,12 +288,12 @@ async fn invalid_set_test() -> Result<(), Error> {
 
     assert_eq!(res.response().status(), StatusCode::OK);
 
-    let pool = get_pool();
     let mut conn = pool.get()?;
     let failed_token = schema::raw_webhook_events_tokens::table
         .select(schema::raw_webhook_events_tokens::token)
         .first::<String>(&mut conn)?;
     assert_eq!(failed_token, set_token);
+    drop(stubr);
     Ok(())
 }
 
@@ -281,14 +305,15 @@ async fn change_profile_test() -> Result<(), Error> {
             port: Some(4321),
             latency: None,
             global_delay: None,
-            verbose: Some(true),
+            verbose: true,
+            verify: false,
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     let set_token = include_str!("../data/set_tokens/set_token_profile_change.txt");
-    reset()?;
-    let app = test_app_with_login().await?;
+    let pool = reset()?;
+    let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
@@ -304,16 +329,17 @@ async fn change_profile_test() -> Result<(), Error> {
 
     drop(stubr);
 
-    let _stubr = Stubr::start_blocking_with(
+    let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/fxa_webhooks"],
         Config {
             port: Some(4321),
             latency: None,
             global_delay: None,
-            verbose: Some(true),
+            verbose: true,
+            verify: false,
         },
     );
-    wait_for_stubr()?;
+    wait_for_stubr().await?;
 
     thread::sleep(TEN_MS);
 
@@ -343,10 +369,12 @@ async fn change_profile_test() -> Result<(), Error> {
     }
 
     assert_last_fxa_webhook_with_retry(
+        &pool,
         "TEST_SUB",
         FxaEvent::ProfileChange,
         FxaEventStatus::Processed,
     )?;
 
+    drop(stubr);
     Ok(())
 }

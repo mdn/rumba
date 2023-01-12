@@ -4,10 +4,12 @@ use actix_web::http::header::HeaderName;
 use actix_web::http::StatusCode;
 use actix_web::middleware::{ErrorHandlerResponse, ErrorHandlers};
 use actix_web::{HttpResponse, ResponseError};
+use basket::BasketError;
 use serde::Serialize;
 use serde_json::json;
 use thiserror::Error;
 use uuid::Uuid;
+use validator::ValidationErrors;
 
 pub const ERROR_ID_HEADER_NAME_STR: &str = "error-id";
 static ERROR_ID_HEADER_NAME: HeaderName = HeaderName::from_static(ERROR_ID_HEADER_NAME_STR);
@@ -52,7 +54,7 @@ pub enum ApiError {
     #[error("Document Not found")]
     DocumentNotFound,
     #[error("Collection with id {0} not found")]
-    CollectionNotFound(i64),
+    CollectionNotFound(String),
     #[error("Notification Not found")]
     NotificationNotFound,
     #[error("Malformed Url")]
@@ -73,6 +75,16 @@ pub enum ApiError {
     BlockingError(#[from] actix_web::error::BlockingError),
     #[error("DB Error: {0}")]
     DbError(#[from] DbError),
+    #[error("Validation error: {0}")]
+    ValidationError(#[from] ValidationErrors),
+    #[error("Subscription limit reached")]
+    MultipleCollectionSubscriptionLimitReached,
+    #[error("Login Required")]
+    LoginRequiredForFeature(String),
+    #[error("Newsletter error: {0}")]
+    BasketError(#[from] BasketError),
+    #[error("Unknown error: {0}")]
+    Generic(String),
 }
 
 impl ApiError {
@@ -94,6 +106,11 @@ impl ApiError {
             Self::BlockingError(_) => "Blocking error",
             Self::CollectionNotFound(_) => "Collection not found",
             Self::DbError(_) => "DB error",
+            Self::ValidationError(_) => "Validation Error",
+            Self::MultipleCollectionSubscriptionLimitReached => "Subscription limit reached",
+            Self::BasketError(_) => "Error managing newsletter",
+            Self::Generic(err) => err,
+            Self::LoginRequiredForFeature(_) => "Login Required",
         }
     }
 }
@@ -117,6 +134,9 @@ impl ResponseError for ApiError {
             Self::Search(SearchError::Query { .. }) => StatusCode::BAD_REQUEST,
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
             Self::CollectionNotFound(_) => StatusCode::BAD_REQUEST,
+            Self::ValidationError(_) => StatusCode::BAD_REQUEST,
+            Self::MultipleCollectionSubscriptionLimitReached => StatusCode::BAD_REQUEST,
+            Self::LoginRequiredForFeature(_) => StatusCode::UNAUTHORIZED,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -138,6 +158,21 @@ impl ResponseError for ApiError {
             ApiError::CollectionNotFound(id) => builder.json(ErrorResponse {
                 code: status_code.as_u16(),
                 message: format!("Collection with id {} not found", id).as_str(),
+                error: self.name(),
+            }),
+            ApiError::ValidationError(errors) => builder.json(ErrorResponse {
+                code: status_code.as_u16(),
+                message: format!("Error validating input {0}", errors).as_str(),
+                error: self.name(),
+            }),
+            ApiError::MultipleCollectionSubscriptionLimitReached => builder.json(ErrorResponse {
+                code: status_code.as_u16(),
+                message: "Subscription limit reached. Please upgrade",
+                error: self.name(),
+            }),
+            ApiError::LoginRequiredForFeature(feature) => builder.json(ErrorResponse {
+                code: status_code.as_u16(),
+                message: format!("Please login to use feature: {0}", feature).as_str(),
                 error: self.name(),
             }),
             _ if status_code == StatusCode::INTERNAL_SERVER_ERROR => builder.json(ErrorResponse {

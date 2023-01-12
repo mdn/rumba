@@ -1,10 +1,8 @@
-use crate::api::collections::{
-    collections, create_or_update_collection_item, delete_collection_item,
-};
+use crate::api::newsletter::{is_subscribed, subscribe_handler, unsubscribe_handler};
+use crate::api::ping::ping;
 use crate::api::root::root_service;
 use crate::api::search::search;
 use crate::api::settings::update_settings;
-use crate::api::user_middleware::AddUser;
 use crate::api::whoami::whoami;
 use actix_web::dev::HttpServiceFactory;
 use actix_web::web;
@@ -17,16 +15,15 @@ use super::watched_items::{get_watched_items, unwatch_many, update_watched_item}
 
 pub fn api_v1_service() -> impl HttpServiceFactory {
     web::scope("/api/v1")
-        .wrap(AddUser)
         .service(
             web::scope("/plus")
-                .service(
-                    web::resource("/collection/")
-                        .route(web::get().to(collections))
-                        .route(web::post().to(create_or_update_collection_item))
-                        .route(web::delete().to(delete_collection_item)),
-                )
                 .service(web::resource("/settings/").route(web::post().to(update_settings)))
+                .service(
+                    web::resource("/newsletter/")
+                        .route(web::get().to(is_subscribed))
+                        .route(web::delete().to(unsubscribe_handler))
+                        .route(web::post().to(subscribe_handler)),
+                )
                 .service(
                     web::scope("/notifications")
                         .service(web::resource("/").route(web::get().to(notifications)))
@@ -60,5 +57,6 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
         )
         .service(web::resource("/search").route(web::get().to(search)))
         .service(web::resource("/whoami").route(web::get().to(whoami)))
+        .service(web::resource("/ping").route(web::post().to(ping)))
         .service(root_service())
 }

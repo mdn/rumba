@@ -1,5 +1,6 @@
 use crate::db;
 use crate::db::model::NotificationDataInsert;
+use crate::db::v2::synchronize_bcd_updates_db::update_bcd;
 use crate::db::Pool;
 use crate::settings::SETTINGS;
 use crate::util::normalize_uri;
@@ -207,11 +208,11 @@ pub struct BrowserItem {
 pub async fn validator(
     req: ServiceRequest,
     credentials: BearerAuth,
-) -> Result<ServiceRequest, Error> {
+) -> Result<ServiceRequest, (Error, ServiceRequest)> {
     if credentials.token() == SETTINGS.auth.admin_update_bearer_token {
         Ok(req)
     } else {
-        Err(Error::from(ApiError::InvalidBearer))
+        Err((Error::from(ApiError::InvalidBearer), req))
     }
 }
 #[derive(Debug)]
@@ -339,7 +340,7 @@ pub async fn process_notification_update(
                     NotificationDataInsert {
                         text: notification.text.to_owned(),
                         url: document.uri,
-                        data: serde_json::to_value(&notification.data).ok(),
+                        data: serde_json::to_value(notification.data).ok(),
                         title,
                         type_: db::types::NotificationTypeEnum::Compat,
                         document_id: document.id,
@@ -449,7 +450,7 @@ async fn get_update_json(
         .json()
         .await
         .map_err(|err| {
-            println!("{:1}", err);
+            error!("{:1}", err);
             ApiError::DocumentNotFound
         })?;
     Ok(res)
@@ -459,4 +460,5 @@ pub fn admin_service() -> impl HttpServiceFactory {
     web::scope("/admin-api")
         .wrap(HttpAuthentication::bearer(validator))
         .service(web::resource("/update/").route(web::post().to(process_notification_update)))
+        .service(web::resource("/v2/updates/").route(web::post().to(update_bcd)))
 }

@@ -13,6 +13,7 @@ pub mod api;
 pub mod db;
 pub mod fxa;
 mod helpers;
+pub mod ids;
 pub mod logging;
 pub mod metrics;
 pub mod settings;

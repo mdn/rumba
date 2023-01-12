@@ -1,16 +1,14 @@
+use actix_identity::Identity;
 use actix_web::{web, HttpRequest, HttpResponse};
 use chrono::NaiveDateTime;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    api::user_middleware::UserId,
-    db::{
-        model::{NotificationsQuery, UserQuery},
-        notifications::{self, get_notifications, update_all_starred},
-        users::get_user,
-        Pool,
-    },
+use crate::db::{
+    model::{NotificationsQuery, UserQuery},
+    notifications::{self, get_notifications, update_all_starred},
+    users::get_user,
+    Pool,
 };
 
 use super::{common::Sorting, error::ApiError};
@@ -80,12 +78,12 @@ impl From<NotificationsQuery> for Notification {
 
 pub async fn notifications(
     _req: HttpRequest,
-    user_id: UserId,
+    user_id: Identity,
     pool: web::Data<Pool>,
     query: web::Query<NotificationQueryParams>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     let res = get_notifications(&mut conn_pool, user.id, query.0)?;
     let items = res
         .iter()
@@ -96,23 +94,23 @@ pub async fn notifications(
 
 pub async fn mark_all_as_read(
     _req: HttpRequest,
-    user_id: UserId,
+    user_id: Identity,
     pool: web::Data<Pool>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     notifications::mark_all_as_read(&mut conn_pool, user.id)?;
     Ok(HttpResponse::Ok().finish())
 }
 
 pub async fn delete_by_id(
     _req: HttpRequest,
-    user_id: UserId,
+    user_id: Identity,
     pool: web::Data<Pool>,
     notification_id: web::Path<NotificationId>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     let res = notifications::set_deleted(&mut conn_pool, user.id, notification_id.id)?;
     if res == 0 {
         return Err(ApiError::NotificationNotFound);
@@ -122,12 +120,12 @@ pub async fn delete_by_id(
 
 pub async fn undo_delete_by_id(
     _req: HttpRequest,
-    user_id: UserId,
+    user_id: Identity,
     pool: web::Data<Pool>,
     notification_id: web::Path<NotificationId>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     let res = notifications::clear_deleted(&mut conn_pool, user.id, notification_id.id)?;
     if res == 0 {
         return Err(ApiError::NotificationNotFound);
@@ -137,24 +135,24 @@ pub async fn undo_delete_by_id(
 
 pub async fn delete_many(
     _req: HttpRequest,
-    user_id: UserId,
+    user_id: Identity,
     pool: web::Data<Pool>,
     data: web::Json<NotificationIds>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     let _res = notifications::set_deleted_many(&mut conn_pool, user.id, data.0.ids)?;
     Ok(HttpResponse::Ok().finish())
 }
 
 pub async fn mark_as_read(
     _req: HttpRequest,
-    user_id: UserId,
+    user_id: Identity,
     pool: web::Data<Pool>,
     notification_id: web::Path<NotificationId>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     let res = notifications::mark_as_read(&mut conn_pool, user.id, notification_id.id)?;
     if res == 0 {
         return Err(ApiError::NotificationNotFound);
@@ -164,36 +162,36 @@ pub async fn mark_as_read(
 
 pub async fn star_ids(
     _req: HttpRequest,
-    user_id: UserId,
+    user_id: Identity,
     pool: web::Data<Pool>,
     data: web::Json<NotificationIds>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     let _res = update_all_starred(&mut conn_pool, user, data.0, true)?;
     Ok(HttpResponse::Ok().finish())
 }
 
 pub async fn unstar_ids(
     _req: HttpRequest,
-    user_id: UserId,
+    user_id: Identity,
     pool: web::Data<Pool>,
     data: web::Json<NotificationIds>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     let _res = update_all_starred(&mut conn_pool, user, data.0, false)?;
     Ok(HttpResponse::Ok().finish())
 }
 
 pub async fn toggle_starred(
     _req: HttpRequest,
-    user_id: UserId,
+    user_id: Identity,
     pool: web::Data<Pool>,
     notification_id: web::Path<NotificationId>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id)?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
     let res = notifications::toggle_starred(&mut conn_pool, user, notification_id.id)?;
     if res == 0 {
         return Err(ApiError::NotificationNotFound);

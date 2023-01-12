@@ -2,9 +2,16 @@
 
 use std::sync::Arc;
 
-use actix_identity::{CookieIdentityPolicy, IdentityService};
+use actix_identity::IdentityMiddleware;
 use actix_rt::Arbiter;
-use actix_web::{cookie::SameSite, middleware::Logger, web::Data, App, HttpServer};
+use actix_session::{config::PersistentSession, storage::CookieSessionStore, SessionMiddleware};
+use actix_web::{
+    cookie::{time::Duration, Key, SameSite},
+    middleware::Logger,
+    web::Data,
+    App, HttpServer,
+};
+use basket::Basket;
 use const_format::formatcp;
 use diesel_migrations::MigrationHarness;
 use elasticsearch::http::transport::Transport;
@@ -63,16 +70,33 @@ async fn main() -> anyhow::Result<()> {
         })
     };
 
+    let session_cookie_key = Key::derive_from(&SETTINGS.auth.cookie_key);
+
+    let basket_client = Data::new(
+        SETTINGS
+            .basket
+            .as_ref()
+            .map(|b| Basket::new(&b.api_key, b.basket_url.clone())),
+    );
+
     HttpServer::new(move || {
-        let policy = CookieIdentityPolicy::new(&SETTINGS.auth.auth_cookie_key)
-            .name(&SETTINGS.auth.auth_cookie_name)
-            .secure(SETTINGS.auth.auth_cookie_secure)
-            .same_site(SameSite::Strict);
         let app = App::new()
             .wrap(error_handler())
-            .wrap(Logger::new(LOG_FMT).exclude("/healthz"))
             .wrap(sentry_actix::Sentry::new())
-            .wrap(IdentityService::new(policy))
+            .wrap(IdentityMiddleware::default())
+            .wrap(
+                SessionMiddleware::builder(
+                    CookieSessionStore::default(),
+                    session_cookie_key.clone(),
+                )
+                .cookie_name(SETTINGS.auth.auth_cookie_name.clone())
+                .cookie_secure(SETTINGS.auth.auth_cookie_secure)
+                .cookie_same_site(SameSite::Strict)
+                .session_lifecycle(PersistentSession::default().session_ttl(Duration::days(365)))
+                .build(),
+            )
+            .wrap(Logger::new(LOG_FMT).exclude("/healthz"))
+            .app_data(Data::clone(&basket_client))
             .app_data(Data::clone(&metrics))
             .app_data(Data::clone(&pool))
             .app_data(Data::clone(&arbiter_handle))
