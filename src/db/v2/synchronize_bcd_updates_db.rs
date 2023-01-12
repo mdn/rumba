@@ -76,11 +76,11 @@ async fn synchronize_browers_and_releases(
         for (release, value) in v["releases"].as_object().unwrap() {
             match value["engine"].as_str() {
                 Some(_) => (),
-                None => error!("No engine for {:?}", value),
+                None => debug!("No engine for {:?}", value),
             }
             match value["release_date"].as_str() {
                 Some(_) => (),
-                None => error!("No release_date for {:?}", value),
+                None => debug!("No release_date for {:?}", value),
             }
             let _release_date: Option<NaiveDate> = value["release_date"]
                 .as_str()
@@ -119,7 +119,7 @@ async fn synchronize_features(pool: &mut PgConnection, json: Value) -> Result<()
     let mut features = Vec::new();
     json.as_array().unwrap().iter().for_each(|val| {
         if val["source_file"].as_str().is_none() {
-            error!("No source file found for path. {:?}", val);
+            debug!("No source file found for path. {:?}", val);
             return;
         }
         features.push((
@@ -145,13 +145,12 @@ async fn synchronize_features(pool: &mut PgConnection, json: Value) -> Result<()
             batch_size = features.len();
         }
         let drained: Vec<_> = features.drain(0..batch_size).collect();
-        let res = diesel::insert_into(bcd_features::table)
-            .values(drained)
+        if let Err(e) = diesel::insert_into(bcd_features::table)
+            .values(drained.clone())
+            .on_conflict_do_nothing()
             .execute(pool)
-            .map_err(|e| error!("{:?}", e));
-
-        if let Err(val) = res {
-            warn!("Error adding features {:?}", val);
+        {
+            error!("{:?}", e);
         }
     }
 
@@ -338,7 +337,7 @@ async fn synchronize_path_mappings(
         .map(|filtered| {
             let paths = filtered["browserCompat"].as_array().unwrap();
             if paths.len() > 1 {
-                warn!("Multiple paths detected for {:?}", paths);
+                debug!("Multiple paths detected for {:?}", paths);
             }
 
             for path in paths {
@@ -383,9 +382,9 @@ async fn synchronize_path_mappings(
         parts.pop();
         while !parts.is_empty() {
             let subpath = parts.join(".");
-            info!("checking subpath {:} for {:}", subpath, val);
+            debug!("checking subpath {:} for {:}", subpath, val);
             if let Some(replacement) = path_map.get(&subpath) {
-                info!(
+                debug!(
                     "Replacing missing url + title for path {:} with {:}'s ({:},{:})",
                     val, subpath, &replacement.0, &replacement.1
                 );
