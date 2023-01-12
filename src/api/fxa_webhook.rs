@@ -3,7 +3,11 @@ use std::collections::BTreeMap;
 use actix_rt::ArbiterHandle;
 use actix_web::{dev::HttpServiceFactory, web, HttpRequest, HttpResponse};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
-use base64;
+use base64::{
+    self, alphabet,
+    engine::{DecodePaddingMode, GeneralPurpose, GeneralPurposeConfig},
+    Engine,
+};
 use basket::Basket;
 use chrono::{DateTime, Utc};
 use openidconnect::{
@@ -28,6 +32,13 @@ use crate::{
     db::{fxa_webhook::update_subscription_state_from_webhook, Pool},
     fxa::{types::Subscription, LoginManager},
 };
+
+const BASE64_DECODER: GeneralPurpose = GeneralPurpose::new(
+    &alphabet::URL_SAFE,
+    GeneralPurposeConfig::new()
+        .with_encode_padding(false)
+        .with_decode_padding_mode(DecodePaddingMode::Indifferent),
+);
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -99,13 +110,13 @@ fn verify(raw_token: &str, key: &CoreJsonWebKey) -> Result<FxASetTokenPayload, F
         return Err(FxaWebhookError::InvalidSET);
     }
 
-    let header_json = base64::decode_config(parts[0], base64::URL_SAFE_NO_PAD)?;
+    let header_json = BASE64_DECODER.decode(parts[0])?; // base64::decode_config(parts[0], base64::URL_SAFE_NO_PAD)?;
     let header: FxASetTokenHeader = serde_json::from_slice(&header_json)?;
 
-    let raw_payload = base64::decode_config(parts[1], base64::URL_SAFE_NO_PAD)?;
+    let raw_payload = BASE64_DECODER.decode(parts[1])?;
     let payload: FxASetTokenPayload = serde_json::from_slice(&raw_payload)?;
 
-    let signature = base64::decode_config(parts[2], base64::URL_SAFE_NO_PAD)?;
+    let signature = BASE64_DECODER.decode(parts[2])?;
 
     let signing_input = format!("{}.{}", parts[0], parts[1]);
     key.verify_signature(&header.algorithm, signing_input.as_bytes(), &signature)?;
