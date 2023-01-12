@@ -10,6 +10,7 @@ use crate::diesel::QueryDsl;
 use crate::diesel::RunQueryDsl;
 use crate::settings::SETTINGS;
 use actix_http::StatusCode;
+use actix_rt::ArbiterHandle;
 use actix_web::{web::Data, HttpResponse};
 use chrono::NaiveDate;
 use diesel::{update, PgConnection};
@@ -43,7 +44,7 @@ async fn get_bcd_updates(client: &Data<Client>) -> Result<Value, ApiError> {
     Ok(res)
 }
 
-pub async fn update_bcd(pool: Data<Pool>, client: Data<Client>) -> Result<HttpResponse, ApiError> {
+async fn do_bcd_update(pool: Data<Pool>, client: Data<Client>) -> Result<(), ApiError> {
     let mut conn = pool.get()?;
     let mut json = get_bcd_updates(&client).await?;
     info!("Synchronize browsers");
@@ -53,7 +54,21 @@ pub async fn update_bcd(pool: Data<Pool>, client: Data<Client>) -> Result<HttpRe
     info!("Synchronize paths + bcd mappings");
     synchronize_path_mappings(&mut conn, client).await?;
     synchronize_updates(&mut conn, json["added_removed"].take()).await?;
+    Ok(())
+}
 
+pub async fn update_bcd(
+    pool: Data<Pool>,
+    client: Data<Client>,
+    arbiter: Data<ArbiterHandle>,
+) -> Result<HttpResponse, ApiError> {
+    if !arbiter.spawn(async move {
+        if let Err(e) = do_bcd_update(pool, client).await {
+            error!("{}", e);
+        }
+    }) {
+        return Ok(HttpResponse::InternalServerError().finish());
+    }
     Ok(HttpResponse::Accepted().finish())
 }
 
