@@ -92,7 +92,7 @@ pub async fn unsubscribe(
             ..Default::default()
         },
     )?;
-    Ok(HttpResponse::Created().json(Subscribed { subscribed: false }))
+    Ok(HttpResponse::Accepted().json(Subscribed { subscribed: false }))
 }
 
 pub async fn is_subscribed(
@@ -123,7 +123,7 @@ pub async fn is_subscribed(
                 },
             )?;
         }
-        return Ok(HttpResponse::Created().json(Subscribed { subscribed }));
+        return Ok(HttpResponse::Ok().json(Subscribed { subscribed }));
     };
     Ok(HttpResponse::NotImplemented().finish())
 }
