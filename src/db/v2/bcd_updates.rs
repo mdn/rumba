@@ -2,6 +2,7 @@ use super::model::BcdUpdate;
 use super::model::BcdUpdateQuery;
 use crate::api::v2::updates::BcdUpdatesQueryParams;
 use crate::apply_filters;
+use crate::bcd_updates_apply_sort;
 use crate::bcd_updates_read_table_get_updates_for_collections;
 use crate::bcd_updates_read_table_group_by_select;
 use crate::db::error::DbError;
@@ -27,6 +28,15 @@ use diesel::PgTextExpressionMethods;
 use r2d2::PooledConnection;
 sql_function!(fn lower(a: Nullable<Text>) -> Nullable<Text>);
 
+const PAGE_LENGTH: i64 = 5;
+
+fn offset_from_page(page: Option<i64>) -> i64 {
+    match page {
+        Some(page) if page > 0 => (page - 1) * PAGE_LENGTH,
+        _ => 0,
+    }
+}
+
 pub fn get_bcd_updates_paginated(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     query_params: &BcdUpdatesQueryParams,
@@ -36,39 +46,12 @@ pub fn get_bcd_updates_paginated(
     let count = get_count_for_query(pool, query_params, &user_option);
     let mut query = bcd_updates_read_table_group_by_select!().into_boxed();
     query = apply_filters!(query, query_params, user_option, pool);
+    query = bcd_updates_apply_sort!(query, query_params.sort);
 
-    let offset = (query_params.page.map_or(1, |val| {
-        if val <= 0 {
-            return 1;
-        }
-        val
-    }) - 1)
-        * 5;
-
-    if let Some(sort) = &query_params.sort {
-        match sort {
-            crate::api::v2::updates::AscOrDesc::Asc => {
-                query = query.order_by((
-                    schema::bcd_updates_read_table::release_date.asc(),
-                    schema::bcd_updates_read_table::browser_name,
-                ))
-            }
-            crate::api::v2::updates::AscOrDesc::Desc => {
-                query = query.order_by((
-                    schema::bcd_updates_read_table::release_date.desc(),
-                    schema::bcd_updates_read_table::browser_name,
-                ))
-            }
-        }
-    } else {
-        query = query.order_by((
-            schema::bcd_updates_read_table::release_date.desc(),
-            schema::bcd_updates_read_table::browser_name,
-        ))
-    }
+    let offset = offset_from_page(query_params.page);
 
     let res = query
-        .limit(5)
+        .limit(PAGE_LENGTH)
         .offset(offset)
         .get_results::<BcdUpdateQuery>(pool)?;
 
@@ -98,39 +81,12 @@ pub fn get_bcd_updates_for_collection(
         );
 
         query = apply_filters!(query, query_params, Some(user_id.id().unwrap()), pool);
+        query = bcd_updates_apply_sort!(query, query_params.sort);
 
-        let offset = (query_params.page.map_or(1, |val| {
-            if val <= 0 {
-                return 1;
-            }
-            val
-        }) - 1)
-            * 5;
-
-        if let Some(sort) = &query_params.sort {
-            match sort {
-                crate::api::v2::updates::AscOrDesc::Asc => {
-                    query = query.order_by((
-                        schema::bcd_updates_read_table::release_date.asc(),
-                        schema::bcd_updates_read_table::browser_name,
-                    ))
-                }
-                crate::api::v2::updates::AscOrDesc::Desc => {
-                    query = query.order_by((
-                        schema::bcd_updates_read_table::release_date.desc(),
-                        schema::bcd_updates_read_table::browser_name,
-                    ))
-                }
-            }
-        } else {
-            query = query.order_by((
-                schema::bcd_updates_read_table::release_date.desc(),
-                schema::bcd_updates_read_table::browser_name,
-            ))
-        }
+        let offset = offset_from_page(query_params.page);
 
         let res = query
-            .limit(5)
+            .limit(PAGE_LENGTH)
             .offset(offset)
             .get_results::<BcdUpdateQuery>(pool)?;
 
@@ -147,8 +103,8 @@ pub fn get_count_for_query(
 ) -> Result<i64, DbError> {
     let mut query = bcd_updates_read_table_group_by_select!().into_boxed();
     query = apply_filters!(query, query_params, user_id, pool);
-    let pags = query.paginate().per_page(5);
-    Ok(pags.count_pages::<BcdUpdateQuery>(pool).unwrap())
+    let pages = query.paginate().per_page(5);
+    Ok(pages.count_pages::<BcdUpdateQuery>(pool).unwrap())
 }
 
 pub fn get_count_for_collections_query(
@@ -159,6 +115,6 @@ pub fn get_count_for_collections_query(
 ) -> Result<i64, DbError> {
     let mut query = bcd_updates_read_table_get_updates_for_collections!(collections, user_id, pool);
     query = apply_filters!(query, query_params, Some(user_id), pool);
-    let pags = query.paginate().per_page(5);
-    Ok(pags.count_pages::<BcdUpdateQuery>(pool).unwrap())
+    let pages = query.paginate().per_page(5);
+    Ok(pages.count_pages::<BcdUpdateQuery>(pool).unwrap())
 }

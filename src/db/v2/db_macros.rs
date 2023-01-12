@@ -1,4 +1,27 @@
 #[macro_export]
+macro_rules! bcd_updates_apply_sort {
+    ($query: expr, $sort: expr) => {
+        if let Some(sort) = &$sort {
+            match sort {
+                $crate::api::v2::updates::AscOrDesc::Asc => $query.order_by((
+                    schema::bcd_updates_read_table::release_date.asc(),
+                    schema::bcd_updates_read_table::browser_name,
+                )),
+                $crate::api::v2::updates::AscOrDesc::Desc => $query.order_by((
+                    schema::bcd_updates_read_table::release_date.desc(),
+                    schema::bcd_updates_read_table::browser_name,
+                )),
+            }
+        } else {
+            $query.order_by((
+                schema::bcd_updates_read_table::release_date.desc(),
+                schema::bcd_updates_read_table::browser_name,
+            ))
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! bcd_updates_read_table_group_by_select {
     () => {
 schema::bcd_updates_read_table::table
