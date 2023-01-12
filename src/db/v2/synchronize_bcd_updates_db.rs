@@ -146,7 +146,7 @@ async fn synchronize_features(pool: &mut PgConnection, json: Value) -> Result<()
         }
         let drained: Vec<_> = features.drain(0..batch_size).collect();
         if let Err(e) = diesel::insert_into(bcd_features::table)
-            .values(drained.clone())
+            .values(drained)
             .on_conflict_do_nothing()
             .execute(pool)
         {
