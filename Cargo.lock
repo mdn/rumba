@@ -2639,7 +2639,7 @@ dependencies = [
  "actix-web-httpauth",
  "anyhow",
  "assert-json-diff",
- "base64 0.13.1",
+ "base64 0.20.0",
  "basket",
  "cadence",
  "chrono",
