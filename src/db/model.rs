@@ -217,3 +217,10 @@ pub struct RawWebHookEventsTokenInsert {
     pub token: String,
     pub error: String,
 }
+
+#[derive(Insertable, Serialize)]
+#[diesel(table_name = activity_pings)]
+pub struct ActivityPingInsert {
+    pub user_id: i64,
+    pub activity: Value,
+}
