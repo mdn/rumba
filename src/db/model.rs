@@ -87,18 +87,16 @@ pub struct DocumentInsert {
 pub struct Settings {
     pub id: i64,
     pub user_id: i64,
-    pub col_in_search: bool,
     pub locale_override: Option<Locale>,
-    pub multiple_collections: bool,
+    pub mdnplus_newsletter: bool,
 }
 
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = settings)]
 pub struct SettingsInsert {
     pub user_id: i64,
-    pub col_in_search: Option<bool>,
     pub locale_override: Option<Option<Locale>>,
-    pub multiple_collections: Option<bool>,
+    pub mdnplus_newsletter: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -218,4 +216,11 @@ pub struct WebHookEventQuery {
 pub struct RawWebHookEventsTokenInsert {
     pub token: String,
     pub error: String,
+}
+
+#[derive(Insertable, Serialize)]
+#[diesel(table_name = activity_pings)]
+pub struct ActivityPingInsert {
+    pub user_id: i64,
+    pub activity: Value,
 }

@@ -1,0 +1,19 @@
+{
+  "uuid": "basket_lookup_user_not_found",
+  "priority": 2,
+  "request": {
+    "method": "GET",
+    "url": "/news/lookup-user/"
+  },
+  "response": {
+    "status": 404,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "status": "error",
+      "desc": "User not found",
+      "code": 3
+    }
+  }
+}

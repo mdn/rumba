@@ -4,6 +4,7 @@ use actix_web::http::header::HeaderName;
 use actix_web::http::StatusCode;
 use actix_web::middleware::{ErrorHandlerResponse, ErrorHandlers};
 use actix_web::{HttpResponse, ResponseError};
+use basket::BasketError;
 use serde::Serialize;
 use serde_json::json;
 use thiserror::Error;
@@ -80,6 +81,8 @@ pub enum ApiError {
     MultipleCollectionSubscriptionLimitReached,
     #[error("Login Required")]
     LoginRequiredForFeature(String),
+    #[error("Newsletter error: {0}")]
+    BasketError(#[from] BasketError),
     #[error("Unknown error: {0}")]
     Generic(String),
 }
@@ -105,6 +108,7 @@ impl ApiError {
             Self::DbError(_) => "DB error",
             Self::ValidationError(_) => "Validation Error",
             Self::MultipleCollectionSubscriptionLimitReached => "Subscription limit reached",
+            Self::BasketError(_) => "Error managing newsletter",
             Self::Generic(err) => err,
             Self::LoginRequiredForFeature(_) => "Login Required",
         }

@@ -30,6 +30,18 @@ diesel::table! {
     use diesel::sql_types::*;
     use crate::db::types::*;
 
+    activity_pings (id) {
+        id -> Int8,
+        user_id -> Int8,
+        ping_at -> Timestamp,
+        activity -> Jsonb,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+
     bcd_features (id) {
         id -> Int8,
         deprecated -> Nullable<Bool>,
@@ -218,9 +230,8 @@ diesel::table! {
     settings (id) {
         id -> Int8,
         user_id -> Int8,
-        col_in_search -> Bool,
         locale_override -> Nullable<Locale>,
-        multiple_collections -> Bool,
+        mdnplus_newsletter -> Bool,
     }
 }
 
@@ -271,6 +282,7 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(activity_pings -> users (user_id));
 diesel::joinable!(bcd_updates -> bcd_features (feature));
 diesel::joinable!(bcd_updates -> browser_releases (browser_release));
 diesel::joinable!(browser_releases -> browsers (browser));
@@ -286,6 +298,7 @@ diesel::joinable!(watched_items -> documents (document_id));
 diesel::joinable!(watched_items -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
+    activity_pings,
     bcd_features,
     bcd_updates,
     bcd_updates_read_table,

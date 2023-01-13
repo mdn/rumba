@@ -2,6 +2,8 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{de::DeserializeOwned, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{from_value, Value};
 
+use crate::{api::error::ApiError, ids::EncodedId};
+
 pub fn deserialize_string_or_vec<'de, T, D>(deserializer: D) -> Result<Vec<T>, D::Error>
 where
     T: DeserializeOwned,
@@ -101,11 +103,49 @@ where
     dt.serialize(serializer)
 }
 
+pub fn array_like_maybe<'de, D>(deserializer: D) -> Result<Option<Vec<String>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let s: Option<String> = Option::deserialize(deserializer)?;
+    if let Some(res) = s {
+        let collected: Vec<String> = res
+            .split(',')
+            .filter(|s| !s.is_empty())
+            .map(String::from)
+            .collect();
+        return Ok(Some(collected));
+    }
+    Ok(None)
+}
+
+pub fn decode_ids_maybe<'de, D>(deserializer: D) -> Result<Option<Vec<i64>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let s: Option<String> = Option::deserialize(deserializer)?;
+    if let Some(res) = s {
+        let collected: Result<Vec<i64>, ApiError> = res
+            .split(',')
+            .filter(|s| !s.is_empty())
+            .map(EncodedId::decode)
+            .collect();
+        match collected {
+            Ok(val) => return Ok(Some(val)),
+            Err(_) => return Ok(Some(vec![])),
+        }
+    }
+    Ok(None)
+}
+
 #[cfg(test)]
 mod test {
+    use crate::settings::HARSH;
+
     use super::*;
     use anyhow::Error;
     use chrono::{DateTime, NaiveDateTime, Utc};
+    use itertools::Itertools;
     use serde::Serialize;
     use serde_json::json;
 
@@ -202,6 +242,63 @@ mod test {
         let d = DateWrapper { date: None };
         let v = serde_json::to_string(&d)?;
         assert_eq!(v, r#"{"date":null}"#);
+        Ok(())
+    }
+
+    #[test]
+    fn test_decode_ids() -> Result<(), Error> {
+        #[derive(Deserialize, PartialEq, Eq, Debug)]
+        struct Browsers {
+            #[serde(default, deserialize_with = "decode_ids_maybe")]
+            pub ids: Option<Vec<i64>>,
+        }
+        let browsers_json = "{}".to_string();
+        let browsers: Browsers = serde_json::from_str(&browsers_json)?;
+        assert_eq!(browsers, Browsers { ids: None });
+
+        let ids = vec![1i64, 2, 3, 4];
+        let id_string: String = ids.iter().map(|u| HARSH.encode(&[*u as u64])).join(",");
+        let browsers_json = format!(r#"{{"ids":"{id_string}"}}"#);
+        let browsers: Browsers = serde_json::from_str(&browsers_json)?;
+        assert_eq!(browsers, Browsers { ids: Some(ids) });
+
+        let ids = vec![1i64, 2, 3, 4];
+        let id_string: String = ids.iter().map(|u| HARSH.encode(&[*u as u64])).join(",");
+        let browsers_json = format!(r#"{{"ids":"{id_string},"}}"#);
+        let browsers: Browsers = serde_json::from_str(&browsers_json)?;
+        assert_eq!(browsers, Browsers { ids: Some(ids) });
+        Ok(())
+    }
+
+    #[test]
+    fn test_array_like() -> Result<(), Error> {
+        #[derive(Deserialize, PartialEq, Eq, Debug)]
+        struct Browsers {
+            #[serde(default, deserialize_with = "array_like_maybe")]
+            pub names: Option<Vec<String>>,
+        }
+        let names = r#"{"names":"firefox,lynx,"}"#;
+        let browsers: Browsers = serde_json::from_str(names)?;
+        assert_eq!(
+            browsers,
+            Browsers {
+                names: Some(vec!["firefox".to_string(), "lynx".to_string(),])
+            }
+        );
+
+        let names = r#"{"names":"firefox"}"#;
+        let browsers: Browsers = serde_json::from_str(names)?;
+        assert_eq!(
+            browsers,
+            Browsers {
+                names: Some(vec!["firefox".to_string()])
+            }
+        );
+
+        let names = r#"{}"#;
+        let browsers: Browsers = serde_json::from_str(names)?;
+        assert_eq!(browsers, Browsers { names: None });
+
         Ok(())
     }
 }

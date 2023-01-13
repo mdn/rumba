@@ -1,30 +1,17 @@
 use std::collections::HashMap;
-use std::str::FromStr;
 
 use crate::db::types::BcdUpdateEventType;
-use crate::db::v2::bcd_updates::get_bcd_updates_paginated;
+use crate::db::v2::bcd_updates::{get_bcd_updates_for_collection, get_bcd_updates_paginated};
 use crate::db::v2::model::{Event, Status};
+use crate::helpers::{array_like_maybe, decode_ids_maybe};
 use crate::{api::error::ApiError, db::Pool};
+
 use actix_identity::Identity;
 use actix_web::{web, HttpRequest, HttpResponse};
 use chrono::NaiveDate;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-fn array_like<'de, D>(deserializer: D) -> Result<Option<Vec<String>>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let s: Option<String> = Option::deserialize(deserializer)?;
-    if let Some(res) = s {
-        let collected: Vec<String> = res
-            .split(',')
-            .map(|val| String::from_str(val).unwrap())
-            .collect();
-        return Ok(Some(collected));
-    }
-    Ok(None)
-}
 #[derive(Debug, Serialize, Deserialize)]
 pub enum AscOrDesc {
     #[serde(alias = "asc")]
@@ -35,10 +22,12 @@ pub enum AscOrDesc {
 
 #[derive(Deserialize, Serialize)]
 pub struct BcdUpdatesQueryParams {
-    #[serde(default, deserialize_with = "array_like")]
+    #[serde(default, deserialize_with = "array_like_maybe")]
     pub browsers: Option<Vec<String>>,
-    #[serde(default, deserialize_with = "array_like")]
+    #[serde(default, deserialize_with = "array_like_maybe")]
     pub category: Option<Vec<String>>,
+    #[serde(default, deserialize_with = "decode_ids_maybe")]
+    pub collections: Option<Vec<i64>>,
     pub page: Option<i64>,
     pub q: Option<String>,
     pub show: Option<String>,
@@ -135,7 +124,13 @@ pub async fn get_updates(
     }
 
     let mut conn_pool = pool.get()?;
-    let updates = get_bcd_updates_paginated(&mut conn_pool, &query, user_id)?;
+
+    let updates = if let (Some(_), Some(user_id)) = (&query.collections, &user_id) {
+        get_bcd_updates_for_collection(&mut conn_pool, &query, user_id)?
+    } else {
+        get_bcd_updates_paginated(&mut conn_pool, &query, user_id)?
+    };
+
     let mapped_updates = updates
         .0
         .into_iter()

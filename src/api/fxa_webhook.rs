@@ -3,7 +3,12 @@ use std::collections::BTreeMap;
 use actix_rt::ArbiterHandle;
 use actix_web::{dev::HttpServiceFactory, web, HttpRequest, HttpResponse};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
-use base64;
+use base64::{
+    self, alphabet,
+    engine::{DecodePaddingMode, GeneralPurpose, GeneralPurposeConfig},
+    Engine,
+};
+use basket::Basket;
 use chrono::{DateTime, Utc};
 use openidconnect::{
     core::{CoreJsonWebKey, CoreJwsSigningAlgorithm},
@@ -27,6 +32,13 @@ use crate::{
     db::{fxa_webhook::update_subscription_state_from_webhook, Pool},
     fxa::{types::Subscription, LoginManager},
 };
+
+const BASE64_DECODER: GeneralPurpose = GeneralPurpose::new(
+    &alphabet::URL_SAFE,
+    GeneralPurposeConfig::new()
+        .with_encode_padding(false)
+        .with_decode_padding_mode(DecodePaddingMode::Indifferent),
+);
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -98,13 +110,13 @@ fn verify(raw_token: &str, key: &CoreJsonWebKey) -> Result<FxASetTokenPayload, F
         return Err(FxaWebhookError::InvalidSET);
     }
 
-    let header_json = base64::decode_config(parts[0], base64::URL_SAFE_NO_PAD)?;
+    let header_json = BASE64_DECODER.decode(parts[0])?; // base64::decode_config(parts[0], base64::URL_SAFE_NO_PAD)?;
     let header: FxASetTokenHeader = serde_json::from_slice(&header_json)?;
 
-    let raw_payload = base64::decode_config(parts[1], base64::URL_SAFE_NO_PAD)?;
+    let raw_payload = BASE64_DECODER.decode(parts[1])?;
     let payload: FxASetTokenPayload = serde_json::from_slice(&raw_payload)?;
 
-    let signature = base64::decode_config(parts[2], base64::URL_SAFE_NO_PAD)?;
+    let signature = BASE64_DECODER.decode(parts[2])?;
 
     let signing_input = format!("{}.{}", parts[0], parts[1]);
     key.verify_signature(&header.algorithm, signing_input.as_bytes(), &signature)?;
@@ -121,6 +133,7 @@ async fn process_event(
     payload: FxASetTokenPayload,
     login_manager: web::Data<LoginManager>,
     arbiter: web::Data<ArbiterHandle>,
+    basket: web::Data<Option<Basket>>,
 ) -> Result<(), DbError> {
     if payload.events.password_change.is_some() {
         debug!("skipped password change event for {}", payload.fxa_uid);
@@ -142,7 +155,9 @@ async fn process_event(
             payload.fxa_uid.clone(),
             subscription_state_change,
             payload.issue_time,
-        )?;
+            basket,
+        )
+        .await?;
     }
     if payload.events.delete_user.is_some() {
         delete_profile_from_webhook(
@@ -160,6 +175,7 @@ async fn set_token(
     login_manager: web::Data<LoginManager>,
     arbiter: web::Data<ArbiterHandle>,
     pool: web::Data<Pool>,
+    basket: web::Data<Option<Basket>>,
 ) -> HttpResponse {
     let mut error = None;
     let mut fail = false;
@@ -167,7 +183,9 @@ async fn set_token(
         match verify(auth.token(), key) {
             Ok(payload) => {
                 let fxa_uid = payload.fxa_uid.clone();
-                return match process_event(pool.clone(), payload, login_manager, arbiter).await {
+                return match process_event(pool.clone(), payload, login_manager, arbiter, basket)
+                    .await
+                {
                     Ok(_) => HttpResponse::Ok().finish(),
                     Err(e) => {
                         // This means either our db connections has issues or our worker thread.
