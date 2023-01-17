@@ -6,6 +6,10 @@ pub mod sql_types {
     pub struct BcdEventType;
 
     #[derive(diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "engine_type"))]
+    pub struct EngineType;
+
+    #[derive(diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "fxa_event_status_type"))]
     pub struct FxaEventStatusType;
 
@@ -59,6 +63,7 @@ diesel::table! {
     use diesel::sql_types::*;
     use crate::db::types::*;
     use super::sql_types::BcdEventType;
+    use super::sql_types::EngineType;
 
     bcd_updates (id) {
         id -> Int8,
@@ -67,35 +72,7 @@ diesel::table! {
         description -> Nullable<Text>,
         event_type -> BcdEventType,
         feature -> Int8,
-    }
-}
-
-diesel::table! {
-    use diesel::sql_types::*;
-    use crate::db::types::*;
-    use super::sql_types::BcdEventType;
-
-    bcd_updates_read_table (id) {
-        id -> Int8,
-        browser_name -> Text,
-        browser -> Text,
-        category -> Text,
-        deprecated -> Nullable<Bool>,
-        description -> Nullable<Text>,
-        engine -> Text,
-        engine_version -> Text,
-        event_type -> BcdEventType,
-        experimental -> Nullable<Bool>,
-        mdn_url -> Nullable<Text>,
-        short_title -> Nullable<Text>,
-        path -> Text,
-        release_date -> Date,
-        release_id -> Text,
-        release_notes -> Nullable<Text>,
-        source_file -> Text,
-        spec_url -> Nullable<Text>,
-        standard_track -> Nullable<Bool>,
-        status -> Nullable<Text>,
+        engines -> Array<Nullable<EngineType>>,
     }
 }
 
@@ -301,7 +278,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     activity_pings,
     bcd_features,
     bcd_updates,
-    bcd_updates_read_table,
     browser_releases,
     browsers,
     collection_items,

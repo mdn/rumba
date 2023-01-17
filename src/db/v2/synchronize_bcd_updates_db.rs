@@ -1,9 +1,10 @@
+use std::cmp::min;
 use std::collections::HashMap;
 use std::str::FromStr;
 
 use crate::api::error::ApiError;
 use crate::db::schema::{self, *};
-use crate::db::types::BcdUpdateEventType;
+use crate::db::types::{BcdUpdateEventType, EngineType};
 use crate::db::Pool;
 use crate::diesel::ExpressionMethods;
 use crate::diesel::QueryDsl;
@@ -13,7 +14,8 @@ use actix_http::StatusCode;
 use actix_rt::ArbiterHandle;
 use actix_web::{web::Data, HttpResponse};
 use chrono::NaiveDate;
-use diesel::{update, PgConnection};
+use diesel::upsert::excluded;
+use diesel::{sql_query, update, PgConnection};
 use reqwest::Client;
 use serde_json::Value;
 use url::Url;
@@ -53,7 +55,14 @@ async fn do_bcd_update(pool: Data<Pool>, client: Data<Client>) -> Result<(), Api
     synchronize_features(&mut conn, json["features"].take()).await?;
     info!("Synchronize paths + bcd mappings");
     synchronize_path_mappings(&mut conn, client).await?;
+    info!("Synchronize updates");
     synchronize_updates(&mut conn, json["added_removed"].take()).await?;
+    info!("Refreshing view");
+    if let Err(e) = sql_query("REFRESH MATERIALIZED VIEW bcd_updates_view;").execute(&mut conn) {
+        error!("Error updating bcd_updates_view , {:?}", e);
+    } else {
+        info!("updated bcd_updates_view");
+    }
     Ok(())
 }
 
@@ -155,10 +164,7 @@ async fn synchronize_features(pool: &mut PgConnection, json: Value) -> Result<()
     });
 
     while !features.is_empty() {
-        let mut batch_size = 1000;
-        if batch_size > features.len() {
-            batch_size = features.len();
-        }
+        let batch_size = min(1000, features.len());
         let drained: Vec<_> = features.drain(0..batch_size).collect();
         if let Err(e) = diesel::insert_into(bcd_features::table)
             .values(drained)
@@ -237,20 +243,25 @@ async fn synchronize_updates(pool: &mut PgConnection, json: Value) -> Result<(),
         };
 
         if let Some(val) = added {
-            for path in val.as_array().unwrap() {
-                let feature_id = match feature_info_cached.get(path.as_str().unwrap()) {
+            for added in val.as_array().unwrap() {
+                let path = added["path"]
+                    .as_str()
+                    .unwrap_or_else(|| added.as_str().unwrap());
+                let engines: Vec<EngineType> =
+                    serde_json::from_value(added["engines"].clone()).unwrap_or_default();
+                let feature_id = match feature_info_cached.get(path) {
                     Some(val) => *val,
                     None => {
                         let _feature_id: Result<i64, diesel::result::Error> = bcd_features::table
                             .select(bcd_features::id)
-                            .filter(bcd_features::path.eq(path.as_str().unwrap()))
+                            .filter(bcd_features::path.eq(path))
                             .first(pool);
                         if _feature_id.is_err() {
-                            error!("Error {:}", path.as_str().unwrap());
+                            error!("Error {:}", path);
                         }
                         let unwrapped = _feature_id.unwrap();
 
-                        feature_info_cached.insert(path.as_str().unwrap().to_owned(), unwrapped);
+                        feature_info_cached.insert(path.to_owned(), unwrapped);
                         unwrapped
                     }
                 };
@@ -258,23 +269,29 @@ async fn synchronize_updates(pool: &mut PgConnection, json: Value) -> Result<(),
                     bcd_updates::browser_release.eq(_browser_release_id),
                     bcd_updates::event_type.eq(BcdUpdateEventType::AddedStable),
                     bcd_updates::feature.eq(feature_id),
+                    bcd_updates::engines.eq(engines),
                 ));
             }
         }
 
         if let Some(val) = removed {
-            for path in val.as_array().unwrap() {
-                let feature_id = match feature_info_cached.get(path.as_str().unwrap()) {
+            for removed in val.as_array().unwrap() {
+                let path = removed["path"]
+                    .as_str()
+                    .unwrap_or_else(|| removed.as_str().unwrap());
+                let engines: Vec<EngineType> =
+                    serde_json::from_value(removed["engines"].clone()).unwrap_or_default();
+                let feature_id = match feature_info_cached.get(path) {
                     Some(val) => *val,
                     None => {
                         let _feature_id: Result<i64, diesel::result::Error> = bcd_features::table
                             .select(bcd_features::id)
-                            .filter(bcd_features::path.eq(path.as_str().unwrap()))
+                            .filter(bcd_features::path.eq(path))
                             .first(pool);
 
                         let unwrapped = _feature_id.unwrap();
 
-                        feature_info_cached.insert(path.as_str().unwrap().to_owned(), unwrapped);
+                        feature_info_cached.insert(path.to_owned(), unwrapped);
                         unwrapped
                     }
                 };
@@ -282,13 +299,21 @@ async fn synchronize_updates(pool: &mut PgConnection, json: Value) -> Result<(),
                     bcd_updates::browser_release.eq(_browser_release_id),
                     bcd_updates::event_type.eq(BcdUpdateEventType::RemovedStable),
                     bcd_updates::feature.eq(feature_id),
+                    bcd_updates::engines.eq(engines),
                 ));
             }
         }
 
         let added_results = diesel::insert_into(bcd_updates::table)
-            .values(_added_)
-            .on_conflict_do_nothing()
+            .values(&_added_)
+            .on_conflict((bcd_updates::browser_release, bcd_updates::feature))
+            .do_update()
+            .set((
+                bcd_updates::browser_release.eq(excluded(bcd_updates::browser_release)),
+                bcd_updates::event_type.eq(excluded(bcd_updates::event_type)),
+                bcd_updates::feature.eq(excluded(bcd_updates::feature)),
+                bcd_updates::engines.eq(excluded(bcd_updates::engines)),
+            ))
             .execute(pool)
             .map_err(|e| {
                 error!("{:?} \n {:?}, {:?}", e, added, _browser_release_id);
@@ -299,7 +324,14 @@ async fn synchronize_updates(pool: &mut PgConnection, json: Value) -> Result<(),
         }
         let remove_results = diesel::insert_into(bcd_updates::table)
             .values(_removed_)
-            .on_conflict_do_nothing()
+            .on_conflict((bcd_updates::browser_release, bcd_updates::feature))
+            .do_update()
+            .set((
+                bcd_updates::browser_release.eq(excluded(bcd_updates::browser_release)),
+                bcd_updates::event_type.eq(excluded(bcd_updates::event_type)),
+                bcd_updates::feature.eq(excluded(bcd_updates::feature)),
+                bcd_updates::engines.eq(excluded(bcd_updates::engines)),
+            ))
             .execute(pool)
             .map_err(|e| {
                 error!("{:?} \n {:?} , {:?}", e, removed, _browser_release_id);

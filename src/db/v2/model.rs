@@ -1,7 +1,7 @@
 #![allow(clippy::extra_unused_lifetimes)] /* https://github.com/rust-lang/rust-clippy/issues/9014 */
 use crate::db::model::User;
 use crate::db::schema::*;
-use crate::db::types::BcdUpdateEventType;
+use crate::db::types::{BcdUpdateEventType, EngineType};
 use crate::helpers::{maybe_to_utc, to_utc};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::sql_types::{Date, Json, Text};
@@ -98,7 +98,7 @@ pub struct Events {
     pub events: Vec<Event>,
 }
 
-#[derive(Clone, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct Event {
     pub path: String,
     pub mdn_url: Option<String>,
@@ -106,6 +106,7 @@ pub struct Event {
     pub spec_url: Option<String>,
     pub status: Option<Status>,
     pub event_type: BcdUpdateEventType,
+    pub engines: Vec<EngineType>,
 }
 
 #[derive(Clone, Eq, Debug, Deserialize, PartialEq, Serialize)]
@@ -133,6 +134,7 @@ pub struct BcdUpdateQuery {
     pub compat: Value,
 }
 
+#[derive(Debug, Clone)]
 pub struct BcdUpdate {
     pub browser: String,
     pub name: String,
