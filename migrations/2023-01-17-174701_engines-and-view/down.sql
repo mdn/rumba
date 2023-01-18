@@ -31,7 +31,7 @@ CREATE TABLE bcd_updates_read_table
 CREATE INDEX release_date_idx ON bcd_updates_read_table ((release_date::DATE));
 CREATE INDEX browser_name_idx ON bcd_updates_read_table ((browser::TEXT));
 CREATE INDEX category_idx ON bcd_updates_read_table ((category::TEXT));
-
+CREATE INDEX bcd_updates_lower_case_url_idx ON bcd_updates_read_table ((lower(mdn_url)));
 CREATE OR REPLACE FUNCTION update_bcd_update_view()
     RETURNS TRIGGER AS
 $$
