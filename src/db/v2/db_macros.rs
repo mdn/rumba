@@ -4,18 +4,18 @@ macro_rules! bcd_updates_apply_sort {
         if let Some(sort) = &$sort {
             match sort {
                 $crate::api::v2::updates::AscOrDesc::Asc => $query.order_by((
-                    schema::bcd_updates_read_table::release_date.asc(),
-                    schema::bcd_updates_read_table::browser_name,
+                    $crate::db::schema_manual::bcd_updates_view::release_date.asc(),
+                    $crate::db::schema_manual::bcd_updates_view::browser_name,
                 )),
                 $crate::api::v2::updates::AscOrDesc::Desc => $query.order_by((
-                    schema::bcd_updates_read_table::release_date.desc(),
-                    schema::bcd_updates_read_table::browser_name,
+                    $crate::db::schema_manual::bcd_updates_view::release_date.desc(),
+                    $crate::db::schema_manual::bcd_updates_view::browser_name,
                 )),
             }
         } else {
             $query.order_by((
-                schema::bcd_updates_read_table::release_date.desc(),
-                schema::bcd_updates_read_table::browser_name,
+                $crate::db::schema_manual::bcd_updates_view::release_date.desc(),
+                $crate::db::schema_manual::bcd_updates_view::browser_name,
             ))
         }
     };
@@ -24,24 +24,25 @@ macro_rules! bcd_updates_apply_sort {
 #[macro_export]
 macro_rules! bcd_updates_read_table_group_by_select {
     () => {
-schema::bcd_updates_read_table::table
+$crate::db::schema_manual::bcd_updates_view::table
         .group_by((
-            schema::bcd_updates_read_table::browser,
-            schema::bcd_updates_read_table::browser_name,
-            schema::bcd_updates_read_table::engine,
-            schema::bcd_updates_read_table::engine_version,
-            schema::bcd_updates_read_table::release_id,
-            schema::bcd_updates_read_table::release_date
+            $crate::db::schema_manual::bcd_updates_view::browser,
+            $crate::db::schema_manual::bcd_updates_view::browser_name,
+            $crate::db::schema_manual::bcd_updates_view::engine,
+            $crate::db::schema_manual::bcd_updates_view::engine_version,
+            $crate::db::schema_manual::bcd_updates_view::release_id,
+            $crate::db::schema_manual::bcd_updates_view::release_date
         ))
         .select((
-            schema::bcd_updates_read_table::browser,
-            schema::bcd_updates_read_table::browser_name,
-            schema::bcd_updates_read_table::engine,
-            schema::bcd_updates_read_table::engine_version,
-            schema::bcd_updates_read_table::release_id,
-            schema::bcd_updates_read_table::release_date,
+            $crate::db::schema_manual::bcd_updates_view::browser,
+            $crate::db::schema_manual::bcd_updates_view::browser_name,
+            $crate::db::schema_manual::bcd_updates_view::engine,
+            $crate::db::schema_manual::bcd_updates_view::engine_version,
+            $crate::db::schema_manual::bcd_updates_view::release_id,
+            $crate::db::schema_manual::bcd_updates_view::release_date,
             sql::<Json>(
                 "json_agg(json_build_object('event_type', event_type,
+                                            'engines', engines,
                                             'path', path,
                                             'status', CASE
                                                         WHEN (deprecated is null or standard_track is null or
@@ -68,7 +69,7 @@ macro_rules! bcd_updates_read_table_get_updates_for_collections {
             .inner_join(
                 schema::documents::table.on(schema::documents::uri
                     .nullable()
-                    .eq(lower(schema::bcd_updates_read_table::mdn_url))),
+                    .eq(lower($crate::db::schema_manual::bcd_updates_view::mdn_url))),
             )
             .inner_join(
                 schema::collection_items::table
@@ -90,16 +91,19 @@ macro_rules! apply_filters {
         let mut query = $query;
 
         if let Some(search) = &$query_params.q {
-            query =
-                query.filter(schema::bcd_updates_read_table::path.ilike(format!("%{:}%", search)));
+            query = query.filter(
+                $crate::db::schema_manual::bcd_updates_view::path.ilike(format!("%{:}%", search)),
+            );
         }
 
         if let Some(category) = &$query_params.category {
-            query = query.filter(schema::bcd_updates_read_table::category.eq_any(category));
+            query = query
+                .filter($crate::db::schema_manual::bcd_updates_view::category.eq_any(category));
         }
 
         if let Some(browsers) = &$query_params.browsers {
-            query = query.filter(schema::bcd_updates_read_table::browser.eq_any(browsers));
+            query =
+                query.filter($crate::db::schema_manual::bcd_updates_view::browser.eq_any(browsers));
         }
 
         if let (Some(show), Some(user)) = (&$query_params.show, $user_id) {
@@ -111,8 +115,9 @@ macro_rules! apply_filters {
                     .iter()
                     .map(|query| query.uri.to_owned())
                     .collect();
-                query =
-                    query.filter(lower(schema::bcd_updates_read_table::mdn_url).eq_any(user_uris));
+                query = query.filter(
+                    lower($crate::db::schema_manual::bcd_updates_view::mdn_url).eq_any(user_uris),
+                );
             }
         }
         query

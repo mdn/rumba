@@ -191,3 +191,22 @@ pub enum BcdUpdateEventType {
     #[serde(other)]
     Unknown,
 }
+
+#[derive(Copy, Clone, diesel_derive_enum::DbEnum, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[DieselTypePath = "crate::db::schema::sql_types::EngineType"]
+pub enum EngineType {
+    #[serde(rename = "gecko")]
+    Gecko,
+    #[serde(rename = "webkit")]
+    Webkit,
+    #[serde(rename = "blink")]
+    Blink,
+    #[serde(rename = "presto")]
+    Presto,
+    #[serde(rename = "edgehtml")]
+    Edgehtml,
+    #[serde(rename = "trident")]
+    Trident,
+    #[serde(other)]
+    Unknown,
+}
