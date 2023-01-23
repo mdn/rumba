@@ -7,6 +7,7 @@ pub mod notifications;
 pub mod ping;
 #[allow(unused_imports)]
 pub mod schema;
+pub mod schema_manual;
 pub mod settings;
 pub mod types;
 pub mod users;

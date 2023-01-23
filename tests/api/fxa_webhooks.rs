@@ -17,6 +17,7 @@ use rumba::db::schema;
 use rumba::db::types::FxaEvent;
 use rumba::db::types::FxaEventStatus;
 use rumba::db::Pool;
+use serde_json::json;
 use stubr::{Config, Stubr};
 
 const TEN_MS: std::time::Duration = Duration::from_millis(10);
@@ -241,6 +242,11 @@ async fn delete_user_test() -> Result<(), Error> {
         )
         .await;
     assert_eq!(create_res.status(), 201);
+
+    let res = logged_in_client
+        .post("/api/v1/ping", None, Some(PostPayload::Form(json!({}))))
+        .await;
+    assert_eq!(res.response().status(), 201);
 
     let res = logged_in_client.trigger_webhook(set_token).await;
     assert!(res.response().status().is_success());

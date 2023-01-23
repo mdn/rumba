@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::db::types::BcdUpdateEventType;
+use crate::db::types::{BcdUpdateEventType, EngineType};
 use crate::db::v2::bcd_updates::{get_bcd_updates_for_collection, get_bcd_updates_paginated};
 use crate::db::v2::model::{Event, Status};
 use crate::helpers::{array_like_maybe, decode_ids_maybe};
@@ -74,7 +74,7 @@ pub struct CompatInfo {
     pub source_file: Option<String>,
     pub spec_url: Option<String>,
     pub status: Option<StatusInfo>,
-    pub engines: Vec<String>,
+    pub engines: Vec<EngineType>,
 }
 #[derive(Serialize)]
 pub struct BrowserInfo {
@@ -146,7 +146,15 @@ pub async fn get_updates(
         })
         .into_iter()
         .map(|(key, group)| {
-            let collected = group.collect::<Vec<crate::db::v2::model::BcdUpdate>>();
+            let (added, removed): (Vec<_>, Vec<_>) = group
+                .into_iter()
+                .flat_map(|f| f.compat)
+                .partition(|f| f.event_type == BcdUpdateEventType::AddedStable);
+            let (added, removed) = (
+                added.into_iter().map(Into::into).collect(),
+                removed.into_iter().map(Into::into).collect(),
+            );
+
             BcdUpdate {
                 _type: UpdateType::BrowserGrouping,
                 browser: Some(BrowserInfo {
@@ -158,30 +166,7 @@ pub async fn get_updates(
                     version: key.5,
                 }),
                 release_date: key.4,
-                events: BcdUpdateEvent {
-                    added: collected
-                        .iter()
-                        .flat_map(|val| {
-                            val.compat
-                                .iter()
-                                .filter(|to_filter| {
-                                    to_filter.event_type.eq(&BcdUpdateEventType::AddedStable)
-                                })
-                                .map(|hello| hello.into())
-                        })
-                        .collect(),
-                    removed: collected
-                        .iter()
-                        .flat_map(|val| {
-                            val.compat
-                                .iter()
-                                .filter(|to_filter| {
-                                    to_filter.event_type.eq(&BcdUpdateEventType::RemovedStable)
-                                })
-                                .map(|hello| hello.into())
-                        })
-                        .collect(),
-                },
+                events: BcdUpdateEvent { added, removed },
             }
         })
         .collect();
@@ -193,23 +178,23 @@ pub async fn get_updates(
     Ok(HttpResponse::Ok().json(response))
 }
 
-impl From<&Event> for FeatureInfo {
-    fn from(val: &Event) -> Self {
+impl From<Event> for FeatureInfo {
+    fn from(val: Event) -> Self {
         FeatureInfo {
-            path: val.path.clone(),
+            path: val.path,
             compat: CompatInfo {
-                mdn_url: val.mdn_url.clone(),
-                source_file: val.source_file.clone(),
-                spec_url: val.spec_url.clone(),
-                status: val.status.as_ref().map(Into::<StatusInfo>::into),
-                engines: vec![],
+                mdn_url: val.mdn_url,
+                source_file: val.source_file,
+                spec_url: val.spec_url,
+                status: val.status.map(Into::<StatusInfo>::into),
+                engines: val.engines,
             },
         }
     }
 }
 
-impl From<&Status> for StatusInfo {
-    fn from(val: &Status) -> Self {
+impl From<Status> for StatusInfo {
+    fn from(val: Status) -> Self {
         StatusInfo {
             deprecated: val.deprecated,
             experimental: val.experimental,

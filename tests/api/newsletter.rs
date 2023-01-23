@@ -30,7 +30,7 @@ async fn whoami_settings_test() -> Result<(), Error> {
 
     let newsletter = logged_in_client.get("/api/v1/plus/newsletter/", None).await;
 
-    assert_eq!(newsletter.status(), 201);
+    assert_eq!(newsletter.status(), 200);
     let json = read_json(newsletter).await;
     assert_eq!(json["subscribed"], false);
 
@@ -55,7 +55,7 @@ async fn whoami_settings_test() -> Result<(), Error> {
     wait_for_stubr().await?;
     let newsletter = logged_in_client.get("/api/v1/plus/newsletter/", None).await;
 
-    assert_eq!(newsletter.status(), 201);
+    assert_eq!(newsletter.status(), 200);
     let json = read_json(newsletter).await;
     assert_eq!(json["subscribed"], true);
 
