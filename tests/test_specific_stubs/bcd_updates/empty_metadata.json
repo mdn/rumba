@@ -1,0 +1,15 @@
+{
+    "uuid": "empty-metadata",
+    "priority": 1,
+    "request": {
+      "method": "GET",
+      "url": "/en-US/metadata.json"
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "jsonBody": []
+    }
+}

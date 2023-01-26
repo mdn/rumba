@@ -1,0 +1,72 @@
+{
+  "data": [
+    {
+      "type": "browser_grouping",
+      "browser": "edge",
+      "version": "109",
+      "name": "Edge",
+      "engine": "Blink",
+      "engine_version": "109",
+      "release_notes": "",
+      "events": {
+        "added": [
+          {
+            "path": "api.CaptureController",
+            "compat": {
+              "mdn_url": "/en-US/docs/Web/API/CaptureController",
+              "source_file": "api/CaptureController.json",
+              "spec_url": "https://w3c.github.io/mediacapture-screen-share/#dom-capturecontroller",
+              "status": {
+                "deprecated": false,
+                "experimental": true,
+                "standard_track": true
+              },
+              "engines": []
+            }
+          }
+        ],
+        "removed": []
+      },
+      "release_date": "2023-01-12"
+    },
+    {
+      "type": "browser_grouping",
+      "browser": "chrome",
+      "version": "109",
+      "name": "Chrome",
+      "engine": "Blink",
+      "engine_version": "109",
+      "release_notes": "",
+      "events": {
+        "added": [
+          {
+            "path": "api.CaptureController",
+            "compat": {
+              "mdn_url": "/en-US/docs/Web/API/CaptureController",
+              "source_file": "api/CaptureController.json",
+              "spec_url": "https://w3c.github.io/mediacapture-screen-share/#dom-capturecontroller",
+              "status": {
+                "deprecated": false,
+                "experimental": true,
+                "standard_track": true
+              },
+              "engines": []
+            }
+          }
+        ],
+        "removed": []
+      },
+      "release_date": "2023-01-10"
+    }
+  ],
+  "query": {
+    "browsers": null,
+    "category": null,
+    "collections": [1],
+    "page": null,
+    "q": null,
+    "show": null,
+    "sort": null
+  },
+  "last": 1
+}

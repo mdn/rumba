@@ -348,7 +348,11 @@ async fn synchronize_path_mappings(
     pool: &mut PgConnection,
     client: Data<Client>,
 ) -> Result<(), ApiError> {
-    let metadata_url = "https://developer.mozilla.org/en-US/metadata.json";
+    let metadata_url = Url::parse(&format!(
+        "{}/en-US/metadata.json",
+        SETTINGS.application.mdn_metadata_base_url
+    ))
+    .map_err(|_| ApiError::MalformedUrl)?;
     let values = client.get(metadata_url.to_owned()).send().await.map_err(
         |err: reqwest::Error| match err.status() {
             Some(StatusCode::NOT_FOUND) => {
