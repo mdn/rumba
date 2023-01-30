@@ -21,8 +21,8 @@ WITH watching AS (
 )
 INSERT INTO collection_items (created_at, updated_at, deleted_at, document_id, user_id, notes, custom_name,
                                 multiple_collection_id)
-             SELECT now(),
-                    now(),
+             SELECT watching.created_at,
+                    watching.created_at,
                     null,
                     watching.document_id,
                     watching.user_id,
