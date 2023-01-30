@@ -1,4 +1,4 @@
--- Get all unique user id's in wathcing and create them a 'Watched items collection'
+-- Get all unique user id's in watching and create them a 'Watched items collection'
 WITH users_watching AS (
     SELECT distinct user_id
     from watched_items
