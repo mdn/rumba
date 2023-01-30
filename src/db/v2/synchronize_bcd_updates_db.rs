@@ -22,7 +22,7 @@ use url::Url;
 
 use crate::diesel::BoolExpressionMethods;
 
-async fn get_bcd_updates(client: &Data<Client>) -> Result<Value, ApiError> {    
+async fn get_bcd_updates(client: &Data<Client>) -> Result<Value, ApiError> {
     let res = client
         .get(SETTINGS.application.bcd_updates_url.as_ref())
         .send()
