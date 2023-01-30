@@ -49,10 +49,7 @@ async fn test_bcd_updates_basic_pagination() -> Result<(), Error> {
     let mut results = Vec::new();
     for i in 1..3 {
         let res = logged_in_client
-            .get(
-                &format!("/api/v2/updates/?page={i}"),
-                None,
-            )
+            .get(&format!("/api/v2/updates/?page={i}"), None)
             .await;
         let json = read_json(res).await;
         results.push(json["data"].as_array().unwrap().clone());
@@ -84,7 +81,6 @@ async fn test_bcd_updates_basic_pagination() -> Result<(), Error> {
     let events = firefox_107["events"].take();
     let added = &events["added"];
     let removed = &events["removed"];
-
 
     assert_eq!(
         json!(

@@ -20,7 +20,7 @@ admin_update_bearer_token="TEST_TOKEN"
 [application]
 document_base_url = "http://localhost:4321"
 notifications_update_base_url = "http://localhost:4321/notifications"
-bcd_updates_base_url = "http://localhost:4321/rumba-bcd-updates"
+bcd_updates_url = "http://localhost:4321/rumba-bcd-updates/bcd-updates.json"
 mdn_metadata_base_url = "http://localhost:4321"
 subscriptions_limit_watched_items = 3
 subscriptions_limit_collections = 5

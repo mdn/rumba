@@ -29,7 +29,7 @@ settings:
 
   application__document_base_url: "https://developer.mozilla.org"
   application__notifications_update_base_url: "https://updates.developer.mozilla.org/notifications"
-  application__bcd_updates_base_url: "https://updates.developer.mozilla.org/rumba-bcd-updates"
+  application__bcd_updates_url: "https://updates.developer.mozilla.org/rumba-bcd-updates/bcd-updates.json"
   application__mdn_metadata_base_url: "https://developer.mozilla.org"
 
   application__subscriptions_limit_watched_items: 3

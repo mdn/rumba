@@ -22,15 +22,9 @@ use url::Url;
 
 use crate::diesel::BoolExpressionMethods;
 
-async fn get_bcd_updates(client: &Data<Client>) -> Result<Value, ApiError> {
-    let update_url = Url::parse(&format!(
-        "{}/bcd-updates.json",
-        SETTINGS.application.bcd_updates_base_url
-    ))
-    .map_err(|_| ApiError::MalformedUrl)?;
-
+async fn get_bcd_updates(client: &Data<Client>) -> Result<Value, ApiError> {    
     let res = client
-        .get(update_url)
+        .get(SETTINGS.application.bcd_updates_url.as_ref())
         .send()
         .await
         .map_err(|err: reqwest::Error| match err.status() {
