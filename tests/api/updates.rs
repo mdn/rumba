@@ -85,7 +85,6 @@ async fn test_bcd_updates_basic_pagination() -> Result<(), Error> {
     let added = &events["added"];
     let removed = &events["removed"];
 
-    firefox_107["events"].take();
 
     assert_eq!(
         json!(
