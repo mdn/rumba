@@ -50,7 +50,7 @@ async fn test_bcd_updates_basic_pagination() -> Result<(), Error> {
     for i in 1..3 {
         let res = logged_in_client
             .get(
-                format!("{0}?page={1}", "/api/v2/updates/", i).as_str(),
+                &format!("/api/v2/updates/?page={i}"),
                 None,
             )
             .await;
