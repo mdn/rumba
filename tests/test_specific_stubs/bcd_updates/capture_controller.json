@@ -1,0 +1,49 @@
+{
+  "uuid": "CaptureController_json",
+  "priority": 1,
+  "request": {
+    "method": "GET",
+    "url": "/en-US/docs/Web/API/CaptureController/index.json"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "doc": {
+        "isMarkdown": true,
+        "isTranslated": false,
+        "isActive": true,
+        "title": "CaptureController",
+        "mdn_url": "/en-US/docs/Web/API/CaptureController",
+        "locale": "en-US",
+        "native": "English (US)",
+        "browserCompat": ["api.CaptureController"],
+        "sidebarHTML": "",
+        "body": [],
+        "toc": [],
+        "summary": "The CaptureController interface provides methods that can be used to further manipulate a capture session separate from its initiation via MediaDevices.getDisplayMedia().",
+        "popularity": 0.0001,
+        "modified": "2022-12-22T00:51:29.000Z",
+        "source": {
+          "folder": "en-us/web/api/capturecontroller",
+          "github_url": "https://github.com/mdn/content/blob/main/files/en-us/web/api/capturecontroller/index.md",
+          "last_commit_url": "https://github.com/mdn/content/commit/54dc4f860070a2e9857be06d391c6c181f0a4573",
+          "filename": "index.md"
+        },
+        "short_title": "CaptureController",
+        "parents": [
+          { "uri": "/en-US/docs/Web", "title": "References" },
+          { "uri": "/en-US/docs/Web/API", "title": "Web APIs" },
+          {
+            "uri": "/en-US/docs/Web/API/CaptureController",
+            "title": "CaptureController"
+          }
+        ],
+        "pageTitle": "CaptureController - Web APIs | MDN",
+        "noIndexing": false
+      }
+    }
+  }
+}

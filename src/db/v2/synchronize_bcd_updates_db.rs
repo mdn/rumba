@@ -18,19 +18,12 @@ use diesel::upsert::excluded;
 use diesel::{sql_query, update, PgConnection};
 use reqwest::Client;
 use serde_json::Value;
-use url::Url;
 
 use crate::diesel::BoolExpressionMethods;
 
 async fn get_bcd_updates(client: &Data<Client>) -> Result<Value, ApiError> {
-    let update_url = Url::parse(&format!(
-        "{}/bcd-updates.json",
-        SETTINGS.application.bcd_updates_base_url
-    ))
-    .map_err(|_| ApiError::MalformedUrl)?;
-
     let res = client
-        .get(update_url)
+        .get(SETTINGS.application.bcd_updates_url.as_ref())
         .send()
         .await
         .map_err(|err: reqwest::Error| match err.status() {
@@ -348,19 +341,26 @@ async fn synchronize_path_mappings(
     pool: &mut PgConnection,
     client: Data<Client>,
 ) -> Result<(), ApiError> {
-    let metadata_url = "https://developer.mozilla.org/en-US/metadata.json";
-    let values = client.get(metadata_url.to_owned()).send().await.map_err(
-        |err: reqwest::Error| match err.status() {
+    let values = client
+        .get(SETTINGS.application.mdn_metadata_url.clone())
+        .send()
+        .await
+        .map_err(|err: reqwest::Error| match err.status() {
             Some(StatusCode::NOT_FOUND) => {
-                warn!("Error NOT_FOUND fetching all metadata {} ", &metadata_url);
+                warn!(
+                    "Error NOT_FOUND fetching all metadata {} ",
+                    &SETTINGS.application.mdn_metadata_url
+                );
                 ApiError::DocumentNotFound
             }
             _ => {
-                warn!("Error Unknown fetching all metadata {} ", &metadata_url);
+                warn!(
+                    "Error Unknown fetching all metadata {} ",
+                    &SETTINGS.application.mdn_metadata_url
+                );
                 ApiError::Unknown
             }
-        },
-    )?;
+        })?;
 
     let json: Value = values
         .json()

@@ -1,0 +1,3281 @@
+{
+  "uuid": "bcd-changes",
+  "priority": 1,
+  "request": {
+    "method": "GET",
+    "url": "/rumba-bcd-updates/bcd-updates.json"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "browsers": {
+        "chrome": {
+          "accepts_flags": true,
+          "accepts_webextensions": true,
+          "name": "Chrome",
+          "pref_url": "chrome://flags",
+          "preview_name": "Canary",
+          "releases": {
+            "107": {
+              "engine": "Blink",
+              "engine_version": "107",
+              "release_date": "2022-10-25",
+              "release_notes": "https://chromereleases.googleblog.com/2022/10/stable-channel-update-for-desktop_25.html",
+              "status": "retired"
+            },
+            "108": {
+              "engine": "Blink",
+              "engine_version": "108",
+              "release_date": "2022-11-29",
+              "release_notes": "https://chromereleases.googleblog.com/2022/11/stable-channel-update-for-desktop_29.html",
+              "status": "retired"
+            },
+            "109": {
+              "engine": "Blink",
+              "engine_version": "109",
+              "release_date": "2023-01-10",
+              "release_notes": "https://chromereleases.googleblog.com/2023/01/stable-channel-update-for-desktop.html",
+              "status": "current"
+            }
+          },
+          "type": "desktop"
+        },
+        "edge": {
+          "accepts_flags": true,
+          "accepts_webextensions": true,
+          "name": "Edge",
+          "pref_url": "about:flags",
+          "releases": {
+            "107": {
+              "engine": "Blink",
+              "engine_version": "107",
+              "release_date": "2022-10-27",
+              "release_notes": "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-relnote-stable-channel#version-1070141824-october-27-2022",
+              "status": "retired"
+            },
+            "108": {
+              "engine": "Blink",
+              "engine_version": "108",
+              "release_date": "2022-12-06",
+              "release_notes": "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-relnote-stable-channel#version-1080146242-december-5-2022",
+              "status": "retired"
+            },
+            "109": {
+              "engine": "Blink",
+              "engine_version": "109",
+              "release_date": "2023-01-12",
+              "release_notes": "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-relnote-stable-channel#version-1090151849-january-12-2023",
+              "status": "current"
+            }
+          },
+          "type": "desktop",
+          "upstream": "chrome"
+        },
+        "firefox": {
+          "accepts_flags": true,
+          "accepts_webextensions": true,
+          "name": "Firefox",
+          "pref_url": "about:config",
+          "preview_name": "Nightly",
+          "releases": {
+            "107": {
+              "engine": "Gecko",
+              "engine_version": "107",
+              "release_date": "2022-11-15",
+              "release_notes": "https://developer.mozilla.org/docs/Mozilla/Firefox/Releases/107",
+              "status": "retired"
+            },
+            "108": {
+              "engine": "Gecko",
+              "engine_version": "108",
+              "release_date": "2022-12-13",
+              "release_notes": "https://developer.mozilla.org/docs/Mozilla/Firefox/Releases/108",
+              "status": "retired"
+            },
+            "109": {
+              "engine": "Gecko",
+              "engine_version": "109",
+              "release_date": "2023-01-17",
+              "release_notes": "https://developer.mozilla.org/docs/Mozilla/Firefox/Releases/109",
+              "status": "current"
+            }
+          },
+          "type": "desktop"
+        }
+      },
+      "added_removed": [
+        [
+          { "browser": "firefox", "version": "109", "release_date": "2023-01-17" },
+          {
+            "added": [
+              "api.Document.scrollend_event",
+              "api.Element.scrollend_event",
+              "css.at-rules.font-face.src.drop_invalid_item",
+              "css.properties.content-visibility",
+              "css.types.color.system-color.mark_marktext_buttonborder",
+              "html.elements.input.type_range.tick_marks",
+              "webextensions.api.omnibox.SuggestResult.deletable",
+              "webextensions.api.omnibox.onDeleteSuggestion",
+              "webextensions.api.webRequest.SecurityInfo.secretKeyLength"
+            ],
+            "removed": []
+          }
+        ],
+        [
+          { "browser": "edge", "version": "109", "release_date": "2023-01-12" },
+          {
+            "added": [
+              "api.CaptureController",
+              "api.CaptureController.CaptureController",
+              "api.CaptureController.setFocusBehavior",
+              "api.CookieStore.delete.partitioned_option",
+              "api.CookieStore.get.partitioned_return_property",
+              "api.CookieStore.getAll.partitioned_return_property",
+              "api.CookieStore.set.partitioned_option",
+              "api.MathMLElement",
+              "api.MathMLElement.blur",
+              "api.MathMLElement.dataset",
+              "api.MathMLElement.focus",
+              "api.MathMLElement.style",
+              "api.MathMLElement.tabIndex",
+              "api.MediaDevices.getDisplayMedia.controller_option",
+              "api.MediaTrackConstraints.suppressLocalAudioPlayback",
+              "api.MediaTrackSettings.suppressLocalAudioPlayback",
+              "api.MediaTrackSupportedConstraints.suppressLocalAudioPlayback",
+              "api.PerformanceResourceTiming.responseStatus",
+              "api.WebTransport.createUnidirectionalStream.byob_readers",
+              "css.properties.display.math",
+              "css.properties.font-family.math",
+              "css.properties.font-size.math",
+              "css.properties.hyphenate-limit-chars",
+              "css.properties.math-depth",
+              "css.properties.math-shift",
+              "css.properties.math-style",
+              "css.properties.text-transform.math-auto",
+              "css.types.length.lh",
+              "http.headers.Set-Cookie.Partitioned",
+              "mathml.elements.maction",
+              "mathml.elements.math",
+              "mathml.elements.math.display",
+              "mathml.elements.merror",
+              "mathml.elements.mfrac",
+              "mathml.elements.mfrac.linethickness",
+              "mathml.elements.mi",
+              "mathml.elements.mmultiscripts",
+              "mathml.elements.mn",
+              "mathml.elements.mo",
+              "mathml.elements.mo.lspace",
+              "mathml.elements.mo.maxsize",
+              "mathml.elements.mo.minsize",
+              "mathml.elements.mo.moveablelimits",
+              "mathml.elements.mo.rspace",
+              "mathml.elements.mo.stretchy",
+              "mathml.elements.mo.symmetric",
+              "mathml.elements.mover",
+              "mathml.elements.mover.accent",
+              "mathml.elements.mpadded",
+              "mathml.elements.mpadded.depth",
+              "mathml.elements.mpadded.height",
+              "mathml.elements.mpadded.lspace",
+              "mathml.elements.mpadded.voffset",
+              "mathml.elements.mpadded.width",
+              "mathml.elements.mphantom",
+              "mathml.elements.mroot",
+              "mathml.elements.mrow",
+              "mathml.elements.ms",
+              "mathml.elements.mspace",
+              "mathml.elements.mspace.depth",
+              "mathml.elements.mspace.height",
+              "mathml.elements.mspace.width",
+              "mathml.elements.msqrt",
+              "mathml.elements.mstyle",
+              "mathml.elements.msub",
+              "mathml.elements.msubsup",
+              "mathml.elements.msup",
+              "mathml.elements.mtable",
+              "mathml.elements.mtd",
+              "mathml.elements.mtext",
+              "mathml.elements.mtr",
+              "mathml.elements.munder",
+              "mathml.elements.munder.accentunder",
+              "mathml.elements.munderover",
+              "mathml.elements.munderover.accent",
+              "mathml.elements.munderover.accentunder",
+              "mathml.elements.semantics",
+              "mathml.global_attributes.dir",
+              "mathml.global_attributes.displaystyle",
+              "mathml.global_attributes.mathbackground",
+              "mathml.global_attributes.mathcolor",
+              "mathml.global_attributes.mathsize",
+              "mathml.global_attributes.scriptlevel",
+              "svg.attributes.conditional_processing.requiredExtensions.mathml"
+            ],
+            "removed": []
+          }
+        ],
+        [
+          { "browser": "chrome", "version": "109", "release_date": "2023-01-10" },
+          {
+            "added": [
+              "api.CaptureController",
+              "api.CaptureController.CaptureController",
+              "api.CaptureController.setFocusBehavior",
+              "api.CookieStore.delete.partitioned_option",
+              "api.CookieStore.get.partitioned_return_property",
+              "api.CookieStore.getAll.partitioned_return_property",
+              "api.CookieStore.set.partitioned_option",
+              "api.MathMLElement",
+              "api.MathMLElement.blur",
+              "api.MathMLElement.dataset",
+              "api.MathMLElement.focus",
+              "api.MathMLElement.style",
+              "api.MathMLElement.tabIndex",
+              "api.MediaDevices.getDisplayMedia.controller_option",
+              "api.MediaTrackConstraints.suppressLocalAudioPlayback",
+              "api.MediaTrackSettings.suppressLocalAudioPlayback",
+              "api.MediaTrackSupportedConstraints.suppressLocalAudioPlayback",
+              "api.PerformanceResourceTiming.responseStatus",
+              "api.WebTransport.createUnidirectionalStream.byob_readers",
+              "css.properties.display.math",
+              "css.properties.font-family.math",
+              "css.properties.font-size.math",
+              "css.properties.hyphenate-limit-chars",
+              "css.properties.math-depth",
+              "css.properties.math-shift",
+              "css.properties.math-style",
+              "css.properties.text-transform.math-auto",
+              "css.types.length.lh",
+              "http.headers.Set-Cookie.Partitioned",
+              "mathml.elements.maction",
+              "mathml.elements.math",
+              "mathml.elements.math.display",
+              "mathml.elements.merror",
+              "mathml.elements.mfrac",
+              "mathml.elements.mfrac.linethickness",
+              "mathml.elements.mi",
+              "mathml.elements.mmultiscripts",
+              "mathml.elements.mn",
+              "mathml.elements.mo",
+              "mathml.elements.mo.lspace",
+              "mathml.elements.mo.maxsize",
+              "mathml.elements.mo.minsize",
+              "mathml.elements.mo.moveablelimits",
+              "mathml.elements.mo.rspace",
+              "mathml.elements.mo.stretchy",
+              "mathml.elements.mo.symmetric",
+              "mathml.elements.mover",
+              "mathml.elements.mover.accent",
+              "mathml.elements.mpadded",
+              "mathml.elements.mpadded.depth",
+              "mathml.elements.mpadded.height",
+              "mathml.elements.mpadded.lspace",
+              "mathml.elements.mpadded.voffset",
+              "mathml.elements.mpadded.width",
+              "mathml.elements.mphantom",
+              "mathml.elements.mroot",
+              "mathml.elements.mrow",
+              "mathml.elements.ms",
+              "mathml.elements.mspace",
+              "mathml.elements.mspace.depth",
+              "mathml.elements.mspace.height",
+              "mathml.elements.mspace.width",
+              "mathml.elements.msqrt",
+              "mathml.elements.mstyle",
+              "mathml.elements.msub",
+              "mathml.elements.msubsup",
+              "mathml.elements.msup",
+              "mathml.elements.mtable",
+              "mathml.elements.mtd",
+              "mathml.elements.mtext",
+              "mathml.elements.mtr",
+              "mathml.elements.munder",
+              "mathml.elements.munder.accentunder",
+              "mathml.elements.munderover",
+              "mathml.elements.munderover.accent",
+              "mathml.elements.munderover.accentunder",
+              "mathml.elements.semantics",
+              "mathml.global_attributes.dir",
+              "mathml.global_attributes.displaystyle",
+              "mathml.global_attributes.mathbackground",
+              "mathml.global_attributes.mathcolor",
+              "mathml.global_attributes.mathsize",
+              "mathml.global_attributes.scriptlevel",
+              "svg.attributes.conditional_processing.requiredExtensions.mathml"
+            ],
+            "removed": []
+          }
+        ],
+        [
+          { "browser": "firefox", "version": "108", "release_date": "2022-12-13" },
+          {
+            "added": [
+              "api.CSPViolationReportBody.effectiveDirective",
+              "api.CSPViolationReportBody.statusCode",
+              "api.HTMLSourceElement.height",
+              "api.HTMLSourceElement.width",
+              "api.MIDIAccess",
+              "api.MIDIAccess.inputs",
+              "api.MIDIAccess.outputs",
+              "api.MIDIAccess.statechange_event",
+              "api.MIDIAccess.sysexEnabled",
+              "api.MIDIConnectionEvent",
+              "api.MIDIConnectionEvent.MIDIConnectionEvent",
+              "api.MIDIConnectionEvent.port",
+              "api.MIDIInput",
+              "api.MIDIInput.midimessage_event",
+              "api.MIDIInputMap",
+              "api.MIDIInputMap.@@iterator",
+              "api.MIDIInputMap.entries",
+              "api.MIDIInputMap.forEach",
+              "api.MIDIInputMap.get",
+              "api.MIDIInputMap.has",
+              "api.MIDIInputMap.keys",
+              "api.MIDIInputMap.size",
+              "api.MIDIInputMap.values",
+              "api.MIDIMessageEvent",
+              "api.MIDIMessageEvent.MIDIMessageEvent",
+              "api.MIDIMessageEvent.data",
+              "api.MIDIOutput",
+              "api.MIDIOutput.clear",
+              "api.MIDIOutput.send",
+              "api.MIDIOutputMap",
+              "api.MIDIOutputMap.entries",
+              "api.MIDIOutputMap.forEach",
+              "api.MIDIOutputMap.get",
+              "api.MIDIOutputMap.has",
+              "api.MIDIOutputMap.keys",
+              "api.MIDIOutputMap.size",
+              "api.MIDIOutputMap.values",
+              "api.MIDIPort",
+              "api.MIDIPort.close",
+              "api.MIDIPort.connection",
+              "api.MIDIPort.id",
+              "api.MIDIPort.manufacturer",
+              "api.MIDIPort.name",
+              "api.MIDIPort.open",
+              "api.MIDIPort.state",
+              "api.MIDIPort.statechange_event",
+              "api.MIDIPort.type",
+              "api.MIDIPort.version",
+              "api.Navigator.requestMIDIAccess",
+              "api.Navigator.requestMIDIAccess.secure_context_required",
+              "api.OES_draw_buffers_indexed",
+              "api.OES_draw_buffers_indexed.blendEquationSeparateiOES",
+              "api.OES_draw_buffers_indexed.blendEquationiOES",
+              "api.OES_draw_buffers_indexed.blendFuncSeparateiOES",
+              "api.OES_draw_buffers_indexed.blendFunciOES",
+              "api.OES_draw_buffers_indexed.colorMaskiOES",
+              "api.OES_draw_buffers_indexed.disableiOES",
+              "api.OES_draw_buffers_indexed.enableiOES",
+              "css.properties.font-variant.font-variant-emoji",
+              "css.properties.font-variant-emoji",
+              "css.types.acos",
+              "css.types.asin",
+              "css.types.atan",
+              "css.types.atan2",
+              "css.types.calc-constant",
+              "css.types.calc-constant.NaN",
+              "css.types.calc-constant.e",
+              "css.types.calc-constant.infinity",
+              "css.types.calc-constant.pi",
+              "css.types.cos",
+              "css.types.sin",
+              "css.types.tan",
+              "html.elements.script.type.importmap",
+              "html.elements.source.height",
+              "html.elements.source.width",
+              "http.headers.Content-Security-Policy.script-src-attr",
+              "http.headers.Content-Security-Policy.script-src-elem",
+              "http.headers.Content-Security-Policy.style-src-attr",
+              "http.headers.Content-Security-Policy.style-src-elem"
+            ],
+            "removed": []
+          }
+        ],
+        [
+          { "browser": "edge", "version": "108", "release_date": "2022-12-06" },
+          {
+            "added": [
+              "api.CSS.vb",
+              "api.CSS.vi",
+              "api.ContentVisibilityAutoStateChangedEvent",
+              "api.ContentVisibilityAutoStateChangedEvent.ContentVisibilityAutoStateChangedEvent",
+              "api.ContentVisibilityAutoStateChangedEvent.skipped",
+              "api.CredentialsContainer.get.identity_option",
+              "api.Element.contentvisibilityautostatechanged_event",
+              "api.HTMLFormElement.rel",
+              "api.HTMLFormElement.relList",
+              "api.IdentityCredential",
+              "api.IdentityCredential.token",
+              "api.MediaSource.MediaSource.worker_support",
+              "api.MediaSource.activeSourceBuffers.worker_support",
+              "api.MediaSource.addSourceBuffer.worker_support",
+              "api.MediaSource.canConstructInDedicatedWorker",
+              "api.MediaSource.clearLiveSeekableRange.worker_support",
+              "api.MediaSource.duration.worker_support",
+              "api.MediaSource.endOfStream.worker_support",
+              "api.MediaSource.handle",
+              "api.MediaSource.isTypeSupported.worker_support",
+              "api.MediaSource.readyState.worker_support",
+              "api.MediaSource.removeSourceBuffer.worker_support",
+              "api.MediaSource.setLiveSeekableRange.worker_support",
+              "api.MediaSource.sourceBuffers.worker_support",
+              "api.MediaSource.sourceclose_event.worker_support",
+              "api.MediaSource.sourceended_event.worker_support",
+              "api.MediaSource.sourceopen_event.worker_support",
+              "api.MediaSourceHandle",
+              "api.PublicKeyCredential.isConditionalMediationAvailable",
+              "api.SourceBuffer.abort.worker_support",
+              "api.SourceBuffer.abort_event.worker_support",
+              "api.SourceBuffer.appendBuffer.worker_support",
+              "api.SourceBuffer.appendWindowEnd.worker_support",
+              "api.SourceBuffer.appendWindowStart.worker_support",
+              "api.SourceBuffer.buffered.worker_support",
+              "api.SourceBuffer.changeType.worker_support",
+              "api.SourceBuffer.error_event.worker_support",
+              "api.SourceBuffer.mode.worker_support",
+              "api.SourceBuffer.remove.worker_support",
+              "api.SourceBuffer.timestampOffset.worker_support",
+              "api.SourceBuffer.update_event.worker_support",
+              "api.SourceBuffer.updateend_event.worker_support",
+              "api.SourceBuffer.updatestart_event.worker_support",
+              "api.SourceBuffer.updating.worker_support",
+              "api.SourceBufferList.addsourcebuffer_event.worker_support",
+              "api.SourceBufferList.length.worker_support",
+              "api.SourceBufferList.removesourcebuffer_event.worker_support",
+              "css.types.length.vb",
+              "css.types.length.vi",
+              "css.types.length.viewport_percentage_units_dynamic",
+              "css.types.length.viewport_percentage_units_large",
+              "css.types.length.viewport_percentage_units_small",
+              "http.headers.Permissions-Policy.wildcards",
+              "http.headers.Sec-CH-Prefers-Reduced-Motion"
+            ],
+            "removed": [
+              "api.NavigateEvent.canTransition",
+              "api.NavigateEvent.restoreScroll",
+              "api.NavigateEvent.transitionWhile"
+            ]
+          }
+        ],
+        [
+          { "browser": "chrome", "version": "108", "release_date": "2022-11-29" },
+          {
+            "added": [
+              "api.CSS.vb",
+              "api.CSS.vi",
+              "api.ContentVisibilityAutoStateChangedEvent",
+              "api.ContentVisibilityAutoStateChangedEvent.ContentVisibilityAutoStateChangedEvent",
+              "api.ContentVisibilityAutoStateChangedEvent.skipped",
+              "api.CredentialsContainer.get.identity_option",
+              "api.Element.contentvisibilityautostatechanged_event",
+              "api.HTMLFormElement.rel",
+              "api.HTMLFormElement.relList",
+              "api.IdentityCredential",
+              "api.IdentityCredential.token",
+              "api.MediaSource.MediaSource.worker_support",
+              "api.MediaSource.activeSourceBuffers.worker_support",
+              "api.MediaSource.addSourceBuffer.worker_support",
+              "api.MediaSource.canConstructInDedicatedWorker",
+              "api.MediaSource.clearLiveSeekableRange.worker_support",
+              "api.MediaSource.duration.worker_support",
+              "api.MediaSource.endOfStream.worker_support",
+              "api.MediaSource.handle",
+              "api.MediaSource.isTypeSupported.worker_support",
+              "api.MediaSource.readyState.worker_support",
+              "api.MediaSource.removeSourceBuffer.worker_support",
+              "api.MediaSource.setLiveSeekableRange.worker_support",
+              "api.MediaSource.sourceBuffers.worker_support",
+              "api.MediaSource.sourceclose_event.worker_support",
+              "api.MediaSource.sourceended_event.worker_support",
+              "api.MediaSource.sourceopen_event.worker_support",
+              "api.MediaSourceHandle",
+              "api.PublicKeyCredential.isConditionalMediationAvailable",
+              "api.SourceBuffer.abort.worker_support",
+              "api.SourceBuffer.abort_event.worker_support",
+              "api.SourceBuffer.appendBuffer.worker_support",
+              "api.SourceBuffer.appendWindowEnd.worker_support",
+              "api.SourceBuffer.appendWindowStart.worker_support",
+              "api.SourceBuffer.buffered.worker_support",
+              "api.SourceBuffer.changeType.worker_support",
+              "api.SourceBuffer.error_event.worker_support",
+              "api.SourceBuffer.mode.worker_support",
+              "api.SourceBuffer.remove.worker_support",
+              "api.SourceBuffer.timestampOffset.worker_support",
+              "api.SourceBuffer.update_event.worker_support",
+              "api.SourceBuffer.updateend_event.worker_support",
+              "api.SourceBuffer.updatestart_event.worker_support",
+              "api.SourceBuffer.updating.worker_support",
+              "api.SourceBufferList.addsourcebuffer_event.worker_support",
+              "api.SourceBufferList.length.worker_support",
+              "api.SourceBufferList.removesourcebuffer_event.worker_support",
+              "css.types.length.vb",
+              "css.types.length.vi",
+              "css.types.length.viewport_percentage_units_dynamic",
+              "css.types.length.viewport_percentage_units_large",
+              "css.types.length.viewport_percentage_units_small",
+              "http.headers.Permissions-Policy.wildcards",
+              "http.headers.Sec-CH-Prefers-Reduced-Motion"
+            ],
+            "removed": [
+              "api.NavigateEvent.canTransition",
+              "api.NavigateEvent.restoreScroll",
+              "api.NavigateEvent.transitionWhile"
+            ]
+          }
+        ],
+        [
+          { "browser": "firefox", "version": "107", "release_date": "2022-11-15" },
+          {
+            "added": [
+              "api.CSSFontPaletteValuesRule",
+              "api.CSSFontPaletteValuesRule.basePalette",
+              "api.CSSFontPaletteValuesRule.fontFamily",
+              "api.CSSFontPaletteValuesRule.name",
+              "api.CSSFontPaletteValuesRule.overrideColors",
+              "css.at-rules.font-palette-values",
+              "css.at-rules.font-palette-values.base-palette",
+              "css.at-rules.font-palette-values.font-family",
+              "css.at-rules.font-palette-values.override-colors",
+              "css.properties.contain-intrinsic-block-size",
+              "css.properties.contain-intrinsic-height",
+              "css.properties.contain-intrinsic-inline-size",
+              "css.properties.contain-intrinsic-size",
+              "css.properties.contain-intrinsic-width",
+              "css.properties.font-palette"
+            ],
+            "removed": [
+              "api.SVGSVGElement.useCurrentView",
+              "mathml.elements.ms.lquote_rquote_attributes"
+            ]
+          }
+        ],
+        [
+          { "browser": "edge", "version": "107", "release_date": "2022-10-27" },
+          {
+            "added": [
+              "api.MediaDevices.getDisplayMedia.selfBrowserSurface_option",
+              "api.MediaDevices.getDisplayMedia.surfaceSwitching_option",
+              "api.MediaTrackConstraints.displaySurface",
+              "api.MediaTrackSupportedConstraints.displaySurface",
+              "api.PerformanceResourceTiming.renderBlockingStatus",
+              "api.URLPattern.URLPattern.ignoreCase_option",
+              "api.XRCamera",
+              "api.XRCamera.height",
+              "api.XRCamera.width",
+              "api.XRView.camera",
+              "api.XRWebGLBinding.getCameraImage",
+              "css.properties.grid-template-columns.animation",
+              "css.properties.grid-template-rows.animation"
+            ],
+            "removed": []
+          }
+        ],
+        [
+          { "browser": "chrome", "version": "107", "release_date": "2022-10-25" },
+          {
+            "added": [
+              "api.MediaDevices.getDisplayMedia.selfBrowserSurface_option",
+              "api.MediaDevices.getDisplayMedia.surfaceSwitching_option",
+              "api.MediaTrackConstraints.displaySurface",
+              "api.MediaTrackSupportedConstraints.displaySurface",
+              "api.PerformanceResourceTiming.renderBlockingStatus",
+              "api.URLPattern.URLPattern.ignoreCase_option",
+              "api.XRCamera",
+              "api.XRCamera.height",
+              "api.XRCamera.width",
+              "api.XRView.camera",
+              "api.XRWebGLBinding.getCameraImage",
+              "css.properties.grid-template-columns.animation",
+              "css.properties.grid-template-rows.animation"
+            ],
+            "removed": []
+          }
+        ]
+      ],
+      "features": [
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/CSPViolationReportBody/effectiveDirective",
+          "source_file": "api/CSPViolationReportBody.json",
+          "spec_url": "https://w3c.github.io/webappsec-csp/#dom-cspviolationreportbody-effectivedirective",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.CSPViolationReportBody.effectiveDirective"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/CSPViolationReportBody/statusCode",
+          "source_file": "api/CSPViolationReportBody.json",
+          "spec_url": "https://w3c.github.io/webappsec-csp/#dom-cspviolationreportbody-statuscode",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.CSPViolationReportBody.statusCode"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/CSS/vb",
+          "source_file": "api/CSS.json",
+          "spec_url": "https://drafts.css-houdini.org/css-typed-om/#dom-css-vb",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.CSS.vb"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/CSS/vi",
+          "source_file": "api/CSS.json",
+          "spec_url": "https://drafts.css-houdini.org/css-typed-om/#dom-css-vi",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.CSS.vi"
+        },
+        {
+          "source_file": "api/CSSFontPaletteValuesRule.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-fonts-4/#om-fontpalettevalues",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.CSSFontPaletteValuesRule"
+        },
+        {
+          "source_file": "api/CSSFontPaletteValuesRule.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-fonts-4/#dom-cssfontpalettevaluesrule-basepalette",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.CSSFontPaletteValuesRule.basePalette"
+        },
+        {
+          "source_file": "api/CSSFontPaletteValuesRule.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-fonts-4/#dom-cssfontpalettevaluesrule-fontfamily",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.CSSFontPaletteValuesRule.fontFamily"
+        },
+        {
+          "source_file": "api/CSSFontPaletteValuesRule.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-fonts-4/#dom-cssfontpalettevaluesrule-name",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.CSSFontPaletteValuesRule.name"
+        },
+        {
+          "source_file": "api/CSSFontPaletteValuesRule.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-fonts-4/#dom-cssfontpalettevaluesrule-overridecolors",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.CSSFontPaletteValuesRule.overrideColors"
+        },
+        {
+          "mdn_url": "/en-US/docs/Web/API/CaptureController",
+          "source_file": "api/CaptureController.json",
+          "spec_url": "https://w3c.github.io/mediacapture-screen-share/#dom-capturecontroller",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.CaptureController"
+        },
+        {
+          "description": "<code>CaptureController()</code> constructor",
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/CaptureController/CaptureController",
+          "source_file": "api/CaptureController.json",
+          "spec_url": "https://w3c.github.io/mediacapture-screen-share/#dom-capturecontroller-constructor",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.CaptureController.CaptureController"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/CaptureController/setFocusBehavior",
+          "source_file": "api/CaptureController.json",
+          "spec_url": "https://w3c.github.io/mediacapture-screen-share/#dom-capturecontroller-setfocusbehavior",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.CaptureController.setFocusBehavior"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/ContentVisibilityAutoStateChangedEvent",
+          "source_file": "api/ContentVisibilityAutoStateChangedEvent.json",
+          "spec_url": "https://www.w3.org/TR/css-contain-2/#content-visibility-auto-state-changed",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.ContentVisibilityAutoStateChangedEvent"
+        },
+        {
+          "description": "<code>ContentVisibilityAutoStateChangedEvent()</code> constructor",
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/ContentVisibilityAutoStateChangedEvent/ContentVisibilityAutoStateChangedEvent",
+          "source_file": "api/ContentVisibilityAutoStateChangedEvent.json",
+          "spec_url": "https://www.w3.org/TR/css-contain-2/#dom-contentvisibilityautostatechangedevent-contentvisibilityautostatechangedevent",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.ContentVisibilityAutoStateChangedEvent.ContentVisibilityAutoStateChangedEvent"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/ContentVisibilityAutoStateChangedEvent/skipped",
+          "source_file": "api/ContentVisibilityAutoStateChangedEvent.json",
+          "spec_url": "https://www.w3.org/TR/css-contain-2/#dom-contentvisibilityautostatechangedevent-skipped",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.ContentVisibilityAutoStateChangedEvent.skipped"
+        },
+        {
+          "description": "<code>partitioned</code> option",
+          "source_file": "api/CookieStore.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": false
+          },
+          "path": "api.CookieStore.delete.partitioned_option"
+        },
+        {
+          "description": "<code>partitioned</code> in return value",
+          "source_file": "api/CookieStore.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": false
+          },
+          "path": "api.CookieStore.get.partitioned_return_property"
+        },
+        {
+          "description": "<code>partitioned</code> in return value",
+          "source_file": "api/CookieStore.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": false
+          },
+          "path": "api.CookieStore.getAll.partitioned_return_property"
+        },
+        {
+          "description": "<code>partitioned</code> option",
+          "source_file": "api/CookieStore.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": false
+          },
+          "path": "api.CookieStore.set.partitioned_option"
+        },
+        {
+          "description": "<code>identity</code> option",
+          "source_file": "api/CredentialsContainer.json",
+          "spec_url": "https://fedidcg.github.io/FedCM/#dom-credentialrequestoptions-identity",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.CredentialsContainer.get.identity_option"
+        },
+        {
+          "description": "<code>scrollend</code> event",
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/Document/scrollend_event",
+          "source_file": "api/Document.json",
+          "spec_url": [
+            "https://w3c.github.io/csswg-drafts/cssom-view/#eventdef-document-scrollend",
+            "https://html.spec.whatwg.org/multipage/webappapis.html#handler-onscrollend"
+          ],
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.Document.scrollend_event"
+        },
+        {
+          "description": "<code>contentvisibilityautostatechanged</code> event",
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/Element/contentvisibilityautostatechanged_event",
+          "source_file": "api/Element.json",
+          "spec_url": "https://www.w3.org/TR/css-contain-2/#content-visibility-auto-state-changed",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.Element.contentvisibilityautostatechanged_event"
+        },
+        {
+          "description": "<code>scrollend</code> event",
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/Element/scrollend_event",
+          "source_file": "api/Element.json",
+          "spec_url": [
+            "https://w3c.github.io/csswg-drafts/cssom-view/#eventdef-document-scrollend",
+            "https://html.spec.whatwg.org/multipage/webappapis.html#handler-onscrollend"
+          ],
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.Element.scrollend_event"
+        },
+        {
+          "source_file": "api/HTMLFormElement.json",
+          "spec_url": "https://html.spec.whatwg.org/multipage/forms.html#dom-form-rel",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.HTMLFormElement.rel"
+        },
+        {
+          "source_file": "api/HTMLFormElement.json",
+          "spec_url": "https://html.spec.whatwg.org/multipage/forms.html#dom-form-rellist",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.HTMLFormElement.relList"
+        },
+        {
+          "source_file": "api/HTMLSourceElement.json",
+          "spec_url": "https://html.spec.whatwg.org/multipage/embedded-content-other.html#dom-dim-height",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.HTMLSourceElement.height"
+        },
+        {
+          "source_file": "api/HTMLSourceElement.json",
+          "spec_url": "https://html.spec.whatwg.org/multipage/embedded-content-other.html#dom-dim-width",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.HTMLSourceElement.width"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/IdentityCredential",
+          "source_file": "api/IdentityCredential.json",
+          "spec_url": "https://fedidcg.github.io/FedCM/#browser-api-identity-credential-interface",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.IdentityCredential"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/IdentityCredential/token",
+          "source_file": "api/IdentityCredential.json",
+          "spec_url": "https://fedidcg.github.io/FedCM/#dom-identitycredential-token",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.IdentityCredential.token"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIAccess",
+          "source_file": "api/MIDIAccess.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#midiaccess-interface",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIAccess"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIAccess/inputs",
+          "source_file": "api/MIDIAccess.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midiaccess-inputs",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIAccess.inputs"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIAccess/outputs",
+          "source_file": "api/MIDIAccess.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midiaccess-outputs",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIAccess.outputs"
+        },
+        {
+          "description": "<code>statechange</code> event",
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIAccess/statechange_event",
+          "source_file": "api/MIDIAccess.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midiaccess-onstatechange",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIAccess.statechange_event"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIAccess/sysexEnabled",
+          "source_file": "api/MIDIAccess.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midiaccess-sysexenabled",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIAccess.sysexEnabled"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIConnectionEvent",
+          "source_file": "api/MIDIConnectionEvent.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#midiconnectionevent-interface",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIConnectionEvent"
+        },
+        {
+          "description": "<code>MIDIConnectionEvent()</code> constructor",
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIConnectionEvent/MIDIConnectionEvent",
+          "source_file": "api/MIDIConnectionEvent.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midiconnectionevent-constructor",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIConnectionEvent.MIDIConnectionEvent"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIConnectionEvent/port",
+          "source_file": "api/MIDIConnectionEvent.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midiconnectionevent-port",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIConnectionEvent.port"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIInput",
+          "source_file": "api/MIDIInput.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#midiinput-interface",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIInput"
+        },
+        {
+          "description": "<code>midimessage</code> event",
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIInput/midimessage_event",
+          "source_file": "api/MIDIInput.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midiinput-onmidimessage",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIInput.midimessage_event"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIInputMap",
+          "source_file": "api/MIDIInputMap.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#midiinputmap-interface",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIInputMap"
+        },
+        {
+          "source_file": "api/MIDIInputMap.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIInputMap.@@iterator"
+        },
+        {
+          "source_file": "api/MIDIInputMap.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIInputMap.entries"
+        },
+        {
+          "source_file": "api/MIDIInputMap.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIInputMap.forEach"
+        },
+        {
+          "source_file": "api/MIDIInputMap.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIInputMap.get"
+        },
+        {
+          "source_file": "api/MIDIInputMap.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIInputMap.has"
+        },
+        {
+          "source_file": "api/MIDIInputMap.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIInputMap.keys"
+        },
+        {
+          "source_file": "api/MIDIInputMap.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIInputMap.size"
+        },
+        {
+          "source_file": "api/MIDIInputMap.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIInputMap.values"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIMessageEvent",
+          "source_file": "api/MIDIMessageEvent.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#midimessageevent-interface",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIMessageEvent"
+        },
+        {
+          "description": "<code>MIDIMessageEvent()</code> constructor",
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIMessageEvent/MIDIMessageEvent",
+          "source_file": "api/MIDIMessageEvent.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midimessageevent-constructor",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIMessageEvent.MIDIMessageEvent"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIMessageEvent/data",
+          "source_file": "api/MIDIMessageEvent.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midimessageevent-data",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIMessageEvent.data"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIOutput",
+          "source_file": "api/MIDIOutput.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#MIDIOutput",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIOutput"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIOutput/clear",
+          "source_file": "api/MIDIOutput.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midioutput-clear",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIOutput.clear"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIOutput/send",
+          "source_file": "api/MIDIOutput.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midioutput-send",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIOutput.send"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIOutputMap",
+          "source_file": "api/MIDIOutputMap.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#midiinputmap-interface",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIOutputMap"
+        },
+        {
+          "source_file": "api/MIDIOutputMap.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIOutputMap.entries"
+        },
+        {
+          "source_file": "api/MIDIOutputMap.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIOutputMap.forEach"
+        },
+        {
+          "source_file": "api/MIDIOutputMap.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIOutputMap.get"
+        },
+        {
+          "source_file": "api/MIDIOutputMap.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIOutputMap.has"
+        },
+        {
+          "source_file": "api/MIDIOutputMap.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIOutputMap.keys"
+        },
+        {
+          "source_file": "api/MIDIOutputMap.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIOutputMap.size"
+        },
+        {
+          "source_file": "api/MIDIOutputMap.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIOutputMap.values"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIPort",
+          "source_file": "api/MIDIPort.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#MIDIPort",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIPort"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIPort/close",
+          "source_file": "api/MIDIPort.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midiport-close",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIPort.close"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIPort/connection",
+          "source_file": "api/MIDIPort.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midiport-connection",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIPort.connection"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIPort/id",
+          "source_file": "api/MIDIPort.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midiport-id",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIPort.id"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIPort/manufacturer",
+          "source_file": "api/MIDIPort.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midiport-manufacturer",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIPort.manufacturer"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIPort/name",
+          "source_file": "api/MIDIPort.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midiport-name",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIPort.name"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIPort/open",
+          "source_file": "api/MIDIPort.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midiport-open",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIPort.open"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIPort/state",
+          "source_file": "api/MIDIPort.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midiport-state",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIPort.state"
+        },
+        {
+          "description": "<code>statechange</code> event",
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIPort/statechange_event",
+          "source_file": "api/MIDIPort.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midiport-onstatechange",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIPort.statechange_event"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIPort/type",
+          "source_file": "api/MIDIPort.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midiport-type",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIPort.type"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MIDIPort/version",
+          "source_file": "api/MIDIPort.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-midiport-version",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MIDIPort.version"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MathMLElement",
+          "source_file": "api/MathMLElement.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#dom-mathmlelement",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MathMLElement"
+        },
+        {
+          "source_file": "api/MathMLElement.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MathMLElement.blur"
+        },
+        {
+          "source_file": "api/MathMLElement.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MathMLElement.dataset"
+        },
+        {
+          "source_file": "api/MathMLElement.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MathMLElement.focus"
+        },
+        {
+          "source_file": "api/MathMLElement.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/cssom/#dom-elementcssinlinestyle-style",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MathMLElement.style"
+        },
+        {
+          "source_file": "api/MathMLElement.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MathMLElement.tabIndex"
+        },
+        {
+          "description": "<code>controller</code> option",
+          "source_file": "api/MediaDevices.json",
+          "spec_url": "https://w3c.github.io/mediacapture-screen-share/#dom-displaymediastreamoptions-controller",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaDevices.getDisplayMedia.controller_option"
+        },
+        {
+          "description": "<code>selfBrowserSurface</code> option",
+          "source_file": "api/MediaDevices.json",
+          "spec_url": "https://w3c.github.io/mediacapture-screen-share/#dom-displaymediastreamoptions-selfbrowsersurface",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaDevices.getDisplayMedia.selfBrowserSurface_option"
+        },
+        {
+          "description": "<code>surfaceSwitching</code> option",
+          "source_file": "api/MediaDevices.json",
+          "spec_url": "https://w3c.github.io/mediacapture-screen-share/#dom-displaymediastreamoptions-surfaceswitching",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaDevices.getDisplayMedia.surfaceSwitching_option"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/MediaSource.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaSource.MediaSource.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/MediaSource.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaSource.activeSourceBuffers.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/MediaSource.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaSource.addSourceBuffer.worker_support"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MediaSource/canConstructInDedicatedWorker",
+          "source_file": "api/MediaSource.json",
+          "spec_url": "https://w3c.github.io/media-source/#dom-mediasource-canconstructindedicatedworker",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaSource.canConstructInDedicatedWorker"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/MediaSource.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaSource.clearLiveSeekableRange.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/MediaSource.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaSource.duration.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/MediaSource.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaSource.endOfStream.worker_support"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MediaSource/handle",
+          "source_file": "api/MediaSource.json",
+          "spec_url": "https://w3c.github.io/media-source/#dom-mediasource-handle",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaSource.handle"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/MediaSource.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaSource.isTypeSupported.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/MediaSource.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaSource.readyState.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/MediaSource.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaSource.removeSourceBuffer.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/MediaSource.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaSource.setLiveSeekableRange.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/MediaSource.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaSource.sourceBuffers.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/MediaSource.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaSource.sourceclose_event.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/MediaSource.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaSource.sourceended_event.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/MediaSource.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaSource.sourceopen_event.worker_support"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MediaSourceHandle",
+          "source_file": "api/MediaSourceHandle.json",
+          "spec_url": "https://w3c.github.io/media-source/#mediasourcehandle",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaSourceHandle"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MediaTrackConstraints/displaySurface",
+          "source_file": "api/MediaTrackConstraints.json",
+          "spec_url": "https://w3c.github.io/mediacapture-screen-share/#dom-mediatrackconstraintset-displaysurface",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MediaTrackConstraints.displaySurface"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MediaTrackConstraints/suppressLocalAudioPlayback",
+          "source_file": "api/MediaTrackConstraints.json",
+          "spec_url": "https://w3c.github.io/mediacapture-screen-share/#dom-mediatrackconstraintset-suppresslocalaudioplayback",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaTrackConstraints.suppressLocalAudioPlayback"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MediaTrackSettings/suppressLocalAudioPlayback",
+          "source_file": "api/MediaTrackSettings.json",
+          "spec_url": "https://w3c.github.io/mediacapture-screen-share/#dom-mediatracksettings-suppresslocalaudioplayback",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaTrackSettings.suppressLocalAudioPlayback"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MediaTrackSupportedConstraints/displaySurface",
+          "source_file": "api/MediaTrackSupportedConstraints.json",
+          "spec_url": "https://w3c.github.io/mediacapture-screen-share/#dom-mediatracksupportedconstraints-displaysurface",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.MediaTrackSupportedConstraints.displaySurface"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/MediaTrackSupportedConstraints/suppressLocalAudioPlayback",
+          "source_file": "api/MediaTrackSupportedConstraints.json",
+          "spec_url": "https://w3c.github.io/mediacapture-screen-share/#dom-mediatracksupportedconstraints-suppresslocalaudioplayback",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.MediaTrackSupportedConstraints.suppressLocalAudioPlayback"
+        },
+        {
+          "source_file": "api/NavigateEvent.json",
+          "status": {
+            "deprecated": true,
+            "experimental": false,
+            "standard_track": false
+          },
+          "path": "api.NavigateEvent.canTransition"
+        },
+        {
+          "source_file": "api/NavigateEvent.json",
+          "status": {
+            "deprecated": true,
+            "experimental": false,
+            "standard_track": false
+          },
+          "path": "api.NavigateEvent.restoreScroll"
+        },
+        {
+          "source_file": "api/NavigateEvent.json",
+          "status": {
+            "deprecated": true,
+            "experimental": false,
+            "standard_track": false
+          },
+          "path": "api.NavigateEvent.transitionWhile"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/Navigator/requestMIDIAccess",
+          "source_file": "api/Navigator.json",
+          "spec_url": "https://webaudio.github.io/web-midi-api/#dom-navigator-requestmidiaccess",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.Navigator.requestMIDIAccess"
+        },
+        {
+          "description": "Secure context required",
+          "source_file": "api/Navigator.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.Navigator.requestMIDIAccess.secure_context_required"
+        },
+        {
+          "source_file": "api/OES_draw_buffers_indexed.json",
+          "spec_url": "https://registry.khronos.org/webgl/extensions/OES_draw_buffers_indexed/",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.OES_draw_buffers_indexed"
+        },
+        {
+          "source_file": "api/OES_draw_buffers_indexed.json",
+          "spec_url": "https://registry.khronos.org/webgl/extensions/OES_draw_buffers_indexed/",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.OES_draw_buffers_indexed.blendEquationSeparateiOES"
+        },
+        {
+          "source_file": "api/OES_draw_buffers_indexed.json",
+          "spec_url": "https://registry.khronos.org/webgl/extensions/OES_draw_buffers_indexed/",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.OES_draw_buffers_indexed.blendEquationiOES"
+        },
+        {
+          "source_file": "api/OES_draw_buffers_indexed.json",
+          "spec_url": "https://registry.khronos.org/webgl/extensions/OES_draw_buffers_indexed/",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.OES_draw_buffers_indexed.blendFuncSeparateiOES"
+        },
+        {
+          "source_file": "api/OES_draw_buffers_indexed.json",
+          "spec_url": "https://registry.khronos.org/webgl/extensions/OES_draw_buffers_indexed/",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.OES_draw_buffers_indexed.blendFunciOES"
+        },
+        {
+          "source_file": "api/OES_draw_buffers_indexed.json",
+          "spec_url": "https://registry.khronos.org/webgl/extensions/OES_draw_buffers_indexed/",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.OES_draw_buffers_indexed.colorMaskiOES"
+        },
+        {
+          "source_file": "api/OES_draw_buffers_indexed.json",
+          "spec_url": "https://registry.khronos.org/webgl/extensions/OES_draw_buffers_indexed/",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.OES_draw_buffers_indexed.disableiOES"
+        },
+        {
+          "source_file": "api/OES_draw_buffers_indexed.json",
+          "spec_url": "https://registry.khronos.org/webgl/extensions/OES_draw_buffers_indexed/",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.OES_draw_buffers_indexed.enableiOES"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/PerformanceResourceTiming/renderBlockingStatus",
+          "source_file": "api/PerformanceResourceTiming.json",
+          "spec_url": "https://w3c.github.io/resource-timing/#dom-performanceresourcetiming-renderblockingstatus",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.PerformanceResourceTiming.renderBlockingStatus"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/API/PerformanceResourceTiming/responseStatus",
+          "source_file": "api/PerformanceResourceTiming.json",
+          "spec_url": "https://w3c.github.io/resource-timing/#dom-performanceresourcetiming-responsestatus",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.PerformanceResourceTiming.responseStatus"
+        },
+        {
+          "source_file": "api/PublicKeyCredential.json",
+          "spec_url": "https://w3c.github.io/webauthn/#dom-publickeycredential-isconditionalmediationavailable",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "api.PublicKeyCredential.isConditionalMediationAvailable"
+        },
+        {
+          "source_file": "api/SVGSVGElement.json",
+          "status": {
+            "deprecated": true,
+            "experimental": false,
+            "standard_track": false
+          },
+          "path": "api.SVGSVGElement.useCurrentView"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/SourceBuffer.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.SourceBuffer.abort.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/SourceBuffer.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.SourceBuffer.abort_event.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/SourceBuffer.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.SourceBuffer.appendBuffer.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/SourceBuffer.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.SourceBuffer.appendWindowEnd.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/SourceBuffer.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.SourceBuffer.appendWindowStart.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/SourceBuffer.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.SourceBuffer.buffered.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/SourceBuffer.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.SourceBuffer.changeType.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/SourceBuffer.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.SourceBuffer.error_event.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/SourceBuffer.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.SourceBuffer.mode.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/SourceBuffer.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.SourceBuffer.remove.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/SourceBuffer.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.SourceBuffer.timestampOffset.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/SourceBuffer.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.SourceBuffer.update_event.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/SourceBuffer.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.SourceBuffer.updateend_event.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/SourceBuffer.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.SourceBuffer.updatestart_event.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/SourceBuffer.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.SourceBuffer.updating.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/SourceBufferList.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.SourceBufferList.addsourcebuffer_event.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/SourceBufferList.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.SourceBufferList.length.worker_support"
+        },
+        {
+          "description": "Available in workers",
+          "source_file": "api/SourceBufferList.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.SourceBufferList.removesourcebuffer_event.worker_support"
+        },
+        {
+          "description": "<code>ignoreCase</code> option",
+          "source_file": "api/URLPattern.json",
+          "spec_url": "https://wicg.github.io/urlpattern/#dom-urlpatternoptions-ignorecase",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.URLPattern.URLPattern.ignoreCase_option"
+        },
+        {
+          "description": "BYOB reader support",
+          "source_file": "api/WebTransport.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.WebTransport.createUnidirectionalStream.byob_readers"
+        },
+        {
+          "source_file": "api/XRCamera.json",
+          "spec_url": "https://immersive-web.github.io/raw-camera-access/#xrcamera",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.XRCamera"
+        },
+        {
+          "source_file": "api/XRCamera.json",
+          "spec_url": "https://immersive-web.github.io/raw-camera-access/#dom-xrcamera-height",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.XRCamera.height"
+        },
+        {
+          "source_file": "api/XRCamera.json",
+          "spec_url": "https://immersive-web.github.io/raw-camera-access/#dom-xrcamera-width",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.XRCamera.width"
+        },
+        {
+          "source_file": "api/XRView.json",
+          "spec_url": "https://immersive-web.github.io/raw-camera-access/#dom-xrview-camera",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.XRView.camera"
+        },
+        {
+          "source_file": "api/XRWebGLBinding.json",
+          "spec_url": "https://immersive-web.github.io/raw-camera-access/#dom-xrwebglbinding-getcameraimage",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "api.XRWebGLBinding.getCameraImage"
+        },
+        {
+          "description": "Drop invalid item (not src string)",
+          "source_file": "css/at-rules/font-face.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.at-rules.font-face.src.drop_invalid_item"
+        },
+        {
+          "description": "<code>@font-palette-values</code>",
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/@font-palette-values",
+          "source_file": "css/at-rules/font-palette-values.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-fonts/#at-ruledef-font-palette-values",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.at-rules.font-palette-values"
+        },
+        {
+          "source_file": "css/at-rules/font-palette-values.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-fonts/#base-palette-desc",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.at-rules.font-palette-values.base-palette"
+        },
+        {
+          "source_file": "css/at-rules/font-palette-values.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-fonts/#font-family-2-desc",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.at-rules.font-palette-values.font-family"
+        },
+        {
+          "source_file": "css/at-rules/font-palette-values.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-fonts/#override-color",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.at-rules.font-palette-values.override-colors"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/contain-intrinsic-contain-intrinsic-block-size",
+          "source_file": "css/properties/contain-intrinsic-block-size.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-sizing-4/#propdef-contain-intrinsic-block-size",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.properties.contain-intrinsic-block-size"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/contain-intrinsic-height",
+          "source_file": "css/properties/contain-intrinsic-height.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-sizing-4/#propdef-contain-intrinsic-height",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.properties.contain-intrinsic-height"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/contain-intrinsic-contain-intrinsic-inline-size",
+          "source_file": "css/properties/contain-intrinsic-inline-size.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-sizing-4/#propdef-contain-intrinsic-inline-size",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.properties.contain-intrinsic-inline-size"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/contain-intrinsic-size",
+          "source_file": "css/properties/contain-intrinsic-size.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-sizing-4/#propdef-contain-intrinsic-size",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.properties.contain-intrinsic-size"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/contain-intrinsic-width",
+          "source_file": "css/properties/contain-intrinsic-width.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-sizing-4/#propdef-contain-intrinsic-width",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.properties.contain-intrinsic-width"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/content-visibility",
+          "source_file": "css/properties/content-visibility.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-contain/#content-visibility",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.properties.content-visibility"
+        },
+        {
+          "source_file": "css/properties/display.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "css.properties.display.math"
+        },
+        {
+          "description": "<code>math</code>",
+          "source_file": "css/properties/font-family.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "css.properties.font-family.math"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/font-palette",
+          "source_file": "css/properties/font-palette.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-fonts/#font-palette-prop",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.properties.font-palette"
+        },
+        {
+          "description": "<code>math</code> keyword",
+          "source_file": "css/properties/font-size.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "css.properties.font-size.math"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/font-variant-emoji",
+          "source_file": "css/properties/font-variant.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-fonts/#font-variant-emoji-prop",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.properties.font-variant.font-variant-emoji"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/font-variant-emoji",
+          "source_file": "css/properties/font-variant-emoji.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-fonts/#font-variant-emoji-prop",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.properties.font-variant-emoji"
+        },
+        {
+          "description": "Animation of tracks",
+          "source_file": "css/properties/grid-template-columns.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.properties.grid-template-columns.animation"
+        },
+        {
+          "description": "Animation of tracks",
+          "source_file": "css/properties/grid-template-rows.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.properties.grid-template-rows.animation"
+        },
+        {
+          "source_file": "css/properties/hyphenate-limit-chars.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-text-4/#propdef-hyphenate-limit-chars",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.properties.hyphenate-limit-chars"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/math-depth",
+          "source_file": "css/properties/math-depth.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#the-math-script-level-property",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "css.properties.math-depth"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/math-shift",
+          "source_file": "css/properties/math-shift.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#the-math-shift",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "css.properties.math-shift"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/math-style",
+          "source_file": "css/properties/math-style.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#the-math-style-property",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.properties.math-style"
+        },
+        {
+          "source_file": "css/properties/text-transform.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#new-text-transform-values",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "css.properties.text-transform.math-auto"
+        },
+        {
+          "description": "<code>acos()</code>",
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/acos",
+          "source_file": "css/types/acos.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-values/#trig-funcs",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.types.acos"
+        },
+        {
+          "description": "<code>asin()</code>",
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/asin",
+          "source_file": "css/types/asin.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-values/#trig-funcs",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.types.asin"
+        },
+        {
+          "description": "<code>atan()</code>",
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/atan",
+          "source_file": "css/types/atan.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-values/#trig-funcs",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.types.atan"
+        },
+        {
+          "description": "<code>atan2()</code>",
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/atan2",
+          "source_file": "css/types/atan2.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-values/#trig-funcs",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.types.atan2"
+        },
+        {
+          "description": "&lt;calc-constant&gt;",
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/calc-constant",
+          "source_file": "css/types/calc-constant.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-values/#calc-constants",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.types.calc-constant"
+        },
+        {
+          "description": "<code>NaN</code> constant",
+          "source_file": "css/types/calc-constant.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "css.types.calc-constant.NaN"
+        },
+        {
+          "description": "<code>e</code> constant",
+          "source_file": "css/types/calc-constant.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.types.calc-constant.e"
+        },
+        {
+          "description": "<code>infinity</code> & <code>-infinity</code> constants",
+          "source_file": "css/types/calc-constant.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "css.types.calc-constant.infinity"
+        },
+        {
+          "description": "<code>pi</code> constant",
+          "source_file": "css/types/calc-constant.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.types.calc-constant.pi"
+        },
+        {
+          "description": "Mark, MarkText, ButtonBorder",
+          "source_file": "css/types/color.json",
+          "spec_url": [
+            "https://w3c.github.io/csswg-drafts/css-color/#valdef-system-color-mark",
+            "https://w3c.github.io/csswg-drafts/css-color/#valdef-system-color-marktext",
+            "https://w3c.github.io/csswg-drafts/css-color/#valdef-system-color-buttonborder"
+          ],
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "css.types.color.system-color.mark_marktext_buttonborder"
+        },
+        {
+          "description": "<code>cos()</code>",
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/cos",
+          "source_file": "css/types/cos.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-values/#trig-funcs",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.types.cos"
+        },
+        {
+          "description": "<code>lh</code> unit",
+          "source_file": "css/types/length.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": false
+          },
+          "path": "css.types.length.lh"
+        },
+        {
+          "description": "<code>vb</code> unit",
+          "source_file": "css/types/length.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.types.length.vb"
+        },
+        {
+          "description": "<code>vi</code> unit",
+          "source_file": "css/types/length.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.types.length.vi"
+        },
+        {
+          "description": "<code>dvb</code>, <code>dvh</code>, <code>dvi</code>, <code>dvmax</code>, <code>dvmin</code>, <code>dvw</code> units",
+          "source_file": "css/types/length.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.types.length.viewport_percentage_units_dynamic"
+        },
+        {
+          "description": "<code>lvb</code>, <code>lvh</code>, <code>lvi</code>, <code>lvmax</code>, <code>lvmin</code>, <code>lvw</code> units",
+          "source_file": "css/types/length.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.types.length.viewport_percentage_units_large"
+        },
+        {
+          "description": "<code>svb</code>, <code>svh</code>, <code>svi</code>, <code>svmax</code>, <code>svmin</code>, <code>svw</code> units",
+          "source_file": "css/types/length.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.types.length.viewport_percentage_units_small"
+        },
+        {
+          "description": "<code>sin()</code>",
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/sin",
+          "source_file": "css/types/sin.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-values/#trig-funcs",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.types.sin"
+        },
+        {
+          "description": "<code>tan()</code>",
+          "mdn_url": "https://developer.mozilla.org/docs/Web/CSS/tan",
+          "source_file": "css/types/tan.json",
+          "spec_url": "https://w3c.github.io/csswg-drafts/css-values/#trig-funcs",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "css.types.tan"
+        },
+        {
+          "description": "Tick mark support",
+          "source_file": "html/elements/input/range.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "html.elements.input.type_range.tick_marks"
+        },
+        {
+          "source_file": "html/elements/script.json",
+          "spec_url": "https://html.spec.whatwg.org/multipage/webappapis.html#import-map",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "html.elements.script.type.importmap"
+        },
+        {
+          "source_file": "html/elements/source.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "html.elements.source.height"
+        },
+        {
+          "source_file": "html/elements/source.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "html.elements.source.width"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Security-Policy/script-src-attr",
+          "source_file": "http/headers/Content-Security-Policy.json",
+          "spec_url": "https://w3c.github.io/webappsec-csp/#directive-script-src-attr",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "http.headers.Content-Security-Policy.script-src-attr"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Security-Policy/script-src-elem",
+          "source_file": "http/headers/Content-Security-Policy.json",
+          "spec_url": "https://w3c.github.io/webappsec-csp/#directive-script-src-elem",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "http.headers.Content-Security-Policy.script-src-elem"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Security-Policy/style-src-attr",
+          "source_file": "http/headers/Content-Security-Policy.json",
+          "spec_url": "https://w3c.github.io/webappsec-csp/#directive-style-src-attr",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "http.headers.Content-Security-Policy.style-src-attr"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Security-Policy/style-src-elem",
+          "source_file": "http/headers/Content-Security-Policy.json",
+          "spec_url": "https://w3c.github.io/webappsec-csp/#directive-style-src-elem",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "http.headers.Content-Security-Policy.style-src-elem"
+        },
+        {
+          "description": "Wildcards in Permissions-Policy allowlist origins",
+          "source_file": "http/headers/Permissions-Policy.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "http.headers.Permissions-Policy.wildcards"
+        },
+        {
+          "description": "<code>Sec-CH-Prefers-Reduced-Motion</code> request header",
+          "mdn_url": "https://developer.mozilla.org/docs/Web/HTTP/Headers/Sec-CH-Prefers-Reduced-Motion",
+          "source_file": "http/headers/Sec-CH-Prefers-Reduced-Motion.json",
+          "spec_url": "https://wicg.github.io/user-preference-media-features-headers/#sec-ch-prefers-reduced-motion",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "http.headers.Sec-CH-Prefers-Reduced-Motion"
+        },
+        {
+          "description": "<code>Partitioned</code>",
+          "source_file": "http/headers/Set-Cookie.json",
+          "status": {
+            "deprecated": false,
+            "experimental": true,
+            "standard_track": true
+          },
+          "path": "http.headers.Set-Cookie.Partitioned"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/maction",
+          "source_file": "mathml/elements/maction.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#dfn-maction",
+          "status": {
+            "deprecated": true,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.maction"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/math",
+          "source_file": "mathml/elements/math.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#the-top-level-math-element",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.math"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/math#attr-display",
+          "source_file": "mathml/elements/math.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.math.display"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/merror",
+          "source_file": "mathml/elements/merror.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#error-message-merror",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.merror"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/mfrac",
+          "source_file": "mathml/elements/mfrac.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#fractions-mfrac",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mfrac"
+        },
+        {
+          "source_file": "mathml/elements/mfrac.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mfrac.linethickness"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/mi",
+          "source_file": "mathml/elements/mi.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#identifier-mi",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mi"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/mmultiscripts",
+          "source_file": "mathml/elements/mmultiscripts.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#prescripts-and-tensor-indices-mmultiscripts",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mmultiscripts"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/mn",
+          "source_file": "mathml/elements/mn.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#number-mn",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mn"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/mo",
+          "source_file": "mathml/elements/mo.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#operator-fence-separator-or-accent-mo",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mo"
+        },
+        {
+          "source_file": "mathml/elements/mo.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mo.lspace"
+        },
+        {
+          "source_file": "mathml/elements/mo.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mo.maxsize"
+        },
+        {
+          "source_file": "mathml/elements/mo.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mo.minsize"
+        },
+        {
+          "source_file": "mathml/elements/mo.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mo.moveablelimits"
+        },
+        {
+          "source_file": "mathml/elements/mo.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mo.rspace"
+        },
+        {
+          "source_file": "mathml/elements/mo.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mo.stretchy"
+        },
+        {
+          "source_file": "mathml/elements/mo.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mo.symmetric"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/mover",
+          "source_file": "mathml/elements/mover.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#underscripts-and-overscripts-munder-mover-munderover",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mover"
+        },
+        {
+          "source_file": "mathml/elements/mover.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mover.accent"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/mpadded",
+          "source_file": "mathml/elements/mpadded.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#adjust-space-around-content-mpadded",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mpadded"
+        },
+        {
+          "source_file": "mathml/elements/mpadded.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mpadded.depth"
+        },
+        {
+          "source_file": "mathml/elements/mpadded.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mpadded.height"
+        },
+        {
+          "source_file": "mathml/elements/mpadded.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mpadded.lspace"
+        },
+        {
+          "source_file": "mathml/elements/mpadded.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mpadded.voffset"
+        },
+        {
+          "source_file": "mathml/elements/mpadded.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mpadded.width"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/mphantom",
+          "source_file": "mathml/elements/mphantom.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#making-sub-expressions-invisible-mphantom",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mphantom"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/mroot",
+          "source_file": "mathml/elements/mroot.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#radicals-msqrt-mroot",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mroot"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/mrow",
+          "source_file": "mathml/elements/mrow.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#horizontally-group-sub-expressions-mrow",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mrow"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/ms",
+          "source_file": "mathml/elements/ms.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#string-literal-ms",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.ms"
+        },
+        {
+          "description": "Surround the content of the <code>&lt;ms&gt;</code> element with quotes, specifiable via the <code>lquote</code> and <code>rquote</code> attributes.",
+          "source_file": "mathml/elements/ms.json",
+          "status": {
+            "deprecated": true,
+            "experimental": false,
+            "standard_track": false
+          },
+          "path": "mathml.elements.ms.lquote_rquote_attributes"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/mspace",
+          "source_file": "mathml/elements/mspace.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#space-mspace",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mspace"
+        },
+        {
+          "source_file": "mathml/elements/mspace.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mspace.depth"
+        },
+        {
+          "source_file": "mathml/elements/mspace.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mspace.height"
+        },
+        {
+          "source_file": "mathml/elements/mspace.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mspace.width"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/msqrt",
+          "source_file": "mathml/elements/msqrt.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#radicals-msqrt-mroot",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.msqrt"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/mstyle",
+          "source_file": "mathml/elements/mstyle.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#style-change-mstyle",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mstyle"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/msub",
+          "source_file": "mathml/elements/msub.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#subscripts-and-superscripts-msub-msup-msubsup",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.msub"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/msubsup",
+          "source_file": "mathml/elements/msubsup.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#subscripts-and-superscripts-msub-msup-msubsup",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.msubsup"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/msup",
+          "source_file": "mathml/elements/msup.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#subscripts-and-superscripts-msub-msup-msubsup",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.msup"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/mtable",
+          "source_file": "mathml/elements/mtable.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#table-or-matrix-mtable",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mtable"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/mtd",
+          "source_file": "mathml/elements/mtd.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#entry-in-table-or-matrix-mtd",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mtd"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/mtext",
+          "source_file": "mathml/elements/mtext.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#text-mtext",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mtext"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/mtr",
+          "source_file": "mathml/elements/mtr.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#row-in-table-or-matrix-mtr",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.mtr"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/munder",
+          "source_file": "mathml/elements/munder.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#underscripts-and-overscripts-munder-mover-munderover",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.munder"
+        },
+        {
+          "source_file": "mathml/elements/munder.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.munder.accentunder"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/munderover",
+          "source_file": "mathml/elements/munderover.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#underscripts-and-overscripts-munder-mover-munderover",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.munderover"
+        },
+        {
+          "source_file": "mathml/elements/munderover.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.munderover.accent"
+        },
+        {
+          "source_file": "mathml/elements/munderover.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.munderover.accentunder"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Element/semantics",
+          "source_file": "mathml/elements/semantics.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#semantics-and-presentation",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.elements.semantics"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Global_attributes/dir",
+          "source_file": "mathml/global_attributes.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#dfn-dir",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.global_attributes.dir"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Global_attributes/displaystyle",
+          "source_file": "mathml/global_attributes.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#dfn-displaystyle",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.global_attributes.displaystyle"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Global_attributes/mathbackground",
+          "source_file": "mathml/global_attributes.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#dfn-mathbackground",
+          "status": {
+            "deprecated": true,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.global_attributes.mathbackground"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Global_attributes/mathcolor",
+          "source_file": "mathml/global_attributes.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#dfn-mathcolor",
+          "status": {
+            "deprecated": true,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.global_attributes.mathcolor"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Global_attributes/mathsize",
+          "source_file": "mathml/global_attributes.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#dfn-mathsize",
+          "status": {
+            "deprecated": true,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.global_attributes.mathsize"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/MathML/Global_attributes/scriptlevel",
+          "source_file": "mathml/global_attributes.json",
+          "spec_url": "https://w3c.github.io/mathml-core/#dfn-scriptlevel",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "mathml.global_attributes.scriptlevel"
+        },
+        {
+          "description": "Recognizes MathML namespace",
+          "source_file": "svg/attributes/conditional_processing.json",
+          "status": {
+            "deprecated": false,
+            "experimental": false,
+            "standard_track": true
+          },
+          "path": "svg.attributes.conditional_processing.requiredExtensions.mathml"
+        },
+        {
+          "source_file": "webextensions/api/omnibox.json",
+          "path": "webextensions.api.omnibox.SuggestResult.deletable"
+        },
+        {
+          "mdn_url": "https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/API/omnibox/onDeleteSuggestion",
+          "source_file": "webextensions/api/omnibox.json",
+          "path": "webextensions.api.omnibox.onDeleteSuggestion"
+        },
+        {
+          "source_file": "webextensions/api/webRequest.json",
+          "path": "webextensions.api.webRequest.SecurityInfo.secretKeyLength"
+        }
+      ]
+    }    
+  }
+}

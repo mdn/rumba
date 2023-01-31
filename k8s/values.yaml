@@ -15,7 +15,8 @@ settings:
   application__document_base_url: "https://developer.allizom.org"
   application__encoded_id_salt: "Qa6SxdMPDKFV4koM9sagpM9pTA6vUcDZH2QUy3n9WJjLk5yy3aEENfETxXYW5U6N"
   application__notifications_update_base_url: "https://updates.developer.allizom.org/notifications"
-  application__bcd_updates_base_url: "https://updates.developer.allizom.org/rumba-bcd-updates"
+  application__bcd_updates_url: "https://updates.developer.allizom.org/rumba-bcd-updates/bcd-updates.json"
+  application__mdn_metadata_url: "https://developer.allizom.org/en-US/metadata.json"
   application__subscriptions_limit_watched_items: 3
   application__subscriptions_limit_collections: 5
 
