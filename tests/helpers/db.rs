@@ -18,8 +18,15 @@ pub fn reset() -> Result<Pool, Error> {
     connection
         .revert_all_migrations(MIGRATIONS)
         .expect("failed to revert migrations");
+
     connection
         .run_pending_migrations(MIGRATIONS)
         .expect("failed to run migrations");
     Ok(pool)
+}
+
+#[test]
+fn test_reset() -> Result<(), Error> {
+    reset()?;
+    Ok(())
 }
