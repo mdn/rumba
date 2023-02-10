@@ -5,8 +5,13 @@ use diesel::PgConnection;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    api::{error::ApiError, settings::SettingUpdateRequest},
-    db::{self, model::UserQuery, users::get_user, Pool},
+    api::error::ApiError,
+    db::{
+        self,
+        model::{SettingsInsert, UserQuery},
+        users::get_user,
+        Pool,
+    },
 };
 
 const MDN_PLUS_LIST: &str = "mdnplus";
@@ -45,8 +50,8 @@ pub async fn subscribe(
         .await?;
     db::settings::create_or_update_settings(
         conn,
-        user,
-        SettingUpdateRequest {
+        SettingsInsert {
+            user_id: user.id,
             mdnplus_newsletter: Some(true),
             ..Default::default()
         },
@@ -86,8 +91,8 @@ pub async fn unsubscribe(
         .await?;
     db::settings::create_or_update_settings(
         conn,
-        user,
-        SettingUpdateRequest {
+        SettingsInsert {
+            user_id: user.id,
             mdnplus_newsletter: Some(false),
             ..Default::default()
         },
@@ -116,8 +121,8 @@ pub async fn is_subscribed(
         if subscribed != settings.map(|s| s.mdnplus_newsletter).unwrap_or_default() {
             db::settings::create_or_update_settings(
                 &mut conn,
-                &user,
-                SettingUpdateRequest {
+                SettingsInsert {
+                    user_id: user.id,
                     mdnplus_newsletter: Some(subscribed),
                     ..Default::default()
                 },

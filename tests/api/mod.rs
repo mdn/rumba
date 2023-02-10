@@ -8,6 +8,7 @@ mod notifications;
 mod ping;
 mod root;
 mod search;
+mod settings;
 pub mod updates;
 pub mod watched_items;
 mod whoami;

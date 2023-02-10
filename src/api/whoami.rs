@@ -47,18 +47,18 @@ pub async fn whoami(
             let mut conn_pool = pool.get()?;
             let user = db::users::get_user(&mut conn_pool, id.id().unwrap());
             match user {
-                Ok(found) => {
-                    let settings = db::settings::get_settings(&mut conn_pool, &found)?;
-                    let subscription_type = found.get_subscription_type().unwrap_or_default();
-                    let is_subscriber = subscription_type.is_subscriber();
+                Ok(user) => {
+                    let settings = db::settings::get_settings(&mut conn_pool, &user)?;
+                    let subscription_type = user.get_subscription_type().unwrap_or_default();
+                    let is_subscriber = user.is_subscriber();
                     let response = WhoamiResponse {
                         geo: country,
-                        username: Option::Some(found.fxa_uid),
+                        username: Option::Some(user.fxa_uid),
                         subscription_type: Option::Some(subscription_type),
-                        avatar_url: found.avatar_url,
+                        avatar_url: user.avatar_url,
                         is_subscriber: Some(is_subscriber),
                         is_authenticated: Option::Some(true),
-                        email: Option::Some(found.email),
+                        email: Option::Some(user.email),
                         settings: settings.map(Into::into),
                     };
                     metrics.incr("whoami.logged_in_success");

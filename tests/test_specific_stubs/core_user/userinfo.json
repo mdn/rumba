@@ -1,0 +1,24 @@
+{
+  "uuid": "userinfo",
+  "priority": 1,
+  "request": {
+    "method": "GET",
+    "url": "/v1/profile"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "email": "test@test.com",
+      "locale": "en",
+      "displayName": "Test Mcface",
+      "avatar": "https://i1.sndcdn.com/avatars-000460644402-0iiiub-t500x500.jpg",
+      "avatarDefault": false,
+      "amrValues": ["pwd"],
+      "uid": "TEST_SUB",
+      "subscriptions": []
+    }
+  }
+}
