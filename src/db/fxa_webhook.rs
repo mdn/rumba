@@ -1,7 +1,10 @@
 use crate::api::fxa_webhook::{ProfileChange, SubscriptionStateChange};
 use crate::api::newsletter;
 use crate::db::error::DbError;
-use crate::db::model::{RawWebHookEventsTokenInsert, UserQuery, WebHookEventInsert};
+use crate::db::model::{
+    RawWebHookEventsTokenInsert, SettingsInsert, UserQuery, WebHookEventInsert,
+};
+use crate::db::settings::create_or_update_settings;
 use crate::db::types::FxaEvent;
 use crate::db::users::get_user_opt;
 use crate::db::{schema, Pool};
@@ -186,11 +189,22 @@ pub async fn update_subscription_state_from_webhook(
                 (true, Some(c)) => Subscription::from(*c),
                 (true, None) => Subscription::Core,
             };
-            if let Some(basket) = &**basket {
-                if subscription == Subscription::Core {
+            if subscription == Subscription::Core {
+                // drop permissions
+                if let Some(basket) = &**basket {
                     if let Err(e) = newsletter::unsubscribe(&mut conn, &user, basket).await {
                         error!("error unsubscribing user: {}", e);
                     }
+                }
+                if let Err(e) = create_or_update_settings(
+                    &mut conn,
+                    SettingsInsert {
+                        user_id: user.id,
+                        no_ads: Some(false),
+                        ..Default::default()
+                    },
+                ) {
+                    error!("error resetting settings for user: {}", e);
                 }
             }
             match diesel::update(schema::users::table.filter(schema::users::id.eq(user.id)))

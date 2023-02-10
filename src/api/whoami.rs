@@ -50,7 +50,7 @@ pub async fn whoami(
                 Ok(found) => {
                     let settings = db::settings::get_settings(&mut conn_pool, &found)?;
                     let subscription_type = found.get_subscription_type().unwrap_or_default();
-                    let is_subscriber = subscription_type.is_subscriber();
+                    let is_subscriber = found.is_subscriber();
                     let response = WhoamiResponse {
                         geo: country,
                         username: Option::Some(found.fxa_uid),

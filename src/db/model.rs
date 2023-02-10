@@ -49,6 +49,12 @@ impl UserQuery {
     pub fn get_subscription_type(&self) -> Option<Subscription> {
         self.enforce_plus.or(self.subscription_type)
     }
+
+    pub fn is_subscriber(&self) -> bool {
+        self.get_subscription_type()
+            .unwrap_or_default()
+            .is_subscriber()
+    }
 }
 
 #[derive(Queryable, Clone)]
@@ -89,14 +95,16 @@ pub struct Settings {
     pub user_id: i64,
     pub locale_override: Option<Locale>,
     pub mdnplus_newsletter: bool,
+    pub no_ads: bool,
 }
 
-#[derive(Insertable, AsChangeset)]
+#[derive(Insertable, AsChangeset, Default)]
 #[diesel(table_name = settings)]
 pub struct SettingsInsert {
     pub user_id: i64,
     pub locale_override: Option<Option<Locale>>,
     pub mdnplus_newsletter: Option<bool>,
+    pub no_ads: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize)]

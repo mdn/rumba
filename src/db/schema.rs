@@ -209,6 +209,7 @@ diesel::table! {
         user_id -> Int8,
         locale_override -> Nullable<Locale>,
         mdnplus_newsletter -> Bool,
+        no_ads -> Bool,
     }
 }
 

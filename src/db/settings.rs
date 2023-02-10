@@ -3,7 +3,6 @@ use crate::db::schema;
 use diesel::prelude::*;
 use diesel::{insert_into, PgConnection};
 
-use crate::api::settings::SettingUpdateRequest;
 use crate::db::error::DbError;
 use crate::db::model::Settings;
 use crate::db::model::SettingsInsert;
@@ -22,14 +21,8 @@ pub fn get_settings(
 
 pub fn create_or_update_settings(
     conn: &mut PgConnection,
-    user: &UserQuery,
-    settings_update: SettingUpdateRequest,
+    settings: SettingsInsert,
 ) -> QueryResult<usize> {
-    let settings = SettingsInsert {
-        user_id: user.id,
-        locale_override: settings_update.locale_override,
-        mdnplus_newsletter: settings_update.mdnplus_newsletter,
-    };
     insert_into(schema::settings::table)
         .values(&settings)
         .on_conflict(schema::settings::user_id)
