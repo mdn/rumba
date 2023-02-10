@@ -68,6 +68,7 @@ sentry = "0.29"
 sentry-actix = "0.29"
 
 basket = "0.0.5"
+async-openai = "0.6"
 
 [dev-dependencies]
 stubr = "0.5"

@@ -75,6 +75,11 @@ pub struct Basket {
     pub basket_url: Url,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct Chat {
+    pub api_key: String,
+}
+
 #[derive(Deserialize)]
 pub struct Settings {
     pub db: DB,
@@ -86,6 +91,7 @@ pub struct Settings {
     pub metrics: Metrics,
     pub sentry: Option<Sentry>,
     pub basket: Option<Basket>,
+    pub chat: Option<Chat>,
 }
 
 impl Settings {
