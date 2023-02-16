@@ -1,4 +1,12 @@
-use crate::db::schema::*;
+use diesel::query_builder::QueryId;
+
+use crate::db::schema::{sql_types::FxaEventType, *};
+
+impl QueryId for FxaEventType {
+    type QueryId = FxaEventType;
+
+    const HAS_STATIC_QUERY_ID: bool = true;
+}
 
 diesel::table! {
     use diesel::sql_types::*;

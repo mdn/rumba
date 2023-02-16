@@ -2,7 +2,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, diesel_derive_enum::DbEnum, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[DieselTypePath = "crate::db::schema::sql_types::Locale"]
+#[ExistingTypePath = "crate::db::schema::sql_types::Locale"]
 pub enum Locale {
     #[serde(rename = "de")]
     De,
@@ -40,7 +40,7 @@ pub enum Locale {
     PartialOrd,
     Serialize,
 )]
-#[DieselTypePath = "crate::db::schema::sql_types::FxaEventStatusType"]
+#[ExistingTypePath = "crate::db::schema::sql_types::FxaEventStatusType"]
 #[serde(rename_all = "snake_case")]
 pub enum FxaEventStatus {
     Processed,
@@ -59,9 +59,10 @@ pub enum FxaEventStatus {
     Ord,
     PartialEq,
     PartialOrd,
+    QueryId,
     Serialize,
 )]
-#[DieselTypePath = "crate::db::schema::sql_types::FxaEventType"]
+#[ExistingTypePath = "crate::db::schema::sql_types::FxaEventType"]
 #[serde(rename_all = "snake_case")]
 pub enum FxaEvent {
     DeleteUser,
@@ -83,7 +84,7 @@ pub enum FxaEvent {
     PartialOrd,
     Serialize,
 )]
-#[DieselTypePath = "crate::db::schema::sql_types::SubscriptionType"]
+#[ExistingTypePath = "crate::db::schema::sql_types::SubscriptionType"]
 pub enum Subscription {
     #[serde(rename(serialize = "core"))]
     Core,
@@ -155,7 +156,7 @@ impl From<Subscription> for String {
     PartialOrd,
     Serialize,
 )]
-#[DieselTypePath = "crate::db::schema::sql_types::NotificationType"]
+#[ExistingTypePath = "crate::db::schema::sql_types::NotificationType"]
 pub enum NotificationTypeEnum {
     #[serde(rename(serialize = "content"))]
     Content,
@@ -176,7 +177,7 @@ pub enum NotificationTypeEnum {
     Serialize,
 )]
 // We only currently (22-12-2022) support added/removed stable.
-#[DieselTypePath = "crate::db::schema::sql_types::BcdEventType"]
+#[ExistingTypePath = "crate::db::schema::sql_types::BcdEventType"]
 pub enum BcdUpdateEventType {
     #[serde(rename = "added_stable")]
     AddedStable,
@@ -193,7 +194,7 @@ pub enum BcdUpdateEventType {
 }
 
 #[derive(Copy, Clone, diesel_derive_enum::DbEnum, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[DieselTypePath = "crate::db::schema::sql_types::EngineType"]
+#[ExistingTypePath = "crate::db::schema::sql_types::EngineType"]
 pub enum EngineType {
     #[serde(rename = "gecko")]
     Gecko,
