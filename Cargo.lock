@@ -1045,9 +1045,9 @@ dependencies = [
 
 [[package]]
 name = "diesel-derive-enum"
-version = "2.0.0-rc.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f28fc9f5bf184ebc58ad9105dede024981e2303fe878a0fe16557f3a979064a"
+checksum = "6b10c03b954333d05bfd5be1d8a74eae2c9ca77b86e0f1c3a1ea29c49da1d6c2"
 dependencies = [
  "heck",
  "proc-macro2",
