@@ -1,5 +1,6 @@
 use crate::api::newsletter::{is_subscribed, subscribe_handler, unsubscribe_handler};
 use crate::api::ping::ping;
+use crate::api::play::{load, save};
 use crate::api::root::root_service;
 use crate::api::search::search;
 use crate::api::settings::update_settings;
@@ -22,5 +23,10 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
         .service(web::resource("/search").route(web::get().to(search)))
         .service(web::resource("/whoami").route(web::get().to(whoami)))
         .service(web::resource("/ping").route(web::post().to(ping)))
+        .service(
+            web::scope("/play")
+                .service(web::resource("/").route(web::post().to(save)))
+                .service(web::resource("/{gist_id}").route(web::get().to(load))),
+        )
         .service(root_service())
 }

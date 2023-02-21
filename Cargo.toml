@@ -69,6 +69,9 @@ sentry-actix = "0.30"
 
 basket = "0.0.5"
 
+octocrab = "0.19"
+futures-timer = "3.0.2"
+
 [dev-dependencies]
 stubr = "0.5"
 stubr-attributes = "0.5"
