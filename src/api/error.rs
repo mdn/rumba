@@ -41,6 +41,15 @@ pub enum FxaWebhookError {
     #[error("Invalid signature")]
     InvalidSignature(#[from] openidconnect::SignatureVerificationError),
 }
+
+#[derive(Error, Debug)]
+pub enum PlaygroundError {
+    #[error("Octocrab error: {0}")]
+    OctocrabError(#[from] octocrab::Error),
+    #[error("Token error: no token")]
+    TokenError,
+}
+
 #[derive(Error, Debug)]
 pub enum ApiError {
     #[error("Artificial error")]
@@ -81,6 +90,8 @@ pub enum ApiError {
     LoginRequiredForFeature(String),
     #[error("Newsletter error: {0}")]
     BasketError(#[from] BasketError),
+    #[error("Playground error: {0}")]
+    PlaygroundError(#[from] PlaygroundError),
     #[error("Unknown error: {0}")]
     Generic(String),
 }
@@ -106,6 +117,7 @@ impl ApiError {
             Self::ValidationError(_) => "Validation Error",
             Self::MultipleCollectionSubscriptionLimitReached => "Subscription limit reached",
             Self::BasketError(_) => "Error managing newsletter",
+            Self::PlaygroundError(_) => "Error querying playground",
             Self::Generic(err) => err,
             Self::LoginRequiredForFeature(_) => "Login Required",
         }
