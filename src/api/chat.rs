@@ -3,7 +3,10 @@ use actix_web::{
     web::{Data, Json},
     HttpResponse,
 };
-use async_openai::{types::CreateCompletionRequestArgs, Client};
+use async_openai::{
+    types::{CreateCompletionRequestArgs, CreateEditRequestArgs},
+    Client,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -47,6 +50,12 @@ pub struct ExampleResponse {
     pub html: String,
     pub css: Option<String>,
     pub js: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct EditRequest {
+    pub instruction: String,
+    pub input: Option<String>,
 }
 
 pub async fn chat(
@@ -142,14 +151,32 @@ pub async fn generate_example(
 
                 Ok(HttpResponse::Ok().json(response))
             }
-            Some(PromptStyle::Html) => {
-                Ok(HttpResponse::Ok().json(ExampleResponse {
-                    html: reply,
-                    css: None,
-                    js: None,
-                }))
-            }
+            Some(PromptStyle::Html) => Ok(HttpResponse::Ok().json(ExampleResponse {
+                html: reply,
+                css: None,
+                js: None,
+            })),
         };
+    };
+    Ok(HttpResponse::NotImplemented().finish())
+}
+
+pub async fn edit_example(
+    openai_client: Data<Option<Client>>,
+    chat_request: Json<EditRequest>,
+) -> Result<HttpResponse, ApiError> {
+    if let Some(client) = &**openai_client {
+        let request = CreateEditRequestArgs::default()
+            .model("code-davinci-edit-001")
+            .temperature(0.0)
+            .instruction(chat_request.instruction.clone())
+            .input(chat_request.input.clone().unwrap_or_default())
+            .build()?;
+
+        let mut response = client.edits().create(request).await?;
+        let reply = response.choices.pop().map(|r| r.text).unwrap_or_default();
+
+        return Ok(HttpResponse::Ok().json(ChatResponse { reply }));
     };
     Ok(HttpResponse::NotImplemented().finish())
 }

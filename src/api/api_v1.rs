@@ -7,7 +7,7 @@ use crate::api::whoami::whoami;
 use actix_web::dev::HttpServiceFactory;
 use actix_web::web;
 
-use super::chat::{chat, explain, generate_example};
+use super::chat::{chat, explain, generate_example, edit_example};
 use super::notifications::{
     delete_by_id, delete_many, mark_all_as_read, mark_as_read, notifications, star_ids,
     toggle_starred, undo_delete_by_id, unstar_ids,
@@ -63,7 +63,8 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
             web::scope("/chat")
                 .service(web::resource("/").route(web::post().to(chat)))
                 .service(web::resource("/explain").route(web::post().to(explain)))
-                .service(web::resource("/generate").route(web::post().to(generate_example))),
+                .service(web::resource("/generate").route(web::post().to(generate_example)))
+                .service(web::resource("/edit").route(web::post().to(edit_example))),
         )
         .service(root_service())
 }
