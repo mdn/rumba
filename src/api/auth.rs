@@ -4,8 +4,10 @@ use actix_session::Session;
 use actix_web::cookie::time::{Duration, OffsetDateTime};
 use actix_web::cookie::{Cookie, CookieJar, Key, SameSite};
 use actix_web::{dev::HttpServiceFactory, http, web, Error, HttpRequest, HttpResponse};
+use once_cell::sync::Lazy;
 use openidconnect::{CsrfToken, Nonce};
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 use crate::api::error::ApiError;
 use crate::db::Pool;
@@ -13,6 +15,12 @@ use crate::{
     fxa::{AuthResponse, LoginManager},
     settings::SETTINGS,
 };
+
+static BASE_URL: Lazy<Url> = Lazy::new(|| {
+    let mut url = SETTINGS.auth.redirect_url.clone();
+    url.set_path("");
+    url
+});
 
 #[derive(Deserialize, Serialize)]
 pub struct LoginCookie {
@@ -30,6 +38,13 @@ pub struct LoginQuery {
 pub struct NoPromptQuery {
     next: Option<String>,
     email: Option<String>,
+}
+
+fn resolve_redirect(next: &str) -> String {
+    match Url::options().base_url(Some(&BASE_URL)).parse(next) {
+        Ok(url) if url.origin() == BASE_URL.origin() => url.path().to_owned(),
+        _ => String::from("/"),
+    }
 }
 
 impl LoginCookie {
@@ -173,7 +188,7 @@ async fn callback(
 
             let cookie = LoginCookie::removal();
             let next = match next {
-                Some(next) if next.starts_with('/') => next,
+                Some(next) => resolve_redirect(&next),
                 _ => String::from("/"),
             };
 
