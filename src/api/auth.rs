@@ -42,7 +42,7 @@ pub struct NoPromptQuery {
 
 fn resolve_redirect(next: &str) -> String {
     match Url::options().base_url(Some(&BASE_URL)).parse(next) {
-        Ok(url) if url.origin() == BASE_URL.origin() => url.path().to_owned(),
+        Ok(url) if url.origin() == BASE_URL.origin() => url.as_str().to_owned(),
         _ => String::from("/"),
     }
 }
