@@ -51,7 +51,7 @@ async fn test_next() -> Result<(), Error> {
             .headers()
             .get("location")
             .and_then(|l| l.to_str().ok()),
-        Some("/foo")
+        Some("http://localhost:8000/foo")
     );
     Ok(())
 }
