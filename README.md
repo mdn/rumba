@@ -9,8 +9,7 @@ Before you can start working with Rumba, you need to:
 
 1. Install [git](https://git-scm.com/) and [Rust](https://www.rust-lang.org/).
 2. Install additional dependencies:
-   - Mac OS (Intel): `brew install postgres libpq`
-   - Mac OS (M1): `arch -arm64 brew install postgres libpq`
+   - Mac OS `brew install libpq && brew link --force libpq`
    - Ubuntu: `apt install gcc libpq-dev libssl-dev pkg-config`
 3. Run a PostgreSQL instance:
    - Mac OS: e.g. [Postgres.app](https://postgresapp.com/)
