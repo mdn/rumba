@@ -45,9 +45,13 @@ async fn main() -> anyhow::Result<()> {
     debug!("DEBUG logging enabled");
 
     let pool = db::establish_connection(&SETTINGS.db.uri);
-    pool.get()?
-        .run_pending_migrations(MIGRATIONS)
-        .expect("failed to run migrations");
+
+    if !SETTINGS.skip_migrations {
+        pool.get()?
+            .run_pending_migrations(MIGRATIONS)
+            .expect("failed to run migrations");
+    }
+
     let pool = Data::new(pool);
 
     let http_client = Data::new(HttpClient::new());

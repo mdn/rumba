@@ -86,6 +86,7 @@ pub struct Settings {
     pub metrics: Metrics,
     pub sentry: Option<Sentry>,
     pub basket: Option<Basket>,
+    pub skip_migrations: bool,
 }
 
 impl Settings {
