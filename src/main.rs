@@ -47,7 +47,7 @@ async fn main() -> anyhow::Result<()> {
 
     let pool = db::establish_connection(&SETTINGS.db.uri);
 
-    if let Some(true) = SETTINGS.skip_migrations {
+    if SETTINGS.skip_migrations {
         info!("skipping migrations...")
     } else {
         info!("running migrations...");
