@@ -86,7 +86,7 @@ pub struct Settings {
     pub metrics: Metrics,
     pub sentry: Option<Sentry>,
     pub basket: Option<Basket>,
-   #[serde(default)]
+    #[serde(default)]
     pub skip_migrations: bool,
 }
 
