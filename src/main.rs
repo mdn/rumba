@@ -40,14 +40,22 @@ async fn main() -> anyhow::Result<()> {
     if std::env::var("RUST_LOG").is_err() {
         std::env::set_var("RUST_LOG", "info");
     }
+
     init_logging(!SETTINGS.logging.human_logs);
     info!("starting…");
     debug!("DEBUG logging enabled");
 
     let pool = db::establish_connection(&SETTINGS.db.uri);
-    pool.get()?
-        .run_pending_migrations(MIGRATIONS)
-        .expect("failed to run migrations");
+
+    if SETTINGS.skip_migrations {
+        info!("skipping migrations...")
+    } else {
+        info!("running migrations...");
+        pool.get()?
+            .run_pending_migrations(MIGRATIONS)
+            .expect("failed to run migrations");
+    }
+
     let pool = Data::new(pool);
 
     let http_client = Data::new(HttpClient::new());
