@@ -14,9 +14,7 @@ async fn whoami_anonymous_test() -> Result<(), Error> {
     wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await.unwrap();
     let service = test::init_service(app).await;
-    let request = test::TestRequest::get()
-        .uri("/api/v1/whoami")
-        .to_request();
+    let request = test::TestRequest::get().uri("/api/v1/whoami").to_request();
     let whoami = test::call_service(&service, request).await;
 
     assert!(whoami.status().is_success());

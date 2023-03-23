@@ -5,6 +5,7 @@ use serde::Serialize;
 use crate::db;
 use crate::db::Pool;
 use crate::metrics::Metrics;
+use crate::util::country_iso_to_name;
 use crate::{api::error::ApiError, db::types::Subscription};
 use actix_web::{web, HttpRequest, HttpResponse};
 
@@ -40,17 +41,22 @@ pub async fn whoami(
     metrics: Metrics,
 ) -> Result<HttpResponse, ApiError> {
     let headers = req.headers();
-    let country_name = headers
-        .get(CLOUDFRONT_COUNTRY_NAME_HEADER)
-        .map(|header| header.to_str().unwrap_or_default().to_string());
+
     let country_iso = None
         .or(headers.get(CLOUDFRONT_COUNTRY_HEADER))
         .or(headers.get(GOOGLE_COUNTRY_HEADER))
-        .map(|header| header.to_str().unwrap_or_default().to_string());
+        .map(|header| header.to_str().unwrap_or_default().to_string())
+        .unwrap_or(String::from("ZZ"));
+
+    let country_name = headers
+        .get(CLOUDFRONT_COUNTRY_NAME_HEADER)
+        .map(|header| header.to_str().unwrap_or_default().to_string())
+        .or(country_iso_to_name(country_iso.as_str()))
+        .unwrap_or(String::from("Unknown"));
 
     let geo = GeoInfo {
-        country: country_name.unwrap_or(String::from("Unknown")),
-        country_iso: country_iso.unwrap_or(String::from("ZZ")),
+        country: country_name,
+        country_iso: country_iso,
     };
 
     match id {
