@@ -19,6 +19,7 @@ async fn whoami_settings_test() -> Result<(), Error> {
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
+    assert_eq!(json["geo"]["country"], "Iceland");
     assert_eq!(json["geo"]["country_iso"], "IS");
 
     assert_eq!(json["username"], "TEST_SUB");

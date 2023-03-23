@@ -42,6 +42,7 @@ async fn whoami_anonymous_test_gcp() -> Result<(), Error> {
     assert!(whoami.status().is_success());
 
     let json = read_json(whoami).await;
+    assert_eq!(json["geo"]["country"], "Iceland");
     assert_eq!(json["geo"]["country_iso"], "IS");
     drop(stubr);
     Ok(())
@@ -63,6 +64,7 @@ async fn whoami_anonymous_test_aws() -> Result<(), Error> {
     assert!(whoami.status().is_success());
 
     let json = read_json(whoami).await;
+    assert_eq!(json["geo"]["country"], "Iceland");
     assert_eq!(json["geo"]["country_iso"], "IS");
     drop(stubr);
     Ok(())
@@ -81,6 +83,7 @@ async fn whoami_legacy_logged_in_test() -> Result<(), Error> {
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
+    assert_eq!(json["geo"]["country"], "Iceland");
     assert_eq!(json["geo"]["country_iso"], "IS");
 
     assert_eq!(json["username"], "TEST_SUB");
@@ -95,6 +98,7 @@ async fn whoami_legacy_logged_in_test() -> Result<(), Error> {
 
     let json = read_json(whoami).await;
 
+    assert_eq!(json["geo"]["country"], "Iceland");
     assert_eq!(json["geo"]["country_iso"], "IS");
     // old sessions do not work anymore
     assert!(json["username"].is_null());
@@ -116,6 +120,7 @@ async fn whoami_logged_in_test() -> Result<(), Error> {
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
+    assert_eq!(json["geo"]["country"], "Iceland");
     assert_eq!(json["geo"]["country_iso"], "IS");
 
     assert_eq!(json["username"], "TEST_SUB");
@@ -147,6 +152,7 @@ async fn whoami_settings_test() -> Result<(), Error> {
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
+    assert_eq!(json["geo"]["country"], "Iceland");
     assert_eq!(json["geo"]["country_iso"], "IS");
 
     assert_eq!(json["username"], "TEST_SUB");
@@ -209,6 +215,7 @@ async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
+    assert_eq!(json["geo"]["country"], "Iceland");
     assert_eq!(json["geo"]["country_iso"], "IS");
 
     assert_eq!(json["username"], "TEST_SUB");
