@@ -48,15 +48,15 @@ pub async fn whoami(
         .map(|header| header.to_str().unwrap_or_default().to_string())
         .unwrap_or(String::from("ZZ"));
 
-    let country_name = headers
+    let country = headers
         .get(CLOUDFRONT_COUNTRY_NAME_HEADER)
         .map(|header| header.to_str().unwrap_or_default().to_string())
         .or(country_iso_to_name(country_iso.as_str()))
         .unwrap_or(String::from("Unknown"));
 
     let geo = GeoInfo {
-        country: country_name,
-        country_iso: country_iso,
+        country,
+        country_iso,
     };
 
     match id {
