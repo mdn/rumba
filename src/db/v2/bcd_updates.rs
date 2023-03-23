@@ -39,10 +39,8 @@ fn offset_from_page(page: Option<i64>) -> i64 {
 pub fn get_bcd_updates_paginated(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     query_params: &BcdUpdatesQueryParams,
-    user_id: Option<Identity>,
 ) -> Result<(Vec<BcdUpdate>, i64), DbError> {
-    let user_option = user_id.and_then(|val| val.id().ok());
-    let count = get_count_for_query(pool, query_params, &user_option);
+    let count = get_count_for_query(pool, query_params);
     let mut query = bcd_updates_read_table_group_by_select!().into_boxed();
     query = apply_filters!(query, query_params, user_option, pool);
     query = bcd_updates_apply_sort!(query, query_params.sort);
@@ -98,7 +96,6 @@ pub fn get_bcd_updates_for_collection(
 pub fn get_count_for_query(
     pool: &mut PooledConnection<ConnectionManager<PgConnection>>,
     query_params: &BcdUpdatesQueryParams,
-    user_id: &Option<String>,
 ) -> Result<i64, DbError> {
     let mut query = bcd_updates_read_table_group_by_select!().into_boxed();
     query = apply_filters!(query, query_params, user_id, pool);

@@ -117,7 +117,7 @@ pub async fn get_updates(
     let updates = if let (Some(_), Some(user_id)) = (&query.collections, &user_id) {
         get_bcd_updates_for_collection(&mut conn_pool, &query, user_id)?
     } else {
-        get_bcd_updates_paginated(&mut conn_pool, &query, user_id)?
+        get_bcd_updates_paginated(&mut conn_pool, &query)?
     };
 
     let mapped_updates = updates
