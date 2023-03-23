@@ -103,15 +103,6 @@ fn query_contains_restricted_filters(query: &BcdUpdatesQueryParams) -> bool {
         || query.category.is_some()
         || query.show.is_some()
 }
-pub async fn get_updates_watched(
-    _req: HttpRequest,
-    pool: web::Data<Pool>,
-    user_id: Option<Identity>,
-    mut query: web::Query<BcdUpdatesQueryParams>,
-) -> Result<HttpResponse, ApiError> {
-    query.show = Some("watched".to_string());
-    get_updates(_req, pool, user_id, query).await
-}
 
 pub async fn get_updates(
     _req: HttpRequest,
