@@ -28,7 +28,7 @@ pub struct WhoamiResponse {
     settings: Option<SettingsResponse>,
 }
 
-const CLOUDFRONT_COUNTRY_HEADER: &str = "CloudFront-Viewer-Country-Name";
+const CLOUDFRONT_COUNTRY_HEADER: &str = "CloudFront-Viewer-Country";
 const GOOGLE_COUNTRY_HEADER: &str = "X-Appengine-Country";
 
 pub async fn whoami(
