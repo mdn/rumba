@@ -10,7 +10,7 @@ async fn test_core_settings() -> Result<(), Error> {
     let whoami = client
         .get(
             "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+            Some(vec![("X-Appengine-Country", "Iceland")]),
         )
         .await;
     assert!(whoami.response().status().is_success());
@@ -35,7 +35,7 @@ async fn test_core_settings() -> Result<(), Error> {
     let whoami = client
         .get(
             "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+            Some(vec![("X-Appengine-Country", "Iceland")]),
         )
         .await;
     assert!(whoami.response().status().is_success());
@@ -53,7 +53,7 @@ async fn test_subscriber_settings() -> Result<(), Error> {
     let whoami = client
         .get(
             "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+            Some(vec![("X-Appengine-Country", "Iceland")]),
         )
         .await;
     assert!(whoami.response().status().is_success());
@@ -78,7 +78,7 @@ async fn test_subscriber_settings() -> Result<(), Error> {
     let whoami = client
         .get(
             "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+            Some(vec![("X-Appengine-Country", "Iceland")]),
         )
         .await;
     assert!(whoami.response().status().is_success());

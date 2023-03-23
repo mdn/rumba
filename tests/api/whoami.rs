@@ -16,6 +16,27 @@ async fn whoami_anonymous_test() -> Result<(), Error> {
     let service = test::init_service(app).await;
     let request = test::TestRequest::get()
         .uri("/api/v1/whoami")
+        .insert_header(("X-Appengine-Country", "Iceland"))
+        .to_request();
+    let whoami = test::call_service(&service, request).await;
+
+    assert!(whoami.status().is_success());
+
+    let json = read_json(whoami).await;
+    assert_eq!(json["geo"]["country"], "Iceland");
+    drop(stubr);
+    Ok(())
+}
+
+#[actix_rt::test]
+#[stubr::mock(port = 4321)]
+async fn whoami_anonymous_test_aws() -> Result<(), Error> {
+    let pool = reset()?;
+    wait_for_stubr().await?;
+    let app = test_app_with_login(&pool).await.unwrap();
+    let service = test::init_service(app).await;
+    let request = test::TestRequest::get()
+        .uri("/api/v1/whoami")
         .insert_header(("CloudFront-Viewer-Country-Name", "Iceland"))
         .to_request();
     let whoami = test::call_service(&service, request).await;
@@ -39,7 +60,7 @@ async fn whoami_legacy_logged_in_test() -> Result<(), Error> {
     let whoami = logged_in_client
         .get(
             "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+            Some(vec![("X-Appengine-Country", "Iceland")]),
         )
         .await;
     assert!(whoami.response().status().is_success());
@@ -54,7 +75,7 @@ async fn whoami_legacy_logged_in_test() -> Result<(), Error> {
     let whoami = legacy_client
         .get(
             "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+            Some(vec![("X-Appengine-Country", "Iceland")]),
         )
         .await;
     assert!(whoami.response().status().is_success());
@@ -80,7 +101,7 @@ async fn whoami_logged_in_test() -> Result<(), Error> {
     let whoami = logged_in_client
         .get(
             "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+            Some(vec![("X-Appengine-Country", "Iceland")]),
         )
         .await;
     assert!(whoami.response().status().is_success());
@@ -114,7 +135,7 @@ async fn whoami_settings_test() -> Result<(), Error> {
     let whoami = logged_in_client
         .get(
             "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+            Some(vec![("X-Appengine-Country", "Iceland")]),
         )
         .await;
     assert!(whoami.response().status().is_success());
@@ -148,7 +169,7 @@ async fn whoami_settings_test() -> Result<(), Error> {
     let whoami = logged_in_client
         .get(
             "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+            Some(vec![("X-Appengine-Country", "Iceland")]),
         )
         .await;
     assert!(whoami.response().status().is_success());
@@ -182,7 +203,7 @@ async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
     let whoami = logged_in_client
         .get(
             "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
+            Some(vec![("X-Appengine-Country", "Iceland")]),
         )
         .await;
     assert!(whoami.response().status().is_success());

@@ -29,6 +29,7 @@ pub struct WhoamiResponse {
 }
 
 const CLOUDFRONT_COUNTRY_HEADER: &str = "CloudFront-Viewer-Country-Name";
+const GOOGLE_COUNTRY_HEADER: &str = "X-Appengine-Country";
 
 pub async fn whoami(
     req: HttpRequest,
@@ -36,7 +37,10 @@ pub async fn whoami(
     pool: web::Data<Pool>,
     metrics: Metrics,
 ) -> Result<HttpResponse, ApiError> {
-    let header_info = req.headers().get(CLOUDFRONT_COUNTRY_HEADER);
+    let headers = req.headers();
+    let header_info = None
+        .or(headers.get(CLOUDFRONT_COUNTRY_HEADER))
+        .or(headers.get(GOOGLE_COUNTRY_HEADER));
 
     let country = header_info.map(|header| GeoInfo {
         country: String::from(header.to_str().unwrap_or("Unknown")),
