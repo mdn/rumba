@@ -13,6 +13,7 @@ use super::settings::SettingsResponse;
 #[derive(Serialize)]
 pub struct GeoInfo {
     country: String,
+    country_iso: String,
 }
 
 #[derive(Serialize, Default)]
@@ -29,6 +30,7 @@ pub struct WhoamiResponse {
 }
 
 const CLOUDFRONT_COUNTRY_HEADER: &str = "CloudFront-Viewer-Country";
+const CLOUDFRONT_COUNTRY_NAME_HEADER: &str = "CloudFront-Viewer-Country-Name";
 const GOOGLE_COUNTRY_HEADER: &str = "X-Appengine-Country";
 
 pub async fn whoami(
@@ -38,13 +40,18 @@ pub async fn whoami(
     metrics: Metrics,
 ) -> Result<HttpResponse, ApiError> {
     let headers = req.headers();
-    let header_info = None
+    let country_name = headers
+        .get(CLOUDFRONT_COUNTRY_NAME_HEADER)
+        .map(|header| header.to_str().unwrap_or_default().to_string());
+    let country_iso = None
         .or(headers.get(CLOUDFRONT_COUNTRY_HEADER))
-        .or(headers.get(GOOGLE_COUNTRY_HEADER));
+        .or(headers.get(GOOGLE_COUNTRY_HEADER))
+        .map(|header| header.to_str().unwrap_or_default().to_string());
 
-    let country = header_info.map(|header| GeoInfo {
-        country: String::from(header.to_str().unwrap_or("Unknown")),
-    });
+    let geo = GeoInfo {
+        country: country_name.unwrap_or(String::from("Unknown")),
+        country_iso: country_iso.unwrap_or(String::from("ZZ")),
+    };
 
     match id {
         Some(id) => {
@@ -56,7 +63,7 @@ pub async fn whoami(
                     let subscription_type = user.get_subscription_type().unwrap_or_default();
                     let is_subscriber = user.is_subscriber();
                     let response = WhoamiResponse {
-                        geo: country,
+                        geo: Option::Some(geo),
                         username: Option::Some(user.fxa_uid),
                         subscription_type: Option::Some(subscription_type),
                         avatar_url: user.avatar_url,
@@ -77,7 +84,7 @@ pub async fn whoami(
         None => {
             metrics.incr("whoami.anonymous");
             let res = WhoamiResponse {
-                geo: country,
+                geo: Option::Some(geo),
                 ..Default::default()
             };
             Ok(HttpResponse::Ok().json(res))

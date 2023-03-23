@@ -12,7 +12,7 @@ async fn test_core_settings() -> Result<(), Error> {
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
-    assert_eq!(json["geo"]["country"], "IS");
+    assert_eq!(json["geo"]["country_iso"], "IS");
 
     assert_eq!(json["username"], "TEST_SUB");
     assert_eq!(json["is_authenticated"], true);
@@ -49,7 +49,7 @@ async fn test_subscriber_settings() -> Result<(), Error> {
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
-    assert_eq!(json["geo"]["country"], "IS");
+    assert_eq!(json["geo"]["country_iso"], "IS");
 
     assert_eq!(json["username"], "TEST_SUB");
     assert_eq!(json["is_authenticated"], true);

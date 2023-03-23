@@ -195,7 +195,7 @@ async fn delete_user_test() -> Result<(), Error> {
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
-    assert_eq!(json["geo"]["country"], "IS");
+    assert_eq!(json["geo"]["country_iso"], "IS");
     assert_eq!(json["is_authenticated"], true);
 
     /*
@@ -266,7 +266,7 @@ async fn invalid_set_test() -> Result<(), Error> {
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
-    assert_eq!(json["geo"]["country"], "IS");
+    assert_eq!(json["geo"]["country_iso"], "IS");
     assert_eq!(json["is_authenticated"], true);
 
     let res = logged_in_client.trigger_webhook(set_token).await;
