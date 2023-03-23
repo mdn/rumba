@@ -2,7 +2,7 @@ name: docker-build
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 env:
   REGISTRY: ghcr.io
@@ -29,7 +29,7 @@ jobs:
 
       - name: Set outputs
         id: vars
-        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"   
+        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta

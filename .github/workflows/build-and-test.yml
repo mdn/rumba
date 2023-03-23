@@ -2,16 +2,15 @@ name: build-and-test
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   MDN_SETTINGS: .settings.test.toml
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     services:
       postgres:
