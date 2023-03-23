@@ -16,6 +16,27 @@ async fn whoami_anonymous_test() -> Result<(), Error> {
     let service = test::init_service(app).await;
     let request = test::TestRequest::get()
         .uri("/api/v1/whoami")
+        .to_request();
+    let whoami = test::call_service(&service, request).await;
+
+    assert!(whoami.status().is_success());
+
+    let json = read_json(whoami).await;
+    assert_eq!(json["geo"]["country"], "Unknown");
+    assert_eq!(json["geo"]["country_iso"], "ZZ");
+    drop(stubr);
+    Ok(())
+}
+
+#[actix_rt::test]
+#[stubr::mock(port = 4321)]
+async fn whoami_anonymous_test_gcp() -> Result<(), Error> {
+    let pool = reset()?;
+    wait_for_stubr().await?;
+    let app = test_app_with_login(&pool).await.unwrap();
+    let service = test::init_service(app).await;
+    let request = test::TestRequest::get()
+        .uri("/api/v1/whoami")
         .insert_header(("X-Appengine-Country", "IS"))
         .to_request();
     let whoami = test::call_service(&service, request).await;
