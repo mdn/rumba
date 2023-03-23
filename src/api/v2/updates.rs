@@ -30,7 +30,6 @@ pub struct BcdUpdatesQueryParams {
     pub collections: Option<Vec<i64>>,
     pub page: Option<i64>,
     pub q: Option<String>,
-    pub show: Option<String>,
     pub sort: Option<AscOrDesc>,
 }
 
@@ -101,7 +100,6 @@ fn query_contains_restricted_filters(query: &BcdUpdatesQueryParams) -> bool {
         || query.q.is_some()
         || query.sort.is_some()
         || query.category.is_some()
-        || query.show.is_some()
 }
 
 pub async fn get_updates(

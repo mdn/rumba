@@ -9,7 +9,6 @@ use crate::db::error::DbError;
 use crate::db::schema;
 use crate::db::users::get_user;
 use crate::db::v2::pagination::PaginationStats;
-use crate::db::watched_items::get_watched_items;
 use crate::diesel::BoolExpressionMethods;
 use crate::diesel::ExpressionMethods;
 use crate::diesel::JoinOnDsl;

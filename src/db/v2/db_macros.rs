@@ -105,21 +105,6 @@ macro_rules! apply_filters {
             query =
                 query.filter($crate::db::schema_manual::bcd_updates_view::browser.eq_any(browsers));
         }
-
-        if let (Some(show), Some(user)) = (&$query_params.show, $user_id) {
-            if show.eq("watched") {
-                let user_db_id = get_user($conn_pool, &user)?;
-                let watched_pages =
-                    get_watched_items($conn_pool, user_db_id.id, &Default::default())?;
-                let user_uris: Vec<String> = watched_pages
-                    .iter()
-                    .map(|query| query.uri.to_owned())
-                    .collect();
-                query = query.filter(
-                    lower($crate::db::schema_manual::bcd_updates_view::mdn_url).eq_any(user_uris),
-                );
-            }
-        }
         query
     }};
 }
