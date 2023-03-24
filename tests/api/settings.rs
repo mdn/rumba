@@ -8,14 +8,12 @@ async fn test_core_settings() -> Result<(), Error> {
     let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/core_user"]).await?;
     let whoami = client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Iceland");
+    assert_eq!(json["geo"]["country_iso"], "IS");
 
     assert_eq!(json["username"], "TEST_SUB");
     assert_eq!(json["is_authenticated"], true);
@@ -33,10 +31,7 @@ async fn test_core_settings() -> Result<(), Error> {
     assert_eq!(settings.status(), 201);
 
     let whoami = client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
@@ -51,14 +46,12 @@ async fn test_core_settings() -> Result<(), Error> {
 async fn test_subscriber_settings() -> Result<(), Error> {
     let (mut client, stubr) = init_test(vec!["tests/stubs"]).await?;
     let whoami = client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Iceland");
+    assert_eq!(json["geo"]["country_iso"], "IS");
 
     assert_eq!(json["username"], "TEST_SUB");
     assert_eq!(json["is_authenticated"], true);
@@ -76,10 +69,7 @@ async fn test_subscriber_settings() -> Result<(), Error> {
     assert_eq!(settings.status(), 201);
 
     let whoami = client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;

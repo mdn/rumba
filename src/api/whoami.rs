@@ -5,6 +5,7 @@ use serde::Serialize;
 use crate::db;
 use crate::db::Pool;
 use crate::metrics::Metrics;
+use crate::util::country_iso_to_name;
 use crate::{api::error::ApiError, db::types::Subscription};
 use actix_web::{web, HttpRequest, HttpResponse};
 
@@ -13,6 +14,7 @@ use super::settings::SettingsResponse;
 #[derive(Serialize)]
 pub struct GeoInfo {
     country: String,
+    country_iso: String,
 }
 
 #[derive(Serialize, Default)]
@@ -28,7 +30,9 @@ pub struct WhoamiResponse {
     settings: Option<SettingsResponse>,
 }
 
-const CLOUDFRONT_COUNTRY_HEADER: &str = "CloudFront-Viewer-Country-Name";
+const CLOUDFRONT_COUNTRY_HEADER: &str = "CloudFront-Viewer-Country";
+const CLOUDFRONT_COUNTRY_NAME_HEADER: &str = "CloudFront-Viewer-Country-Name";
+const GOOGLE_COUNTRY_HEADER: &str = "X-Appengine-Country";
 
 pub async fn whoami(
     req: HttpRequest,
@@ -36,11 +40,26 @@ pub async fn whoami(
     pool: web::Data<Pool>,
     metrics: Metrics,
 ) -> Result<HttpResponse, ApiError> {
-    let header_info = req.headers().get(CLOUDFRONT_COUNTRY_HEADER);
+    let headers = req.headers();
 
-    let country = header_info.map(|header| GeoInfo {
-        country: String::from(header.to_str().unwrap_or("Unknown")),
-    });
+    let country_iso = None
+        .or(headers.get(CLOUDFRONT_COUNTRY_HEADER))
+        .or(headers.get(GOOGLE_COUNTRY_HEADER))
+        .and_then(|header| header.to_str().ok())
+        .unwrap_or("ZZ")
+        .to_string();
+
+    let country = headers
+        .get(CLOUDFRONT_COUNTRY_NAME_HEADER)
+        .and_then(|header| header.to_str().ok())
+        .or(country_iso_to_name(&country_iso))
+        .unwrap_or("Unknown")
+        .to_string();
+
+    let geo = GeoInfo {
+        country,
+        country_iso,
+    };
 
     match id {
         Some(id) => {
@@ -52,7 +71,7 @@ pub async fn whoami(
                     let subscription_type = user.get_subscription_type().unwrap_or_default();
                     let is_subscriber = user.is_subscriber();
                     let response = WhoamiResponse {
-                        geo: country,
+                        geo: Option::Some(geo),
                         username: Option::Some(user.fxa_uid),
                         subscription_type: Option::Some(subscription_type),
                         avatar_url: user.avatar_url,
@@ -73,7 +92,7 @@ pub async fn whoami(
         None => {
             metrics.incr("whoami.anonymous");
             let res = WhoamiResponse {
-                geo: country,
+                geo: Option::Some(geo),
                 ..Default::default()
             };
             Ok(HttpResponse::Ok().json(res))

@@ -14,9 +14,28 @@ async fn whoami_anonymous_test() -> Result<(), Error> {
     wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await.unwrap();
     let service = test::init_service(app).await;
+    let request = test::TestRequest::get().uri("/api/v1/whoami").to_request();
+    let whoami = test::call_service(&service, request).await;
+
+    assert!(whoami.status().is_success());
+
+    let json = read_json(whoami).await;
+    assert_eq!(json["geo"]["country"], "Unknown");
+    assert_eq!(json["geo"]["country_iso"], "ZZ");
+    drop(stubr);
+    Ok(())
+}
+
+#[actix_rt::test]
+#[stubr::mock(port = 4321)]
+async fn whoami_anonymous_test_gcp() -> Result<(), Error> {
+    let pool = reset()?;
+    wait_for_stubr().await?;
+    let app = test_app_with_login(&pool).await.unwrap();
+    let service = test::init_service(app).await;
     let request = test::TestRequest::get()
         .uri("/api/v1/whoami")
-        .insert_header(("CloudFront-Viewer-Country-Name", "Iceland"))
+        .insert_header(("X-Appengine-Country", "IS"))
         .to_request();
     let whoami = test::call_service(&service, request).await;
 
@@ -24,6 +43,29 @@ async fn whoami_anonymous_test() -> Result<(), Error> {
 
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Iceland");
+    assert_eq!(json["geo"]["country_iso"], "IS");
+    drop(stubr);
+    Ok(())
+}
+
+#[actix_rt::test]
+#[stubr::mock(port = 4321)]
+async fn whoami_anonymous_test_aws() -> Result<(), Error> {
+    let pool = reset()?;
+    wait_for_stubr().await?;
+    let app = test_app_with_login(&pool).await.unwrap();
+    let service = test::init_service(app).await;
+    let request = test::TestRequest::get()
+        .uri("/api/v1/whoami")
+        .insert_header(("CloudFront-Viewer-Country", "IS"))
+        .to_request();
+    let whoami = test::call_service(&service, request).await;
+
+    assert!(whoami.status().is_success());
+
+    let json = read_json(whoami).await;
+    assert_eq!(json["geo"]["country"], "Iceland");
+    assert_eq!(json["geo"]["country_iso"], "IS");
     drop(stubr);
     Ok(())
 }
@@ -37,14 +79,12 @@ async fn whoami_legacy_logged_in_test() -> Result<(), Error> {
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Iceland");
+    assert_eq!(json["geo"]["country_iso"], "IS");
 
     assert_eq!(json["username"], "TEST_SUB");
 
@@ -52,16 +92,14 @@ async fn whoami_legacy_logged_in_test() -> Result<(), Error> {
     let mut legacy_client =
         TestHttpClient::with_legacy_session(logged_in_client.service, "TEST_SUB");
     let whoami = legacy_client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
     assert!(whoami.response().status().is_success());
 
     let json = read_json(whoami).await;
 
     assert_eq!(json["geo"]["country"], "Iceland");
+    assert_eq!(json["geo"]["country_iso"], "IS");
     // old sessions do not work anymore
     assert!(json["username"].is_null());
 
@@ -78,14 +116,12 @@ async fn whoami_logged_in_test() -> Result<(), Error> {
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Iceland");
+    assert_eq!(json["geo"]["country_iso"], "IS");
 
     assert_eq!(json["username"], "TEST_SUB");
     assert_eq!(json["is_authenticated"], true);
@@ -112,14 +148,12 @@ async fn whoami_settings_test() -> Result<(), Error> {
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Iceland");
+    assert_eq!(json["geo"]["country_iso"], "IS");
 
     assert_eq!(json["username"], "TEST_SUB");
     assert_eq!(json["is_authenticated"], true);
@@ -146,10 +180,7 @@ async fn whoami_settings_test() -> Result<(), Error> {
     assert_eq!(settings.status(), 201);
 
     let whoami = logged_in_client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
@@ -180,14 +211,12 @@ async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Iceland");
+    assert_eq!(json["geo"]["country_iso"], "IS");
 
     assert_eq!(json["username"], "TEST_SUB");
     assert_eq!(json["is_authenticated"], true);

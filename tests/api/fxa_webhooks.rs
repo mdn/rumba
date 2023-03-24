@@ -73,10 +73,7 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
@@ -90,10 +87,7 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
     assert!(res.response().status().is_success());
 
     let whoami = logged_in_client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
@@ -145,10 +139,7 @@ async fn subscription_state_change_to_core_test(set_token: &str) -> Result<(), E
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
@@ -162,10 +153,7 @@ async fn subscription_state_change_to_core_test(set_token: &str) -> Result<(), E
     assert!(res.response().status().is_success());
 
     let whoami = logged_in_client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
@@ -203,14 +191,12 @@ async fn delete_user_test() -> Result<(), Error> {
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Iceland");
+    assert_eq!(json["geo"]["country_iso"], "IS");
     assert_eq!(json["is_authenticated"], true);
 
     /*
@@ -252,10 +238,7 @@ async fn delete_user_test() -> Result<(), Error> {
     assert!(res.response().status().is_success());
 
     let whoami = logged_in_client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
     assert!(!whoami.response().status().is_success());
 
@@ -280,14 +263,12 @@ async fn invalid_set_test() -> Result<(), Error> {
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Iceland");
+    assert_eq!(json["geo"]["country_iso"], "IS");
     assert_eq!(json["is_authenticated"], true);
 
     let res = logged_in_client.trigger_webhook(set_token).await;
@@ -323,10 +304,7 @@ async fn change_profile_test() -> Result<(), Error> {
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
@@ -355,10 +333,7 @@ async fn change_profile_test() -> Result<(), Error> {
     let mut tries = 100;
     while tries > 0 {
         let whoami = logged_in_client
-            .get(
-                "/api/v1/whoami",
-                Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-            )
+            .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
             .await;
         assert!(whoami.response().status().is_success());
         let json = read_json(whoami).await;

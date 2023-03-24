@@ -15,14 +15,12 @@ async fn whoami_settings_test() -> Result<(), Error> {
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
     let whoami = logged_in_client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Iceland");
+    assert_eq!(json["geo"]["country_iso"], "IS");
 
     assert_eq!(json["username"], "TEST_SUB");
     assert_eq!(json["is_authenticated"], true);
@@ -60,10 +58,7 @@ async fn whoami_settings_test() -> Result<(), Error> {
     assert_eq!(json["subscribed"], true);
 
     let whoami = logged_in_client
-        .get(
-            "/api/v1/whoami",
-            Some(vec![("CloudFront-Viewer-Country-Name", "Iceland")]),
-        )
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
