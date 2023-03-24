@@ -30,7 +30,6 @@ pub struct BcdUpdatesQueryParams {
     pub collections: Option<Vec<i64>>,
     pub page: Option<i64>,
     pub q: Option<String>,
-    pub show: Option<String>,
     pub sort: Option<AscOrDesc>,
 }
 
@@ -101,16 +100,6 @@ fn query_contains_restricted_filters(query: &BcdUpdatesQueryParams) -> bool {
         || query.q.is_some()
         || query.sort.is_some()
         || query.category.is_some()
-        || query.show.is_some()
-}
-pub async fn get_updates_watched(
-    _req: HttpRequest,
-    pool: web::Data<Pool>,
-    user_id: Option<Identity>,
-    mut query: web::Query<BcdUpdatesQueryParams>,
-) -> Result<HttpResponse, ApiError> {
-    query.show = Some("watched".to_string());
-    get_updates(_req, pool, user_id, query).await
 }
 
 pub async fn get_updates(
@@ -128,7 +117,7 @@ pub async fn get_updates(
     let updates = if let (Some(_), Some(user_id)) = (&query.collections, &user_id) {
         get_bcd_updates_for_collection(&mut conn_pool, &query, user_id)?
     } else {
-        get_bcd_updates_paginated(&mut conn_pool, &query, user_id)?
+        get_bcd_updates_paginated(&mut conn_pool, &query)?
     };
 
     let mapped_updates = updates
