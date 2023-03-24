@@ -45,14 +45,16 @@ pub async fn whoami(
     let country_iso = None
         .or(headers.get(CLOUDFRONT_COUNTRY_HEADER))
         .or(headers.get(GOOGLE_COUNTRY_HEADER))
-        .map(|header| header.to_str().unwrap_or_default().to_string())
-        .unwrap_or(String::from("ZZ"));
+        .and_then(|header| header.to_str().ok())
+        .unwrap_or("ZZ")
+        .to_string();
 
     let country = headers
         .get(CLOUDFRONT_COUNTRY_NAME_HEADER)
-        .map(|header| header.to_str().unwrap_or_default().to_string())
-        .or(country_iso_to_name(country_iso.as_str()))
-        .unwrap_or(String::from("Unknown"));
+        .and_then(|header| header.to_str().ok())
+        .or(country_iso_to_name(&country_iso))
+        .unwrap_or("Unknown")
+        .to_string();
 
     let geo = GeoInfo {
         country,

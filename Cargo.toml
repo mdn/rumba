@@ -68,7 +68,6 @@ sentry = "0.29"
 sentry-actix = "0.29"
 
 basket = "0.0.5"
-phf = { version = "0.11.1", features = ["macros"] }
 
 [dev-dependencies]
 stubr = "0.5"
