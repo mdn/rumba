@@ -235,8 +235,8 @@ async fn synchronize_updates(pool: &mut PgConnection, json: Value) -> Result<(),
             }
         };
 
-        if let Some(val) = added {
-            for added in val.as_array().unwrap() {
+        if let Some(Value::Array(val)) = added {
+            for added in val {
                 let path = added["path"]
                     .as_str()
                     .unwrap_or_else(|| added.as_str().unwrap());

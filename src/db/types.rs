@@ -156,26 +156,6 @@ impl From<Subscription> for String {
     PartialOrd,
     Serialize,
 )]
-#[ExistingTypePath = "crate::db::schema::sql_types::NotificationType"]
-pub enum NotificationTypeEnum {
-    #[serde(rename(serialize = "content"))]
-    Content,
-    #[serde(rename(serialize = "compat"))]
-    Compat,
-}
-
-#[derive(
-    Copy,
-    Clone,
-    diesel_derive_enum::DbEnum,
-    Debug,
-    Deserialize,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    Serialize,
-)]
 // We only currently (22-12-2022) support added/removed stable.
 #[ExistingTypePath = "crate::db::schema::sql_types::BcdEventType"]
 pub enum BcdUpdateEventType {
