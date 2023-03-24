@@ -1,5 +1,3 @@
-use self::countries::COUNTRIES;
-
 pub fn country_iso_to_name(input: &str) -> Option<&str> {
     Some(match input {
         "AX" => "Åland Islands",
