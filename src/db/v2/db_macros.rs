@@ -87,7 +87,7 @@ macro_rules! bcd_updates_read_table_get_updates_for_collections {
 
 #[macro_export]
 macro_rules! apply_filters {
-    ($query: expr, $query_params: expr, $user_id: expr, $conn_pool: expr) => {{
+    ($query: expr, $query_params: expr, $conn_pool: expr) => {{
         let mut query = $query;
 
         if let Some(search) = &$query_params.q {
@@ -105,6 +105,7 @@ macro_rules! apply_filters {
             query =
                 query.filter($crate::db::schema_manual::bcd_updates_view::browser.eq_any(browsers));
         }
+
         query
     }};
 }

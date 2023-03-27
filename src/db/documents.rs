@@ -1,14 +1,10 @@
-use crate::db::model::{DocumentInsert, DocumentMetadata, DocumentQuery};
+use crate::db::model::{DocumentInsert, DocumentMetadata};
 use crate::db::schema;
 
-use crate::diesel::NullableExpressionMethods;
-use diesel::expression_methods::ExpressionMethods;
-
-use crate::db::error::DbError;
 use diesel::r2d2::ConnectionManager;
+use diesel::QueryResult;
 use diesel::RunQueryDsl;
 use diesel::{insert_into, PgConnection};
-use diesel::{QueryDsl, QueryResult};
 use r2d2::PooledConnection;
 
 use crate::settings::SETTINGS;
@@ -38,44 +34,4 @@ pub fn create_or_update_document(
         .set(&insert)
         .returning(schema::documents::id)
         .get_result(conn)
-}
-
-pub fn get_document_by_path(
-    conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
-    path: String,
-) -> Result<DocumentQuery, DbError> {
-    let doc = schema::documents::table
-        .filter(schema::documents::paths.nullable().eq(vec![path]))
-        .select((
-            schema::documents::id,
-            schema::documents::created_at,
-            schema::documents::updated_at,
-            schema::documents::absolute_uri,
-            schema::documents::uri,
-            schema::documents::metadata,
-            schema::documents::title,
-            schema::documents::paths,
-        ))
-        .first::<DocumentQuery>(conn)?;
-    Ok(doc)
-}
-
-pub fn get_document_by_url(
-    conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
-    url: &str,
-) -> Result<DocumentQuery, DbError> {
-    let doc = schema::documents::table
-        .filter(schema::documents::uri.eq(url))
-        .select((
-            schema::documents::id,
-            schema::documents::created_at,
-            schema::documents::updated_at,
-            schema::documents::absolute_uri,
-            schema::documents::uri,
-            schema::documents::metadata,
-            schema::documents::title,
-            schema::documents::paths,
-        ))
-        .first::<DocumentQuery>(conn)?;
-    Ok(doc)
 }

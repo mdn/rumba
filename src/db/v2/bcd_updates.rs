@@ -42,7 +42,7 @@ pub fn get_bcd_updates_paginated(
 ) -> Result<(Vec<BcdUpdate>, i64), DbError> {
     let count = get_count_for_query(pool, query_params);
     let mut query = bcd_updates_read_table_group_by_select!().into_boxed();
-    query = apply_filters!(query, query_params, user_option, pool);
+    query = apply_filters!(query, query_params, pool);
     query = bcd_updates_apply_sort!(query, query_params.sort);
 
     let offset = offset_from_page(query_params.page);
@@ -77,7 +77,7 @@ pub fn get_bcd_updates_for_collection(
             pool
         );
 
-        query = apply_filters!(query, query_params, Some(user_id.id().unwrap()), pool);
+        query = apply_filters!(query, query_params, pool);
         query = bcd_updates_apply_sort!(query, query_params.sort);
 
         let offset = offset_from_page(query_params.page);
@@ -98,7 +98,7 @@ pub fn get_count_for_query(
     query_params: &BcdUpdatesQueryParams,
 ) -> Result<i64, DbError> {
     let mut query = bcd_updates_read_table_group_by_select!().into_boxed();
-    query = apply_filters!(query, query_params, user_id, pool);
+    query = apply_filters!(query, query_params, pool);
     let pages = query.paginate().per_page(5);
     Ok(pages.count_pages::<BcdUpdateQuery>(pool).unwrap())
 }
@@ -110,7 +110,7 @@ pub fn get_count_for_collections_query(
     user_id: &String,
 ) -> Result<i64, DbError> {
     let mut query = bcd_updates_read_table_get_updates_for_collections!(collections, user_id, pool);
-    query = apply_filters!(query, query_params, Some(user_id), pool);
+    query = apply_filters!(query, query_params, pool);
     let pages = query.paginate().per_page(5);
     Ok(pages.count_pages::<BcdUpdateQuery>(pool).unwrap())
 }
