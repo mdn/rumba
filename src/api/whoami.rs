@@ -83,8 +83,9 @@ pub async fn whoami(
                     metrics.incr("whoami.logged_in_success");
                     Ok(HttpResponse::Ok().json(response))
                 }
-                Err(_err) => {
+                Err(err) => {
                     metrics.incr("whoami.logged_in_invalid");
+                    sentry::capture_error(&err);
                     Err(ApiError::InvalidSession)
                 }
             }
