@@ -5,6 +5,7 @@ use serde::Serialize;
 use crate::db;
 use crate::db::Pool;
 use crate::metrics::Metrics;
+use crate::settings::SETTINGS;
 use crate::util::country_iso_to_name;
 use crate::{api::error::ApiError, db::types::Subscription};
 use actix_web::{web, HttpRequest, HttpResponse};
@@ -28,6 +29,8 @@ pub struct WhoamiResponse {
     is_subscriber: Option<bool>,
     subscription_type: Option<Subscription>,
     settings: Option<SettingsResponse>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    maintenance: Option<String>,
 }
 
 const CLOUDFRONT_COUNTRY_HEADER: &str = "CloudFront-Viewer-Country";
@@ -79,6 +82,7 @@ pub async fn whoami(
                         is_authenticated: Option::Some(true),
                         email: Option::Some(user.email),
                         settings: settings.map(Into::into),
+                        maintenance: SETTINGS.maintenance.clone(),
                     };
                     metrics.incr("whoami.logged_in_success");
                     Ok(HttpResponse::Ok().json(response))

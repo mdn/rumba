@@ -86,6 +86,7 @@ pub struct Settings {
     pub basket: Option<Basket>,
     #[serde(default)]
     pub skip_migrations: bool,
+    pub maintenance: Option<String>,
 }
 
 impl Settings {
