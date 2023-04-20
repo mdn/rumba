@@ -1,6 +1,9 @@
 use actix_identity::Identity;
-use actix_web::{web::Data, HttpResponse};
-use basket::{Basket, YesNo};
+use actix_web::{
+    web::{self, Data},
+    HttpResponse,
+};
+use basket::{Basket, SubscribeOpts, YesNo};
 use diesel::PgConnection;
 use serde::{Deserialize, Serialize};
 
@@ -15,6 +18,8 @@ use crate::{
 };
 
 const MDN_PLUS_LIST: &str = "mdnplus";
+const SOURCE_URL_NEWSLETTER: &str = "https://developer.mozilla.org/en-US/newsletter";
+const SOURCE_URL_SETTINGS: &str = "https://developer.mozilla.org/en-US/settings";
 
 #[derive(Deserialize, Serialize)]
 struct UserLookup {
@@ -25,6 +30,11 @@ struct UserLookup {
 #[derive(Deserialize, Serialize)]
 struct Subscribed {
     pub subscribed: bool,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct SubscriptionRequest {
+    pub email: String,
 }
 
 pub async fn subscribe_handler(
@@ -40,13 +50,42 @@ pub async fn subscribe_handler(
     Ok(HttpResponse::NotImplemented().finish())
 }
 
+pub async fn subscribe_anonymous_handler(
+    basket: Data<Option<Basket>>,
+    subscription_req: web::Json<SubscriptionRequest>,
+) -> Result<HttpResponse, ApiError> {
+    if let Some(basket) = &**basket {
+        basket
+            .subscribe(
+                &subscription_req.email,
+                vec![MDN_PLUS_LIST.into()],
+                Some(SubscribeOpts {
+                    source_url: Some(SOURCE_URL_NEWSLETTER.to_string()),
+                    ..Default::default()
+                }),
+            )
+            .await?;
+
+        return Ok(HttpResponse::Created().json(Subscribed { subscribed: true }));
+    }
+    Ok(HttpResponse::NotImplemented().finish())
+}
+
 pub async fn subscribe(
     conn: &mut PgConnection,
     user: &UserQuery,
     basket: &Basket,
 ) -> Result<HttpResponse, ApiError> {
     basket
-        .subscribe_private(&user.email, vec![MDN_PLUS_LIST.into()], None)
+        .subscribe_private(
+            &user.email,
+            vec![MDN_PLUS_LIST.into()],
+            Some(SubscribeOpts {
+                optin: Some(YesNo::Y),
+                source_url: Some(SOURCE_URL_SETTINGS.to_string()),
+                ..Default::default()
+            }),
+        )
         .await?;
     db::settings::create_or_update_settings(
         conn,
