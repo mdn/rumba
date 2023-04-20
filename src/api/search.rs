@@ -45,18 +45,13 @@ struct Document {
     highlight: elastic::ResponseHighlight,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 enum Sort {
+    #[default]
     Best,
     Relevance,
     Popularity,
-}
-
-impl Default for Sort {
-    fn default() -> Self {
-        Sort::Best
-    }
 }
 
 #[derive(Deserialize)]
