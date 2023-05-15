@@ -73,9 +73,13 @@ pub struct Basket {
     pub basket_url: Url,
 }
 
+
+#[serde_as]
 #[derive(Debug, Deserialize)]
 pub struct Playground {
     pub github_token: String,
+    #[serde_as(as = "Base64")]
+    pub crypt_key: [u8; 32],
 }
 
 #[derive(Deserialize)]

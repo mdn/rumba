@@ -69,8 +69,8 @@ sentry-actix = "0.30"
 
 basket = "0.0.5"
 
-octocrab = "0.19"
-futures-timer = "3.0.2"
+octocrab = "0.21"
+aes-gcm = { version = "0.10", features = ["default", "std"] }
 
 [dev-dependencies]
 stubr = "0.5"
