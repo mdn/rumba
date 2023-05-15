@@ -15,11 +15,10 @@ use crate::{
         users::get_user,
         Pool,
     },
+    settings::SETTINGS,
 };
 
 const MDN_PLUS_LIST: &str = "mdnplus";
-const SOURCE_URL_NEWSLETTER: &str = "https://developer.mozilla.org/en-US/newsletter";
-const SOURCE_URL_SETTINGS: &str = "https://developer.mozilla.org/en-US/settings";
 
 #[derive(Deserialize, Serialize)]
 struct UserLookup {
@@ -60,7 +59,10 @@ pub async fn subscribe_anonymous_handler(
                 &subscription_req.email,
                 vec![MDN_PLUS_LIST.into()],
                 Some(SubscribeOpts {
-                    source_url: Some(SOURCE_URL_NEWSLETTER.to_string()),
+                    source_url: Some(format!(
+                        "{}/en-US/newsletter",
+                        &SETTINGS.application.document_base_url
+                    )),
                     ..Default::default()
                 }),
             )
@@ -82,7 +84,10 @@ pub async fn subscribe(
             vec![MDN_PLUS_LIST.into()],
             Some(SubscribeOpts {
                 optin: Some(YesNo::Y),
-                source_url: Some(SOURCE_URL_SETTINGS.to_string()),
+                source_url: Some(format!(
+                    "{}/en-US/settings",
+                    &SETTINGS.application.document_base_url
+                )),
                 ..Default::default()
             }),
         )
