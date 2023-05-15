@@ -1,3 +1,5 @@
+use std::string::FromUtf8Error;
+
 use crate::db::error::DbError;
 use actix_http::header::HeaderValue;
 use actix_web::http::header::HeaderName;
@@ -46,8 +48,14 @@ pub enum FxaWebhookError {
 pub enum PlaygroundError {
     #[error("Octocrab error: {0}")]
     OctocrabError(#[from] octocrab::Error),
-    #[error("Token error: no token")]
-    TokenError,
+    #[error("Crypt error: {0}")]
+    CryptError(#[from] aes_gcm::Error),
+    #[error("Crypt decoding error: {0}")]
+    DecodeError(#[from] base64::DecodeError),
+    #[error("Crypt utf error: {0}")]
+    UtfDecodeError(#[from] FromUtf8Error),
+    #[error("Playground error: no settings")]
+    SettingsError,
 }
 
 #[derive(Error, Debug)]
