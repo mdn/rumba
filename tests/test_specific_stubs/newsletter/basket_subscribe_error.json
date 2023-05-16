@@ -1,0 +1,17 @@
+{
+  "uuid": "basket_subscribe",
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "url": "/news/subscribe/"
+  },
+  "response": {
+    "status": 500,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "status": "error"
+    }
+  }
+}
