@@ -30,7 +30,7 @@ harsh = "0.2"
 itertools = "0.10.5"
 r2d2 = "0.8"
 
-openidconnect = "2"
+openidconnect = "3"
 jsonwebtoken = "8"
 
 serde = { version = "1", features = ["derive"] }
