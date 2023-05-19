@@ -35,7 +35,7 @@ jsonwebtoken = "8"
 
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-serde_with = { version = "2", features = ["base64"]}
+serde_with = { version = "3", features = ["base64"]}
 serde_urlencoded = "0.7"
 form_urlencoded = "1"
 serde_path_to_error = "0.1"
