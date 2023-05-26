@@ -10,6 +10,7 @@ use url::Url;
 #[derive(Deserialize)]
 pub struct DB {
     pub uri: String,
+    pub supabase_uri: Option<String>,
 }
 
 #[derive(Deserialize)]

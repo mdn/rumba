@@ -8,6 +8,7 @@ pub mod ping;
 pub mod schema;
 pub mod schema_manual;
 pub mod settings;
+pub mod supabase;
 pub mod types;
 pub mod users;
 pub mod v2;
@@ -24,3 +25,5 @@ pub fn establish_connection(database_url: &str) -> Pool {
         .build(manager)
         .expect("Failed to create pool.")
 }
+
+pub struct SupabaseDB(pub Pool);

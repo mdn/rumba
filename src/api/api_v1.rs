@@ -1,4 +1,4 @@
-use crate::api::chat::{explain_chat, generate_example, stream_response};
+use crate::api::chat::{explain_chat, generate_example, stream_response, ask};
 use crate::api::newsletter::{
     is_subscribed, subscribe_anonymous_handler, subscribe_handler, unsubscribe_handler,
 };
@@ -29,7 +29,7 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
         .service(
             web::scope("/chat")
                 .service(web::resource("/explain").route(web::post().to(explain_chat)))
-                .service(web::resource("/stream").route(web::post().to(stream_response)))
+                .service(web::resource("/stream").route(web::post().to(ask)))
                 .service(web::resource("/generate").route(web::post().to(generate_example))),
         )
         .service(root_service())
