@@ -87,6 +87,13 @@ async fn main() -> anyhow::Result<()> {
             .map(|b| Basket::new(&b.api_key, b.basket_url.clone())),
     );
 
+    let openai_client = Data::new(
+        SETTINGS
+            .chat
+            .as_ref()
+            .map(|c| async_openai::Client::new().with_api_key(&c.api_key)),
+    );
+
     HttpServer::new(move || {
         let app = App::new()
             .wrap(error_handler())
@@ -104,6 +111,7 @@ async fn main() -> anyhow::Result<()> {
                 .build(),
             )
             .wrap(Logger::new(LOG_FMT).exclude("/healthz"))
+            .app_data(Data::clone(&openai_client))
             .app_data(Data::clone(&basket_client))
             .app_data(Data::clone(&metrics))
             .app_data(Data::clone(&pool))

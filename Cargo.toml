@@ -20,6 +20,7 @@ actix-rt = "2"
 actix-identity = "0.5"
 actix-session = { version = "0.7", features = ["cookie-session"] }
 actix-web-httpauth = "0.8"
+actix-web-lab = "0.19"
 
 diesel = { version = "2", features = ["postgres", "uuid", "r2d2", "chrono", "serde_json"] }
 diesel_migrations = "2"
@@ -68,6 +69,7 @@ sentry = "0.31"
 sentry-actix = "0.31"
 
 basket = "0.0.5"
+async-openai = "0.10"
 
 [dev-dependencies]
 stubr = "0.5"

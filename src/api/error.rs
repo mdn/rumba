@@ -4,6 +4,7 @@ use actix_web::http::header::HeaderName;
 use actix_web::http::StatusCode;
 use actix_web::middleware::{ErrorHandlerResponse, ErrorHandlers};
 use actix_web::{HttpResponse, ResponseError};
+use async_openai::error::OpenAIError;
 use basket::BasketError;
 use serde::Serialize;
 use serde_json::json;
@@ -41,6 +42,7 @@ pub enum FxaWebhookError {
     #[error("Invalid signature")]
     InvalidSignature(#[from] openidconnect::SignatureVerificationError),
 }
+
 #[derive(Error, Debug)]
 pub enum ApiError {
     #[error("Artificial error")]
@@ -81,6 +83,8 @@ pub enum ApiError {
     LoginRequiredForFeature(String),
     #[error("Newsletter error: {0}")]
     BasketError(#[from] BasketError),
+    #[error("OpenAI error: {0}")]
+    OpenAIError(#[from] OpenAIError),
     #[error("Unknown error: {0}")]
     Generic(String),
 }
@@ -108,6 +112,7 @@ impl ApiError {
             Self::BasketError(_) => "Error managing newsletter",
             Self::Generic(err) => err,
             Self::LoginRequiredForFeature(_) => "Login Required",
+            Self::OpenAIError(_) => "AI error",
         }
     }
 }
