@@ -8,13 +8,13 @@ pub mod ping;
 pub mod schema;
 pub mod schema_manual;
 pub mod settings;
-pub mod supabase;
 pub mod types;
 pub mod users;
 pub mod v2;
 
 use diesel::pg::PgConnection;
 use diesel::r2d2::ConnectionManager;
+use sqlx::postgres::PgPoolOptions;
 
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
@@ -26,4 +26,11 @@ pub fn establish_connection(database_url: &str) -> Pool {
         .expect("Failed to create pool.")
 }
 
-pub struct SupabaseDB(pub Pool);
+pub type SupaPool = sqlx::PgPool;
+
+pub async fn establish_supa_connection(database_url: &str) -> SupaPool {
+    PgPoolOptions::new()
+    .max_connections(25)
+    .connect(database_url).await.expect("Failed to create supa pool")
+}
+

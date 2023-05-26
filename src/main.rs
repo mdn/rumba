@@ -20,7 +20,7 @@ use reqwest::Client as HttpClient;
 use rumba::{
     add_services,
     api::error::{error_handler, ERROR_ID_HEADER_NAME_STR},
-    db::{self, SupabaseDB},
+    db,
     fxa::LoginManager,
     logging::{self, init_logging},
     metrics::{metrics_from_opts, MetricsData},
@@ -58,7 +58,15 @@ async fn main() -> anyhow::Result<()> {
 
     let pool = Data::new(pool);
 
-    let supabase_pool = Data::new(SETTINGS.db.supabase_uri.as_ref().map(|uri| SupabaseDB(db::establish_connection(uri))));
+    let supabase_pool = Data::new(match 
+        SETTINGS
+            .db
+            .supabase_uri
+            .as_ref() {
+                Some(uri) => Some(db::establish_supa_connection(uri).await),
+                None => None,
+            }
+    );
 
     let http_client = Data::new(HttpClient::new());
     let login_manager = Data::new(LoginManager::init().await?);

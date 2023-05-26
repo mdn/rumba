@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use crate::db::{supabase::MdnDoc, Pool, SupabaseDB};
+use crate::db::{Pool, SupaPool};
 use actix_identity::Identity;
 use actix_web::{
     web::{Data, Json},
@@ -17,7 +17,6 @@ use async_openai::{
     },
     Client,
 };
-use diesel::RunQueryDsl;
 use futures_util::{stream::FuturesUnordered, TryStreamExt};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
@@ -390,7 +389,7 @@ async fn search_embeddings(query: String, supabase_pool: Data<Pool>) {}
 pub async fn ask(
     _: Identity,
     openai_client: Data<Option<Client>>,
-    supabase_pool: Data<Option<SupabaseDB>>,
+    supabase_pool: Data<Option<SupaPool>>,
     messages: Json<ChatRequestMessages>,
 ) -> Result<HttpResponse, ApiError> {
     if let Some(client) = &**openai_client {
@@ -401,9 +400,9 @@ pub async fn ask(
 
         // 3. Get matching sections from Supabase.
         if let Some(pool) = &**supabase_pool {
-            let mut conn = pool.0.get()?;
-            let d = MdnDoc::find(&mut conn);
-            println!("{:?}", d.embedding);
+            let row: (String,) = sqlx::query_as("SELECT heading FROM mdn_doc_section LIMIT 1")
+            .fetch_one(pool).await?;
+            println!("{}", row.0);
         }
         //let results = diesel::sql_query("SELECT match_page_sections($1, $2, $3, $4) AS (id Bigint, heading Text, content Text, similarity Float)")
 
