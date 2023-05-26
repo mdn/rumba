@@ -1,3 +1,5 @@
+use std::string::FromUtf8Error;
+
 use crate::db::error::DbError;
 use actix_http::header::HeaderValue;
 use actix_web::http::header::HeaderName;
@@ -41,6 +43,21 @@ pub enum FxaWebhookError {
     #[error("Invalid signature")]
     InvalidSignature(#[from] openidconnect::SignatureVerificationError),
 }
+
+#[derive(Error, Debug)]
+pub enum PlaygroundError {
+    #[error("Octocrab error: {0}")]
+    OctocrabError(#[from] octocrab::Error),
+    #[error("Crypt error: {0}")]
+    CryptError(#[from] aes_gcm::Error),
+    #[error("Crypt decoding error: {0}")]
+    DecodeError(#[from] base64::DecodeError),
+    #[error("Crypt utf error: {0}")]
+    UtfDecodeError(#[from] FromUtf8Error),
+    #[error("Playground error: no settings")]
+    SettingsError,
+}
+
 #[derive(Error, Debug)]
 pub enum ApiError {
     #[error("Artificial error")]
@@ -81,6 +98,8 @@ pub enum ApiError {
     LoginRequiredForFeature(String),
     #[error("Newsletter error: {0}")]
     BasketError(#[from] BasketError),
+    #[error("Playground error: {0}")]
+    PlaygroundError(#[from] PlaygroundError),
     #[error("Unknown error: {0}")]
     Generic(String),
 }
@@ -106,6 +125,7 @@ impl ApiError {
             Self::ValidationError(_) => "Validation Error",
             Self::MultipleCollectionSubscriptionLimitReached => "Subscription limit reached",
             Self::BasketError(_) => "Error managing newsletter",
+            Self::PlaygroundError(_) => "Error querying playground",
             Self::Generic(err) => err,
             Self::LoginRequiredForFeature(_) => "Login Required",
         }

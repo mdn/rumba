@@ -73,6 +73,15 @@ pub struct Basket {
     pub basket_url: Url,
 }
 
+#[serde_as]
+#[derive(Debug, Deserialize)]
+pub struct Playground {
+    pub github_token: String,
+    #[serde_as(as = "Base64")]
+    pub crypt_key: [u8; 32],
+    pub flag_repo: String,
+}
+
 #[derive(Deserialize)]
 pub struct Settings {
     pub db: DB,
@@ -84,6 +93,7 @@ pub struct Settings {
     pub metrics: Metrics,
     pub sentry: Option<Sentry>,
     pub basket: Option<Basket>,
+    pub playground: Option<Playground>,
     #[serde(default)]
     pub skip_migrations: bool,
     pub maintenance: Option<String>,
