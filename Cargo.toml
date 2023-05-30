@@ -72,6 +72,7 @@ sentry-actix = "0.31"
 
 basket = "0.0.5"
 async-openai = "0.10"
+tiktoken-rs = { version = "0.4", features = ["async-openai"] }
 
 [dev-dependencies]
 stubr = "0.5"
