@@ -502,14 +502,13 @@ pub async fn ask(
             pgvector::Vector::from(embedding_res.data.into_iter().next().unwrap().embedding);
         // 3. Get matching sections from Supabase.
         if let Some(pool) = &**supabase_pool {
-            let row: Vec<(i64, i64, String, String, f64)> = match sqlx::query_as(
+            let row: Vec<(String, String, String, f64)> = match sqlx::query_as(
                 r#"select
-mdn_doc_section.id,
-mdn_doc_section.doc_id,
+mdn_doc.slug,
 mdn_doc_section.heading,
 mdn_doc_section.content,
 (mdn_doc_section.embedding <#> $1) * -1 as similarity
-from mdn_doc_section
+from mdn_doc_section left join mdn_doc on mdn_doc.id = mdn_doc_section.doc_id
 where length(mdn_doc_section.content) >= $4
 and (mdn_doc_section.embedding <#> $1) * -1 > $2
 order by mdn_doc_section.embedding <#> $1
@@ -532,13 +531,14 @@ limit $3;"#,
             let mut context = vec![];
             let mut token_len = 0;
             for doc in row.into_iter() {
+                println!("slug: {}", doc.0);
                 let bpe = tiktoken_rs::r50k_base().unwrap();
-                let tokens = bpe.encode_with_special_tokens(&doc.3).len();
+                let tokens = bpe.encode_with_special_tokens(&doc.2).len();
                 token_len += tokens;
                 if token_len >= 1500 {
                     break;
                 }
-                context.push(doc.3)
+                context.push(doc.2)
             }
             let context = context.join("\n---\n");
             let system_message = ChatCompletionRequestMessageArgs::default()
