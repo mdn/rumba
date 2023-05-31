@@ -30,7 +30,8 @@ pub type SupaPool = sqlx::PgPool;
 
 pub async fn establish_supa_connection(database_url: &str) -> SupaPool {
     PgPoolOptions::new()
-    .max_connections(25)
-    .connect(database_url).await.expect("Failed to create supa pool")
+        .max_connections(25)
+        .connect(database_url)
+        .await
+        .expect("Failed to create supa pool")
 }
-

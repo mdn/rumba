@@ -9,6 +9,7 @@ use actix_web::{
     App, Error,
 };
 
+pub mod ai;
 pub mod api;
 pub mod db;
 pub mod fxa;

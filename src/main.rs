@@ -58,15 +58,10 @@ async fn main() -> anyhow::Result<()> {
 
     let pool = Data::new(pool);
 
-    let supabase_pool = Data::new(match 
-        SETTINGS
-            .db
-            .supabase_uri
-            .as_ref() {
-                Some(uri) => Some(db::establish_supa_connection(uri).await),
-                None => None,
-            }
-    );
+    let supabase_pool = Data::new(match SETTINGS.db.supabase_uri.as_ref() {
+        Some(uri) => Some(db::establish_supa_connection(uri).await),
+        None => None,
+    });
 
     let http_client = Data::new(HttpClient::new());
     let login_manager = Data::new(LoginManager::init().await?);

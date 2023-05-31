@@ -1,3 +1,4 @@
+use crate::ai::error::AIError;
 use crate::db::error::DbError;
 use actix_http::header::HeaderValue;
 use actix_web::http::header::HeaderName;
@@ -87,8 +88,8 @@ pub enum ApiError {
     BasketError(#[from] BasketError),
     #[error("OpenAI error: {0}")]
     OpenAIError(#[from] OpenAIError),
-    #[error("SqlXError: {0}")]
-    SqlXError(#[from] sqlx::Error),
+    #[error("AI error: {0}")]
+    AIError(#[from] AIError),
     #[error("Unknown error: {0}")]
     Generic(String),
 }
@@ -117,8 +118,8 @@ impl ApiError {
             Self::BasketError(_) => "Error managing newsletter",
             Self::Generic(err) => err,
             Self::LoginRequiredForFeature(_) => "Login Required",
-            Self::OpenAIError(_) => "AI error",
-            Self::SqlXError(_) => "SqlX error",
+            Self::OpenAIError(_) => "Open AI error",
+            Self::AIError(_) => "AI error",
         }
     }
 }

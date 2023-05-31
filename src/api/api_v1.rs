@@ -1,4 +1,4 @@
-use crate::api::chat::{explain_chat, generate_example, ask};
+use crate::api::chat::{ask, explain_chat, generate_example};
 use crate::api::newsletter::{
     is_subscribed, subscribe_anonymous_handler, subscribe_handler, unsubscribe_handler,
 };
