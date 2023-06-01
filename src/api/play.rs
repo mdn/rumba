@@ -6,29 +6,27 @@ use aes_gcm::{
 };
 use base64::{engine::general_purpose::STANDARD, Engine};
 use octocrab::Octocrab;
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
 use crate::{
-    api::error::{ApiError, PlaygroundError},
+    api::{
+        error::{ApiError, PlaygroundError},
+    },
     settings::SETTINGS,
 };
 
 const FILENAME: &str = "playground.html";
 const DESCRIPTION: &str = "Code shared from the MDN Playground";
 
-#[derive(Deserialize)]
-pub struct PlaySaveRequest {
+#[derive(Deserialize, Serialize)]
+pub struct PlayCode {
     code: String,
 }
 #[derive(Serialize)]
 pub struct PlaySaveResponse {
     id: String,
-}
-
-#[derive(Serialize)]
-pub struct PlayLoadResponse {
-    code: String,
 }
 
 pub struct Gist {
@@ -44,34 +42,38 @@ pub struct PlayFlagRequest {
 }
 
 pub(crate) const NONCE_LEN: usize = 12;
-
-fn encrypt(gist_id: &str) -> Result<String, PlaygroundError> {
-    let settings = &SETTINGS
+static CIPHER: Lazy<Option<Aes256Gcm>> = Lazy::new(|| {
+    SETTINGS
         .playground
         .as_ref()
-        .ok_or(PlaygroundError::SettingsError)?;
-    let cipher = Aes256Gcm::new(GenericArray::from_slice(&settings.crypt_key));
-    let mut nonce = vec![0; NONCE_LEN];
-    OsRng.fill_bytes(&mut nonce);
-    let nonce = Nonce::from_slice(&nonce);
-    let mut data = cipher.encrypt(nonce, gist_id.as_bytes())?;
-    data.extend_from_slice(nonce.as_slice());
+        .map(|playground| Aes256Gcm::new(GenericArray::from_slice(&playground.crypt_key)))
+});
 
-    Ok(STANDARD.encode(data))
+fn encrypt(gist_id: &str) -> Result<String, PlaygroundError> {
+    if let Some(cipher) = &*CIPHER {
+        let mut nonce = vec![0; NONCE_LEN];
+        OsRng.fill_bytes(&mut nonce);
+        let nonce = Nonce::from_slice(&nonce);
+        let mut data = cipher.encrypt(nonce, gist_id.as_bytes())?;
+        data.extend_from_slice(nonce.as_slice());
+
+        Ok(STANDARD.encode(data))
+    } else {
+        Err(PlaygroundError::SettingsError)
+    }
 }
 
 fn decrypt(encoded: &str) -> Result<String, PlaygroundError> {
-    let settings = &SETTINGS
-        .playground
-        .as_ref()
-        .ok_or(PlaygroundError::SettingsError)?;
-    let cipher = Aes256Gcm::new(GenericArray::from_slice(&settings.crypt_key));
-    let data = STANDARD.decode(encoded)?;
-    let (enc, nonce) = data.split_at(data.len() - NONCE_LEN);
-    let nonce = Nonce::from_slice(nonce);
-    let data = cipher.decrypt(nonce, enc)?;
+    if let Some(cipher) = &*CIPHER {
+        let data = STANDARD.decode(encoded)?;
+        let (enc, nonce) = data.split_at(data.len() - NONCE_LEN);
+        let nonce = Nonce::from_slice(nonce);
+        let data = cipher.decrypt(nonce, enc)?;
 
-    Ok(String::from_utf8(data)?)
+        Ok(String::from_utf8(data)?)
+    } else {
+        Err(PlaygroundError::SettingsError)
+    }
 }
 
 impl From<octocrab::models::gists::Gist> for Gist {
@@ -103,8 +105,8 @@ impl From<octocrab::models::gists::Gist> for Gist {
     }
 }
 
-pub async fn create_gist(code: String) -> Result<Gist, PlaygroundError> {
-    github()?
+pub async fn create_gist(client: &Octocrab, code: String) -> Result<Gist, PlaygroundError> {
+    client
         .gists()
         .create()
         .description(DESCRIPTION)
@@ -116,14 +118,17 @@ pub async fn create_gist(code: String) -> Result<Gist, PlaygroundError> {
         .map_err(Into::into)
 }
 
-pub async fn create_flag_issue(id: String, reason: Option<String>) -> Result<(), PlaygroundError> {
+pub async fn create_flag_issue(
+    client: &Octocrab,
+    id: String,
+    reason: Option<String>,
+) -> Result<(), PlaygroundError> {
     let repo = SETTINGS
         .playground
         .as_ref()
         .map(|p| p.flag_repo.as_str())
         .ok_or(PlaygroundError::SettingsError)?;
-    let gh = github()?;
-    let issues = gh.issues("mdn", repo);
+    let issues = client.issues("mdn", repo);
     let mut issue = issues.create(&format!("flag-{id}"));
     if let Some(reason) = reason {
         issue = issue.body(&reason);
@@ -131,10 +136,8 @@ pub async fn create_flag_issue(id: String, reason: Option<String>) -> Result<(),
     issue.send().await.map(|_| ()).map_err(Into::into)
 }
 
-pub async fn load_gist(id: &str) -> Result<Gist, PlaygroundError> {
-    let github = github()?;
-
-    github
+pub async fn load_gist(client: &Octocrab, id: &str) -> Result<Gist, PlaygroundError> {
+    client
         .gists()
         .get(id)
         .await
@@ -142,41 +145,49 @@ pub async fn load_gist(id: &str) -> Result<Gist, PlaygroundError> {
         .map_err(Into::into)
 }
 
-fn github() -> Result<Octocrab, PlaygroundError> {
-    let token = SETTINGS
-        .playground
-        .as_ref()
-        .map(|p| p.github_token.clone())
-        .ok_or(PlaygroundError::SettingsError)?;
-    octocrab::OctocrabBuilder::new()
-        .personal_token(token)
-        .build()
-        .map_err(Into::into)
-}
-
 pub async fn save(
-    save: web::Json<PlaySaveRequest>,
+    save: web::Json<PlayCode>,
     id: Option<Identity>,
+    github_client: web::Data<Option<Octocrab>>,
 ) -> Result<HttpResponse, ApiError> {
-    if id.is_some() {
-        let gist = create_gist(save.into_inner().code).await?;
-        let id = encrypt(&gist.id)?;
-        println!("save: {id}");
-        return Ok(HttpResponse::Created().json(PlaySaveResponse { id }));
+    if let Some(client) = &**github_client {
+        if id.is_some() {
+            let gist = create_gist(client, save.into_inner().code).await?;
+            let id = encrypt(&gist.id)?;
+            println!("save: {id}");
+            Ok(HttpResponse::Created().json(PlaySaveResponse { id }))
+        } else {
+            Ok(HttpResponse::Unauthorized().finish())
+        }
+    } else {
+        Ok(HttpResponse::NotImplemented().finish())
     }
-    Ok(HttpResponse::Unauthorized().finish())
 }
 
-pub async fn load(gist_id: web::Path<String>) -> Result<HttpResponse, ApiError> {
-    let id = decrypt(&gist_id.into_inner())?;
-    println!("load: {id}");
-    let gist = load_gist(&id).await?;
-    Ok(HttpResponse::Created().json(PlayLoadResponse { code: gist.code }))
+pub async fn load(
+    gist_id: web::Path<String>,
+    github_client: web::Data<Option<Octocrab>>,
+) -> Result<HttpResponse, ApiError> {
+    if let Some(client) = &**github_client {
+        let id = decrypt(&gist_id.into_inner())?;
+        println!("load: {id}");
+        let gist = load_gist(client, &id).await?;
+        Ok(HttpResponse::Created().json(PlayCode { code: gist.code }))
+    } else {
+        Ok(HttpResponse::NotImplemented().finish())
+    }
 }
 
-pub async fn flag(flag: web::Json<PlayFlagRequest>) -> Result<HttpResponse, ApiError> {
-    let PlayFlagRequest { id, reason } = flag.into_inner();
-    let gist_id = decrypt(&id)?;
-    create_flag_issue(gist_id, reason).await?;
-    Ok(HttpResponse::Created().finish())
+pub async fn flag(
+    flag: web::Json<PlayFlagRequest>,
+    github_client: web::Data<Option<Octocrab>>,
+) -> Result<HttpResponse, ApiError> {
+    if let Some(client) = &**github_client {
+        let PlayFlagRequest { id, reason } = flag.into_inner();
+        let gist_id = decrypt(&id)?;
+        create_flag_issue(client, gist_id, reason).await?;
+        Ok(HttpResponse::Created().finish())
+    } else {
+        Ok(HttpResponse::NotImplemented().finish())
+    }
 }

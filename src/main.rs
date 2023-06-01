@@ -16,6 +16,7 @@ use const_format::formatcp;
 use diesel_migrations::MigrationHarness;
 use elasticsearch::http::transport::Transport;
 use elasticsearch::Elasticsearch;
+use octocrab::OctocrabBuilder;
 use reqwest::Client as HttpClient;
 use rumba::{
     add_services,
@@ -87,6 +88,13 @@ async fn main() -> anyhow::Result<()> {
             .map(|b| Basket::new(&b.api_key, b.basket_url.clone())),
     );
 
+    let github_client = Data::new(SETTINGS.playground.as_ref().and_then(|p| {
+        OctocrabBuilder::new()
+            .personal_token(p.github_token.clone())
+            .build()
+            .ok()
+    }));
+
     HttpServer::new(move || {
         let app = App::new()
             .wrap(error_handler())
@@ -104,6 +112,7 @@ async fn main() -> anyhow::Result<()> {
                 .build(),
             )
             .wrap(Logger::new(LOG_FMT).exclude("/healthz"))
+            .app_data(Data::clone(&github_client))
             .app_data(Data::clone(&basket_client))
             .app_data(Data::clone(&metrics))
             .app_data(Data::clone(&pool))
