@@ -1,4 +1,4 @@
-use crate::api::chat::ask;
+use crate::api::ai::ask;
 use crate::api::newsletter::{
     is_subscribed, subscribe_anonymous_handler, subscribe_handler, unsubscribe_handler,
 };
@@ -26,6 +26,6 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
         .service(web::resource("/whoami").route(web::get().to(whoami)))
         .service(web::resource("/ping").route(web::post().to(ping)))
         .service(web::resource("/newsletter").route(web::post().to(subscribe_anonymous_handler)))
-        .service(web::scope("/chat").service(web::resource("/stream").route(web::post().to(ask))))
+        .service(web::scope("/ai").service(web::resource("/ask").route(web::post().to(ask))))
         .service(root_service())
 }

@@ -75,11 +75,6 @@ pub struct Basket {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Playground {
-    pub github_token: String,
-}
-
-#[derive(Debug, Deserialize)]
 pub struct Chat {
     pub api_key: String,
 }
@@ -95,7 +90,6 @@ pub struct Settings {
     pub metrics: Metrics,
     pub sentry: Option<Sentry>,
     pub basket: Option<Basket>,
-    pub playground: Option<Playground>,
     pub chat: Option<Chat>,
     #[serde(default)]
     pub skip_migrations: bool,
