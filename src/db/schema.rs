@@ -1,27 +1,27 @@
 // @generated automatically by Diesel CLI.
 
 pub mod sql_types {
-    #[derive(diesel::sql_types::SqlType)]
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "bcd_event_type"))]
     pub struct BcdEventType;
 
-    #[derive(diesel::sql_types::SqlType)]
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "engine_type"))]
     pub struct EngineType;
 
-    #[derive(diesel::sql_types::SqlType)]
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "fxa_event_status_type"))]
     pub struct FxaEventStatusType;
 
-    #[derive(diesel::sql_types::SqlType)]
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "fxa_event_type"))]
     pub struct FxaEventType;
 
-    #[derive(diesel::sql_types::SqlType)]
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "locale"))]
     pub struct Locale;
 
-    #[derive(diesel::sql_types::SqlType)]
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "subscription_type"))]
     pub struct SubscriptionType;
 }
@@ -186,7 +186,9 @@ diesel::table! {
         created_at -> Timestamp,
         updated_at -> Timestamp,
         email -> Text,
+        #[max_length = 255]
         fxa_uid -> Varchar,
+        #[max_length = 255]
         fxa_refresh_token -> Varchar,
         avatar_url -> Nullable<Text>,
         subscription_type -> Nullable<SubscriptionType>,
@@ -203,6 +205,7 @@ diesel::table! {
 
     webhook_events (id) {
         id -> Int8,
+        #[max_length = 255]
         fxa_uid -> Varchar,
         change_time -> Nullable<Timestamp>,
         issue_time -> Timestamp,
