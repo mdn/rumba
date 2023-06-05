@@ -7,12 +7,17 @@ use aes_gcm::{
 use base64::{engine::general_purpose::STANDARD, Engine};
 use octocrab::Octocrab;
 use once_cell::sync::Lazy;
+use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
 use crate::{
-    api::{
-        error::{ApiError, PlaygroundError},
+    api::error::{ApiError, PlaygroundError},
+    db::{
+        self,
+        model::Playground,
+        play::{create_playground, flag_playground},
+        Pool,
     },
     settings::SETTINGS,
 };
@@ -120,6 +125,7 @@ pub async fn create_gist(client: &Octocrab, code: String) -> Result<Gist, Playgr
 
 pub async fn create_flag_issue(
     client: &Octocrab,
+    gist_id: String,
     id: String,
     reason: Option<String>,
 ) -> Result<(), PlaygroundError> {
@@ -129,9 +135,13 @@ pub async fn create_flag_issue(
         .map(|p| p.flag_repo.as_str())
         .ok_or(PlaygroundError::SettingsError)?;
     let issues = client.issues("mdn", repo);
-    let mut issue = issues.create(&format!("flag-{id}"));
+    let mut issue = issues.create(&format!("flag-{gist_id}"));
     if let Some(reason) = reason {
-        issue = issue.body(&reason);
+        issue = issue.body(&format!(
+            "url: {}/en-US/play?id={}\n{reason}",
+            &SETTINGS.application.document_base_url,
+            utf8_percent_encode(&id, NON_ALPHANUMERIC)
+        ));
     }
     issue.send().await.map(|_| ()).map_err(Into::into)
 }
@@ -148,13 +158,27 @@ pub async fn load_gist(client: &Octocrab, id: &str) -> Result<Gist, PlaygroundEr
 pub async fn save(
     save: web::Json<PlayCode>,
     id: Option<Identity>,
+    pool: web::Data<Pool>,
     github_client: web::Data<Option<Octocrab>>,
 ) -> Result<HttpResponse, ApiError> {
     if let Some(client) = &**github_client {
-        if id.is_some() {
+        if let Some(user_id) = id {
             let gist = create_gist(client, save.into_inner().code).await?;
+            let mut conn = pool.get()?;
+            let user = db::users::get_user(&mut conn, user_id.id().unwrap())?;
+            println!("{}", user.email);
+            create_playground(
+                &mut conn,
+                Playground {
+                    user_id: Some(user.id),
+                    gist: gist.id.clone(),
+                    active: true,
+                    ..Default::default()
+                },
+            )?;
+            println!("foo");
+
             let id = encrypt(&gist.id)?;
-            println!("save: {id}");
             Ok(HttpResponse::Created().json(PlaySaveResponse { id }))
         } else {
             Ok(HttpResponse::Unauthorized().finish())
@@ -170,7 +194,6 @@ pub async fn load(
 ) -> Result<HttpResponse, ApiError> {
     if let Some(client) = &**github_client {
         let id = decrypt(&gist_id.into_inner())?;
-        println!("load: {id}");
         let gist = load_gist(client, &id).await?;
         Ok(HttpResponse::Created().json(PlayCode { code: gist.code }))
     } else {
@@ -180,12 +203,15 @@ pub async fn load(
 
 pub async fn flag(
     flag: web::Json<PlayFlagRequest>,
+    pool: web::Data<Pool>,
     github_client: web::Data<Option<Octocrab>>,
 ) -> Result<HttpResponse, ApiError> {
     if let Some(client) = &**github_client {
         let PlayFlagRequest { id, reason } = flag.into_inner();
         let gist_id = decrypt(&id)?;
-        create_flag_issue(client, gist_id, reason).await?;
+        let mut conn = pool.get()?;
+        flag_playground(&mut conn, &gist_id)?;
+        create_flag_issue(client, gist_id, id, reason).await?;
         Ok(HttpResponse::Created().finish())
     } else {
         Ok(HttpResponse::NotImplemented().finish())

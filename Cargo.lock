@@ -3028,6 +3028,7 @@ dependencies = [
  "octocrab",
  "once_cell",
  "openidconnect",
+ "percent-encoding",
  "r2d2",
  "regex",
  "reqwest",
