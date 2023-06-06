@@ -15,7 +15,7 @@ use crate::{
     api::error::{ApiError, PlaygroundError},
     db::{
         self,
-        model::Playground,
+        model::PlaygroundInsert,
         play::{create_playground, flag_playground},
         Pool,
     },
@@ -171,7 +171,7 @@ pub async fn save(
             let user = db::users::get_user(&mut conn, user_id.id().unwrap())?;
             create_playground(
                 &mut conn,
-                Playground {
+                PlaygroundInsert {
                     user_id: Some(user.id),
                     gist: gist.id.clone(),
                     active: true,

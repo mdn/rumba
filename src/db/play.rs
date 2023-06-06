@@ -1,11 +1,13 @@
+use crate::db::model::PlaygroundInsert;
 use crate::db::schema;
 
 use diesel::{insert_into, PgConnection};
 use diesel::{prelude::*, update};
 
-use crate::db::model::Playground;
-
-pub fn create_playground(conn: &mut PgConnection, playground: Playground) -> QueryResult<usize> {
+pub fn create_playground(
+    conn: &mut PgConnection,
+    playground: PlaygroundInsert,
+) -> QueryResult<usize> {
     insert_into(schema::playground::table)
         .values(&playground)
         .execute(conn)

@@ -169,11 +169,22 @@ pub struct ActivityPingInsert {
     pub activity: Value,
 }
 
-#[derive(Queryable, Insertable, Serialize, Debug, Default)]
+#[derive(Insertable, Serialize, Debug, Default)]
 #[diesel(table_name = playground)]
-pub struct Playground {
+pub struct PlaygroundInsert {
     pub user_id: Option<i64>,
     pub gist: String,
     pub active: bool,
     pub flagged: bool,
+}
+
+#[derive(Queryable, Serialize, Debug, Default)]
+#[diesel(table_name = playground)]
+pub struct PlaygroundQuery {
+    pub id: i64,
+    pub user_id: Option<i64>,
+    pub gist: String,
+    pub active: bool,
+    pub flagged: bool,
+    pub deleted_user_id: Option<i64>,
 }

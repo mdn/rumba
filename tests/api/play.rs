@@ -5,7 +5,10 @@ use crate::helpers::{read_json, wait_for_stubr};
 use actix_web::test;
 use anyhow::Error;
 use assert_json_diff::assert_json_eq;
+use diesel::prelude::*;
 use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
+use rumba::db::model::PlaygroundQuery;
+use rumba::db::schema;
 use serde_json::json;
 
 #[actix_rt::test]
@@ -30,12 +33,12 @@ async fn test_playground() -> Result<(), Error> {
     assert_eq!(save.status(), 201);
     let json = read_json(save).await;
     assert!(json["id"].is_string());
-
+    let gist_id = json["id"].as_str().unwrap();
     let load = client
         .get(
             &format!(
                 "/api/v1/play/{}",
-                utf8_percent_encode(json["id"].as_str().unwrap(), NON_ALPHANUMERIC)
+                utf8_percent_encode(gist_id, NON_ALPHANUMERIC)
             ),
             None,
         )
@@ -46,5 +49,17 @@ async fn test_playground() -> Result<(), Error> {
         json,
         json!({"html":"<h1>foo</h1>","css":"h1 { font-size: 4rem; }","js":"const foo = 1;","src":null})
     );
+
+    let mut conn = pool.get()?;
+    let user_id = schema::users::table
+        .filter(schema::users::fxa_uid.eq("TEST_SUB"))
+        .select(schema::users::id)
+        .first::<i64>(&mut conn)?;
+    let d = diesel::delete(schema::users::table.filter(schema::users::id.eq(user_id)))
+        .execute(&mut conn)?;
+    assert_eq!(d, 1);
+    let playground: PlaygroundQuery = schema::playground::table.first(&mut conn)?;
+    assert_eq!(playground.user_id, None);
+    assert_eq!(playground.deleted_user_id, Some(user_id));
     Ok(())
 }

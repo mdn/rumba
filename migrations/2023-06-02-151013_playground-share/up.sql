@@ -21,4 +21,5 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER set_deleted_user_id
 BEFORE UPDATE ON playground 
 FOR EACH ROW
-EXECUTE PROCEDURE set_deleted_user_id();
+WHEN (OLD.user_id IS NOT NULL AND NEW.user_id IS NULL)
+EXECUTE FUNCTION set_deleted_user_id();
