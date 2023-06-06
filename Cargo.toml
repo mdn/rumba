@@ -70,7 +70,7 @@ sentry-actix = "0.31"
 
 basket = "0.0.5"
 
-octocrab = "0.21"
+octocrab = "0.25"
 aes-gcm = { version = "0.10", features = ["default", "std"] }
 
 [dev-dependencies]
