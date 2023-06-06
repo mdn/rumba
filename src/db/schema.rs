@@ -160,6 +160,7 @@ diesel::table! {
         gist -> Text,
         active -> Bool,
         flagged -> Bool,
+        deleted_user_id -> Nullable<Int8>,
     }
 }
 

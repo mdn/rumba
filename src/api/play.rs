@@ -25,19 +25,23 @@ use crate::{
 const FILENAME: &str = "playground.html";
 const DESCRIPTION: &str = "Code shared from the MDN Playground";
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Default, Debug)]
 pub struct PlayCode {
-    code: String,
+    html: Option<String>,
+    css: Option<String>,
+    js: Option<String>,
+    src: Option<String>,
 }
 #[derive(Serialize)]
 pub struct PlaySaveResponse {
     id: String,
 }
 
+#[derive(Debug)]
 pub struct Gist {
     pub id: String,
     pub url: Url,
-    pub code: String,
+    pub code: PlayCode,
 }
 
 #[derive(Deserialize)]
@@ -90,16 +94,11 @@ impl From<octocrab::models::gists::Gist> for Gist {
             .collect();
 
         files.sort_by(|(name1, _), (name2, _)| name1.cmp(name2));
-
-        let code = match files.len() {
-            0 | 1 => files
-                .into_iter()
-                .map(|(_, content)| content.unwrap_or_default())
-                .collect(),
-            _ => files
-                .into_iter()
-                .map(|(name, content)| format!("// {}\n{}\n\n", name, content.unwrap_or_default()))
-                .collect(),
+        let code = if files.len() != 1 {
+            PlayCode::default()
+        } else {
+            let (_, content) = files.pop().unwrap();
+            serde_json::from_str(&content.unwrap_or_default()).unwrap_or_default()
         };
 
         Gist {
@@ -110,7 +109,10 @@ impl From<octocrab::models::gists::Gist> for Gist {
     }
 }
 
-pub async fn create_gist(client: &Octocrab, code: String) -> Result<Gist, PlaygroundError> {
+pub async fn create_gist(
+    client: &Octocrab,
+    code: impl Into<String>,
+) -> Result<Gist, PlaygroundError> {
     client
         .gists()
         .create()
@@ -163,10 +165,10 @@ pub async fn save(
 ) -> Result<HttpResponse, ApiError> {
     if let Some(client) = &**github_client {
         if let Some(user_id) = id {
-            let gist = create_gist(client, save.into_inner().code).await?;
+            let gist =
+                create_gist(client, serde_json::to_string_pretty(&save.into_inner())?).await?;
             let mut conn = pool.get()?;
             let user = db::users::get_user(&mut conn, user_id.id().unwrap())?;
-            println!("{}", user.email);
             create_playground(
                 &mut conn,
                 Playground {
@@ -176,7 +178,6 @@ pub async fn save(
                     ..Default::default()
                 },
             )?;
-            println!("foo");
 
             let id = encrypt(&gist.id)?;
             Ok(HttpResponse::Created().json(PlaySaveResponse { id }))
@@ -195,7 +196,7 @@ pub async fn load(
     if let Some(client) = &**github_client {
         let id = decrypt(&gist_id.into_inner())?;
         let gist = load_gist(client, &id).await?;
-        Ok(HttpResponse::Created().json(PlayCode { code: gist.code }))
+        Ok(HttpResponse::Ok().json(gist.code))
     } else {
         Ok(HttpResponse::NotImplemented().finish())
     }
