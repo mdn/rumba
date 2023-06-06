@@ -19,7 +19,20 @@ deployment:
 
 settings:
   metrics__statsd_label: rumba_stage
+  playground__flag_repo: playground-flags
 
 podDisruptionBudget:
   enabled: true
   minAvailable: 1
+
+
+secrets:
+- db__uri
+- auth__admin_update_bearer_token
+- auth__cookie_key
+- auth__client_secret
+- basket__api_key
+- search__url
+- sentry__dsn
+- playground__github_token
+- playground__crypt_key
