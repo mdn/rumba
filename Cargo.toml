@@ -39,6 +39,7 @@ serde_with = { version = "3", features = ["base64"]}
 serde_urlencoded = "0.7"
 form_urlencoded = "1"
 serde_path_to_error = "0.1"
+percent-encoding = "2"
 
 config = "0.13"
 hostname = "0.3"
@@ -68,6 +69,9 @@ sentry = "0.31"
 sentry-actix = "0.31"
 
 basket = "0.0.5"
+
+octocrab = "0.25"
+aes-gcm = { version = "0.10", features = ["default", "std"] }
 
 [dev-dependencies]
 stubr = "0.5"

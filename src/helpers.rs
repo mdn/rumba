@@ -191,7 +191,7 @@ mod test {
         assert_eq!(dt, dt_serde.dt);
 
         let millis = Millis { dt };
-        let millis_json = serde_json::to_value(&millis)?;
+        let millis_json = serde_json::to_value(millis)?;
         assert_eq!(json, millis_json);
 
         Ok(())

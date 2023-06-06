@@ -15,6 +15,7 @@ use actix_web::{
 use basket::Basket;
 use elasticsearch::http::transport::Transport;
 use elasticsearch::Elasticsearch;
+use octocrab::OctocrabBuilder;
 use reqwest::Client;
 use rumba::add_services;
 use rumba::api::error::error_handler;
@@ -63,6 +64,12 @@ pub async fn test_app_with_login(
     let arbiter = Arbiter::new();
     let arbiter_handle = Data::new(arbiter.handle());
     let session_cookie_key = Key::derive_from(&SETTINGS.auth.cookie_key);
+    let github_client = Data::new(Some(
+        OctocrabBuilder::new()
+            .base_uri("http://localhost:4321")
+            .unwrap()
+            .build()?,
+    ));
     let basket_client = Data::new(
         SETTINGS
             .basket
@@ -80,6 +87,7 @@ pub async fn test_app_with_login(
                 .build(),
         )
         .app_data(Data::clone(&arbiter_handle))
+        .app_data(Data::clone(&github_client))
         .app_data(Data::clone(&pool))
         .app_data(Data::clone(&client))
         .app_data(Data::clone(&basket_client))

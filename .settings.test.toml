@@ -41,3 +41,8 @@ statsd_port = 8125
 [basket]
 api_key = "foobar"
 basket_url = "http://localhost:4321"
+
+[playground]
+github_token = "foobar"
+crypt_key = "IXAe2h1MekK4LKysmMvxomja69PT6c20A3nmcDHQ2eQ="
+flag_repo = "flags"

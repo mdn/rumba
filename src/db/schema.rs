@@ -154,6 +154,20 @@ diesel::table! {
     use diesel::sql_types::*;
     use crate::db::types::*;
 
+    playground (id) {
+        id -> Int8,
+        user_id -> Nullable<Int8>,
+        gist -> Text,
+        active -> Bool,
+        flagged -> Bool,
+        deleted_user_id -> Nullable<Int8>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+
     raw_webhook_events_tokens (id) {
         id -> Int8,
         received_at -> Timestamp,
@@ -223,6 +237,7 @@ diesel::joinable!(collection_items -> documents (document_id));
 diesel::joinable!(collection_items -> multiple_collections (multiple_collection_id));
 diesel::joinable!(collection_items -> users (user_id));
 diesel::joinable!(multiple_collections -> users (user_id));
+diesel::joinable!(playground -> users (user_id));
 diesel::joinable!(settings -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
@@ -234,6 +249,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     collection_items,
     documents,
     multiple_collections,
+    playground,
     raw_webhook_events_tokens,
     settings,
     users,
