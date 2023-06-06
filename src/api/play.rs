@@ -22,7 +22,7 @@ use crate::{
     settings::SETTINGS,
 };
 
-const FILENAME: &str = "playground.html";
+const FILENAME: &str = "playground.json";
 const DESCRIPTION: &str = "Code shared from the MDN Playground";
 
 #[derive(Deserialize, Serialize, Default, Debug)]

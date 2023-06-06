@@ -19,11 +19,11 @@
       "git_push_url": "https://gist.github.com/2decf6c462d9b4418f2.git",
       "html_url": "https://gist.github.com/2decf6c462d9b4418f2",
       "files": {
-        "README.md": {
-          "filename": "playground.html",
-          "type": "text/html",
-          "language": "html",
-          "raw_url": "https://gist.githubusercontent.com/monalisa/2decf6c462d9b4418f2/raw/ac3e6daf176fafe73609fd000cd188e4472010fb/playground.html",
+        "playground.json": {
+          "filename": "playground.json",
+          "type": "text/json",
+          "language": "json",
+          "raw_url": "https://gist.githubusercontent.com/monalisa/2decf6c462d9b4418f2/raw/ac3e6daf176fafe73609fd000cd188e4472010fb/playground.json",
           "size": 23,
           "truncated": false,
           "content": "Hello world from GitHub"
