@@ -67,12 +67,12 @@ pub async fn quota(user_id: Identity, diesel_pool: Data<Pool>) -> Result<HttpRes
     let mut conn = diesel_pool.get()?;
     let user = get_user(&mut conn, user_id.id().unwrap())?;
     if user.is_subscriber() {
+        Ok(HttpResponse::Ok().json(AskQuota { quota: None }))
+    } else {
         let count = get_count(&mut conn, &user)?;
         Ok(HttpResponse::Ok().json(AskQuota {
             quota: Some(AskLimit::from_count(count)),
         }))
-    } else {
-        Ok(HttpResponse::Ok().json(AskQuota { quota: None }))
     }
 }
 
