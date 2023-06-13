@@ -75,5 +75,5 @@ aes-gcm = { version = "0.10", features = ["default", "std"] }
 
 [dev-dependencies]
 stubr = "0.5"
-stubr-attributes = "0.5"
+stubr-attributes = "0.6"
 assert-json-diff = "2"
