@@ -188,3 +188,11 @@ pub struct PlaygroundQuery {
     pub flagged: bool,
     pub deleted_user_id: Option<i64>,
 }
+
+#[derive(Insertable, Serialize, Debug, Default)]
+#[diesel(table_name = ai_help_limits)]
+pub struct AIHelpLimitInsert {
+    pub user_id: i64,
+    pub latest_start: NaiveDateTime,
+    pub num_questions: i64,
+}

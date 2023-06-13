@@ -77,6 +77,7 @@ pub struct Basket {
 #[derive(Debug, Deserialize)]
 pub struct Chat {
     pub api_key: String,
+    pub limit_reset_duration: i64,
 }
 
 #[serde_as]
