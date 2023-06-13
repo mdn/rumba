@@ -7,6 +7,7 @@ use async_openai::{
     Client,
 };
 use futures_util::{stream::FuturesUnordered, TryStreamExt};
+use serde::Serialize;
 
 use crate::{
     ai::{
@@ -18,9 +19,15 @@ use crate::{
     db::SupaPool,
 };
 
+#[derive(Serialize)]
+pub struct RefDoc {
+    pub slug: String,
+    pub title: Option<String>,
+}
+
 pub struct AskRequest {
     pub req: CreateChatCompletionRequest,
-    pub refs: Vec<String>,
+    pub refs: Vec<RefDoc>,
 }
 
 pub async fn prepare_ask_req(
@@ -74,7 +81,7 @@ pub async fn prepare_ask_req(
             break;
         }
         context.push(doc.content);
-        refs.push(doc.slug);
+        refs.push(RefDoc { slug: doc.slug, title: None });
     }
     let context = context.join("\n---\n");
     let system_message = ChatCompletionRequestMessageArgs::default()

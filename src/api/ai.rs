@@ -5,7 +5,7 @@ use actix_web::{
 };
 use actix_web_lab::sse;
 use async_openai::{types::ChatCompletionRequestMessage, Client};
-use futures_util::TryStreamExt;
+use futures_util::{stream, StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
 
 use crate::api::error::ApiError;
@@ -30,9 +30,12 @@ pub async fn ask(
         // 1. Prepare messages
         let stream = client.chat().create_stream(ask_req.req).await.unwrap();
 
-        return Either::Left(sse::Sse::from_stream(
+        let refs = stream::once(async {
+            Ok(sse::Event::Data(sse::Data::new_json(ask_req.refs).unwrap()))
+        });
+        return Either::Left(sse::Sse::from_stream(refs.chain(
             stream.map_ok(|res| sse::Event::Data(sse::Data::new_json(res).unwrap())),
-        ));
+        )));
     }
     Either::Right(Ok(HttpResponse::NotImplemented().finish()))
 }
