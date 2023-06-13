@@ -81,7 +81,10 @@ pub async fn prepare_ask_req(
             break;
         }
         context.push(doc.content);
-        refs.push(RefDoc { slug: doc.slug, title: None });
+        refs.push(RefDoc {
+            slug: doc.slug,
+            title: None,
+        });
     }
     let context = context.join("\n---\n");
     let system_message = ChatCompletionRequestMessageArgs::default()
