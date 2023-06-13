@@ -28,7 +28,6 @@ pub struct ChatRequestMessages {
 
 #[derive(Serialize)]
 #[serde(rename_all = "lowercase")]
-#[serde(untagged)]
 pub enum MetaType {
     Metadata,
 }
@@ -57,7 +56,7 @@ pub struct AskQuota {
 
 #[derive(Serialize)]
 pub struct AskMeta {
-    #[serde(rename = "typ")]
+    #[serde(rename = "type")]
     pub typ: MetaType,
     pub sources: Vec<RefDoc>,
     pub quota: Option<AskLimit>,
