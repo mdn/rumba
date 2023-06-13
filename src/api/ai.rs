@@ -11,7 +11,10 @@ use serde_json::json;
 
 use crate::{
     ai::ask::{prepare_ask_req, RefDoc},
-    db::SupaPool,
+    db::{
+        ai::{get_count, AI_HELP_LIMIT},
+        SupaPool,
+    },
 };
 use crate::{
     api::error::ApiError,
@@ -24,9 +27,53 @@ pub struct ChatRequestMessages {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "lowercase")]
+#[serde(untagged)]
+pub enum MetaType {
+    Metadata,
+}
+
+#[derive(Serialize)]
+pub struct AskLimit {
+    pub count: i64,
+    pub remaining: i64,
+    pub limit: i64,
+}
+
+impl AskLimit {
+    pub fn from_count(count: i64) -> Self {
+        Self {
+            count,
+            remaining: AI_HELP_LIMIT - count,
+            limit: AI_HELP_LIMIT,
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct AskQuota {
+    pub quota: Option<AskLimit>,
+}
+
+#[derive(Serialize)]
 pub struct AskMeta {
-    pub refs: Vec<RefDoc>,
-    pub count: Option<i64>,
+    #[serde(rename = "typ")]
+    pub typ: MetaType,
+    pub sources: Vec<RefDoc>,
+    pub quota: Option<AskLimit>,
+}
+
+pub async fn quota(user_id: Identity, diesel_pool: Data<Pool>) -> Result<HttpResponse, ApiError> {
+    let mut conn = diesel_pool.get()?;
+    let user = get_user(&mut conn, user_id.id().unwrap())?;
+    if user.is_subscriber() {
+        let count = get_count(&mut conn, &user)?;
+        Ok(HttpResponse::Ok().json(AskQuota {
+            quota: Some(AskLimit::from_count(count)),
+        }))
+    } else {
+        Ok(HttpResponse::Ok().json(AskQuota { quota: None }))
+    }
 }
 
 pub async fn ask(
@@ -55,8 +102,9 @@ pub async fn ask(
         let refs = stream::once(async move {
             Ok(sse::Event::Data(
                 sse::Data::new_json(AskMeta {
-                    refs: ask_req.refs,
-                    count: current,
+                    typ: MetaType::Metadata,
+                    sources: ask_req.refs,
+                    quota: current.map(AskLimit::from_count),
                 })
                 .map_err(OpenAIError::JSONDeserialize)?,
             ))

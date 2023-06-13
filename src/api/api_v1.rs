@@ -1,4 +1,4 @@
-use crate::api::ai::ask;
+use crate::api::ai::{ask, quota};
 use crate::api::newsletter::{
     is_subscribed, subscribe_anonymous_handler, subscribe_handler, unsubscribe_handler,
 };
@@ -18,6 +18,13 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
     web::scope("/api/v1")
         .service(
             web::scope("/plus")
+                .service(
+                    web::scope("/ai").service(
+                        web::scope("/ask")
+                            .service(web::resource("").route(web::post().to(ask)))
+                            .service(web::resource("/quota").route(web::get().to(quota))),
+                    ),
+                )
                 .service(web::resource("/settings/").route(web::post().to(update_settings)))
                 .service(
                     web::resource("/newsletter/")
@@ -30,7 +37,6 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
         .service(web::resource("/whoami").route(web::get().to(whoami)))
         .service(web::resource("/ping").route(web::post().to(ping)))
         .service(web::resource("/newsletter").route(web::post().to(subscribe_anonymous_handler)))
-        .service(web::scope("/ai").service(web::resource("/ask").route(web::post().to(ask))))
         .service(
             web::scope("/play")
                 .app_data(json_cfg_1mb_limit)
