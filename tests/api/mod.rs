@@ -4,6 +4,7 @@ pub mod healthz;
 mod multiple_collections;
 mod newsletter;
 mod ping;
+mod play;
 mod root;
 mod search;
 mod settings;

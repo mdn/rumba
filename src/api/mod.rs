@@ -9,6 +9,7 @@ pub mod fxa_webhook;
 pub mod healthz;
 pub mod newsletter;
 pub mod ping;
+pub mod play;
 pub mod root;
 pub mod search;
 pub mod settings;

@@ -1,27 +1,27 @@
 // @generated automatically by Diesel CLI.
 
 pub mod sql_types {
-    #[derive(diesel::sql_types::SqlType)]
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "bcd_event_type"))]
     pub struct BcdEventType;
 
-    #[derive(diesel::sql_types::SqlType)]
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "engine_type"))]
     pub struct EngineType;
 
-    #[derive(diesel::sql_types::SqlType)]
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "fxa_event_status_type"))]
     pub struct FxaEventStatusType;
 
-    #[derive(diesel::sql_types::SqlType)]
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "fxa_event_type"))]
     pub struct FxaEventType;
 
-    #[derive(diesel::sql_types::SqlType)]
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "locale"))]
     pub struct Locale;
 
-    #[derive(diesel::sql_types::SqlType)]
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "subscription_type"))]
     pub struct SubscriptionType;
 }
@@ -154,6 +154,20 @@ diesel::table! {
     use diesel::sql_types::*;
     use crate::db::types::*;
 
+    playground (id) {
+        id -> Int8,
+        user_id -> Nullable<Int8>,
+        gist -> Text,
+        active -> Bool,
+        flagged -> Bool,
+        deleted_user_id -> Nullable<Int8>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+
     raw_webhook_events_tokens (id) {
         id -> Int8,
         received_at -> Timestamp,
@@ -186,7 +200,9 @@ diesel::table! {
         created_at -> Timestamp,
         updated_at -> Timestamp,
         email -> Text,
+        #[max_length = 255]
         fxa_uid -> Varchar,
+        #[max_length = 255]
         fxa_refresh_token -> Varchar,
         avatar_url -> Nullable<Text>,
         subscription_type -> Nullable<SubscriptionType>,
@@ -203,6 +219,7 @@ diesel::table! {
 
     webhook_events (id) {
         id -> Int8,
+        #[max_length = 255]
         fxa_uid -> Varchar,
         change_time -> Nullable<Timestamp>,
         issue_time -> Timestamp,
@@ -220,6 +237,7 @@ diesel::joinable!(collection_items -> documents (document_id));
 diesel::joinable!(collection_items -> multiple_collections (multiple_collection_id));
 diesel::joinable!(collection_items -> users (user_id));
 diesel::joinable!(multiple_collections -> users (user_id));
+diesel::joinable!(playground -> users (user_id));
 diesel::joinable!(settings -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
@@ -231,6 +249,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     collection_items,
     documents,
     multiple_collections,
+    playground,
     raw_webhook_events_tokens,
     settings,
     users,
