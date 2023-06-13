@@ -22,7 +22,7 @@ use crate::{
 #[derive(Serialize)]
 pub struct RefDoc {
     pub slug: String,
-    pub title: Option<String>,
+    pub title: String,
 }
 
 pub struct AskRequest {
@@ -83,7 +83,7 @@ pub async fn prepare_ask_req(
         context.push(doc.content);
         refs.push(RefDoc {
             slug: doc.slug,
-            title: None,
+            title: doc.title,
         });
     }
     let context = context.join("\n---\n");

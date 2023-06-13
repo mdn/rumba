@@ -8,6 +8,7 @@ use crate::{
 #[derive(sqlx::FromRow)]
 pub struct RelatedDoc {
     pub slug: String,
+    pub title: String,
     pub heading: String,
     pub content: String,
     pub similarity: f64,
@@ -29,6 +30,7 @@ pub async fn get_related_docs(
     let docs: Vec<RelatedDoc> = sqlx::query_as(
         "select
 mdn_doc.slug,
+mdn_doc.title,
 mdn_doc_section.heading,
 mdn_doc_section.content,
 (mdn_doc_section.embedding <#> $1) * -1 as similarity
