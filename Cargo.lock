@@ -3047,7 +3047,7 @@ dependencies = [
  "slog-stdlog",
  "slog-term",
  "stubr",
- "stubr-attributes 0.6.0",
+ "stubr-attributes 0.6.1",
  "thiserror",
  "url",
  "uuid",
@@ -3785,9 +3785,9 @@ dependencies = [
 
 [[package]]
 name = "stubr-attributes"
-version = "0.6.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7544d02f036eae9f0a85049a8a16662c6d15a987bd6b811d0ac903380869cd62"
+checksum = "b28bf0602bf1f41722baa04b9260c4b1f94ea9238cb16dbcd8169926d8a73f02"
 dependencies = [
  "itertools",
  "proc-macro2",
