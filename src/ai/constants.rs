@@ -3,7 +3,7 @@ pub const MODERATION_MODEL: &str = "text-embedding-ada-002";
 
 pub const ASK_SYSTEM_MESSAGE: &str = "You are a very enthusiastic MDN AI who loves \
 to help people! Given the following information from MDN, answer the user's question \
-using only that information, outputted in markdownformat.\
+using only that information, outputted in markdown format.\
 ";
 
 pub const ASK_USER_MESSAGE: &str = "Answer all future questions using only the above \

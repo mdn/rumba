@@ -1,4 +1,4 @@
-use chrono::{Duration, NaiveDateTime, Utc};
+use chrono::{Duration, Utc};
 use diesel::prelude::*;
 use diesel::{insert_into, PgConnection};
 use once_cell::sync::Lazy;
@@ -13,12 +13,8 @@ pub const AI_HELP_LIMIT: i64 = 5;
 static AI_HELP_RESET_DURATION: Lazy<Duration> =
     Lazy::new(|| Duration::minutes(SETTINGS.chat.as_ref().map_or(0, |s| s.limit_reset_duration)));
 
-fn now_minus_reset_duration() -> NaiveDateTime {
-    Utc::now().naive_utc() - *AI_HELP_RESET_DURATION
-}
-
 pub fn get_count(conn: &mut PgConnection, user: &UserQuery) -> Result<i64, DbError> {
-    let some_time_ago = now_minus_reset_duration();
+    let some_time_ago = Utc::now().naive_utc() - *AI_HELP_RESET_DURATION;
     schema::ai_help_limits::table
         .filter(user_id.eq(&user.id).and(latest_start.gt(some_time_ago)))
         .select(num_questions)
@@ -51,14 +47,15 @@ pub fn create_or_increment_limit(
     if let Some(current) = current {
         Ok(Some(current))
     } else {
-        let some_time_ago = now_minus_reset_duration();
+        let now = Utc::now().naive_utc();
+        let some_time_ago = now - *AI_HELP_RESET_DURATION;
         // reset if latest_start is old enough
         let current = diesel::query_dsl::methods::FilterDsl::filter(
             insert_into(schema::ai_help_limits::table)
                 .values(&limit)
                 .on_conflict(schema::ai_help_limits::user_id)
                 .do_update()
-                .set(num_questions.eq(1)),
+                .set((num_questions.eq(1), (latest_start.eq(now)))),
             latest_start.le(some_time_ago),
         )
         .returning(num_questions)
