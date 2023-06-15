@@ -32,6 +32,8 @@ pub fn create_or_increment_limit(
         latest_start: Utc::now().naive_utc(),
         num_questions: 1,
     };
+    let now = Utc::now().naive_utc();
+    let some_time_ago = now - *AI_HELP_RESET_DURATION;
     // increment num_question if within limit
     let current = diesel::query_dsl::methods::FilterDsl::filter(
         insert_into(schema::ai_help_limits::table)
@@ -39,7 +41,9 @@ pub fn create_or_increment_limit(
             .on_conflict(schema::ai_help_limits::user_id)
             .do_update()
             .set(num_questions.eq(num_questions + 1)),
-        num_questions.lt(AI_HELP_LIMIT),
+        num_questions
+            .lt(AI_HELP_LIMIT)
+            .and(latest_start.gt(some_time_ago)),
     )
     .returning(num_questions)
     .get_result(conn)
@@ -47,8 +51,6 @@ pub fn create_or_increment_limit(
     if let Some(current) = current {
         Ok(Some(current))
     } else {
-        let now = Utc::now().naive_utc();
-        let some_time_ago = now - *AI_HELP_RESET_DURATION;
         // reset if latest_start is old enough
         let current = diesel::query_dsl::methods::FilterDsl::filter(
             insert_into(schema::ai_help_limits::table)
