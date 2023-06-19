@@ -10,8 +10,14 @@ use crate::db::schema::ai_help_limits::*;
 use crate::settings::SETTINGS;
 
 pub const AI_HELP_LIMIT: i64 = 5;
-static AI_HELP_RESET_DURATION: Lazy<Duration> =
-    Lazy::new(|| Duration::seconds(SETTINGS.ai.as_ref().map_or(0, |s| s.limit_reset_duration_in_sec)));
+static AI_HELP_RESET_DURATION: Lazy<Duration> = Lazy::new(|| {
+    Duration::seconds(
+        SETTINGS
+            .ai
+            .as_ref()
+            .map_or(0, |s| s.limit_reset_duration_in_sec),
+    )
+});
 
 pub fn get_count(conn: &mut PgConnection, user: &UserQuery) -> Result<i64, DbError> {
     let some_time_ago = Utc::now().naive_utc() - *AI_HELP_RESET_DURATION;
