@@ -119,7 +119,7 @@ async fn test_quota_rest() -> Result<(), Error> {
         SETTINGS
             .ai
             .as_ref()
-            .map(|ai| ai.limit_reset_duration)
+            .map(|ai| ai.limit_reset_duration_in_sec)
             .unwrap()
             .try_into()
             .unwrap(),

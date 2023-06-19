@@ -77,7 +77,7 @@ pub struct Basket {
 #[derive(Debug, Deserialize)]
 pub struct AI {
     pub api_key: String,
-    pub limit_reset_duration: i64,
+    pub limit_reset_duration_in_sec: i64,
 }
 
 #[serde_as]
