@@ -1,4 +1,4 @@
-use async_openai::{types::CreateEmbeddingRequestArgs, Client, config::OpenAIConfig};
+use async_openai::{config::OpenAIConfig, types::CreateEmbeddingRequestArgs, Client};
 
 use crate::{
     ai::{constants::MODERATION_MODEL, error::AIError},

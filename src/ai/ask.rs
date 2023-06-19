@@ -1,10 +1,11 @@
 use async_openai::{
+    config::OpenAIConfig,
     types::{
         ChatCompletionRequestMessage, ChatCompletionRequestMessageArgs,
         CreateChatCompletionRequest, CreateChatCompletionRequestArgs, CreateModerationRequestArgs,
         Role,
     },
-    Client, config::OpenAIConfig,
+    Client,
 };
 use futures_util::{stream::FuturesUnordered, TryStreamExt};
 use serde::Serialize;

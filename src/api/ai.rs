@@ -4,7 +4,9 @@ use actix_web::{
     Either, HttpResponse, Responder,
 };
 use actix_web_lab::sse;
-use async_openai::{error::OpenAIError, types::ChatCompletionRequestMessage, Client, config::OpenAIConfig};
+use async_openai::{
+    config::OpenAIConfig, error::OpenAIError, types::ChatCompletionRequestMessage, Client,
+};
 use futures_util::{stream, StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
