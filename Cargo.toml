@@ -79,6 +79,6 @@ octocrab = "0.25"
 aes-gcm = { version = "0.10", features = ["default", "std"] }
 
 [dev-dependencies]
-stubr = "0.5"
+stubr = "0.6"
 stubr-attributes = "0.6"
 assert-json-diff = "2"
