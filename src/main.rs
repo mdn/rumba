@@ -11,6 +11,7 @@ use actix_web::{
     web::Data,
     App, HttpServer,
 };
+use async_openai::config::OpenAIConfig;
 use basket::Basket;
 use const_format::formatcp;
 use diesel_migrations::MigrationHarness;
@@ -93,12 +94,10 @@ async fn main() -> anyhow::Result<()> {
             .map(|b| Basket::new(&b.api_key, b.basket_url.clone())),
     );
 
-    let openai_client = Data::new(
-        SETTINGS
-            .ai
-            .as_ref()
-            .map(|c| async_openai::Client::new().with_api_key(&c.api_key)),
-    );
+    let openai_client =
+        Data::new(SETTINGS.ai.as_ref().map(|c| {
+            async_openai::Client::with_config(OpenAIConfig::new().with_api_key(&c.api_key))
+        }));
 
     let github_client = Data::new(SETTINGS.playground.as_ref().and_then(|p| {
         OctocrabBuilder::new()

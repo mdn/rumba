@@ -4,7 +4,7 @@ use actix_web::{
     Either, HttpResponse, Responder,
 };
 use actix_web_lab::sse;
-use async_openai::{error::OpenAIError, types::ChatCompletionRequestMessage, Client};
+use async_openai::{error::OpenAIError, types::ChatCompletionRequestMessage, Client, config::OpenAIConfig};
 use futures_util::{stream, StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -77,7 +77,7 @@ pub async fn quota(user_id: Identity, diesel_pool: Data<Pool>) -> Result<HttpRes
 
 pub async fn ask(
     user_id: Identity,
-    openai_client: Data<Option<Client>>,
+    openai_client: Data<Option<Client<OpenAIConfig>>>,
     supabase_pool: Data<Option<SupaPool>>,
     diesel_pool: Data<Pool>,
     messages: Json<ChatRequestMessages>,

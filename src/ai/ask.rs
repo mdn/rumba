@@ -4,7 +4,7 @@ use async_openai::{
         CreateChatCompletionRequest, CreateChatCompletionRequestArgs, CreateModerationRequestArgs,
         Role,
     },
-    Client,
+    Client, config::OpenAIConfig,
 };
 use futures_util::{stream::FuturesUnordered, TryStreamExt};
 use serde::Serialize;
@@ -31,7 +31,7 @@ pub struct AskRequest {
 }
 
 pub async fn prepare_ask_req(
-    client: &Client,
+    client: &Client<OpenAIConfig>,
     pool: &SupaPool,
     messages: Vec<ChatCompletionRequestMessage>,
 ) -> Result<AskRequest, AIError> {

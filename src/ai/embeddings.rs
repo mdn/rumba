@@ -1,4 +1,4 @@
-use async_openai::{types::CreateEmbeddingRequestArgs, Client};
+use async_openai::{types::CreateEmbeddingRequestArgs, Client, config::OpenAIConfig};
 
 use crate::{
     ai::{constants::MODERATION_MODEL, error::AIError},
@@ -15,7 +15,7 @@ pub struct RelatedDoc {
 }
 
 pub async fn get_related_docs(
-    client: &Client,
+    client: &Client<OpenAIConfig>,
     pool: &SupaPool,
     prompt: String,
 ) -> Result<Vec<RelatedDoc>, AIError> {

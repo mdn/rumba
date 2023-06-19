@@ -12,6 +12,7 @@ use actix_web::{
     dev::{ServiceFactory, ServiceRequest, ServiceResponse},
     App, Error,
 };
+use async_openai::config::OpenAIConfig;
 use basket::Basket;
 use elasticsearch::http::transport::Transport;
 use elasticsearch::Elasticsearch;
@@ -77,7 +78,7 @@ pub async fn test_app_with_login(
             .map(|b| Basket::new(&b.api_key, b.basket_url.clone())),
     );
 
-    let openai_client = Data::new(None::<async_openai::Client>);
+    let openai_client = Data::new(None::<async_openai::Client<OpenAIConfig>>);
     let supabase_pool = Data::new(None::<SupaPool>);
 
     let app = App::new()
