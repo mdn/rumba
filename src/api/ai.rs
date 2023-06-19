@@ -12,7 +12,7 @@ use serde_json::json;
 use crate::{
     ai::ask::{prepare_ask_req, RefDoc},
     db::{
-        ai::{get_count, AI_HELP_LIMIT},
+        ai::{create_or_increment, get_count, AI_HELP_LIMIT},
         SupaPool,
     },
 };
@@ -85,6 +85,7 @@ pub async fn ask(
     let mut conn = diesel_pool.get()?;
     let user = get_user(&mut conn, user_id.id().unwrap())?;
     let current = if user.is_subscriber() {
+        create_or_increment(&mut conn, &user)?;
         None
     } else {
         let current = create_or_increment_limit(&mut conn, &user)?;

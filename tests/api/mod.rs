@@ -1,3 +1,4 @@
+mod ai_help;
 mod auth;
 mod fxa_webhooks;
 pub mod healthz;

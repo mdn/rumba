@@ -46,3 +46,7 @@ basket_url = "http://localhost:4321"
 github_token = "foobar"
 crypt_key = "IXAe2h1MekK4LKysmMvxomja69PT6c20A3nmcDHQ2eQ="
 flag_repo = "flags"
+
+[ai]
+limit_reset_duration = 5
+api_key = ""

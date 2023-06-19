@@ -46,7 +46,8 @@ diesel::table! {
         id -> Int8,
         user_id -> Nullable<Int8>,
         latest_start -> Nullable<Timestamp>,
-        num_questions -> Int8,
+        session_questions -> Int8,
+        total_questions -> Int8,
     }
 }
 

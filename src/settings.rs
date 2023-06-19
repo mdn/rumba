@@ -75,7 +75,7 @@ pub struct Basket {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Chat {
+pub struct AI {
     pub api_key: String,
     pub limit_reset_duration: i64,
 }
@@ -100,7 +100,7 @@ pub struct Settings {
     pub metrics: Metrics,
     pub sentry: Option<Sentry>,
     pub basket: Option<Basket>,
-    pub chat: Option<Chat>,
+    pub ai: Option<AI>,
     pub playground: Option<Playground>,
     #[serde(default)]
     pub skip_migrations: bool,

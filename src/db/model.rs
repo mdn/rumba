@@ -194,5 +194,6 @@ pub struct PlaygroundQuery {
 pub struct AIHelpLimitInsert {
     pub user_id: i64,
     pub latest_start: NaiveDateTime,
-    pub num_questions: i64,
+    pub session_questions: i64,
+    pub total_questions: i64,
 }

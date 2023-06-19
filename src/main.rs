@@ -95,7 +95,7 @@ async fn main() -> anyhow::Result<()> {
 
     let openai_client = Data::new(
         SETTINGS
-            .chat
+            .ai
             .as_ref()
             .map(|c| async_openai::Client::new().with_api_key(&c.api_key)),
     );

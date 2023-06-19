@@ -19,7 +19,7 @@ use octocrab::OctocrabBuilder;
 use reqwest::Client;
 use rumba::add_services;
 use rumba::api::error::error_handler;
-use rumba::db::Pool;
+use rumba::db::{Pool, SupaPool};
 use rumba::fxa::LoginManager;
 use rumba::settings::SETTINGS;
 use slog::{slog_o, Drain};
@@ -77,6 +77,9 @@ pub async fn test_app_with_login(
             .map(|b| Basket::new(&b.api_key, b.basket_url.clone())),
     );
 
+    let openai_client = Data::new(None::<async_openai::Client>);
+    let supabase_pool = Data::new(None::<SupaPool>);
+
     let app = App::new()
         .wrap(error_handler())
         .wrap(IdentityMiddleware::default())
@@ -87,6 +90,8 @@ pub async fn test_app_with_login(
                 .build(),
         )
         .app_data(Data::clone(&arbiter_handle))
+        .app_data(Data::clone(&openai_client))
+        .app_data(Data::clone(&supabase_pool))
         .app_data(Data::clone(&github_client))
         .app_data(Data::clone(&pool))
         .app_data(Data::clone(&client))
