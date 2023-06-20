@@ -82,3 +82,6 @@ aes-gcm = { version = "0.10", features = ["default", "std"] }
 stubr = "0.6"
 stubr-attributes = "0.6"
 assert-json-diff = "2"
+
+[patch.crates-io]
+tiktoken-rs = { git = 'https://github.com/fiji-flo/tiktoken-rs.git' }

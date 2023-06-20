@@ -4554,8 +4554,7 @@ dependencies = [
 [[package]]
 name = "tiktoken-rs"
 version = "0.4.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eaea81e057ef9e935bb8e92f03126f69379916fe3268cfafe56a3cd862421df6"
+source = "git+https://github.com/fiji-flo/tiktoken-rs.git#e57d88cedb0b32a0ef570ee13a372a68f3594bbf"
 dependencies = [
  "anyhow",
  "async-openai",
