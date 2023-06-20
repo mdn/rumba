@@ -30,7 +30,7 @@ pub fn get_count(conn: &mut PgConnection, user: &UserQuery) -> Result<i64, DbErr
         .map_err(Into::into)
 }
 
-pub fn create_or_increment(conn: &mut PgConnection, user: &UserQuery) -> Result<(), DbError> {
+pub fn create_or_increment_total(conn: &mut PgConnection, user: &UserQuery) -> Result<(), DbError> {
     let limit = AIHelpLimitInsert {
         user_id: user.id,
         latest_start: Utc::now().naive_utc(),

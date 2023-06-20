@@ -34,14 +34,14 @@ pub fn cap_messages(
     }
     let mut context_tokens = num_tokens_from_messages(MODEL, &context_messages)?;
 
-    let mut index = 0;
+    let mut skip = 0;
     while context_tokens + init_tokens + ASK_MAX_COMPLETION_TOKENS > ASK_TOKEN_LIMIT {
-        index += 1;
-        if index >= context_messages.len() {
+        skip += 1;
+        if skip >= context_messages.len() {
             return Err(AIError::TokenLimit);
         }
-        context_tokens = num_tokens_from_messages(MODEL, &context_messages[index..])?;
+        context_tokens = num_tokens_from_messages(MODEL, &context_messages[skip..])?;
     }
-    init_messages.extend(context_messages.into_iter().skip(index));
+    init_messages.extend(context_messages.into_iter().skip(skip));
     Ok(init_messages)
 }

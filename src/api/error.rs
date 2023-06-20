@@ -75,8 +75,6 @@ pub enum ApiError {
     DocumentNotFound,
     #[error("Collection with id {0} not found")]
     CollectionNotFound(String),
-    #[error("Notification Not found")]
-    NotificationNotFound,
     #[error("Malformed Url")]
     MalformedUrl,
     #[error("Json error")]
@@ -123,7 +121,6 @@ impl ApiError {
             Self::DocumentNotFound => "Document not found",
             Self::InvalidBearer => "Invalid bearer info",
             Self::MalformedUrl => "Malformed URL",
-            Self::NotificationNotFound => "Notification not found",
             Self::JsonProcessingError => "Error processing JSON document",
             Self::Query(_) => "Query error",
             Self::Search(_) => "Search error",
@@ -157,7 +154,6 @@ impl ResponseError for ApiError {
             Self::InvalidSession => StatusCode::BAD_REQUEST,
             Self::DocumentNotFound => StatusCode::NOT_FOUND,
             Self::InvalidBearer => StatusCode::FORBIDDEN,
-            Self::NotificationNotFound => StatusCode::NOT_FOUND,
             Self::MalformedUrl => StatusCode::BAD_REQUEST,
             Self::Query(_) => StatusCode::BAD_REQUEST,
             Self::Search(SearchError::Query { .. }) => StatusCode::BAD_REQUEST,

@@ -1,9 +1,13 @@
 use async_openai::{config::OpenAIConfig, types::CreateEmbeddingRequestArgs, Client};
 
 use crate::{
-    ai::{constants::MODERATION_MODEL, error::AIError},
+    ai::{constants::EMBEDDING_MODEL, error::AIError},
     db::SupaPool,
 };
+
+const EMB_DISTANCE: f64 = 0.78;
+const EMB_SEC_MIN_LENGTH: i64 = 50;
+const EMB_DOC_LIMIT: i64 = 3;
 
 #[derive(sqlx::FromRow)]
 pub struct RelatedDoc {
@@ -20,7 +24,7 @@ pub async fn get_related_docs(
     prompt: String,
 ) -> Result<Vec<RelatedDoc>, AIError> {
     let embedding_req = CreateEmbeddingRequestArgs::default()
-        .model(MODERATION_MODEL)
+        .model(EMBEDDING_MODEL)
         .input(prompt)
         .build()?;
     let embedding_res = client.embeddings().create(embedding_req).await?;
@@ -41,11 +45,9 @@ order by mdn_doc_section.embedding <#> $1
 limit $3;",
     )
     .bind(embedding)
-    .bind(0.78)
-    .bind(3)
-    .bind(50)
-    //match sqlx::query("SELECT match_page_sections($1, 0.78, 3, 50)")
-    //.bind(embedding)
+    .bind(EMB_DISTANCE)
+    .bind(EMB_DOC_LIMIT)
+    .bind(EMB_SEC_MIN_LENGTH)
     .fetch_all(pool)
     .await?;
     Ok(docs)

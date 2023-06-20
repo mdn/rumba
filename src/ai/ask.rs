@@ -74,7 +74,7 @@ pub async fn prepare_ask_req(
     let mut refs = vec![];
     let mut token_len = 0;
     for doc in related_docs.into_iter() {
-        println!("slug: {}", doc.slug);
+        debug!("slug: {}", doc.slug);
         let bpe = tiktoken_rs::r50k_base().unwrap();
         let tokens = bpe.encode_with_special_tokens(&doc.content).len();
         token_len += tokens;
