@@ -11,6 +11,7 @@ const EMB_DOC_LIMIT: i64 = 3;
 
 #[derive(sqlx::FromRow)]
 pub struct RelatedDoc {
+    pub url: String,
     pub slug: String,
     pub title: String,
     pub heading: String,
@@ -33,6 +34,7 @@ pub async fn get_related_docs(
         pgvector::Vector::from(embedding_res.data.into_iter().next().unwrap().embedding);
     let docs: Vec<RelatedDoc> = sqlx::query_as(
         "select
+mdn_doc.url,
 mdn_doc.slug,
 mdn_doc.title,
 mdn_doc_section.heading,

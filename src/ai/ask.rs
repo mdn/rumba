@@ -22,6 +22,7 @@ use crate::{
 
 #[derive(Serialize)]
 pub struct RefDoc {
+    pub url: String,
     pub slug: String,
     pub title: String,
 }
@@ -74,7 +75,7 @@ pub async fn prepare_ask_req(
     let mut refs = vec![];
     let mut token_len = 0;
     for doc in related_docs.into_iter() {
-        debug!("slug: {}", doc.slug);
+        debug!("url: {}", doc.url);
         let bpe = tiktoken_rs::r50k_base().unwrap();
         let tokens = bpe.encode_with_special_tokens(&doc.content).len();
         token_len += tokens;
@@ -83,6 +84,7 @@ pub async fn prepare_ask_req(
         }
         context.push(doc.content);
         refs.push(RefDoc {
+            url: doc.url,
             slug: doc.slug,
             title: doc.title,
         });
