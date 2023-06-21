@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/mdn/rumba/compare/v1.1.0...v1.2.0) (2023-06-19)
+
+
+### Features
+
+* **playground:** playground back-end ([#222](https://github.com/mdn/rumba/issues/222)) ([04a67ea](https://github.com/mdn/rumba/commit/04a67ea8452ec7b19752ea94de7aa60acb5b4a54))
+
 ## [1.1.0](https://github.com/mdn/rumba/compare/v1.0.0...v1.1.0) (2023-05-16)
 
 
