@@ -14,9 +14,14 @@ pub mod types;
 pub mod users;
 pub mod v2;
 
+use std::str::FromStr;
+
 use diesel::pg::PgConnection;
 use diesel::r2d2::ConnectionManager;
-use sqlx::postgres::PgPoolOptions;
+use sqlx::{
+    postgres::{PgConnectOptions, PgPoolOptions},
+    ConnectOptions,
+};
 
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
@@ -31,9 +36,12 @@ pub fn establish_connection(database_url: &str) -> Pool {
 pub type SupaPool = sqlx::PgPool;
 
 pub async fn establish_supa_connection(database_url: &str) -> SupaPool {
+    let mut options =
+        PgConnectOptions::from_str(database_url).expect("Failed to create supa connect options");
+    options.disable_statement_logging();
     PgPoolOptions::new()
         .max_connections(25)
-        .connect(database_url)
+        .connect_with(options)
         .await
         .expect("Failed to create supa pool")
 }
