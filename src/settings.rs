@@ -74,10 +74,13 @@ pub struct Basket {
     pub basket_url: Url,
 }
 
+#[serde_as]
 #[derive(Debug, Deserialize)]
 pub struct AI {
     pub api_key: String,
     pub limit_reset_duration_in_sec: i64,
+    #[serde_as(as = "Base64")]
+    pub explain_sign_key: [u8; 32],
 }
 
 #[serde_as]

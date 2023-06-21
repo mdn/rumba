@@ -12,7 +12,10 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use crate::{
-    ai::ask::{prepare_ask_req, RefDoc},
+    ai::{
+        ask::{prepare_ask_req, RefDoc},
+        explain::{prepare_explain_req, ExplainRequest},
+    },
     db::{
         ai::{create_or_increment_total, get_count, AI_HELP_LIMIT},
         SupaPool,
@@ -118,32 +121,21 @@ pub async fn ask(
     Ok(Either::Right(HttpResponse::NotImplemented().finish()))
 }
 
-fn explain(
+pub async fn explain(
     user_id: Identity,
     openai_client: Data<Option<Client<OpenAIConfig>>>,
     diesel_pool: Data<Pool>,
-    messages: Json<ChatRequestMessages>,
+    req: Json<ExplainRequest>,
 ) -> Result<impl Responder, ApiError> {
     let mut conn = diesel_pool.get()?;
     let user = get_user(&mut conn, user_id.id().unwrap())?;
     if let Some(client) = &**openai_client {
-        // 1. Prepare messages
+        let explain_req = prepare_explain_req(req.into_inner(), client).await?;
+        let stream = client.chat().create_stream(explain_req).await.unwrap();
 
-        let stream = client.chat().create_stream(ask_req.req).await.unwrap();
-
-        let refs = stream::once(async move {
-            Ok(sse::Event::Data(
-                sse::Data::new_json(AskMeta {
-                    typ: MetaType::Metadata,
-                    sources: ask_req.refs,
-                    quota: current.map(AskLimit::from_count),
-                })
-                .map_err(OpenAIError::JSONDeserialize)?,
-            ))
-        });
-        return Ok(Either::Left(sse::Sse::from_stream(refs.chain(
-            stream.map_ok(|res| sse::Event::Data(sse::Data::new_json(res).unwrap())),
-        ))));
+        return Ok(sse::Sse::from_stream(stream.map_ok(|res| {
+            sse::Event::Data(sse::Data::new_json(res).unwrap())
+        })));
     }
-    Ok(Either::Right(HttpResponse::NotImplemented().finish()))
+    Err(ApiError::Artificial)
 }
