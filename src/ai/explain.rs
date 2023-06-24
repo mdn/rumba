@@ -22,9 +22,9 @@ use crate::{
 
 type HmacSha256 = Hmac<Sha256>;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct ExplainRequest {
-    pub language: String,
+    pub language: Option<String>,
     pub sample: String,
     pub signature: String,
     pub highlighted: Option<String>,
@@ -60,6 +60,7 @@ pub async fn prepare_explain_req(
         highlighted,
         ..
     } = q;
+    let language = language.unwrap_or_default();
     let user_prompt = if let Some(highlighted) = highlighted {
         format!("Explain the following part: ```{language}\n{highlighted}\n```")
     } else {

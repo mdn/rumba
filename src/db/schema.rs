@@ -42,6 +42,19 @@ diesel::table! {
     use diesel::sql_types::*;
     use crate::db::types::*;
 
+    ai_explain_cache (id) {
+        id -> Int8,
+        signature -> Bytea,
+        highlighted_hash -> Bytea,
+        explanation -> Nullable<Text>,
+        created_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+
     ai_help_limits (id) {
         id -> Int8,
         user_id -> Nullable<Int8>,
@@ -256,6 +269,7 @@ diesel::joinable!(settings -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     activity_pings,
+    ai_explain_cache,
     ai_help_limits,
     bcd_features,
     bcd_updates,

@@ -3,21 +3,30 @@ use actix_web::{
     web::{Data, Json},
     Either, HttpResponse, Responder,
 };
-use actix_web_lab::sse;
+use actix_web_lab::{__reexports::tokio::sync::mpsc, sse};
 use async_openai::{
-    config::OpenAIConfig, error::OpenAIError, types::ChatCompletionRequestMessage, Client,
+    config::OpenAIConfig,
+    error::OpenAIError,
+    types::{ChatCompletionRequestMessage, CreateChatCompletionStreamResponse},
+    Client,
 };
+use base64::{engine::general_purpose::STANDARD, Engine};
 use futures_util::{stream, StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use sha2::{Digest, Sha256};
 
 use crate::{
     ai::{
         ask::{prepare_ask_req, RefDoc},
-        explain::{prepare_explain_req, ExplainRequest},
+        explain::{prepare_explain_req, verify_explain_request, ExplainRequest},
     },
     db::{
-        ai::{create_or_increment_total, get_count, AI_HELP_LIMIT},
+        ai::{
+            add_explain_answer, create_or_increment_total, explain_from_cache, get_count,
+            AI_HELP_LIMIT,
+        },
+        model::AIExplainCacheInsert,
         SupaPool,
     },
 };
@@ -126,16 +135,60 @@ pub async fn explain(
     openai_client: Data<Option<Client<OpenAIConfig>>>,
     diesel_pool: Data<Pool>,
     req: Json<ExplainRequest>,
-) -> Result<impl Responder, ApiError> {
+) -> Result<Either<impl Responder, impl Responder>, ApiError> {
+    let explain_request = req.into_inner();
+
+    if verify_explain_request(&explain_request).is_err() {
+        return Err(ApiError::Unauthorized);
+    }
+    let signature = STANDARD.decode(&explain_request.signature).unwrap();
+    let to_be_hashed = if let Some(ref highlighted) = explain_request.highlighted {
+        highlighted
+    } else {
+        &explain_request.sample
+    };
+    let mut hasher = Sha256::new();
+    hasher.update(to_be_hashed.as_bytes());
+    let highlighted_hash = hasher.finalize().to_vec();
+
     let mut conn = diesel_pool.get()?;
-    let user = get_user(&mut conn, user_id.id().unwrap())?;
+    if let Some(hit) = explain_from_cache(&mut conn, &signature, &highlighted_hash)? {
+        if let Some(explanation) = hit.explanation {
+            println!("replying from cache");
+            let chunked = explanation.split(' ').map(|s| s.to_owned()).collect::<Vec<String>>();
+            let stream = futures::stream::iter(chunked.into_iter());
+            return Ok(Either::Left(sse::Sse::from_stream(stream.map(move |res| {
+                Ok::<_, OpenAIError>(sse::Event::Data(sse::Data::new_json(res).unwrap()))
+            }))));
+        }
+    }
     if let Some(client) = &**openai_client {
-        let explain_req = prepare_explain_req(req.into_inner(), client).await?;
+        let explain_req = prepare_explain_req(explain_request.clone(), client).await?;
         let stream = client.chat().create_stream(explain_req).await.unwrap();
 
-        return Ok(sse::Sse::from_stream(stream.map_ok(|res| {
+        let (tx, mut rx) = mpsc::unbounded_channel::<CreateChatCompletionStreamResponse>();
+
+        actix_web::rt::spawn(async move {
+            let mut answer = vec![];
+            while let Some(mut chunk) = rx.recv().await {
+                if let Some(part) = chunk.choices.pop().and_then(|c| c.delta.content) {
+                    answer.push(part);
+                }
+            }
+            let insert = AIExplainCacheInsert {
+                signature,
+                highlighted_hash,
+                explanation: Some(answer.join("")),
+            };
+            println!("{:?}", add_explain_answer(&mut conn, &insert));
+        });
+
+        return Ok(Either::Right(sse::Sse::from_stream(stream.map_ok(move |res| {
+            if let Err(e) = tx.send(res.clone()) {
+                println!("{e}");
+            }
             sse::Event::Data(sse::Data::new_json(res).unwrap())
-        })));
+        }))));
     }
     Err(ApiError::Artificial)
 }

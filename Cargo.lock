@@ -3536,6 +3536,7 @@ dependencies = [
  "diesel_migrations",
  "elasticsearch",
  "form_urlencoded",
+ "futures",
  "futures-util",
  "harsh",
  "hmac",

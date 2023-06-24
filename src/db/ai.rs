@@ -4,7 +4,7 @@ use diesel::{insert_into, PgConnection};
 use once_cell::sync::Lazy;
 
 use crate::db::error::DbError;
-use crate::db::model::{AIHelpLimitInsert, UserQuery};
+use crate::db::model::{AIExplainCacheInsert, AIExplainCacheQuery, AIHelpLimitInsert, UserQuery};
 use crate::db::schema;
 use crate::db::schema::ai_help_limits::*;
 use crate::settings::SETTINGS;
@@ -96,4 +96,30 @@ pub fn create_or_increment_limit(
         .optional()?;
         Ok(current)
     }
+}
+
+pub fn add_explain_answer(
+    conn: &mut PgConnection,
+    cache: &AIExplainCacheInsert,
+) -> Result<(), DbError> {
+    insert_into(schema::ai_explain_cache::table)
+        .values(cache)
+        .execute(conn)?;
+    Ok(())
+}
+
+pub fn explain_from_cache(
+    conn: &mut PgConnection,
+    signature: &Vec<u8>,
+    highlighted_hash: &Vec<u8>,
+) -> Result<Option<AIExplainCacheQuery>, DbError> {
+    let hit = schema::ai_explain_cache::table
+        .filter(
+            schema::ai_explain_cache::signature
+                .eq(signature)
+                .and(schema::ai_explain_cache::highlighted_hash.eq(highlighted_hash)),
+        )
+        .first(conn)
+        .optional()?;
+    Ok(hit)
 }
