@@ -76,6 +76,32 @@ pub struct AskMeta {
     pub quota: Option<AskLimit>,
 }
 
+#[derive(Serialize)]
+pub struct CachedChunkDelta {
+    pub content: String,
+}
+
+#[derive(Serialize)]
+pub struct CachedChunkChoice {
+    pub delta: CachedChunkDelta,
+}
+#[derive(Serialize)]
+pub struct CachedChunk {
+    pub choices: Vec<CachedChunkChoice>,
+}
+
+impl From<&str> for CachedChunk {
+    fn from(content: &str) -> Self {
+        CachedChunk {
+            choices: vec![CachedChunkChoice {
+                delta: CachedChunkDelta {
+                    content: content.into(),
+                },
+            }],
+        }
+    }
+}
+
 pub async fn quota(user_id: Identity, diesel_pool: Data<Pool>) -> Result<HttpResponse, ApiError> {
     let mut conn = diesel_pool.get()?;
     let user = get_user(&mut conn, user_id.id().unwrap())?;
@@ -155,11 +181,16 @@ pub async fn explain(
     if let Some(hit) = explain_from_cache(&mut conn, &signature, &highlighted_hash)? {
         if let Some(explanation) = hit.explanation {
             println!("replying from cache");
-            let chunked = explanation.split(' ').map(|s| s.to_owned()).collect::<Vec<String>>();
+            let chunked = explanation
+                .split_inclusive(' ')
+                .map(|s| s.into())
+                .collect::<Vec<CachedChunk>>();
             let stream = futures::stream::iter(chunked.into_iter());
-            return Ok(Either::Left(sse::Sse::from_stream(stream.map(move |res| {
-                Ok::<_, OpenAIError>(sse::Event::Data(sse::Data::new_json(res).unwrap()))
-            }))));
+            return Ok(Either::Left(sse::Sse::from_stream(stream.map(
+                move |res| {
+                    Ok::<_, OpenAIError>(sse::Event::Data(sse::Data::new_json(res).unwrap()))
+                },
+            ))));
         }
     }
     if let Some(client) = &**openai_client {
@@ -183,12 +214,14 @@ pub async fn explain(
             println!("{:?}", add_explain_answer(&mut conn, &insert));
         });
 
-        return Ok(Either::Right(sse::Sse::from_stream(stream.map_ok(move |res| {
-            if let Err(e) = tx.send(res.clone()) {
-                println!("{e}");
-            }
-            sse::Event::Data(sse::Data::new_json(res).unwrap())
-        }))));
+        return Ok(Either::Right(sse::Sse::from_stream(stream.map_ok(
+            move |res| {
+                if let Err(e) = tx.send(res.clone()) {
+                    println!("{e}");
+                }
+                sse::Event::Data(sse::Data::new_json(res).unwrap())
+            },
+        ))));
     }
     Err(ApiError::Artificial)
 }
