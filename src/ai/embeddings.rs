@@ -7,7 +7,7 @@ use crate::{
 
 const EMB_DISTANCE: f64 = 0.78;
 const EMB_SEC_MIN_LENGTH: i64 = 50;
-const EMB_DOC_LIMIT: i64 = 3;
+const EMB_DOC_LIMIT: i64 = 5;
 
 #[derive(sqlx::FromRow)]
 pub struct RelatedDoc {
