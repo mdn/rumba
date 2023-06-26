@@ -9,7 +9,6 @@ use async_openai::{
 };
 use futures_util::{stream::FuturesUnordered, TryStreamExt};
 use serde::Serialize;
-use std::collections::HashSet;
 
 use crate::{
     ai::{
@@ -73,7 +72,7 @@ pub async fn prepare_ask_req(
         get_related_docs(client, pool, last_user_message.content.replace('\n', " ")).await?;
 
     let mut context = vec![];
-    let mut ref_set: HashSet<RefDoc> = HashSet::new();
+    let mut refs = vec![];
     let mut token_len = 0;
     for doc in related_docs.into_iter() {
         debug!("url: {}", doc.url);
@@ -84,13 +83,14 @@ pub async fn prepare_ask_req(
             break;
         }
         context.push(doc.content);
-        ref_set.insert(RefDoc {
-            url: doc.url,
-            slug: doc.slug,
-            title: doc.title,
-        });
+        if refs.iter().any(|r: &RefDoc| r.slug == doc.slug) {
+            refs.push(RefDoc {
+                url: doc.url,
+                slug: doc.slug,
+                title: doc.title,
+            });
+        }
     }
-    let refs = ref_set.into_iter().collect();
     let context = context.join("\n---\n");
     let system_message = ChatCompletionRequestMessageArgs::default()
         .role(Role::System)
