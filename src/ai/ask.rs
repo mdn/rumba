@@ -83,7 +83,7 @@ pub async fn prepare_ask_req(
             break;
         }
         context.push(doc.content);
-        if refs.iter().any(|r: &RefDoc| r.slug == doc.slug) {
+        if !refs.iter().any(|r: &RefDoc| r.slug == doc.slug) {
             refs.push(RefDoc {
                 url: doc.url,
                 slug: doc.slug,
