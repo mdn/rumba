@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/mdn/rumba/compare/v1.3.0...v1.3.1) (2023-06-27)
+
+
+### Bug Fixes
+
+* **ai-help:** add related docs (negate missing) ([#257](https://github.com/mdn/rumba/issues/257)) ([634bf40](https://github.com/mdn/rumba/commit/634bf40d27d9a9f066e9cc1dc9378e020fb6f2d0))
+
 ## [1.3.0](https://github.com/mdn/rumba/compare/v1.2.0...v1.3.0) (2023-06-27)
 
 
