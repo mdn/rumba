@@ -1,5 +1,6 @@
 [db]
 uri = "postgres://rumba:rumba@127.0.0.1:5432/mdn"
+supabase_uri = ""
 
 [server]
 host = "0.0.0.0"
