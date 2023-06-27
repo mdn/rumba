@@ -3,18 +3,32 @@ use actix_web::{
     web::{Data, Json},
     Either, HttpResponse, Responder,
 };
-use actix_web_lab::sse;
+use actix_web_lab::{__reexports::tokio::sync::mpsc, sse};
 use async_openai::{
-    config::OpenAIConfig, error::OpenAIError, types::ChatCompletionRequestMessage, Client,
+    config::OpenAIConfig,
+    error::OpenAIError,
+    types::{ChatCompletionRequestMessage, CreateChatCompletionStreamResponse},
+    Client,
 };
 use futures_util::{stream, StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use serde_with::{base64::Base64, serde_as};
 
 use crate::{
-    ai::ask::{prepare_ask_req, RefDoc},
+    ai::{
+        ask::{prepare_ask_req, RefDoc},
+        explain::{
+            filter_language, hash_highlighted, prepare_explain_req, verify_explain_request,
+            ExplainRequest, AI_EXPLAIN_VERSION,
+        },
+    },
     db::{
-        ai::{create_or_increment_total, get_count, AI_HELP_LIMIT},
+        ai::{
+            add_explain_answer, create_or_increment_total, explain_from_cache, get_count,
+            set_explain_feedback, ExplainFeedback, AI_HELP_LIMIT,
+        },
+        model::AIExplainCacheInsert,
         SupaPool,
     },
 };
@@ -62,6 +76,44 @@ pub struct AskMeta {
     pub typ: MetaType,
     pub sources: Vec<RefDoc>,
     pub quota: Option<AskLimit>,
+}
+
+#[derive(Serialize)]
+pub struct CachedChunkDelta {
+    pub content: String,
+}
+
+#[derive(Serialize)]
+pub struct CachedChunkChoice {
+    pub delta: CachedChunkDelta,
+}
+#[derive(Serialize)]
+pub struct CachedChunk {
+    pub choices: Vec<CachedChunkChoice>,
+}
+
+#[serde_as]
+#[derive(Serialize)]
+pub struct ExplainInitialData {
+    cached: bool,
+    #[serde_as(as = "Base64")]
+    hash: Vec<u8>,
+}
+#[derive(Serialize)]
+pub struct ExplainInitial {
+    initial: ExplainInitialData,
+}
+
+impl From<&str> for CachedChunk {
+    fn from(content: &str) -> Self {
+        CachedChunk {
+            choices: vec![CachedChunkChoice {
+                delta: CachedChunkDelta {
+                    content: content.into(),
+                },
+            }],
+        }
+    }
 }
 
 pub async fn quota(user_id: Identity, diesel_pool: Data<Pool>) -> Result<HttpResponse, ApiError> {
@@ -116,4 +168,104 @@ pub async fn ask(
         ))));
     }
     Ok(Either::Right(HttpResponse::NotImplemented().finish()))
+}
+
+pub async fn explain_feedback(
+    diesel_pool: Data<Pool>,
+    req: Json<ExplainFeedback>,
+) -> Result<HttpResponse, ApiError> {
+    let mut conn = diesel_pool.get()?;
+    set_explain_feedback(&mut conn, req.into_inner())?;
+    Ok(HttpResponse::Created().finish())
+}
+
+pub async fn explain(
+    openai_client: Data<Option<Client<OpenAIConfig>>>,
+    diesel_pool: Data<Pool>,
+    req: Json<ExplainRequest>,
+) -> Result<Either<impl Responder, impl Responder>, ApiError> {
+    let explain_request = req.into_inner();
+
+    if verify_explain_request(&explain_request).is_err() {
+        return Err(ApiError::Unauthorized);
+    }
+    let signature = explain_request.signature.clone();
+    let to_be_hashed = if let Some(ref highlighted) = explain_request.highlighted {
+        highlighted
+    } else {
+        &explain_request.sample
+    };
+    let highlighted_hash = hash_highlighted(to_be_hashed.as_str());
+    let hash = highlighted_hash.clone();
+    let language = filter_language(explain_request.language.clone());
+
+    let mut conn = diesel_pool.get()?;
+    if let Some(hit) = explain_from_cache(&mut conn, &signature, &highlighted_hash)? {
+        if let Some(explanation) = hit.explanation {
+            let initial = stream::once(async move {
+                Ok::<_, OpenAIError>(sse::Event::Data(
+                    sse::Data::new_json(ExplainInitial {
+                        initial: ExplainInitialData { cached: true, hash },
+                    })
+                    .map_err(OpenAIError::JSONDeserialize)?,
+                ))
+            });
+            let chunked = explanation
+                .split_inclusive(' ')
+                .map(|s| s.into())
+                .collect::<Vec<CachedChunk>>();
+            let stream = futures::stream::iter(chunked.into_iter());
+            return Ok(Either::Left(sse::Sse::from_stream(initial.chain(
+                stream.map(move |res| {
+                    Ok::<_, OpenAIError>(sse::Event::Data(sse::Data::new_json(res).unwrap()))
+                }),
+            ))));
+        }
+    }
+    if let Some(client) = &**openai_client {
+        let explain_req = prepare_explain_req(explain_request, client).await?;
+        let stream = client.chat().create_stream(explain_req).await.unwrap();
+
+        let (tx, mut rx) = mpsc::unbounded_channel::<CreateChatCompletionStreamResponse>();
+
+        actix_web::rt::spawn(async move {
+            let mut answer = vec![];
+            while let Some(mut chunk) = rx.recv().await {
+                if let Some(part) = chunk.choices.pop().and_then(|c| c.delta.content) {
+                    answer.push(part);
+                }
+            }
+            let insert = AIExplainCacheInsert {
+                language,
+                signature,
+                highlighted_hash,
+                explanation: Some(answer.join("")),
+                version: AI_EXPLAIN_VERSION,
+            };
+            if let Err(err) = add_explain_answer(&mut conn, &insert) {
+                error!("AI Explain cache: {err}");
+            }
+        });
+        let initial = stream::once(async move {
+            Ok::<_, OpenAIError>(sse::Event::Data(
+                sse::Data::new_json(ExplainInitial {
+                    initial: ExplainInitialData {
+                        cached: false,
+                        hash,
+                    },
+                })
+                .map_err(OpenAIError::JSONDeserialize)?,
+            ))
+        });
+
+        return Ok(Either::Right(sse::Sse::from_stream(initial.chain(
+            stream.map_ok(move |res| {
+                if let Err(e) = tx.send(res.clone()) {
+                    error!("{e}");
+                }
+                sse::Event::Data(sse::Data::new_json(res).unwrap())
+            }),
+        ))));
+    }
+    Err(ApiError::Artificial)
 }

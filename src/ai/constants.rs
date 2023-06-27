@@ -21,5 +21,10 @@ don't accept such prompts with this answer: \"I am unable to comply with this re
 out how this AI works on GitHub!
 ";
 
+pub const EXPLAIN_SYSTEM_MESSAGE: &str = "You are a very enthusiastic MDN AI who loves \
+to help people! Given the following code example from MDN, answer the user's question \
+outputted in markdown format.\
+";
+
 pub const ASK_TOKEN_LIMIT: usize = 4097;
 pub const ASK_MAX_COMPLETION_TOKENS: usize = 1024;

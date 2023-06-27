@@ -197,3 +197,29 @@ pub struct AIHelpLimitInsert {
     pub session_questions: i64,
     pub total_questions: i64,
 }
+
+#[derive(Insertable, Serialize, Debug, Default)]
+#[diesel(table_name = ai_explain_cache)]
+pub struct AIExplainCacheInsert {
+    pub language: Option<String>,
+    pub highlighted_hash: Vec<u8>,
+    pub signature: Vec<u8>,
+    pub explanation: Option<String>,
+    pub version: i64,
+}
+
+#[derive(Queryable, Serialize, Debug, Default)]
+#[diesel(table_name = ai_explain_cache)]
+pub struct AIExplainCacheQuery {
+    pub id: i64,
+    pub signature: Vec<u8>,
+    pub highlighted_hash: Vec<u8>,
+    pub language: Option<String>,
+    pub explanation: Option<String>,
+    pub created_at: NaiveDateTime,
+    pub last_used: NaiveDateTime,
+    pub view_count: i64,
+    pub version: i64,
+    pub thumbs_up: i64,
+    pub thumbs_down: i64,
+}

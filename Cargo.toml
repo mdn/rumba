@@ -60,6 +60,7 @@ reqwest = { version = "0.11", features = ["blocking", "json"] }
 chrono = "0.4"
 url = "2"
 base64 = "0.21"
+futures = "0.3"
 futures-util = "0.3"
 regex = "1"
 
@@ -73,12 +74,17 @@ sentry-actix = "0.31"
 
 basket = "0.0.5"
 async-openai = "0.11"
-tiktoken-rs = { version = "0.4.5", features = ["async-openai"] }
+tiktoken-rs = { version = "0.4", features = ["async-openai"] }
 
 octocrab = "0.25"
 aes-gcm = { version = "0.10", features = ["default", "std"] }
+hmac = "0.12"
+sha2 = "0.10"
 
 [dev-dependencies]
 stubr = "0.6"
 stubr-attributes = "0.6"
 assert-json-diff = "2"
+
+[patch.crates-io]
+tiktoken-rs = { git = 'https://github.com/fiji-flo/tiktoken-rs.git' }
