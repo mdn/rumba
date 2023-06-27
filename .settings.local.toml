@@ -1,5 +1,6 @@
 [db]
-uri = "postgres://postgres:mdn@127.0.0.1/mdn "
+uri = "postgres://postgres:mdn@127.0.0.1/mdn"
+supabase_uri = ""
 
 [server]
 host = "localhost"
@@ -12,6 +13,8 @@ scopes = "openid profile email profile:subscriptions"
 auth_cookie_name = "auth-cookie"
 login_cookie_name = "login-cookie"
 auth_cookie_secure = false
+client_id="TEST_CLIENT_ID"
+client_secret="TEST_CLIENT_SECRET"
 cookie_key = "DUwIFZuUYzRhHPlhOm6DwTHSDUSyR5SyvZHIeHdx4DIanxm5/GD/4dqXROLvn5vMofOYUq37HhhivjCyMCWP4w=="
 admin_update_bearer_token="TEST_TOKEN"
 
@@ -35,3 +38,16 @@ human_logs = true
 [metrics]
 statsd_label = "rumba"
 statsd_port = 8125
+
+[basket]
+api_key = ""
+basket_url = ""
+
+[playground]
+github_token = ""
+crypt_key = ""
+flag_repo = "flags"
+
+[ai]
+api_key = ""
+limit_reset_duration_in_sec = 3600

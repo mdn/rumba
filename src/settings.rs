@@ -10,6 +10,7 @@ use url::Url;
 #[derive(Deserialize)]
 pub struct DB {
     pub uri: String,
+    pub supabase_uri: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -73,6 +74,12 @@ pub struct Basket {
     pub basket_url: Url,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct AI {
+    pub api_key: String,
+    pub limit_reset_duration_in_sec: i64,
+}
+
 #[serde_as]
 #[derive(Debug, Deserialize)]
 pub struct Playground {
@@ -93,6 +100,7 @@ pub struct Settings {
     pub metrics: Metrics,
     pub sentry: Option<Sentry>,
     pub basket: Option<Basket>,
+    pub ai: Option<AI>,
     pub playground: Option<Playground>,
     #[serde(default)]
     pub skip_migrations: bool,

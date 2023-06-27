@@ -1,11 +1,14 @@
 use std::string::FromUtf8Error;
 
+use crate::ai::error::AIError;
 use crate::db::error::DbError;
+
 use actix_http::header::HeaderValue;
 use actix_web::http::header::HeaderName;
 use actix_web::http::StatusCode;
 use actix_web::middleware::{ErrorHandlerResponse, ErrorHandlers};
 use actix_web::{HttpResponse, ResponseError};
+use async_openai::error::OpenAIError;
 use basket::BasketError;
 use serde::Serialize;
 use serde_json::json;
@@ -98,6 +101,10 @@ pub enum ApiError {
     LoginRequiredForFeature(String),
     #[error("Newsletter error: {0}")]
     BasketError(#[from] BasketError),
+    #[error("OpenAI error: {0}")]
+    OpenAIError(#[from] OpenAIError),
+    #[error("AI error: {0}")]
+    AIError(#[from] AIError),
     #[error("Playground error: {0}")]
     PlaygroundError(#[from] PlaygroundError),
     #[error("Unknown error: {0}")]
@@ -128,6 +135,8 @@ impl ApiError {
             Self::PlaygroundError(_) => "Error querying playground",
             Self::Generic(err) => err,
             Self::LoginRequiredForFeature(_) => "Login Required",
+            Self::OpenAIError(_) => "Open AI error",
+            Self::AIError(_) => "AI error",
         }
     }
 }

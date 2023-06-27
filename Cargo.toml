@@ -20,10 +20,13 @@ actix-rt = "2"
 actix-identity = "0.5"
 actix-session = { version = "0.7", features = ["cookie-session"] }
 actix-web-httpauth = "0.8"
+actix-web-lab = "0.19"
 
 diesel = { version = "2", features = ["postgres", "uuid", "r2d2", "chrono", "serde_json"] }
 diesel_migrations = "2"
 diesel-derive-enum = { version = "2", features = ["postgres"] }
+pgvector = { version = "0.2", features = ["sqlx"] }
+sqlx = { version = "0.6", features = [ "runtime-tokio-rustls", "postgres"] }
 
 elasticsearch = "7.14.0-alpha.1"
 harsh = "0.2"
@@ -69,6 +72,8 @@ sentry = "0.31"
 sentry-actix = "0.31"
 
 basket = "0.0.5"
+async-openai = "0.11"
+tiktoken-rs = { version = "0.4.5", features = ["async-openai"] }
 
 octocrab = "0.25"
 aes-gcm = { version = "0.10", features = ["default", "std"] }

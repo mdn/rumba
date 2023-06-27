@@ -1,3 +1,4 @@
+use crate::api::ai::{ask, quota};
 use crate::api::newsletter::{
     is_subscribed, subscribe_anonymous_handler, subscribe_handler, unsubscribe_handler,
 };
@@ -17,6 +18,13 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
     web::scope("/api/v1")
         .service(
             web::scope("/plus")
+                .service(
+                    web::scope("/ai").service(
+                        web::scope("/ask")
+                            .service(web::resource("").route(web::post().to(ask)))
+                            .service(web::resource("/quota").route(web::get().to(quota))),
+                    ),
+                )
                 .service(web::resource("/settings/").route(web::post().to(update_settings)))
                 .service(
                     web::resource("/newsletter/")

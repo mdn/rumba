@@ -1,5 +1,6 @@
 [db]
 uri = "postgres://rumba:rumba@127.0.0.1:5432/mdn"
+supabase_uri = ""
 
 [server]
 host = "localhost"
@@ -37,3 +38,16 @@ human_logs = true
 [metrics]
 statsd_label = "rumba"
 statsd_port = 8125
+
+[basket]
+api_key = ""
+basket_url = ""
+
+[playground]
+github_token = ""
+crypt_key = ""
+flag_repo = "flags"
+
+[ai]
+api_key = ""
+limit_reset_duration_in_sec = 3600

@@ -42,6 +42,19 @@ diesel::table! {
     use diesel::sql_types::*;
     use crate::db::types::*;
 
+    ai_help_limits (id) {
+        id -> Int8,
+        user_id -> Nullable<Int8>,
+        latest_start -> Nullable<Timestamp>,
+        session_questions -> Int8,
+        total_questions -> Int8,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+
     bcd_features (id) {
         id -> Int8,
         deprecated -> Nullable<Bool>,
@@ -230,6 +243,7 @@ diesel::table! {
 }
 
 diesel::joinable!(activity_pings -> users (user_id));
+diesel::joinable!(ai_help_limits -> users (user_id));
 diesel::joinable!(bcd_updates -> bcd_features (feature));
 diesel::joinable!(bcd_updates -> browser_releases (browser_release));
 diesel::joinable!(browser_releases -> browsers (browser));
@@ -242,6 +256,7 @@ diesel::joinable!(settings -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     activity_pings,
+    ai_help_limits,
     bcd_features,
     bcd_updates,
     browser_releases,

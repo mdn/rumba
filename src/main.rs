@@ -11,6 +11,7 @@ use actix_web::{
     web::Data,
     App, HttpServer,
 };
+use async_openai::config::OpenAIConfig;
 use basket::Basket;
 use const_format::formatcp;
 use diesel_migrations::MigrationHarness;
@@ -59,6 +60,11 @@ async fn main() -> anyhow::Result<()> {
 
     let pool = Data::new(pool);
 
+    let supabase_pool = Data::new(match SETTINGS.db.supabase_uri.as_ref() {
+        Some(uri) => Some(db::establish_supa_connection(uri).await),
+        None => None,
+    });
+
     let http_client = Data::new(HttpClient::new());
     let login_manager = Data::new(LoginManager::init().await?);
     let arbiter = Arbiter::new();
@@ -88,6 +94,11 @@ async fn main() -> anyhow::Result<()> {
             .map(|b| Basket::new(&b.api_key, b.basket_url.clone())),
     );
 
+    let openai_client =
+        Data::new(SETTINGS.ai.as_ref().map(|c| {
+            async_openai::Client::with_config(OpenAIConfig::new().with_api_key(&c.api_key))
+        }));
+
     let github_client = Data::new(SETTINGS.playground.as_ref().and_then(|p| {
         OctocrabBuilder::new()
             .personal_token(p.github_token.clone())
@@ -112,10 +123,12 @@ async fn main() -> anyhow::Result<()> {
                 .build(),
             )
             .wrap(Logger::new(LOG_FMT).exclude("/healthz"))
+            .app_data(Data::clone(&openai_client))
             .app_data(Data::clone(&github_client))
             .app_data(Data::clone(&basket_client))
             .app_data(Data::clone(&metrics))
             .app_data(Data::clone(&pool))
+            .app_data(Data::clone(&supabase_pool))
             .app_data(Data::clone(&arbiter_handle))
             .app_data(Data::clone(&http_client))
             .app_data(Data::clone(&login_manager))
