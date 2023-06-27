@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/mdn/rumba/compare/v1.2.0...v1.3.0) (2023-06-27)
+
+
+### Features
+
+* **plus:** add AI Help backend ([#230](https://github.com/mdn/rumba/issues/230)) ([064dedd](https://github.com/mdn/rumba/commit/064deddaa5ebec95d2a53a4c8b46fab276db4c34))
+
 ## [1.2.0](https://github.com/mdn/rumba/compare/v1.1.0...v1.2.0) (2023-06-19)
 
 
