@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/mdn/rumba/compare/v1.3.1...v1.4.0) (2023-06-28)
+
+
+### Features
+
+* **ai-explain:** add ai-explain api ([#262](https://github.com/mdn/rumba/issues/262)) ([9785eab](https://github.com/mdn/rumba/commit/9785eab520301f275e6489fda10d1cd77c40df51))
+
 ## [1.3.1](https://github.com/mdn/rumba/compare/v1.3.0...v1.3.1) (2023-06-27)
 
 
