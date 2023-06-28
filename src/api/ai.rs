@@ -202,24 +202,18 @@ pub async fn explain(
     let mut conn = diesel_pool.get()?;
     if let Some(hit) = explain_from_cache(&mut conn, &signature, &highlighted_hash)? {
         if let Some(explanation) = hit.explanation {
-            let initial = stream::once(async move {
-                Ok::<_, OpenAIError>(sse::Event::Data(
-                    sse::Data::new_json(ExplainInitial {
-                        initial: ExplainInitialData { cached: true, hash },
-                    })
+            let parts = vec![
+                sse::Data::new_json(ExplainInitial {
+                    initial: ExplainInitialData { cached: true, hash },
+                })
+                .map_err(OpenAIError::JSONDeserialize)?,
+                sse::Data::new_json(CachedChunk::from(explanation.as_str()))
                     .map_err(OpenAIError::JSONDeserialize)?,
-                ))
-            });
-            let chunked = explanation
-                .split_inclusive(' ')
-                .map(|s| s.into())
-                .collect::<Vec<CachedChunk>>();
-            let stream = futures::stream::iter(chunked.into_iter());
-            return Ok(Either::Left(sse::Sse::from_stream(initial.chain(
-                stream.map(move |res| {
-                    Ok::<_, OpenAIError>(sse::Event::Data(sse::Data::new_json(res).unwrap()))
-                }),
-            ))));
+            ];
+            let stream = futures::stream::iter(parts.into_iter());
+            return Ok(Either::Left(sse::Sse::from_stream(
+                stream.map(|r| Ok::<_, ApiError>(sse::Event::Data(r))),
+            )));
         }
     }
     if let Some(client) = &**openai_client {

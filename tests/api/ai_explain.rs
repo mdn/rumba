@@ -105,6 +105,22 @@ async fn test_explain() -> Result<(), Error> {
     assert_eq!(row.thumbs_up, 1);
     assert_eq!(row.thumbs_down, 1);
 
+    let request = test::TestRequest::post()
+        .uri("/api/v1/plus/ai/explain/feedback")
+        .set_json(ExplainFeedback {
+            typ: FeedbackTyp::ThumbsDown,
+            signature: sign(JS_SAMPLE)?,
+            hash: hash_highlighted("foo"),
+        })
+        .to_request();
+    let feedback = test::call_service(&service, request).await;
+    assert!(feedback.status().is_success());
+    let row: AIExplainCacheQuery = ai_explain_cache::table
+        .select(ai_explain_cache::all_columns)
+        .first(&mut conn)?;
+    assert_eq!(row.thumbs_up, 1);
+    assert_eq!(row.thumbs_down, 1);
+
     drop(stubr);
     Ok(())
 }
