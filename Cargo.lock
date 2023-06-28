@@ -505,9 +505,9 @@ dependencies = [
 
 [[package]]
 name = "async-openai"
-version = "0.11.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fb81e98a73c697e72e6bd0b92714b00fc0ffa8871beedeb8c14ab4d1e27ff79"
+checksum = "207db2dadafe69aeab087dd54263e04ec9b01836a2d75335707b408eb7ad3f40"
 dependencies = [
  "backoff",
  "base64 0.21.2",
@@ -3560,8 +3560,10 @@ dependencies = [
  "diesel_migrations",
  "elasticsearch",
  "form_urlencoded",
+ "futures",
  "futures-util",
  "harsh",
+ "hmac",
  "hostname",
  "itertools 0.11.0",
  "jsonwebtoken",
@@ -3580,6 +3582,7 @@ dependencies = [
  "serde_path_to_error",
  "serde_urlencoded",
  "serde_with 3.0.0",
+ "sha2",
  "slog",
  "slog-async",
  "slog-envlogger",
@@ -4577,9 +4580,8 @@ dependencies = [
 
 [[package]]
 name = "tiktoken-rs"
-version = "0.4.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52aacc1cff93ba9d5f198c62c49c77fa0355025c729eed3326beaf7f33bc8614"
+version = "0.4.3"
+source = "git+https://github.com/fiji-flo/tiktoken-rs.git#e57d88cedb0b32a0ef570ee13a372a68f3594bbf"
 dependencies = [
  "anyhow",
  "async-openai",

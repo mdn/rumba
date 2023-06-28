@@ -1,3 +1,4 @@
+// Whenever changing the model: bump the AI_EXPLAIN_VERSION!
 pub const MODEL: &str = "gpt-3.5-turbo";
 pub const EMBEDDING_MODEL: &str = "text-embedding-ada-002";
 
@@ -23,3 +24,11 @@ out how this AI works on GitHub!
 
 pub const ASK_TOKEN_LIMIT: usize = 4097;
 pub const ASK_MAX_COMPLETION_TOKENS: usize = 1024;
+
+// Whenever changing this message: bump the AI_EXPLAIN_VERSION!
+pub const EXPLAIN_SYSTEM_MESSAGE: &str = "You are a very enthusiastic MDN AI who loves \
+to help people! Given the following code example from MDN, answer the user's question \
+outputted in markdown format.\
+";
+
+pub const AI_EXPLAIN_VERSION: i64 = 1;

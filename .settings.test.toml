@@ -51,3 +51,4 @@ flag_repo = "flags"
 [ai]
 limit_reset_duration_in_sec = 5
 api_key = ""
+explain_sign_key = "kmMAMku9PB/fTtaoLg82KjTvShg8CSZCBUNuJhUz5Pg="
