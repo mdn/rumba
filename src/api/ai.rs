@@ -18,9 +18,8 @@ use serde_with::{base64::Base64, serde_as};
 use crate::{
     ai::{
         ask::{prepare_ask_req, RefDoc},
-        explain::{
-            hash_highlighted, prepare_explain_req, verify_explain_request, ExplainRequest,
-        }, constants::AI_EXPLAIN_VERSION,
+        constants::AI_EXPLAIN_VERSION,
+        explain::{hash_highlighted, prepare_explain_req, verify_explain_request, ExplainRequest},
     },
     db::{
         ai::{
