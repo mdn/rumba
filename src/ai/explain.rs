@@ -20,8 +20,6 @@ use crate::{
     settings::SETTINGS,
 };
 
-pub const AI_EXPLAIN_VERSION: i64 = 1;
-
 pub type HmacSha256 = Hmac<Sha256>;
 
 #[serde_as]

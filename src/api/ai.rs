@@ -20,8 +20,7 @@ use crate::{
         ask::{prepare_ask_req, RefDoc},
         explain::{
             hash_highlighted, prepare_explain_req, verify_explain_request, ExplainRequest,
-            AI_EXPLAIN_VERSION,
-        },
+        }, constants::AI_EXPLAIN_VERSION,
     },
     db::{
         ai::{

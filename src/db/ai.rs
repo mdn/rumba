@@ -5,7 +5,7 @@ use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use serde_with::{base64::Base64, serde_as};
 
-use crate::ai::explain::AI_EXPLAIN_VERSION;
+use crate::ai::constants::AI_EXPLAIN_VERSION;
 use crate::db::error::DbError;
 use crate::db::model::{AIExplainCacheInsert, AIExplainCacheQuery, AIHelpLimitInsert, UserQuery};
 use crate::db::schema::ai_explain_cache as explain;
