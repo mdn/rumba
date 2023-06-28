@@ -19,8 +19,8 @@ use crate::{
     ai::{
         ask::{prepare_ask_req, RefDoc},
         explain::{
-            filter_language, hash_highlighted, prepare_explain_req, verify_explain_request,
-            ExplainRequest, AI_EXPLAIN_VERSION,
+            hash_highlighted, prepare_explain_req, verify_explain_request, ExplainRequest,
+            AI_EXPLAIN_VERSION,
         },
     },
     db::{
@@ -197,7 +197,7 @@ pub async fn explain(
     };
     let highlighted_hash = hash_highlighted(to_be_hashed.as_str());
     let hash = highlighted_hash.clone();
-    let language = filter_language(explain_request.language.clone());
+    let language = explain_request.language.clone();
 
     let mut conn = diesel_pool.get()?;
     if let Some(hit) = explain_from_cache(&mut conn, &signature, &highlighted_hash)? {

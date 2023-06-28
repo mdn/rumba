@@ -13,7 +13,7 @@ use rumba::settings::SETTINGS;
 
 const JS_SAMPLE: &str = "const foo = 1;";
 
-fn sign(sample: &str) -> Result<Vec<u8>, Error> {
+fn sign(language: &str, sample: &str) -> Result<Vec<u8>, Error> {
     let mut mac = HmacSha256::new_from_slice(
         &SETTINGS
             .ai
@@ -22,6 +22,7 @@ fn sign(sample: &str) -> Result<Vec<u8>, Error> {
             .expect("missing sign_key"),
     )?;
 
+    mac.update(language.as_bytes());
     mac.update(sample.as_bytes());
 
     Ok(mac.finalize().into_bytes().to_vec())
@@ -30,7 +31,7 @@ fn sign(sample: &str) -> Result<Vec<u8>, Error> {
 fn add_explain_cache() -> Result<(), Error> {
     let insert = AIExplainCacheInsert {
         language: Some("js".to_owned()),
-        signature: sign(JS_SAMPLE)?,
+        signature: sign("js", JS_SAMPLE)?,
         highlighted_hash: hash_highlighted(JS_SAMPLE),
         explanation: Some("Explain this!".to_owned()),
         version: AI_EXPLAIN_VERSION,
@@ -52,9 +53,9 @@ async fn test_explain() -> Result<(), Error> {
     let request = test::TestRequest::post()
         .uri("/api/v1/plus/ai/explain")
         .set_json(ExplainRequest {
-            language: None,
+            language: Some("js".to_owned()),
             sample: JS_SAMPLE.to_owned(),
-            signature: sign(JS_SAMPLE)?,
+            signature: sign("js", JS_SAMPLE)?,
             highlighted: Some(JS_SAMPLE.to_owned()),
         })
         .to_request();
@@ -62,7 +63,7 @@ async fn test_explain() -> Result<(), Error> {
 
     assert!(explain.status().is_success());
 
-    let expected = "data: {\"initial\":{\"cached\":true,\"hash\":\"nW77myAksS9XEAZpmXYHPFbW3WZTQvZLLO1cAwPTKwQ=\"}}\n\ndata: {\"choices\":[{\"delta\":{\"content\":\"Explain \"}}]}\n\ndata: {\"choices\":[{\"delta\":{\"content\":\"this!\"}}]}\n\n";
+    let expected = "data: {\"initial\":{\"cached\":true,\"hash\":\"nW77myAksS9XEAZpmXYHPFbW3WZTQvZLLO1cAwPTKwQ=\"}}\n\ndata: {\"choices\":[{\"delta\":{\"content\":\"Explain this!\"}}]}\n\n";
     assert_eq!(
         expected,
         String::from_utf8_lossy(test::read_body(explain).await.as_ref())
@@ -72,7 +73,7 @@ async fn test_explain() -> Result<(), Error> {
         .uri("/api/v1/plus/ai/explain/feedback")
         .set_json(ExplainFeedback {
             typ: FeedbackTyp::ThumbsUp,
-            signature: sign(JS_SAMPLE)?,
+            signature: sign("js", JS_SAMPLE)?,
             hash: hash_highlighted(JS_SAMPLE),
         })
         .to_request();
@@ -91,7 +92,7 @@ async fn test_explain() -> Result<(), Error> {
         .uri("/api/v1/plus/ai/explain/feedback")
         .set_json(ExplainFeedback {
             typ: FeedbackTyp::ThumbsDown,
-            signature: sign(JS_SAMPLE)?,
+            signature: sign("js", JS_SAMPLE)?,
             hash: hash_highlighted(JS_SAMPLE),
         })
         .to_request();
@@ -109,7 +110,7 @@ async fn test_explain() -> Result<(), Error> {
         .uri("/api/v1/plus/ai/explain/feedback")
         .set_json(ExplainFeedback {
             typ: FeedbackTyp::ThumbsDown,
-            signature: sign(JS_SAMPLE)?,
+            signature: sign("js", JS_SAMPLE)?,
             hash: hash_highlighted("foo"),
         })
         .to_request();
