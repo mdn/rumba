@@ -4470,9 +4470,9 @@ dependencies = [
 
 [[package]]
 name = "stubr-attributes"
-version = "0.6.1"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b28bf0602bf1f41722baa04b9260c4b1f94ea9238cb16dbcd8169926d8a73f02"
+checksum = "826958975a94e4f7e70bf156ef63e6c9d13da8f188a47dfa6eaff90c933c4a14"
 dependencies = [
  "itertools 0.10.5",
  "proc-macro2",
