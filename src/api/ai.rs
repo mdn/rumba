@@ -12,13 +12,13 @@ use async_openai::{
 };
 use futures_util::{stream, StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 use serde_with::{base64::Base64, serde_as};
 
 use crate::{
     ai::{
         ask::{prepare_ask_req, RefDoc},
         constants::AI_EXPLAIN_VERSION,
+        error::AIError,
         explain::{hash_highlighted, prepare_explain_req, verify_explain_request, ExplainRequest},
     },
     db::{
@@ -76,18 +76,29 @@ pub struct AskMeta {
     pub quota: Option<AskLimit>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 pub struct CachedChunkDelta {
     pub content: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 pub struct CachedChunkChoice {
     pub delta: CachedChunkDelta,
+    pub finish_reason: Option<String>,
 }
 #[derive(Serialize)]
 pub struct CachedChunk {
     pub choices: Vec<CachedChunkChoice>,
+    pub id: i64,
+}
+
+impl Default for CachedChunk {
+    fn default() -> Self {
+        Self {
+            choices: Default::default(),
+            id: 1,
+        }
+    }
 }
 
 #[serde_as]
@@ -109,7 +120,9 @@ impl From<&str> for CachedChunk {
                 delta: CachedChunkDelta {
                     content: content.into(),
                 },
+                ..Default::default()
             }],
+            ..Default::default()
         }
     }
 }
@@ -133,7 +146,7 @@ pub async fn ask(
     supabase_pool: Data<Option<SupaPool>>,
     diesel_pool: Data<Pool>,
     messages: Json<ChatRequestMessages>,
-) -> Result<Either<impl Responder, HttpResponse>, ApiError> {
+) -> Result<Either<impl Responder, impl Responder>, ApiError> {
     let mut conn = diesel_pool.get()?;
     let user = get_user(&mut conn, user_id.id().unwrap())?;
     let current = if user.is_subscriber() {
@@ -142,30 +155,62 @@ pub async fn ask(
     } else {
         let current = create_or_increment_limit(&mut conn, &user)?;
         if current.is_none() {
-            return Ok(Either::Right(HttpResponse::Ok().json(json!(null))));
+            return Err(ApiError::PaymentRequired);
         }
         current
     };
     if let (Some(client), Some(pool)) = (&**openai_client, &**supabase_pool) {
-        let ask_req = prepare_ask_req(client, pool, messages.into_inner().messages).await?;
-        // 1. Prepare messages
-        let stream = client.chat().create_stream(ask_req.req).await.unwrap();
+        match prepare_ask_req(client, pool, messages.into_inner().messages).await {
+            Ok(ask_req) => {
+                // 1. Prepare messages
+                let stream = client.chat().create_stream(ask_req.req).await.unwrap();
 
-        let refs = stream::once(async move {
-            Ok(sse::Event::Data(
-                sse::Data::new_json(AskMeta {
-                    typ: MetaType::Metadata,
-                    sources: ask_req.refs,
-                    quota: current.map(AskLimit::from_count),
-                })
-                .map_err(OpenAIError::JSONDeserialize)?,
-            ))
-        });
-        return Ok(Either::Left(sse::Sse::from_stream(refs.chain(
-            stream.map_ok(|res| sse::Event::Data(sse::Data::new_json(res).unwrap())),
-        ))));
+                let refs = stream::once(async move {
+                    Ok(sse::Event::Data(
+                        sse::Data::new_json(AskMeta {
+                            typ: MetaType::Metadata,
+                            sources: ask_req.refs,
+                            quota: current.map(AskLimit::from_count),
+                        })
+                        .map_err(OpenAIError::JSONDeserialize)?,
+                    ))
+                });
+                let res = sse::Sse::from_stream(refs.chain(
+                    stream.map_ok(|res| sse::Event::Data(sse::Data::new_json(res).unwrap())),
+                ));
+                return Ok(Either::Left(res));
+            }
+            Err(AIError::NoSources) => {
+                let parts = vec![
+                    sse::Data::new_json(AskMeta {
+                        typ: MetaType::Metadata,
+                        sources: vec![],
+                        quota: current.map(AskLimit::from_count),
+                    })
+                    .map_err(OpenAIError::JSONDeserialize)?,
+                    sse::Data::new_json(CachedChunk::from(
+                        "Sorry we couldn't find any related articles on MDN.",
+                    ))
+                    .map_err(OpenAIError::JSONDeserialize)?,
+                    sse::Data::new_json(CachedChunk {
+                        choices: vec![CachedChunkChoice {
+                            finish_reason: Some("stop".to_owned()),
+                            ..Default::default()
+                        }],
+                        ..Default::default()
+                    })
+                    .map_err(OpenAIError::JSONDeserialize)?,
+                ];
+                let stream = futures::stream::iter(parts.into_iter());
+                let res =
+                    sse::Sse::from_stream(stream.map(|r| Ok::<_, ApiError>(sse::Event::Data(r))));
+
+                return Ok(Either::Right(res));
+            }
+            Err(e) => return Err(e.into()),
+        }
     }
-    Ok(Either::Right(HttpResponse::NotImplemented().finish()))
+    Err(ApiError::NotImplemented)
 }
 
 pub async fn explain_feedback(

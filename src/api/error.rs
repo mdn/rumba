@@ -109,6 +109,10 @@ pub enum ApiError {
     PlaygroundError(#[from] PlaygroundError),
     #[error("Unknown error: {0}")]
     Generic(String),
+    #[error("Payment required")]
+    PaymentRequired,
+    #[error("Not implemented")]
+    NotImplemented,
 }
 
 impl ApiError {
@@ -137,6 +141,8 @@ impl ApiError {
             Self::LoginRequiredForFeature(_) => "Login Required",
             Self::OpenAIError(_) => "Open AI error",
             Self::AIError(_) => "AI error",
+            Self::PaymentRequired => "Payment required",
+            Self::NotImplemented => "Not implemented",
         }
     }
 }
@@ -162,6 +168,8 @@ impl ResponseError for ApiError {
             Self::ValidationError(_) => StatusCode::BAD_REQUEST,
             Self::MultipleCollectionSubscriptionLimitReached => StatusCode::BAD_REQUEST,
             Self::LoginRequiredForFeature(_) => StatusCode::UNAUTHORIZED,
+            Self::PaymentRequired => StatusCode::PAYMENT_REQUIRED,
+            Self::NotImplemented => StatusCode::NOT_IMPLEMENTED,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

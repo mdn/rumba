@@ -7,6 +7,8 @@ pub enum AIError {
     OpenAIError(#[from] OpenAIError),
     #[error("SqlXError: {0}")]
     SqlXError(#[from] sqlx::Error),
+    #[error("No sources")]
+    NoSources,
     #[error("Flagged content")]
     FlaggedError,
     #[error("No user prompt")]

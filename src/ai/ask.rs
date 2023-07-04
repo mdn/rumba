@@ -82,7 +82,7 @@ pub async fn prepare_ask_req(
         if token_len >= 1500 {
             break;
         }
-        context.push(doc.content);
+        context.push(format!("Excerpt from MDN article \"{}\":\n{}", doc.title, doc.content));
         if !refs.iter().any(|r: &RefDoc| r.slug == doc.slug) {
             refs.push(RefDoc {
                 url: doc.url,
@@ -90,6 +90,9 @@ pub async fn prepare_ask_req(
                 title: doc.title,
             });
         }
+    }
+    if context.is_empty() {
+        return Err(AIError::NoSources)
     }
     let context = context.join("\n---\n");
     let system_message = ChatCompletionRequestMessageArgs::default()
