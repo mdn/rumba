@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/mdn/rumba/compare/v1.4.0...v1.4.1) (2023-07-05)
+
+
+### Bug Fixes
+
+* **play:** don't panic on to short id ([#273](https://github.com/mdn/rumba/issues/273)) ([46015de](https://github.com/mdn/rumba/commit/46015de19d30f87b9e5ea3287f0c474243eaf1c5))
+
 ## [1.4.0](https://github.com/mdn/rumba/compare/v1.3.1...v1.4.0) (2023-06-28)
 
 
