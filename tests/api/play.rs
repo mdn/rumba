@@ -2,6 +2,7 @@ use crate::helpers::app::test_app_with_login;
 use crate::helpers::db::reset;
 use crate::helpers::http_client::TestHttpClient;
 use crate::helpers::{read_json, wait_for_stubr};
+use actix_http::StatusCode;
 use actix_web::test;
 use anyhow::Error;
 use assert_json_diff::assert_json_eq;
@@ -61,5 +62,19 @@ async fn test_playground() -> Result<(), Error> {
     let playground: PlaygroundQuery = schema::playground::table.first(&mut conn)?;
     assert_eq!(playground.user_id, None);
     assert_eq!(playground.deleted_user_id, Some(user_id));
+    Ok(())
+}
+
+#[actix_rt::test]
+#[stubr::mock(port = 4321)]
+async fn test_invalid_id() -> Result<(), Error> {
+    let pool = reset()?;
+    wait_for_stubr().await?;
+    let app = test_app_with_login(&pool).await?;
+    let service = test::init_service(app).await;
+    let mut client = TestHttpClient::new(service).await;
+    let res = client.get("/api/v1/play/sssieddidxsx", None).await;
+    // This used to panic, now it should just 500
+    assert_eq!(res.status(), StatusCode::INTERNAL_SERVER_ERROR);
     Ok(())
 }

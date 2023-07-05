@@ -75,6 +75,9 @@ fn encrypt(gist_id: &str) -> Result<String, PlaygroundError> {
 fn decrypt(encoded: &str) -> Result<String, PlaygroundError> {
     if let Some(cipher) = &*CIPHER {
         let data = STANDARD.decode(encoded)?;
+        if NONCE_LEN > data.len() {
+            return Err(PlaygroundError::NoNonceError);
+        }
         let (enc, nonce) = data.split_at(data.len() - NONCE_LEN);
         let nonce = Nonce::from_slice(nonce);
         let data = cipher.decrypt(nonce, enc)?;
