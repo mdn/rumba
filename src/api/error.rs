@@ -55,6 +55,8 @@ pub enum PlaygroundError {
     CryptError(#[from] aes_gcm::Error),
     #[error("Crypt decoding error: {0}")]
     DecodeError(#[from] base64::DecodeError),
+    #[error("No nonce error")]
+    NoNonceError,
     #[error("Crypt utf error: {0}")]
     UtfDecodeError(#[from] FromUtf8Error),
     #[error("Playground error: no settings")]
