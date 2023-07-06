@@ -82,7 +82,10 @@ pub async fn prepare_ask_req(
         if token_len >= 1500 {
             break;
         }
-        context.push(doc.content);
+        context.push(format!(
+            "Excerpt from MDN article \"{}\":\n{}",
+            doc.title, doc.content
+        ));
         if !refs.iter().any(|r: &RefDoc| r.slug == doc.slug) {
             refs.push(RefDoc {
                 url: doc.url,
