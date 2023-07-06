@@ -64,7 +64,7 @@ async fn test_explain() -> Result<(), Error> {
 
     assert!(explain.status().is_success());
 
-    let expected = "data: {\"initial\":{\"cached\":true,\"hash\":\"nW77myAksS9XEAZpmXYHPFbW3WZTQvZLLO1cAwPTKwQ=\"}}\n\ndata: {\"choices\":[{\"delta\":{\"content\":\"Explain this!\"}}]}\n\n";
+    let expected = "data: {\"initial\":{\"cached\":true,\"hash\":\"nW77myAksS9XEAZpmXYHPFbW3WZTQvZLLO1cAwPTKwQ=\"}}\n\ndata: {\"choices\":[{\"delta\":{\"content\":\"Explain this!\"},\"finish_reason\":null}],\"id\":1}\n\n";
     assert_eq!(
         expected,
         String::from_utf8_lossy(test::read_body(explain).await.as_ref())

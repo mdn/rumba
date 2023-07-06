@@ -57,7 +57,7 @@ async fn test_quota() -> Result<(), Error> {
             }))),
         )
         .await;
-    assert_ok_with_json_containing(ask, json!(null)).await;
+    assert_eq!(ask.status(), StatusCode::PAYMENT_REQUIRED);
     drop(stubr);
     Ok(())
 }
@@ -111,7 +111,7 @@ async fn test_quota_rest() -> Result<(), Error> {
             }))),
         )
         .await;
-    assert_ok_with_json_containing(ask, json!(null)).await;
+    assert_eq!(ask.status(), StatusCode::PAYMENT_REQUIRED);
 
     sleep(Duration::from_secs(
         SETTINGS

@@ -36,7 +36,7 @@ pub async fn prepare_ask_req(
     client: &Client<OpenAIConfig>,
     pool: &SupaPool,
     messages: Vec<ChatCompletionRequestMessage>,
-) -> Result<AskRequest, AIError> {
+) -> Result<Option<AskRequest>, AIError> {
     let open_ai_messages = sanitize_messages(messages);
 
     // TODO: sign messages os we don't check again
@@ -91,6 +91,9 @@ pub async fn prepare_ask_req(
             });
         }
     }
+    if context.is_empty() {
+        return Ok(None);
+    }
     let context = context.join("\n---\n");
     let system_message = ChatCompletionRequestMessageArgs::default()
         .role(Role::System)
@@ -116,5 +119,5 @@ pub async fn prepare_ask_req(
         .temperature(0.0)
         .build()?;
 
-    Ok(AskRequest { req, refs })
+    Ok(Some(AskRequest { req, refs }))
 }
