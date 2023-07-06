@@ -36,9 +36,9 @@ pub fn establish_connection(database_url: &str) -> Pool {
 pub type SupaPool = sqlx::PgPool;
 
 pub async fn establish_supa_connection(database_url: &str) -> SupaPool {
-    let mut options =
-        PgConnectOptions::from_str(database_url).expect("Failed to create supa connect options");
-    options.disable_statement_logging();
+    let options = PgConnectOptions::from_str(database_url)
+        .expect("Failed to create supa connect options")
+        .disable_statement_logging();
     PgPoolOptions::new()
         .max_connections(25)
         .connect_with(options)
