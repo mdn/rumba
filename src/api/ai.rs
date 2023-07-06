@@ -188,7 +188,7 @@ pub async fn ask(
                     })
                     .map_err(OpenAIError::JSONDeserialize)?,
                     sse::Data::new_json(GeneratedChunk::from(
-                        "Sorry, I can’t answer that question.",
+                        "Sorry, I don't know how to help with that.",
                     ))
                     .map_err(OpenAIError::JSONDeserialize)?,
                     sse::Data::new_json(GeneratedChunk {
