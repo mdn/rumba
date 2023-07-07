@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.2](https://github.com/mdn/rumba/compare/v1.4.1...v1.4.2) (2023-07-07)
+
+
+### Enhancements
+
+* **ai-help:** Don't answer if no refs ([#277](https://github.com/mdn/rumba/issues/277)) ([5f9bb64](https://github.com/mdn/rumba/commit/5f9bb647928659a775a8b632f08f04ddbd45a6fe))
+* **release-please:** take enhance/chore commits into consideration ([#282](https://github.com/mdn/rumba/issues/282)) ([f3dd4b1](https://github.com/mdn/rumba/commit/f3dd4b14028695598ed8c4c98d2791994fb1afad))
+
 ## [1.4.1](https://github.com/mdn/rumba/compare/v1.4.0...v1.4.1) (2023-07-05)
 
 
