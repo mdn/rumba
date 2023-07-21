@@ -44,9 +44,10 @@ pub async fn prepare_ask_req(
     let moderations = FuturesUnordered::from_iter(
         context_messages
             .iter()
-            .map(|msg| {
+            .filter_map(|msg| msg.content.clone())
+            .map(|content| {
                 CreateModerationRequestArgs::default()
-                    .input(msg.content.clone())
+                    .input(content)
                     .build()
                     .unwrap()
             })
@@ -66,10 +67,10 @@ pub async fn prepare_ask_req(
     let last_user_message = context_messages
         .iter()
         .last()
+        .and_then(|msg| msg.content.as_ref())
         .ok_or(AIError::NoUserPrompt)?;
 
-    let related_docs =
-        get_related_docs(client, pool, last_user_message.content.replace('\n', " ")).await?;
+    let related_docs = get_related_docs(client, pool, last_user_message.replace('\n', " ")).await?;
 
     let mut context = vec![];
     let mut refs = vec![];
