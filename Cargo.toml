@@ -73,10 +73,10 @@ sentry = "0.31"
 sentry-actix = "0.31"
 
 basket = "0.0.5"
-async-openai = "0.11"
-tiktoken-rs = { version = "0.4", features = ["async-openai"] }
+async-openai = "0.12"
+tiktoken-rs = { version = "0.5", features = ["async-openai"] }
 
-octocrab = "0.27"
+octocrab = "0.28"
 aes-gcm = { version = "0.10", features = ["default", "std"] }
 hmac = "0.12"
 sha2 = "0.10"
@@ -85,6 +85,3 @@ sha2 = "0.10"
 stubr = "0.6"
 stubr-attributes = "0.6"
 assert-json-diff = "2"
-
-[patch.crates-io]
-tiktoken-rs = { git = 'https://github.com/fiji-flo/tiktoken-rs.git' }
