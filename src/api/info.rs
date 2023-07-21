@@ -7,8 +7,9 @@ struct Info {
     version: &'static str,
 }
 
-const INFO: Info = Info { version: env!("CARGO_PKG_VERSION") };
-
+const INFO: Info = Info {
+    version: env!("CARGO_PKG_VERSION"),
+};
 
 pub async fn information(_: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().json(INFO)
