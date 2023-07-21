@@ -1,4 +1,5 @@
 use crate::api::ai::{ask, explain, explain_feedback, quota};
+use crate::api::info::information;
 use crate::api::newsletter::{
     is_subscribed, subscribe_anonymous_handler, subscribe_handler, unsubscribe_handler,
 };
@@ -16,6 +17,7 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
         // limit request payload size to 1MB
         .limit(1_048_576);
     web::scope("/api/v1")
+        .service(web::resource("/info").route(web::get().to(information)))
         .service(
             web::scope("/plus")
                 .service(

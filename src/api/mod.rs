@@ -7,6 +7,7 @@ pub mod elastic;
 pub mod error;
 pub mod fxa_webhook;
 pub mod healthz;
+pub mod info;
 pub mod newsletter;
 pub mod ping;
 pub mod play;
