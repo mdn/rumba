@@ -1,4 +1,3 @@
-use actix_web::HttpRequest;
 use actix_web::HttpResponse;
 use serde::Serialize;
 
@@ -11,6 +10,6 @@ const INFO: Info = Info {
     version: env!("CARGO_PKG_VERSION"),
 };
 
-pub async fn information(_: HttpRequest) -> HttpResponse {
+pub async fn information() -> HttpResponse {
     HttpResponse::Ok().json(INFO)
 }
