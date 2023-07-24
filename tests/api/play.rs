@@ -74,7 +74,7 @@ async fn test_invalid_id() -> Result<(), Error> {
     let service = test::init_service(app).await;
     let mut client = TestHttpClient::new(service).await;
     let res = client.get("/api/v1/play/sssieddidxsx", None).await;
-    // This used to panic, now it should just 500
-    assert_eq!(res.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    // This used to panic, now it should just 400
+    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
     Ok(())
 }

@@ -2,6 +2,7 @@ use std::string::FromUtf8Error;
 
 use crate::ai::error::AIError;
 use crate::db::error::DbError;
+use crate::error::ErrorResponse;
 
 use actix_http::header::HeaderValue;
 use actix_web::http::header::HeaderName;
@@ -10,7 +11,6 @@ use actix_web::middleware::{ErrorHandlerResponse, ErrorHandlers};
 use actix_web::{HttpResponse, ResponseError};
 use async_openai::error::OpenAIError;
 use basket::BasketError;
-use serde::Serialize;
 use serde_json::json;
 use thiserror::Error;
 use uuid::Uuid;
@@ -61,6 +61,28 @@ pub enum PlaygroundError {
     UtfDecodeError(#[from] FromUtf8Error),
     #[error("Playground error: no settings")]
     SettingsError,
+}
+
+impl ResponseError for PlaygroundError {
+    fn status_code(&self) -> StatusCode {
+        match &self {
+            PlaygroundError::CryptError(_)
+            | PlaygroundError::DecodeError(_)
+            | PlaygroundError::NoNonceError
+            | PlaygroundError::UtfDecodeError(_) => StatusCode::BAD_REQUEST,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+
+    fn error_response(&self) -> HttpResponse<actix_http::body::BoxBody> {
+        let status_code = self.status_code();
+        let mut builder = HttpResponse::build(status_code);
+        builder.json(ErrorResponse {
+            code: status_code.as_u16(),
+            message: status_code.canonical_reason().unwrap_or("Unknown"),
+            error: "Playground Error",
+        })
+    }
 }
 
 #[derive(Error, Debug)]
@@ -149,13 +171,6 @@ impl ApiError {
     }
 }
 
-#[derive(Serialize)]
-struct ErrorResponse<'a> {
-    code: u16,
-    error: &'a str,
-    message: &'a str,
-}
-
 impl ResponseError for ApiError {
     fn status_code(&self) -> StatusCode {
         match *self {
@@ -172,6 +187,8 @@ impl ResponseError for ApiError {
             Self::LoginRequiredForFeature(_) => StatusCode::UNAUTHORIZED,
             Self::PaymentRequired => StatusCode::PAYMENT_REQUIRED,
             Self::NotImplemented => StatusCode::NOT_IMPLEMENTED,
+            Self::PlaygroundError(ref e) => e.status_code(),
+            Self::AIError(_) => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -210,6 +227,7 @@ impl ResponseError for ApiError {
                 message: format!("Please login to use feature: {0}", feature).as_str(),
                 error: self.name(),
             }),
+            ApiError::PlaygroundError(error) => error.error_response(),
             _ if status_code == StatusCode::INTERNAL_SERVER_ERROR => builder.json(ErrorResponse {
                 code: status_code.as_u16(),
                 message: "internal server error",
