@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/mdn/rumba/compare/v1.4.2...v1.5.0) (2023-07-24)
+
+
+### Features
+
+* **info:** add an info endpoint ([#301](https://github.com/mdn/rumba/issues/301)) ([9614323](https://github.com/mdn/rumba/commit/9614323ad0087898775400f5bbb081436b8614d9))
+
 ## [1.4.2](https://github.com/mdn/rumba/compare/v1.4.1...v1.4.2) (2023-07-07)
 
 
