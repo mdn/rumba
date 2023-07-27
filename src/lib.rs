@@ -12,6 +12,7 @@ use actix_web::{
 pub mod ai;
 pub mod api;
 pub mod db;
+pub mod error;
 pub mod fxa;
 mod helpers;
 pub mod ids;
