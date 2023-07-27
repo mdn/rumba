@@ -12,12 +12,12 @@ use serde::Serialize;
 
 use crate::{
     ai::{
-        constants::{ASK_SYSTEM_MESSAGE, ASK_USER_MESSAGE, MODEL},
+        constants:: AskConfig,
         embeddings::get_related_docs,
         error::AIError,
         helpers::{cap_messages, into_user_messages, sanitize_messages},
     },
-    db::SupaPool,
+    db::SupaPool, experiments::Experiments,
 };
 
 #[derive(Eq, Hash, PartialEq, Serialize)]
@@ -36,7 +36,9 @@ pub async fn prepare_ask_req(
     client: &Client<OpenAIConfig>,
     pool: &SupaPool,
     messages: Vec<ChatCompletionRequestMessage>,
+    experiments: Option<Experiments>,
 ) -> Result<Option<AskRequest>, AIError> {
+    let config = AskConfig::from(experiments.unwrap_or_default().config);
     let open_ai_messages = sanitize_messages(messages);
 
     // TODO: sign messages os we don't check again
@@ -70,7 +72,7 @@ pub async fn prepare_ask_req(
         .and_then(|msg| msg.content.as_ref())
         .ok_or(AIError::NoUserPrompt)?;
 
-    let related_docs = get_related_docs(client, pool, last_user_message.replace('\n', " ")).await?;
+    let related_docs = get_related_docs(client, pool, last_user_message.replace('\n', " "), &config).await?;
 
     let mut context = vec![];
     let mut refs = vec![];
@@ -98,7 +100,7 @@ pub async fn prepare_ask_req(
     let context = context.join("\n---\n");
     let system_message = ChatCompletionRequestMessageArgs::default()
         .role(Role::System)
-        .content(ASK_SYSTEM_MESSAGE)
+        .content(config.system_prompt)
         .build()
         .unwrap();
     let context_message = ChatCompletionRequestMessageArgs::default()
@@ -108,14 +110,14 @@ pub async fn prepare_ask_req(
         .unwrap();
     let user_message = ChatCompletionRequestMessageArgs::default()
         .role(Role::User)
-        .content(ASK_USER_MESSAGE)
+        .content(config.user_prompt)
         .build()
         .unwrap();
     let init_messages = vec![system_message, context_message, user_message];
-    let messages = cap_messages(init_messages, context_messages)?;
+    let messages = cap_messages(&config, init_messages, context_messages)?;
 
     let req = CreateChatCompletionRequestArgs::default()
-        .model(MODEL)
+        .model(config.model)
         .messages(messages)
         .temperature(0.0)
         .build()?;

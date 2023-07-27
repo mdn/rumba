@@ -26,7 +26,7 @@ use crate::{
             set_explain_feedback, ExplainFeedback, AI_HELP_LIMIT,
         },
         model::AIExplainCacheInsert,
-        SupaPool,
+        SupaPool, experiments::get_experiments,
     },
 };
 use crate::{
@@ -148,6 +148,7 @@ pub async fn ask(
 ) -> Result<Either<impl Responder, impl Responder>, ApiError> {
     let mut conn = diesel_pool.get()?;
     let user = get_user(&mut conn, user_id.id().unwrap())?;
+    let experiments = get_experiments(&mut conn, &user)?;
     let current = if user.is_subscriber() {
         create_or_increment_total(&mut conn, &user)?;
         None
@@ -159,7 +160,7 @@ pub async fn ask(
         current
     };
     if let (Some(client), Some(pool)) = (&**openai_client, &**supabase_pool) {
-        match prepare_ask_req(client, pool, messages.into_inner().messages).await? {
+        match prepare_ask_req(client, pool, messages.into_inner().messages, experiments).await? {
             Some(ask_req) => {
                 // 1. Prepare messages
                 let stream = client.chat().create_stream(ask_req.req).await.unwrap();

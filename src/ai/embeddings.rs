@@ -1,13 +1,46 @@
 use async_openai::{config::OpenAIConfig, types::CreateEmbeddingRequestArgs, Client};
 
 use crate::{
-    ai::{constants::EMBEDDING_MODEL, error::AIError},
+    ai::{
+        constants::{AskConfig, EMBEDDING_MODEL},
+        error::AIError,
+    },
     db::SupaPool,
 };
 
-const EMB_DISTANCE: f64 = 0.78;
-const EMB_SEC_MIN_LENGTH: i64 = 50;
-const EMB_DOC_LIMIT: i64 = 5;
+const DEFAULT_EMB_DISTANCE: f64 = 0.78;
+const DEFAULT_EMB_SEC_MIN_LENGTH: i64 = 50;
+const DEFAULT_EMB_DOC_LIMIT: i64 = 5;
+
+const DEFAULT_QUERY: &str = "select
+mdn_doc.url,
+mdn_doc.slug,
+mdn_doc.title,
+mdn_doc_section.heading,
+mdn_doc_section.content,
+(mdn_doc_section.embedding <#> $1) * -1 as similarity
+from mdn_doc_section left join mdn_doc on mdn_doc.id = mdn_doc_section.doc_id
+where length(mdn_doc_section.content) >= $4
+and (mdn_doc_section.embedding <#> $1) * -1 > $2
+order by mdn_doc_section.embedding <#> $1
+limit $3;";
+
+const FULL_EMB_DISTANCE: f64 = 0.78;
+const FULL_EMB_SEC_MIN_LENGTH: i64 = 50;
+const FULL_EMB_DOC_LIMIT: i64 = 5;
+
+const FULL_DOCS_QUERY: &str = "select
+mdn_doc.url,
+mdn_doc.slug,
+mdn_doc.title,
+mdn_doc_section.heading,
+mdn_doc_section.content,
+(mdn_doc_section.embedding <#> $1) * -1 as similarity
+from mdn_doc_section left join mdn_doc on mdn_doc.id = mdn_doc_section.doc_id
+where length(mdn_doc_section.content) >= $4
+and (mdn_doc_section.embedding <#> $1) * -1 > $2
+order by mdn_doc_section.embedding <#> $1
+limit $3;";
 
 #[derive(sqlx::FromRow)]
 pub struct RelatedDoc {
@@ -23,6 +56,7 @@ pub async fn get_related_docs(
     client: &Client<OpenAIConfig>,
     pool: &SupaPool,
     prompt: String,
+    config: &AskConfig,
 ) -> Result<Vec<RelatedDoc>, AIError> {
     let embedding_req = CreateEmbeddingRequestArgs::default()
         .model(EMBEDDING_MODEL)
@@ -32,24 +66,27 @@ pub async fn get_related_docs(
 
     let embedding =
         pgvector::Vector::from(embedding_res.data.into_iter().next().unwrap().embedding);
-    let docs: Vec<RelatedDoc> = sqlx::query_as(
-        "select
-mdn_doc.url,
-mdn_doc.slug,
-mdn_doc.title,
-mdn_doc_section.heading,
-mdn_doc_section.content,
-(mdn_doc_section.embedding <#> $1) * -1 as similarity
-from mdn_doc_section left join mdn_doc on mdn_doc.id = mdn_doc_section.doc_id
-where length(mdn_doc_section.content) >= $4
-and (mdn_doc_section.embedding <#> $1) * -1 > $2
-order by mdn_doc_section.embedding <#> $1
-limit $3;",
-    )
+    let docs: Vec<RelatedDoc> = sqlx::query_as(if config.full_doc {
+        FULL_DOCS_QUERY
+    } else {
+        DEFAULT_QUERY
+    })
     .bind(embedding)
-    .bind(EMB_DISTANCE)
-    .bind(EMB_DOC_LIMIT)
-    .bind(EMB_SEC_MIN_LENGTH)
+    .bind(if config.full_doc {
+        FULL_EMB_DISTANCE
+    } else {
+        DEFAULT_EMB_DISTANCE
+    })
+    .bind(if config.full_doc {
+        FULL_EMB_DOC_LIMIT
+    } else {
+        DEFAULT_EMB_DOC_LIMIT
+    })
+    .bind(if config.full_doc {
+        FULL_EMB_SEC_MIN_LENGTH
+    } else {
+        DEFAULT_EMB_SEC_MIN_LENGTH
+    })
     .fetch_all(pool)
     .await?;
     Ok(docs)

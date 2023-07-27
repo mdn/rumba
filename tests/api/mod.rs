@@ -1,6 +1,7 @@
 mod ai_explain;
 mod ai_help;
 mod auth;
+mod experiments;
 mod fxa_webhooks;
 pub mod healthz;
 mod multiple_collections;

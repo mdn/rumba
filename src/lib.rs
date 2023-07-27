@@ -13,6 +13,7 @@ pub mod ai;
 pub mod api;
 pub mod db;
 pub mod error;
+pub mod experiments;
 pub mod fxa;
 mod helpers;
 pub mod ids;

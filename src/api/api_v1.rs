@@ -1,4 +1,5 @@
 use crate::api::ai::{ask, explain, explain_feedback, quota};
+use crate::api::experiments::{get_experiments, update_experiments};
 use crate::api::info::information;
 use crate::api::newsletter::{
     is_subscribed, subscribe_anonymous_handler, subscribe_handler, unsubscribe_handler,
@@ -36,7 +37,15 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
                                 ),
                         ),
                 )
-                .service(web::resource("/settings/").route(web::post().to(update_settings)))
+                .service(
+                    web::scope("/settings")
+                        .service(web::resource("/").route(web::post().to(update_settings)))
+                        .service(
+                            web::resource("/experiments/")
+                                .route(web::post().to(update_experiments))
+                                .route(web::get().to(get_experiments)),
+                        ),
+                )
                 .service(
                     web::resource("/newsletter/")
                         .route(web::get().to(is_subscribed))

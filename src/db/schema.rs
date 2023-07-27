@@ -172,6 +172,18 @@ diesel::table! {
     use diesel::sql_types::*;
     use crate::db::types::*;
 
+    experiments (id) {
+        id -> Int8,
+        user_id -> Int8,
+        active -> Bool,
+        config -> Jsonb,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+
     multiple_collections (id) {
         id -> Int8,
         created_at -> Timestamp,
@@ -270,6 +282,7 @@ diesel::joinable!(browser_releases -> browsers (browser));
 diesel::joinable!(collection_items -> documents (document_id));
 diesel::joinable!(collection_items -> multiple_collections (multiple_collection_id));
 diesel::joinable!(collection_items -> users (user_id));
+diesel::joinable!(experiments -> users (user_id));
 diesel::joinable!(multiple_collections -> users (user_id));
 diesel::joinable!(playground -> users (user_id));
 diesel::joinable!(settings -> users (user_id));
@@ -284,6 +297,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     browsers,
     collection_items,
     documents,
+    experiments,
     multiple_collections,
     playground,
     raw_webhook_events_tokens,

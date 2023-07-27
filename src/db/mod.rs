@@ -1,6 +1,7 @@
 pub mod ai;
 pub mod documents;
 pub mod error;
+pub mod experiments;
 pub mod fxa_webhook;
 #[allow(clippy::extra_unused_lifetimes)]
 pub mod model;
