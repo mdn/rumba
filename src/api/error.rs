@@ -70,7 +70,9 @@ impl ResponseError for PlaygroundError {
             | PlaygroundError::DecodeError(_)
             | PlaygroundError::NoNonceError
             | PlaygroundError::UtfDecodeError(_) => StatusCode::BAD_REQUEST,
-            _ => StatusCode::INTERNAL_SERVER_ERROR,
+            PlaygroundError::OctocrabError(_) | PlaygroundError::SettingsError => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
         }
     }
 
@@ -188,7 +190,7 @@ impl ResponseError for ApiError {
             Self::PaymentRequired => StatusCode::PAYMENT_REQUIRED,
             Self::NotImplemented => StatusCode::NOT_IMPLEMENTED,
             Self::PlaygroundError(ref e) => e.status_code(),
-            Self::AIError(_) => StatusCode::BAD_REQUEST,
+            Self::AIError(ref e) => e.status_code(),
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -228,6 +230,7 @@ impl ResponseError for ApiError {
                 error: self.name(),
             }),
             ApiError::PlaygroundError(error) => error.error_response(),
+            ApiError::AIError(error) => error.error_response(),
             _ if status_code == StatusCode::INTERNAL_SERVER_ERROR => builder.json(ErrorResponse {
                 code: status_code.as_u16(),
                 message: "internal server error",
