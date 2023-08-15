@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/mdn/rumba/compare/v1.5.0...v1.5.1) (2023-08-15)
+
+
+### Bug Fixes
+
+* **errors:** Downgrade AI/Playground erors to 400 ([#304](https://github.com/mdn/rumba/issues/304)) ([855094f](https://github.com/mdn/rumba/commit/855094fde7d2dd2793d1f6060aad89dafc83e793))
+
 ## [1.5.0](https://github.com/mdn/rumba/compare/v1.4.2...v1.5.0) (2023-07-24)
 
 

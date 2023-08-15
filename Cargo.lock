@@ -3565,7 +3565,7 @@ dependencies = [
 
 [[package]]
 name = "rumba"
-version = "1.5.0"
+version = "1.5.1"
 dependencies = [
  "actix-http",
  "actix-identity",
