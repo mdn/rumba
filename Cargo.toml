@@ -10,6 +10,10 @@ path = "src/lib.rs"
 name = "rumba"
 path = "src/main.rs"
 
+[workspace]
+members = ["ai-test"]
+resolver = "2"
+
 [dependencies]
 thiserror = "1"
 anyhow = "1"

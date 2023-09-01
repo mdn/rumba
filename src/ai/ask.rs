@@ -12,12 +12,13 @@ use serde::Serialize;
 
 use crate::{
     ai::{
-        constants:: AskConfig,
-        embeddings::get_related_docs,
+        constants::AskConfig,
+        embeddings::{get_related_docs, get_related_full_docs},
         error::AIError,
         helpers::{cap_messages, into_user_messages, sanitize_messages},
     },
-    db::SupaPool, experiments::Experiments,
+    db::SupaPool,
+    experiments::Experiments,
 };
 
 #[derive(Eq, Hash, PartialEq, Serialize)]
@@ -72,7 +73,11 @@ pub async fn prepare_ask_req(
         .and_then(|msg| msg.content.as_ref())
         .ok_or(AIError::NoUserPrompt)?;
 
-    let related_docs = get_related_docs(client, pool, last_user_message.replace('\n', " "), &config).await?;
+    let related_docs = if config.full_doc {
+        get_related_full_docs(client, pool, last_user_message.replace('\n', " ")).await?
+    } else {
+        get_related_docs(client, pool, last_user_message.replace('\n', " ")).await?
+    };
 
     let mut context = vec![];
     let mut refs = vec![];
@@ -82,7 +87,7 @@ pub async fn prepare_ask_req(
         let bpe = tiktoken_rs::r50k_base().unwrap();
         let tokens = bpe.encode_with_special_tokens(&doc.content).len();
         token_len += tokens;
-        if token_len >= 1500 {
+        if token_len >= config.context_limit {
             break;
         }
         context.push(doc.content);

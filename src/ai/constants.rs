@@ -8,6 +8,7 @@ pub struct AskConfig {
     pub system_prompt: &'static str,
     pub user_prompt: &'static str,
     pub token_limit: usize,
+    pub context_limit: usize,
     pub max_completion_tokens: usize,
 }
 
@@ -17,6 +18,7 @@ const ASK_DEFAULT: AskConfig = AskConfig {
     system_prompt: include_str!("prompts/default/system.md"),
     user_prompt: include_str!("prompts/default/user.md"),
     token_limit: 4_097,
+    context_limit: 1_500,
     max_completion_tokens: 1_024,
 };
 
@@ -26,6 +28,7 @@ const ASK_NEW_PROMPT: AskConfig = AskConfig {
     system_prompt: include_str!("prompts/new_prompt/system.md"),
     user_prompt: include_str!("prompts/new_prompt/user.md"),
     token_limit: 4_097,
+    context_limit: 1_500,
     max_completion_tokens: 1_024,
 };
 
@@ -35,6 +38,7 @@ const ASK_FULL_DOC: AskConfig = AskConfig {
     system_prompt: include_str!("prompts/default/system.md"),
     user_prompt: include_str!("prompts/default/user.md"),
     token_limit: 16_384,
+    context_limit: 12_000,
     max_completion_tokens: 2_048,
 };
 
@@ -44,6 +48,7 @@ const ASK_FULL_DOC_NEW_PROMPT: AskConfig = AskConfig {
     system_prompt: include_str!("prompts/new_prompt/system.md"),
     user_prompt: include_str!("prompts/new_prompt/user.md"),
     token_limit: 16_384,
+    context_limit: 12_000,
     max_completion_tokens: 2_048,
 };
 
@@ -53,6 +58,7 @@ const ASK_GPT4: AskConfig = AskConfig {
     system_prompt: include_str!("prompts/default/system.md"),
     user_prompt: include_str!("prompts/default/user.md"),
     token_limit: 8_192,
+    context_limit: 4_500,
     max_completion_tokens: 1_536,
 };
 
@@ -62,6 +68,7 @@ const ASK_GTP4_NEW_PROMPT: AskConfig = AskConfig {
     system_prompt: include_str!("prompts/new_prompt/system.md"),
     user_prompt: include_str!("prompts/new_prompt/user.md"),
     token_limit: 8_192,
+    context_limit: 4_500,
     max_completion_tokens: 1_536,
 };
 
@@ -71,6 +78,7 @@ const ASK_GPT4_FULL_DOC: AskConfig = AskConfig {
     system_prompt: include_str!("prompts/default/system.md"),
     user_prompt: include_str!("prompts/default/user.md"),
     token_limit: 32_768,
+    context_limit: 12_000,
     max_completion_tokens: 4_096,
 };
 
@@ -80,6 +88,7 @@ const ASK_GPT4_FULL_DOC_NEW_PROMPT: AskConfig = AskConfig {
     system_prompt: include_str!("prompts/new_prompt/system.md"),
     user_prompt: include_str!("prompts/new_prompt/user.md"),
     token_limit: 32_768,
+    context_limit: 12_000,
     max_completion_tokens: 4_096,
 };
 
