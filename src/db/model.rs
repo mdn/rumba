@@ -20,6 +20,8 @@ pub struct User {
     pub subscription_type: Subscription,
     pub enforce_plus: Option<Subscription>,
     pub is_admin: Option<bool>,
+    pub is_mdn_team: Option<bool>,
+    pub is_fox_food: Option<bool>,
 }
 
 impl User {
@@ -43,6 +45,8 @@ pub struct UserQuery {
     subscription_type: Option<Subscription>,
     pub enforce_plus: Option<Subscription>,
     pub is_admin: bool,
+    pub is_mdn_team: bool,
+    pub is_fox_food: bool,
 }
 
 impl UserQuery {
