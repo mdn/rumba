@@ -88,6 +88,5 @@ pub async fn get_related_docs(
         .bind(DEFAULT_EMB_SEC_MIN_LENGTH)
         .fetch_all(pool)
         .await?;
-    println!("{:?}", docs);
     Ok(docs)
 }

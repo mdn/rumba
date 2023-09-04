@@ -7,8 +7,8 @@ use serde_with::{base64::Base64, serde_as};
 
 use crate::ai::constants::AI_EXPLAIN_VERSION;
 use crate::db::error::DbError;
-use crate::db::model::{AIExplainCacheInsert, AIExplainCacheQuery, AIHelpLimitInsert, UserQuery};
-use crate::db::schema::ai_explain_cache as explain;
+use crate::db::model::{AIExplainCacheInsert, AIExplainCacheQuery, AIHelpLimitInsert, UserQuery, AIHelpLogsInsert};
+use crate::db::schema::{ai_explain_cache as explain, ai_help_logs};
 use crate::db::schema::ai_help_limits as limits;
 use crate::settings::SETTINGS;
 
@@ -185,5 +185,13 @@ pub fn set_explain_feedback(
             .execute(conn)
             .optional()?,
     };
+    Ok(())
+}
+
+pub fn add_help_log(conn: &mut PgConnection, cache: &AIHelpLogsInsert) -> Result<(), DbError> {
+    insert_into(ai_help_logs::table)
+        .values(cache)
+        .on_conflict_do_nothing()
+        .execute(conn)?;
     Ok(())
 }

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::db::model::ExperimentsQuery;
 
-#[derive(FromSqlRow, AsExpression, Debug, Clone, Serialize, Default, Deserialize)]
+#[derive(FromSqlRow, AsExpression, Debug, Copy, Clone, Serialize, Default, Deserialize)]
 #[diesel(sql_type = Jsonb)]
 #[serde(default)]
 pub struct ExperimentsConfig {
@@ -30,7 +30,17 @@ pub struct ExperimentsConfig {
     pub new_prompt: Option<bool>,
 }
 
-#[derive( Debug, Clone, Serialize, Default, Deserialize)]
+impl From<usize> for ExperimentsConfig {
+    fn from(value: usize) -> Self {
+        ExperimentsConfig {
+            gpt4: Some(value & 0x001 != 0),
+            full_doc: Some(value & 0x010 != 0),
+            new_prompt: Some(value & 0x100 != 0),
+        }
+    }
+}
+
+#[derive( Debug, Clone, Copy, Serialize, Default, Deserialize)]
 #[serde(default)]
 pub struct Experiments {
     pub active: bool,

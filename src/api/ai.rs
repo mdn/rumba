@@ -12,22 +12,26 @@ use async_openai::{
 };
 use futures_util::{stream, StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
+use serde_json::Value::Null;
 use serde_with::{base64::Base64, serde_as};
+use uuid::Uuid;
 
 use crate::{
     ai::{
         ask::{prepare_ask_req, RefDoc},
-        constants::AI_EXPLAIN_VERSION,
+        constants::{AskConfig, AI_EXPLAIN_VERSION},
         explain::{hash_highlighted, prepare_explain_req, verify_explain_request, ExplainRequest},
     },
     db::{
         ai::{
-            add_explain_answer, create_or_increment_total, explain_from_cache, get_count,
-            set_explain_feedback, ExplainFeedback, AI_HELP_LIMIT,
+            add_explain_answer, add_help_log, create_or_increment_total, explain_from_cache,
+            get_count, set_explain_feedback, ExplainFeedback, AI_HELP_LIMIT,
         },
-        model::AIExplainCacheInsert,
-        SupaPool, experiments::get_experiments,
+        experiments::get_experiments,
+        model::{AIExplainCacheInsert, AIHelpLogsInsert},
+        SupaPool,
     },
+    experiments::Experiments,
 };
 use crate::{
     api::error::ApiError,
@@ -36,16 +40,17 @@ use crate::{
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct ChatRequestMessages {
+    chat_id: Option<Uuid>,
     messages: Vec<ChatCompletionRequestMessage>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum MetaType {
     Metadata,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug, Clone, Copy)]
 pub struct AskLimit {
     pub count: i64,
     pub remaining: i64,
@@ -67,10 +72,11 @@ pub struct AskQuota {
     pub quota: Option<AskLimit>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug, Clone)]
 pub struct AskMeta {
     #[serde(rename = "type")]
     pub typ: MetaType,
+    pub chat_id: Uuid,
     pub sources: Vec<RefDoc>,
     pub quota: Option<AskLimit>,
 }
@@ -126,6 +132,12 @@ impl From<&str> for GeneratedChunk {
     }
 }
 
+#[derive(Serialize)]
+pub struct AskLogResponse {
+    meta: AskMeta,
+    answer: String,
+}
+
 pub async fn quota(user_id: Identity, diesel_pool: Data<Pool>) -> Result<HttpResponse, ApiError> {
     let mut conn = diesel_pool.get()?;
     let user = get_user(&mut conn, user_id.id().unwrap())?;
@@ -160,30 +172,77 @@ pub async fn ask(
         current
     };
     if let (Some(client), Some(pool)) = (&**openai_client, &**supabase_pool) {
-        match prepare_ask_req(client, pool, messages.into_inner().messages, experiments).await? {
+        let ChatRequestMessages { chat_id, messages } = messages.into_inner();
+        match prepare_ask_req(client, pool, messages, experiments).await? {
             Some(ask_req) => {
-                // 1. Prepare messages
+                let chat_id = chat_id.unwrap_or_else(Uuid::new_v4);
+                let req = ask_req.req.clone();
                 let stream = client.chat().create_stream(ask_req.req).await.unwrap();
+                let ask_meta = AskMeta {
+                    typ: MetaType::Metadata,
+                    chat_id,
+                    sources: ask_req.refs,
+                    quota: current.map(AskLimit::from_count),
+                };
+                let ask_meta_log = ask_meta.clone();
+                let tx = if let Some(Experiments {
+                    active: true,
+                    config,
+                }) = experiments
+                {
+                    let ask_config = AskConfig::from(config);
 
+                    let (tx, mut rx) =
+                        mpsc::unbounded_channel::<CreateChatCompletionStreamResponse>();
+                    actix_web::rt::spawn(async move {
+                        let mut answer = vec![];
+                        while let Some(mut chunk) = rx.recv().await {
+                            if let Some(part) = chunk.choices.pop().and_then(|c| c.delta.content) {
+                                answer.push(part);
+                            }
+                        }
+                        let insert = AIHelpLogsInsert {
+                            user_id: user.id,
+                            variant: ask_config.name.to_owned(),
+                            chat_id,
+                            message_id: ask_req.message_id,
+                            created_at: None,
+                            request: serde_json::to_value(req).unwrap_or(Null),
+                            response: serde_json::to_value(AskLogResponse {
+                                meta: ask_meta_log,
+                                answer: answer.join(""),
+                            })
+                            .unwrap_or(Null),
+                        };
+                        if let Err(err) = add_help_log(&mut conn, &insert) {
+                            error!("AI Help log: {err}");
+                        }
+                    });
+                    Some(tx)
+                } else {
+                    None
+                };
                 let refs = stream::once(async move {
                     Ok(sse::Event::Data(
-                        sse::Data::new_json(AskMeta {
-                            typ: MetaType::Metadata,
-                            sources: ask_req.refs,
-                            quota: current.map(AskLimit::from_count),
-                        })
-                        .map_err(OpenAIError::JSONDeserialize)?,
+                        sse::Data::new_json(ask_meta).map_err(OpenAIError::JSONDeserialize)?,
                     ))
                 });
-                let res = sse::Sse::from_stream(refs.chain(
-                    stream.map_ok(|res| sse::Event::Data(sse::Data::new_json(res).unwrap())),
-                ));
-                return Ok(Either::Left(res));
+                return Ok(Either::Left(sse::Sse::from_stream(refs.chain(
+                    stream.map_ok(move |res| {
+                        if let Some(ref tx) = tx {
+                            if let Err(e) = tx.send(res.clone()) {
+                                error!("{e}");
+                            }
+                        }
+                        sse::Event::Data(sse::Data::new_json(res).unwrap())
+                    }),
+                ))));
             }
             None => {
                 let parts = vec![
                     sse::Data::new_json(AskMeta {
                         typ: MetaType::Metadata,
+                        chat_id: chat_id.unwrap_or_else(Uuid::new_v4),
                         sources: vec![],
                         quota: current.map(AskLimit::from_count),
                     })

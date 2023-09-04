@@ -1,0 +1,64 @@
+- 
+  - Why is processing a sorted array faster than processing an unsorted array?
+- 
+  - How can I remove a specific item from an array in JavaScript?
+  - you have an array with 10 elements, remove the 5th element
+- 
+  - Which JSON content type do I use?
+- 
+  - Can comments be used in JSON?
+- 
+  - Why does HTML think "chucknorris" is a color?
+- 
+  - What does "use strict" do in JavaScript, and what is the reasoning behind it?
+- 
+  - How do I redirect to another webpage?
+  - given you have a Cat page, and you no longer like Cats, so you want users going to the Cats page being directed to the Dogs page
+- 
+  - How do JavaScript closures work?
+- 
+  - var functionName = function() {} vs function functionName() {}
+- 
+  - How to check whether a string contains a substring in JavaScript?
+- 
+  - How do I remove a property from a JavaScript object?
+  - you have a JavaScript object { a, b, c } and you want to get { a, c }, how do you get there?
+- 
+  - How do I return the response from an asynchronous call?
+- 
+  - How do I include a JavaScript file in another JavaScript file?
+- 
+  - What is the difference between "let" and "var"?
+- 
+  - How to disable text selection highlighting
+- 
+  - Which equals operator (== vs ===) should be used in JavaScript comparisons?
+- 
+  - What is the maximum length of a URL in different browsers?
+- 
+  - Loop (for each) over an array in JavaScript
+- 
+  - How can I validate an email address in JavaScript?
+  - input field with email address, how to make it green if it’s a valid email address
+- 
+  - How do I replace all occurrences of a string in JavaScript?
+- 
+  - Regular expression to match a line that doesn't contain a word
+- 
+  - How do I create a GUID / UUID?
+- 
+  - What is the most efficient way to deep clone an object in JavaScript?
+- 
+  - How do I check whether a checkbox is checked?
+- 
+  - How do I make the first letter of a string uppercase in JavaScript?
+- 
+  - How can I horizontally center an element?
+- 
+  - What is the difference between a URI, a URL, and a URN?
+- 
+  - How do I check if an array includes a value in JavaScript?
+- 
+  - How do I get a timestamp in JavaScript?
+- 
+  - How do I copy to the clipboard in JavaScript?

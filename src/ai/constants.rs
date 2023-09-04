@@ -1,8 +1,16 @@
-use crate::experiments::ExperimentsConfig;
+use itertools::Itertools;
+
+use crate::{ai::embeddings::RelatedDoc, experiments::ExperimentsConfig};
+
+fn default_make_context(related_docs: Vec<RelatedDoc>) -> String {
+    let context = related_docs.into_iter().map(|d| d.content).join("\n---\n");
+    format!("Here is the MDN content:\n{context}")
+}
 
 // Whenever changing the model: bump the AI_EXPLAIN_VERSION!
 #[derive(Debug, Copy, Clone)]
 pub struct AskConfig {
+    pub name: &'static str,
     pub model: &'static str,
     pub full_doc: bool,
     pub system_prompt: &'static str,
@@ -10,9 +18,11 @@ pub struct AskConfig {
     pub token_limit: usize,
     pub context_limit: usize,
     pub max_completion_tokens: usize,
+    pub make_context: fn(Vec<RelatedDoc>) -> String,
 }
 
 const ASK_DEFAULT: AskConfig = AskConfig {
+    name: "20230901-default",
     model: "gpt-3.5-turbo",
     full_doc: false,
     system_prompt: include_str!("prompts/default/system.md"),
@@ -20,9 +30,11 @@ const ASK_DEFAULT: AskConfig = AskConfig {
     token_limit: 4_097,
     context_limit: 1_500,
     max_completion_tokens: 1_024,
+    make_context: default_make_context,
 };
 
 const ASK_NEW_PROMPT: AskConfig = AskConfig {
+    name: "20230901-new_prompt",
     model: "gpt-3.5-turbo",
     full_doc: false,
     system_prompt: include_str!("prompts/new_prompt/system.md"),
@@ -30,9 +42,11 @@ const ASK_NEW_PROMPT: AskConfig = AskConfig {
     token_limit: 4_097,
     context_limit: 1_500,
     max_completion_tokens: 1_024,
+    make_context: default_make_context,
 };
 
 const ASK_FULL_DOC: AskConfig = AskConfig {
+    name: "20230901-full_doc",
     model: "gpt-3.5-turbo-16k",
     full_doc: true,
     system_prompt: include_str!("prompts/default/system.md"),
@@ -40,9 +54,20 @@ const ASK_FULL_DOC: AskConfig = AskConfig {
     token_limit: 16_384,
     context_limit: 12_000,
     max_completion_tokens: 2_048,
+    make_context: |docs| {
+        let context = docs
+            .into_iter()
+            .map(|d| d.content)
+            .join("<article></article>");
+        format!(
+            "Here are the related MDN articles (delimited with XML tags):\n<article>{}</article>",
+            context
+        )
+    },
 };
 
 const ASK_FULL_DOC_NEW_PROMPT: AskConfig = AskConfig {
+    name: "20230901-full_doc-new_prompt",
     model: "gpt-3.5-turbo-16k",
     full_doc: true,
     system_prompt: include_str!("prompts/new_prompt/system.md"),
@@ -50,9 +75,11 @@ const ASK_FULL_DOC_NEW_PROMPT: AskConfig = AskConfig {
     token_limit: 16_384,
     context_limit: 12_000,
     max_completion_tokens: 2_048,
+    make_context: default_make_context,
 };
 
 const ASK_GPT4: AskConfig = AskConfig {
+    name: "20230901-gpt4",
     model: "gpt-4",
     full_doc: false,
     system_prompt: include_str!("prompts/default/system.md"),
@@ -60,9 +87,11 @@ const ASK_GPT4: AskConfig = AskConfig {
     token_limit: 8_192,
     context_limit: 4_500,
     max_completion_tokens: 1_536,
+    make_context: default_make_context,
 };
 
 const ASK_GTP4_NEW_PROMPT: AskConfig = AskConfig {
+    name: "20230901-gpt4-new_prompt",
     model: "gpt-4",
     full_doc: false,
     system_prompt: include_str!("prompts/new_prompt/system.md"),
@@ -70,9 +99,11 @@ const ASK_GTP4_NEW_PROMPT: AskConfig = AskConfig {
     token_limit: 8_192,
     context_limit: 4_500,
     max_completion_tokens: 1_536,
+    make_context: default_make_context,
 };
 
 const ASK_GPT4_FULL_DOC: AskConfig = AskConfig {
+    name: "20230901-gpt4-full_doc",
     model: "gpt-4-32k",
     full_doc: true,
     system_prompt: include_str!("prompts/default/system.md"),
@@ -80,9 +111,11 @@ const ASK_GPT4_FULL_DOC: AskConfig = AskConfig {
     token_limit: 32_768,
     context_limit: 12_000,
     max_completion_tokens: 4_096,
+    make_context: default_make_context,
 };
 
 const ASK_GPT4_FULL_DOC_NEW_PROMPT: AskConfig = AskConfig {
+    name: "20230901-gpt4-full_doc-new_pormpt",
     model: "gpt-4-32k",
     full_doc: true,
     system_prompt: include_str!("prompts/new_prompt/system.md"),
@@ -90,12 +123,16 @@ const ASK_GPT4_FULL_DOC_NEW_PROMPT: AskConfig = AskConfig {
     token_limit: 32_768,
     context_limit: 12_000,
     max_completion_tokens: 4_096,
+    make_context: default_make_context,
 };
-
 
 impl From<ExperimentsConfig> for AskConfig {
     fn from(ex: ExperimentsConfig) -> Self {
-        match (ex.gpt4.unwrap_or_default(), ex.full_doc.unwrap_or_default(), ex.new_prompt.unwrap_or_default()) {
+        match (
+            ex.gpt4.unwrap_or_default(),
+            ex.full_doc.unwrap_or_default(),
+            ex.new_prompt.unwrap_or_default(),
+        ) {
             (true, true, true) => ASK_GPT4_FULL_DOC_NEW_PROMPT,
             (true, true, false) => ASK_GPT4_FULL_DOC,
             (true, false, true) => ASK_GTP4_NEW_PROMPT,

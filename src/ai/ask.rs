@@ -8,7 +8,7 @@ use async_openai::{
     Client,
 };
 use futures_util::{stream::FuturesUnordered, TryStreamExt};
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 
 use crate::{
     ai::{
@@ -21,16 +21,18 @@ use crate::{
     experiments::Experiments,
 };
 
-#[derive(Eq, Hash, PartialEq, Serialize)]
+#[derive(Eq, Hash, PartialEq, Serialize, Deserialize, Debug, Clone)]
 pub struct RefDoc {
     pub url: String,
     pub slug: String,
     pub title: String,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct AskRequest {
     pub req: CreateChatCompletionRequest,
     pub refs: Vec<RefDoc>,
+    pub message_id: i32,
 }
 
 pub async fn prepare_ask_req(
@@ -44,6 +46,9 @@ pub async fn prepare_ask_req(
 
     // TODO: sign messages os we don't check again
     let context_messages: Vec<_> = into_user_messages(open_ai_messages);
+    let message_id = i32::try_from(context_messages.len())
+        .ok()
+        .unwrap_or_default();
     let moderations = FuturesUnordered::from_iter(
         context_messages
             .iter()
@@ -90,19 +95,18 @@ pub async fn prepare_ask_req(
         if token_len >= config.context_limit {
             break;
         }
-        context.push(doc.content);
         if !refs.iter().any(|r: &RefDoc| r.slug == doc.slug) {
             refs.push(RefDoc {
-                url: doc.url,
-                slug: doc.slug,
-                title: doc.title,
+                url: doc.url.clone(),
+                slug: doc.slug.clone(),
+                title: doc.title.clone(),
             });
         }
+        context.push(doc);
     }
     if context.is_empty() {
         return Ok(None);
     }
-    let context = context.join("\n---\n");
     let system_message = ChatCompletionRequestMessageArgs::default()
         .role(Role::System)
         .content(config.system_prompt)
@@ -110,7 +114,7 @@ pub async fn prepare_ask_req(
         .unwrap();
     let context_message = ChatCompletionRequestMessageArgs::default()
         .role(Role::User)
-        .content(format!("Here is the MDN content:\n{context}"))
+        .content((config.make_context)(context))
         .build()
         .unwrap();
     let user_message = ChatCompletionRequestMessageArgs::default()
@@ -127,5 +131,9 @@ pub async fn prepare_ask_req(
         .temperature(0.0)
         .build()?;
 
-    Ok(Some(AskRequest { req, refs }))
+    Ok(Some(AskRequest {
+        req,
+        refs,
+        message_id,
+    }))
 }

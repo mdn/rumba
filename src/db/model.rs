@@ -6,6 +6,7 @@ use chrono::NaiveDateTime;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use uuid::Uuid;
 
 use super::types::Locale;
 
@@ -244,4 +245,16 @@ pub struct ExperimentsQuery {
     pub user_id: i64,
     pub active: bool,
     pub config: ExperimentsConfig,
+}
+
+#[derive(Insertable, Serialize, Debug, Default)]
+#[diesel(table_name = ai_help_logs)]
+pub struct AIHelpLogsInsert {
+    pub user_id: i64,
+    pub variant: String,
+    pub chat_id: Uuid,
+    pub message_id: i32,
+    pub created_at: Option<NaiveDateTime>,
+    pub request: Value,
+    pub response: Value,
 }

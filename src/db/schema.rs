@@ -75,6 +75,22 @@ diesel::table! {
     use diesel::sql_types::*;
     use crate::db::types::*;
 
+    ai_help_logs (id) {
+        id -> Int8,
+        user_id -> Int8,
+        variant -> Text,
+        chat_id -> Uuid,
+        message_id -> Int4,
+        created_at -> Timestamp,
+        request -> Jsonb,
+        response -> Jsonb,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+
     bcd_features (id) {
         id -> Int8,
         deprecated -> Nullable<Bool>,
@@ -172,6 +188,18 @@ diesel::table! {
     use diesel::sql_types::*;
     use crate::db::types::*;
 
+    experiments (id) {
+        id -> Int8,
+        user_id -> Int8,
+        active -> Bool,
+        config -> Jsonb,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+
     multiple_collections (id) {
         id -> Int8,
         created_at -> Timestamp,
@@ -241,6 +269,8 @@ diesel::table! {
         subscription_type -> Nullable<SubscriptionType>,
         enforce_plus -> Nullable<SubscriptionType>,
         is_admin -> Bool,
+        is_mdn_team -> Bool,
+        is_fox_food -> Bool,
     }
 }
 
@@ -264,12 +294,14 @@ diesel::table! {
 
 diesel::joinable!(activity_pings -> users (user_id));
 diesel::joinable!(ai_help_limits -> users (user_id));
+diesel::joinable!(ai_help_logs -> users (user_id));
 diesel::joinable!(bcd_updates -> bcd_features (feature));
 diesel::joinable!(bcd_updates -> browser_releases (browser_release));
 diesel::joinable!(browser_releases -> browsers (browser));
 diesel::joinable!(collection_items -> documents (document_id));
 diesel::joinable!(collection_items -> multiple_collections (multiple_collection_id));
 diesel::joinable!(collection_items -> users (user_id));
+diesel::joinable!(experiments -> users (user_id));
 diesel::joinable!(multiple_collections -> users (user_id));
 diesel::joinable!(playground -> users (user_id));
 diesel::joinable!(settings -> users (user_id));
@@ -278,12 +310,14 @@ diesel::allow_tables_to_appear_in_same_query!(
     activity_pings,
     ai_explain_cache,
     ai_help_limits,
+    ai_help_logs,
     bcd_features,
     bcd_updates,
     browser_releases,
     browsers,
     collection_items,
     documents,
+    experiments,
     multiple_collections,
     playground,
     raw_webhook_events_tokens,
