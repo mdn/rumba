@@ -60,6 +60,10 @@ impl UserQuery {
             .unwrap_or_default()
             .is_subscriber()
     }
+
+    pub fn eligible_for_experiments(&self) -> bool {
+        self.is_admin || self.is_fox_food
+    }
 }
 
 #[derive(Queryable, Clone)]

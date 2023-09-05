@@ -79,6 +79,7 @@ pub async fn whoami(
                     let is_subscriber = user.is_subscriber();
                     let experiments = match get_experiments(&mut conn_pool, &user)? {
                         Some(ex) if ex.active  => Some(ex),
+                        _ if user.eligible_for_experiments() => Some(Default::default()),
                         _ => None,
                     };
                     let response = WhoamiResponse {

@@ -13,6 +13,9 @@ pub fn get_experiments(
     conn: &mut PgConnection,
     user: &UserQuery,
 ) -> Result<Option<Experiments>, DbError> {
+    if !(user.is_admin || user.is_fox_food || user.is_mdn_team) {
+        return Ok(None);
+    }
     ex::table
         .filter(ex::user_id.eq(user.id).and(ex::active.eq(true)))
         .first::<ExperimentsQuery>(conn)
