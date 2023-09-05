@@ -1,7 +1,6 @@
 use std::{path::Path, fs};
 
 use anyhow::Error;
-use once_cell::sync::Lazy;
 
 const PROMPTS_YAML: & str = include_str!("../data/prompts.yaml");
 

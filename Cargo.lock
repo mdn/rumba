@@ -370,7 +370,7 @@ dependencies = [
  "async-openai",
  "clap",
  "futures",
- "once_cell",
+ "itertools 0.11.0",
  "rumba",
  "serde",
  "serde_json",

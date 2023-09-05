@@ -1,4 +1,5 @@
 use std::{
+    iter,
     path::{Path, PathBuf},
     sync::Arc,
     time::Instant,
@@ -10,6 +11,7 @@ use async_openai::{
     types::{ChatCompletionRequestMessage, ChatCompletionResponseMessage, Role::User},
 };
 use futures::{stream, StreamExt, TryStreamExt};
+use itertools::Itertools;
 use rumba::{
     ai::ask::{prepare_ask_req, AskRequest},
     db,
@@ -25,6 +27,40 @@ use crate::prompts;
 pub struct Storage {
     pub req: AskRequest,
     pub res: Option<ChatCompletionResponseMessage>,
+}
+
+const MD_DELIM: &str = "\n---\n---\n";
+
+fn msg_to_md(msg: &ChatCompletionRequestMessage) -> String {
+    let role = &msg.role;
+    let content = msg.content.as_deref().unwrap_or_default();
+    format!("{role}:{MD_DELIM}{content}")
+}
+
+impl Storage {
+    pub fn to_md(&self) -> String {
+        let docs = self
+            .req
+            .refs
+            .iter()
+            .map(|r| format!("[{}]({})", r.title, r.url))
+            .join("\n");
+        let res = if let Some(res) = &self.res {
+            let res_content = res.content.as_deref().unwrap_or_default();
+            let res_role = &res.role;
+            format!("{res_role}:{MD_DELIM}{res_content}")
+        } else {
+            "**no response**".to_string()
+        };
+        self.req
+            .req
+            .messages
+            .iter()
+            .map(msg_to_md)
+            .chain(iter::once(res))
+            .chain(iter::once(docs))
+            .join(MD_DELIM)
+    }
 }
 
 pub async fn ask_all(
@@ -49,10 +85,9 @@ pub async fn ask_all(
     stream::iter(prompts.into_iter().enumerate())
         .map(Ok::<(usize, Vec<String>), Error>)
         .try_for_each_concurrent(10, |(i, prompts)| async move {
-            println!("processing {:0>2}", i);
-            let control_out = PathBuf::from(out.as_ref())
-                .with_file_name(format!("{:3}", i))
-                .with_extension("md");
+            println!("processing: {:0>2}", i);
+            let json_out = PathBuf::from(out.as_ref()).join(format!("{:0>2}.json", i));
+            let md_out = PathBuf::from(out.as_ref()).join(format!("{:0>2}.md", i));
             let messages = prompts
                 .into_iter()
                 .map(|prompt| ChatCompletionRequestMessage {
@@ -67,13 +102,12 @@ pub async fn ask_all(
             {
                 let mut res = openai_client.chat().create(req.req.clone()).await?;
                 let res = res.choices.pop().map(|res| res.message);
-                fs::write(
-                    control_out,
-                    serde_json::to_vec_pretty(&Storage { req, res })?,
-                )
-                .await?;
+                let storage = Storage { req, res };
+                println!("writing: {}", json_out.display());
+                fs::write(json_out, serde_json::to_vec_pretty(&storage)?).await?;
+                println!("writing: {}", md_out.display());
+                fs::write(md_out, storage.to_md().as_bytes()).await?;
             }
-            println!("finished {:0>2}", i);
             Ok(())
         })
         .await?;
