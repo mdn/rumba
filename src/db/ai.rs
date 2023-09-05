@@ -4,10 +4,11 @@ use diesel::{prelude::*, update};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use serde_with::{base64::Base64, serde_as};
+use uuid::Uuid;
 
 use crate::ai::constants::AI_EXPLAIN_VERSION;
 use crate::db::error::DbError;
-use crate::db::model::{AIExplainCacheInsert, AIExplainCacheQuery, AIHelpLimitInsert, UserQuery, AIHelpLogsInsert};
+use crate::db::model::{AIExplainCacheInsert, AIExplainCacheQuery, AIHelpLimitInsert, UserQuery, AIHelpLogsInsert, AIHelpLogsFeedbackInsert};
 use crate::db::schema::{ai_explain_cache as explain, ai_help_logs};
 use crate::db::schema::ai_help_limits as limits;
 use crate::settings::SETTINGS;
@@ -22,12 +23,21 @@ static AI_HELP_RESET_DURATION: Lazy<Duration> = Lazy::new(|| {
     )
 });
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum FeedbackTyp {
     ThumbsDown,
     ThumbsUp,
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct AskFeedback {
+    pub chat_id: Uuid,
+    pub message_id: i32,
+    pub feedback: Option<String>,
+    pub thumbs: Option<FeedbackTyp>,
+}
+
 #[serde_as]
 #[derive(Serialize, Deserialize)]
 pub struct ExplainFeedback {
@@ -191,6 +201,14 @@ pub fn set_explain_feedback(
 pub fn add_help_log(conn: &mut PgConnection, cache: &AIHelpLogsInsert) -> Result<(), DbError> {
     insert_into(ai_help_logs::table)
         .values(cache)
+        .on_conflict_do_nothing()
+        .execute(conn)?;
+    Ok(())
+}
+
+pub fn add_help_log_feedback(conn: &mut PgConnection, feedback: &AIHelpLogsFeedbackInsert) -> Result<(), DbError> {
+    insert_into(ai_help_logs::table)
+        .values(feedback)
         .on_conflict_do_nothing()
         .execute(conn)?;
     Ok(())

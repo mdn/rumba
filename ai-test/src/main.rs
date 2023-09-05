@@ -47,6 +47,8 @@ async fn main() -> Result<(), Error> {
                 active: true,
                 config: i.into(),
             });
+            println!("{:?}", experiments);
+            return Ok(());
             ask_all(path, out, experiments).await?;
         }
     }

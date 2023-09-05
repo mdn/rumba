@@ -33,9 +33,9 @@ pub struct ExperimentsConfig {
 impl From<usize> for ExperimentsConfig {
     fn from(value: usize) -> Self {
         ExperimentsConfig {
-            gpt4: Some(value & 0x001 != 0),
-            full_doc: Some(value & 0x010 != 0),
-            new_prompt: Some(value & 0x100 != 0),
+            gpt4: Some(value & 0b001 != 0),
+            full_doc: Some(value & 0b010 != 0),
+            new_prompt: Some(value & 0b100 != 0),
         }
     }
 }

@@ -18,5 +18,7 @@ CREATE TABLE ai_help_logs (
     message_id      INT NOT NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT now(),
     request         JSONB NOT NULL DEFAULT '{}'::jsonb,
-    response        JSONB NOT NULL DEFAULT '{}'::jsonb
+    response        JSONB NOT NULL DEFAULT '{}'::jsonb,
+    feedback        TEXT,
+    thumbs          BOOLEAN DEFAULT NULL
 );

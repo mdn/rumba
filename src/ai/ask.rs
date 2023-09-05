@@ -32,7 +32,6 @@ pub struct RefDoc {
 pub struct AskRequest {
     pub req: CreateChatCompletionRequest,
     pub refs: Vec<RefDoc>,
-    pub message_id: i32,
 }
 
 pub async fn prepare_ask_req(
@@ -46,9 +45,6 @@ pub async fn prepare_ask_req(
 
     // TODO: sign messages os we don't check again
     let context_messages: Vec<_> = into_user_messages(open_ai_messages);
-    let message_id = i32::try_from(context_messages.len())
-        .ok()
-        .unwrap_or_default();
     let moderations = FuturesUnordered::from_iter(
         context_messages
             .iter()
@@ -134,6 +130,5 @@ pub async fn prepare_ask_req(
     Ok(Some(AskRequest {
         req,
         refs,
-        message_id,
     }))
 }

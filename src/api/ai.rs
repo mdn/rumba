@@ -25,10 +25,10 @@ use crate::{
     db::{
         ai::{
             add_explain_answer, add_help_log, create_or_increment_total, explain_from_cache,
-            get_count, set_explain_feedback, ExplainFeedback, AI_HELP_LIMIT,
+            get_count, set_explain_feedback, ExplainFeedback, AI_HELP_LIMIT, AskFeedback, FeedbackTyp, add_help_log_feedback,
         },
         experiments::get_experiments,
-        model::{AIExplainCacheInsert, AIHelpLogsInsert},
+        model::{AIExplainCacheInsert, AIHelpLogsInsert, AIHelpLogsFeedbackInsert},
         SupaPool,
     },
     experiments::Experiments,
@@ -77,6 +77,7 @@ pub struct AskMeta {
     #[serde(rename = "type")]
     pub typ: MetaType,
     pub chat_id: Uuid,
+    pub message_id: i32,
     pub sources: Vec<RefDoc>,
     pub quota: Option<AskLimit>,
 }
@@ -173,23 +174,24 @@ pub async fn ask(
     };
     if let (Some(client), Some(pool)) = (&**openai_client, &**supabase_pool) {
         let ChatRequestMessages { chat_id, messages } = messages.into_inner();
+        let message_id = i32::try_from(messages.len()).ok().unwrap_or_default();
         match prepare_ask_req(client, pool, messages, experiments).await? {
             Some(ask_req) => {
                 let chat_id = chat_id.unwrap_or_else(Uuid::new_v4);
-                let req = ask_req.req.clone();
-                let stream = client.chat().create_stream(ask_req.req).await.unwrap();
                 let ask_meta = AskMeta {
                     typ: MetaType::Metadata,
                     chat_id,
+                    message_id,
                     sources: ask_req.refs,
                     quota: current.map(AskLimit::from_count),
                 };
-                let ask_meta_log = ask_meta.clone();
                 let tx = if let Some(Experiments {
                     active: true,
                     config,
                 }) = experiments
                 {
+                    let req = ask_req.req.clone();
+                    let ask_meta_log = ask_meta.clone();
                     let ask_config = AskConfig::from(config);
 
                     let (tx, mut rx) =
@@ -205,7 +207,7 @@ pub async fn ask(
                             user_id: user.id,
                             variant: ask_config.name.to_owned(),
                             chat_id,
-                            message_id: ask_req.message_id,
+                            message_id,
                             created_at: None,
                             request: serde_json::to_value(req).unwrap_or(Null),
                             response: serde_json::to_value(AskLogResponse {
@@ -222,6 +224,7 @@ pub async fn ask(
                 } else {
                     None
                 };
+                let stream = client.chat().create_stream(ask_req.req).await.unwrap();
                 let refs = stream::once(async move {
                     Ok(sse::Event::Data(
                         sse::Data::new_json(ask_meta).map_err(OpenAIError::JSONDeserialize)?,
@@ -243,6 +246,7 @@ pub async fn ask(
                     sse::Data::new_json(AskMeta {
                         typ: MetaType::Metadata,
                         chat_id: chat_id.unwrap_or_else(Uuid::new_v4),
+                        message_id,
                         sources: vec![],
                         quota: current.map(AskLimit::from_count),
                     })
@@ -269,6 +273,29 @@ pub async fn ask(
         }
     }
     Err(ApiError::NotImplemented)
+}
+
+pub async fn ask_feedback(
+    user_id: Identity,
+    diesel_pool: Data<Pool>,
+    req: Json<AskFeedback>,
+) -> Result<HttpResponse, ApiError> {
+    let mut conn = diesel_pool.get()?;
+    let user = get_user(&mut conn, user_id.id().unwrap())?;
+    let experiments = get_experiments(&mut conn, &user)?;
+    if !experiments.map(|ex| ex.active).unwrap_or_default() {
+        return Ok(HttpResponse::BadRequest().finish());
+    }
+    let ask_feedback = req.into_inner();
+    let feedback = AIHelpLogsFeedbackInsert {
+        user_id: user.id,
+        chat_id: ask_feedback.chat_id,
+        message_id: ask_feedback.message_id,
+        feedback: ask_feedback.feedback.map(Some),
+        thumbs: ask_feedback.thumbs.map(|t| Some(t == FeedbackTyp::ThumbsUp)),
+    };
+    add_help_log_feedback(&mut conn, &feedback)?;
+    Ok(HttpResponse::Created().finish())
 }
 
 pub async fn explain_feedback(
