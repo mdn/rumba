@@ -1,4 +1,4 @@
-use crate::api::ai::{ask, ask_feedback, explain, explain_feedback, quota};
+use crate::api::ai::{ask, ask_feedback, explain, explain_feedback, quota, ask_log, ask_log_list};
 use crate::api::experiments::{get_experiments, update_experiments};
 use crate::api::info::information;
 use crate::api::newsletter::{
@@ -27,6 +27,8 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
                             web::scope("/ask")
                                 .service(web::resource("").route(web::post().to(ask)))
                                 .service(web::resource("/quota").route(web::get().to(quota)))
+                                .service(web::resource("/history/list").route(web::get().to(ask_log_list)))
+                                .service(web::resource("/history/{chat_id}").route(web::get().to(ask_log)))
                                 .service(
                                     web::resource("/feedback").route(web::post().to(ask_feedback)),
                                 ),

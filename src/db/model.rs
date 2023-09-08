@@ -262,14 +262,24 @@ pub struct AIHelpLogsInsert {
     pub request: Value,
     pub response: Value,
 }
-
-
-#[derive(Insertable, Serialize, Debug, Default)]
+#[derive(Queryable, Serialize, Debug, Default)]
 #[diesel(table_name = ai_help_logs)]
-pub struct AIHelpLogsFeedbackInsert {
+pub struct AIHelpLogs {
+    pub id: i64,
     pub user_id: i64,
+    pub variant: String,
     pub chat_id: Uuid,
     pub message_id: i32,
+    pub created_at: NaiveDateTime,
+    pub request: Value,
+    pub response: Value,
+    pub feedback: Option<String>,
+    pub thumbs: Option<bool>,
+}
+
+#[derive(Insertable, AsChangeset, Serialize, Debug, Default)]
+#[diesel(table_name = ai_help_logs)]
+pub struct AIHelpLogsFeedbackInsert {
     pub feedback: Option<Option<String>>,
     pub thumbs: Option<Option<bool>>,
 }

@@ -1,4 +1,6 @@
-use chrono::{Duration, Utc};
+use chrono::{Duration, NaiveDateTime, Utc};
+use diesel::dsl::sql;
+use diesel::sql_types::Text;
 use diesel::{insert_into, PgConnection};
 use diesel::{prelude::*, update};
 use once_cell::sync::Lazy;
@@ -8,9 +10,12 @@ use uuid::Uuid;
 
 use crate::ai::constants::AI_EXPLAIN_VERSION;
 use crate::db::error::DbError;
-use crate::db::model::{AIExplainCacheInsert, AIExplainCacheQuery, AIHelpLimitInsert, UserQuery, AIHelpLogsInsert, AIHelpLogsFeedbackInsert};
-use crate::db::schema::{ai_explain_cache as explain, ai_help_logs};
+use crate::db::model::{
+    AIExplainCacheInsert, AIExplainCacheQuery, AIHelpLimitInsert, AIHelpLogs,
+    AIHelpLogsFeedbackInsert, AIHelpLogsInsert, UserQuery,
+};
 use crate::db::schema::ai_help_limits as limits;
+use crate::db::schema::{ai_explain_cache as explain, ai_help_logs};
 use crate::settings::SETTINGS;
 
 pub const AI_HELP_LIMIT: i64 = 5;
@@ -206,10 +211,62 @@ pub fn add_help_log(conn: &mut PgConnection, cache: &AIHelpLogsInsert) -> Result
     Ok(())
 }
 
-pub fn add_help_log_feedback(conn: &mut PgConnection, feedback: &AIHelpLogsFeedbackInsert) -> Result<(), DbError> {
-    insert_into(ai_help_logs::table)
-        .values(feedback)
-        .on_conflict_do_nothing()
+pub fn add_help_log_feedback(
+    conn: &mut PgConnection,
+    user: &UserQuery,
+    chat_id: &Uuid,
+    message_id: i32,
+    feedback: &AIHelpLogsFeedbackInsert,
+) -> Result<(), DbError> {
+    update(ai_help_logs::table)
+        .filter(
+            ai_help_logs::user_id.eq(user.id).and(
+                ai_help_logs::chat_id
+                    .eq(chat_id)
+                    .and(ai_help_logs::message_id.eq(message_id)),
+            ),
+        )
+        .set(feedback)
         .execute(conn)?;
     Ok(())
+}
+
+pub fn help_from_log(
+    conn: &mut PgConnection,
+    user: &UserQuery,
+    chat_id: &Uuid,
+) -> Result<Vec<AIHelpLogs>, DbError> {
+    ai_help_logs::table
+        .filter(
+            ai_help_logs::user_id
+                .eq(user.id)
+                .and(ai_help_logs::chat_id.eq(chat_id)),
+        )
+        .order(ai_help_logs::message_id.asc())
+        .get_results(conn)
+        .map_err(Into::into)
+}
+
+#[derive(Queryable, Deserialize, Serialize, Debug, Default)]
+pub struct AIHelpLogsListEntry {
+    pub chat_id: Uuid,
+    pub last: NaiveDateTime,
+    pub question: String,
+}
+
+pub fn help_log_list(
+    conn: &mut PgConnection,
+    user: &UserQuery,
+) -> Result<Vec<AIHelpLogsListEntry>, DbError> {
+    ai_help_logs::table
+        .filter(ai_help_logs::user_id.eq(user.id))
+        .select((
+            ai_help_logs::chat_id,
+            ai_help_logs::created_at,
+            sql::<Text>("request->'messages'->-1->>'content'"),
+        ))
+        .order_by((ai_help_logs::chat_id, ai_help_logs::created_at.desc()))
+        .distinct_on(ai_help_logs::chat_id)
+        .get_results(conn)
+        .map_err(Into::into)
 }

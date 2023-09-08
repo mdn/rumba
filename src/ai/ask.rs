@@ -28,7 +28,7 @@ pub struct RefDoc {
     pub title: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AskRequest {
     pub req: CreateChatCompletionRequest,
     pub refs: Vec<RefDoc>,
