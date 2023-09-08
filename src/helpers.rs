@@ -1,4 +1,4 @@
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use serde::{de::DeserializeOwned, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{from_value, Value};
 
@@ -99,7 +99,7 @@ pub fn to_utc<S>(naive: &NaiveDateTime, serializer: S) -> Result<S::Ok, S::Error
 where
     S: Serializer,
 {
-    let dt = DateTime::<Utc>::from_utc(*naive, Utc);
+    let dt = Utc.from_utc_datetime(naive);
     dt.serialize(serializer)
 }
 
@@ -184,9 +184,8 @@ mod test {
     fn test_utc_milliseconds() -> Result<(), Error> {
         let json = json!({ "dt": 1655312049699001i64 });
         let dt_serde: Millis = serde_json::from_value(json.clone())?;
-        let dt = DateTime::<Utc>::from_utc(
-            NaiveDateTime::from_timestamp_opt(1655312049699, 1_000_000).unwrap(),
-            Utc,
+        let dt = Utc.from_utc_datetime(
+            &NaiveDateTime::from_timestamp_opt(1655312049699, 1_000_000).unwrap(),
         );
         assert_eq!(dt, dt_serde.dt);
 
@@ -201,9 +200,8 @@ mod test {
     fn test_utc_seconds_f() -> Result<(), Error> {
         let json = json!({ "dt": 1655312049699.1f64 });
         let dt_serde: SecondsF = serde_json::from_value(json)?;
-        let dt = DateTime::<Utc>::from_utc(
-            NaiveDateTime::from_timestamp_opt(1655312049699, 100_000_000).unwrap(),
-            Utc,
+        let dt = Utc.from_utc_datetime(
+            &NaiveDateTime::from_timestamp_opt(1655312049699, 100_000_000).unwrap(),
         );
         assert_eq!(dt, dt_serde.dt);
 
