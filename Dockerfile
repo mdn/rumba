@@ -1,4 +1,4 @@
-FROM rust:latest
+FROM rust:bookworm
 
 WORKDIR /usr/src/rumba
 
@@ -12,7 +12,7 @@ RUN cargo vendor > .cargo/config
 COPY . .
 RUN cargo build --release
 
-FROM debian:11-slim
+FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y \
     libpq5 ca-certificates \
