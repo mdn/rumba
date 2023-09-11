@@ -21,7 +21,7 @@ pub struct AskConfig {
     pub make_context: fn(Vec<RelatedDoc>) -> String,
 }
 
-const ASK_DEFAULT: AskConfig = AskConfig {
+pub const ASK_DEFAULT: AskConfig = AskConfig {
     name: "20230901-default",
     model: "gpt-3.5-turbo",
     full_doc: false,
