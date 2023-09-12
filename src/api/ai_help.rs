@@ -21,8 +21,8 @@ use uuid::Uuid;
 
 use crate::{
     ai::{
-        help::{prepare_ask_req, RefDoc},
-        constants::AskConfig,
+        help::{prepare_ai_help_req, RefDoc},
+        constants::AIHelpConfig,
     },
     db::{
         ai_help::{
@@ -54,13 +54,13 @@ pub enum MetaType {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
-pub struct AskLimit {
+pub struct AIHelpLimit {
     pub count: i64,
     pub remaining: i64,
     pub limit: i64,
 }
 
-impl AskLimit {
+impl AIHelpLimit {
     pub fn from_count(count: i64) -> Self {
         Self {
             count,
@@ -71,34 +71,34 @@ impl AskLimit {
 }
 
 #[derive(Serialize)]
-pub struct AskQuota {
-    pub quota: Option<AskLimit>,
+pub struct AIHelpQuota {
+    pub quota: Option<AIHelpLimit>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-pub struct AskMeta {
+pub struct AIHelpMeta {
     #[serde(rename = "type")]
     pub typ: MetaType,
     pub chat_id: Uuid,
     pub message_id: i32,
     pub sources: Vec<RefDoc>,
-    pub quota: Option<AskLimit>,
+    pub quota: Option<AIHelpLimit>,
 }
 
 #[derive(Serialize, Debug, Clone)]
-pub struct AskLogMessage {
-    pub metadata: AskMeta,
+pub struct AIHelpLogMessage {
+    pub metadata: AIHelpMeta,
     pub user: ChatCompletionRequestMessage,
     pub assistant: ChatCompletionRequestMessage,
 }
 
 #[derive(Serialize, Debug, Clone)]
-pub struct AskLog {
+pub struct AIHelpLog {
     pub chat_id: Uuid,
-    pub messages: Vec<AskLogMessage>,
+    pub messages: Vec<AIHelpLogMessage>,
 }
 
-impl TryFrom<Vec<AIHelpLogs>> for AskLog {
+impl TryFrom<Vec<AIHelpLogs>> for AIHelpLog {
     type Error = ApiError;
 
     fn try_from(value: Vec<AIHelpLogs>) -> Result<Self, Self::Error> {
@@ -106,20 +106,20 @@ impl TryFrom<Vec<AIHelpLogs>> for AskLog {
         let messages = value
             .into_iter()
             .map(|log| {
-                let res: AskLogResponse = serde_json::from_value(log.response).unwrap_or_default();
+                let res: AIHelpLogResponse = serde_json::from_value(log.response).unwrap_or_default();
                 let mut req: CreateChatCompletionRequest =
                     serde_json::from_value(log.request).unwrap_or_default();
                 if chat_id.is_none() {
                     chat_id = Some(res.meta.chat_id);
                 }
-                AskLogMessage {
+                AIHelpLogMessage {
                     metadata: res.meta,
                     user: req.messages.pop().unwrap_or_default(),
                     assistant: res.answer,
                 }
             })
             .collect();
-        Ok(AskLog {
+        Ok(AIHelpLog {
             chat_id: chat_id.unwrap_or_default(),
             messages,
         })
@@ -178,8 +178,8 @@ impl From<&str> for GeneratedChunk {
 }
 
 #[derive(Serialize, Deserialize, Default)]
-pub struct AskLogResponse {
-    meta: AskMeta,
+pub struct AIHelpLogResponse {
+    meta: AIHelpMeta,
     answer: ChatCompletionRequestMessage,
 }
 
@@ -187,16 +187,16 @@ pub async fn quota(user_id: Identity, diesel_pool: Data<Pool>) -> Result<HttpRes
     let mut conn = diesel_pool.get()?;
     let user = get_user(&mut conn, user_id.id().unwrap())?;
     if user.is_subscriber() {
-        Ok(HttpResponse::Ok().json(AskQuota { quota: None }))
+        Ok(HttpResponse::Ok().json(AIHelpQuota { quota: None }))
     } else {
         let count = get_count(&mut conn, &user)?;
-        Ok(HttpResponse::Ok().json(AskQuota {
-            quota: Some(AskLimit::from_count(count)),
+        Ok(HttpResponse::Ok().json(AIHelpQuota {
+            quota: Some(AIHelpLimit::from_count(count)),
         }))
     }
 }
 
-pub async fn ask(
+pub async fn ai_help(
     user_id: Identity,
     openai_client: Data<Option<Client<OpenAIConfig>>>,
     supabase_pool: Data<Option<SupaPool>>,
@@ -225,24 +225,24 @@ pub async fn ask(
             chat_id = None;
         }
         let message_id = i32::try_from(messages.len()).ok().unwrap_or_default();
-        match prepare_ask_req(client, pool, messages, experiments).await? {
-            Some(ask_req) => {
+        match prepare_ai_help_req(client, pool, messages, experiments).await? {
+            Some(ai_help_req) => {
                 let chat_id = chat_id.unwrap_or_else(Uuid::new_v4);
-                let ask_meta = AskMeta {
+                let ai_help_meta = AIHelpMeta {
                     typ: MetaType::Metadata,
                     chat_id,
                     message_id,
-                    sources: ask_req.refs,
-                    quota: current.map(AskLimit::from_count),
+                    sources: ai_help_req.refs,
+                    quota: current.map(AIHelpLimit::from_count),
                 };
                 let tx = if let Some(Experiments {
                     active: true,
                     config,
                 }) = experiments
                 {
-                    let req = ask_req.req.clone();
-                    let ask_meta_log = ask_meta.clone();
-                    let ask_config = AskConfig::from(config);
+                    let req = ai_help_req.req.clone();
+                    let ai_help_meta_log = ai_help_meta.clone();
+                    let ai_help_config = AIHelpConfig::from(config);
 
                     let (tx, mut rx) =
                         mpsc::unbounded_channel::<CreateChatCompletionStreamResponse>();
@@ -255,13 +255,13 @@ pub async fn ask(
                         }
                         let insert = AIHelpLogsInsert {
                             user_id: user.id,
-                            variant: ask_config.name.to_owned(),
+                            variant: ai_help_config.name.to_owned(),
                             chat_id,
                             message_id,
                             created_at: None,
                             request: serde_json::to_value(req).unwrap_or(Null),
-                            response: serde_json::to_value(AskLogResponse {
-                                meta: ask_meta_log,
+                            response: serde_json::to_value(AIHelpLogResponse {
+                                meta: ai_help_meta_log,
                                 answer: ChatCompletionRequestMessage {
                                     role: Assistant,
                                     content: Some(answer.join("")),
@@ -278,10 +278,10 @@ pub async fn ask(
                 } else {
                     None
                 };
-                let stream = client.chat().create_stream(ask_req.req).await.unwrap();
+                let stream = client.chat().create_stream(ai_help_req.req).await.unwrap();
                 let refs = stream::once(async move {
                     Ok(sse::Event::Data(
-                        sse::Data::new_json(ask_meta).map_err(OpenAIError::JSONDeserialize)?,
+                        sse::Data::new_json(ai_help_meta).map_err(OpenAIError::JSONDeserialize)?,
                     ))
                 });
                 return Ok(Either::Left(sse::Sse::from_stream(refs.chain(
@@ -297,12 +297,12 @@ pub async fn ask(
             }
             None => {
                 let parts = vec![
-                    sse::Data::new_json(AskMeta {
+                    sse::Data::new_json(AIHelpMeta {
                         typ: MetaType::Metadata,
                         chat_id: chat_id.unwrap_or_else(Uuid::new_v4),
                         message_id,
                         sources: vec![],
-                        quota: current.map(AskLimit::from_count),
+                        quota: current.map(AIHelpLimit::from_count),
                     })
                     .map_err(OpenAIError::JSONDeserialize)?,
                     sse::Data::new_json(GeneratedChunk::from(
@@ -329,7 +329,7 @@ pub async fn ask(
     Err(ApiError::NotImplemented)
 }
 
-pub async fn ask_log(
+pub async fn ai_help_log(
     user_id: Identity,
     diesel_pool: Data<Pool>,
     chat_id: Path<Uuid>,
@@ -340,14 +340,14 @@ pub async fn ask_log(
     if experiments.map(|e| e.active).unwrap_or_default() {
         let hit = help_from_log(&mut conn, &user, &chat_id.into_inner())?;
         if !hit.is_empty() {
-            let res = AskLog::try_from(hit)?;
+            let res = AIHelpLog::try_from(hit)?;
             return Ok(HttpResponse::Ok().json(res));
         }
     }
     Err(ApiError::NotImplemented)
 }
 
-pub async fn ask_log_list(
+pub async fn ai_help_log_list(
     user_id: Identity,
     diesel_pool: Data<Pool>,
 ) -> Result<HttpResponse, ApiError> {
@@ -361,7 +361,7 @@ pub async fn ask_log_list(
     Err(ApiError::NotImplemented)
 }
 
-pub async fn ask_feedback(
+pub async fn ai_help_feedback(
     user_id: Identity,
     diesel_pool: Data<Pool>,
     req: Json<AIHelpFeedback>,
@@ -372,18 +372,18 @@ pub async fn ask_feedback(
     if !experiments.map(|ex| ex.active).unwrap_or_default() {
         return Ok(HttpResponse::BadRequest().finish());
     }
-    let ask_feedback = req.into_inner();
+    let ai_help_feedback = req.into_inner();
     let feedback = AIHelpLogsFeedbackInsert {
-        feedback: ask_feedback.feedback.map(Some),
-        thumbs: ask_feedback
+        feedback: ai_help_feedback.feedback.map(Some),
+        thumbs: ai_help_feedback
             .thumbs
             .map(|t| Some(t == FeedbackTyp::ThumbsUp)),
     };
     add_help_log_feedback(
         &mut conn,
         &user,
-        &ask_feedback.chat_id,
-        ask_feedback.message_id,
+        &ai_help_feedback.chat_id,
+        ai_help_feedback.message_id,
         &feedback,
     )?;
     Ok(HttpResponse::Created().finish())

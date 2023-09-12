@@ -4,9 +4,10 @@ use anyhow::Error;
 use clap::{Parser, Subcommand};
 use rumba::experiments::Experiments;
 
-use crate::ask::ask_all;
+use crate::ai_help::ai_help_all;
 
-mod ask;
+
+mod ai_help;
 mod prompts;
 
 #[derive(Parser)]
@@ -47,7 +48,7 @@ async fn main() -> Result<(), Error> {
                 active: true,
                 config: i.into(),
             });
-            ask_all(path, out, experiments).await?;
+            ai_help_all(path, out, experiments).await?;
         }
     }
     Ok(())

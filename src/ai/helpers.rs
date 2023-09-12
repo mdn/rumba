@@ -2,7 +2,7 @@ use async_openai::types::{ChatCompletionRequestMessage, Role};
 use tiktoken_rs::async_openai::num_tokens_from_messages;
 
 use crate::ai::{
-    constants::AskConfig,
+    constants::AIHelpConfig,
     error::AIError,
 };
 
@@ -25,7 +25,7 @@ pub fn into_user_messages(
 }
 
 pub fn cap_messages(
-    config: &AskConfig,
+    config: &AIHelpConfig,
     mut init_messages: Vec<ChatCompletionRequestMessage>,
     context_messages: Vec<ChatCompletionRequestMessage>,
 ) -> Result<Vec<ChatCompletionRequestMessage>, AIError> {

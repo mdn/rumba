@@ -12,7 +12,7 @@ use serde::{Serialize, Deserialize};
 
 use crate::{
     ai::{
-        constants::AskConfig,
+        constants::AIHelpConfig,
         embeddings::{get_related_docs, get_related_full_docs},
         error::AIError,
         helpers::{cap_messages, into_user_messages, sanitize_messages},
@@ -29,18 +29,18 @@ pub struct RefDoc {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct AskRequest {
+pub struct AIHelpRequest {
     pub req: CreateChatCompletionRequest,
     pub refs: Vec<RefDoc>,
 }
 
-pub async fn prepare_ask_req(
+pub async fn prepare_ai_help_req(
     client: &Client<OpenAIConfig>,
     pool: &SupaPool,
     messages: Vec<ChatCompletionRequestMessage>,
     experiments: Option<Experiments>,
-) -> Result<Option<AskRequest>, AIError> {
-    let config = AskConfig::from(experiments.unwrap_or_default().config);
+) -> Result<Option<AIHelpRequest>, AIError> {
+    let config = AIHelpConfig::from(experiments.unwrap_or_default().config);
     let open_ai_messages = sanitize_messages(messages);
 
     // TODO: sign messages os we don't check again
@@ -127,7 +127,7 @@ pub async fn prepare_ask_req(
         .temperature(0.0)
         .build()?;
 
-    Ok(Some(AskRequest {
+    Ok(Some(AIHelpRequest {
         req,
         refs,
     }))

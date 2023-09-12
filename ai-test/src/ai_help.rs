@@ -13,7 +13,7 @@ use async_openai::{
 use futures::{stream, StreamExt, TryStreamExt};
 use itertools::Itertools;
 use rumba::{
-    ai::help::{prepare_ask_req, AskRequest},
+    ai::help::{prepare_ai_help_req, AIHelpRequest},
     db,
     experiments::Experiments,
     settings::SETTINGS,
@@ -25,7 +25,7 @@ use crate::prompts;
 
 #[derive(Serialize, Deserialize)]
 pub struct Storage {
-    pub req: AskRequest,
+    pub req: AIHelpRequest,
     pub res: Option<ChatCompletionResponseMessage>,
 }
 
@@ -63,7 +63,7 @@ impl Storage {
     }
 }
 
-pub async fn ask_all(
+pub async fn ai_help_all(
     path: Option<impl AsRef<Path>>,
     out: impl AsRef<Path>,
     experiments: Option<Experiments>,
@@ -98,7 +98,7 @@ pub async fn ask_all(
                 })
                 .collect();
             if let Some(req) =
-                prepare_ask_req(openai_client, supabase_pool, messages, experiments).await?
+                prepare_ai_help_req(openai_client, supabase_pool, messages, experiments).await?
             {
                 let mut res = openai_client.chat().create(req.req.clone()).await?;
                 let res = res.choices.pop().map(|res| res.message);

@@ -5,7 +5,7 @@ use crate::helpers::{read_json, wait_for_stubr};
 use actix_web::test;
 use anyhow::Error;
 use diesel::{QueryDsl, RunQueryDsl};
-use rumba::ai::constants::ASK_DEFAULT;
+use rumba::ai::constants::AI_HELP_DEFAULT;
 use rumba::api::root::RootSetIsAdminQuery;
 use rumba::db::ai_help::{add_help_log, AIHelpFeedback, FeedbackTyp};
 use rumba::db::model::{AIHelpLogs, AIHelpLogsInsert};
@@ -19,7 +19,7 @@ const CHAT_ID: Uuid = Uuid::nil();
 fn add_history_log() -> Result<(), Error> {
     let insert = AIHelpLogsInsert {
         user_id: 1,
-        variant: ASK_DEFAULT.name.to_string(),
+        variant: AI_HELP_DEFAULT.name.to_string(),
         chat_id: CHAT_ID,
         message_id: 1,
         created_at: None,
