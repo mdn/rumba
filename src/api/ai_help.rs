@@ -21,25 +21,23 @@ use uuid::Uuid;
 
 use crate::{
     ai::{
-        ask::{prepare_ask_req, RefDoc},
-        constants::{AskConfig, AI_EXPLAIN_VERSION},
-        explain::{hash_highlighted, prepare_explain_req, verify_explain_request, ExplainRequest},
+        help::{prepare_ask_req, RefDoc},
+        constants::AskConfig,
     },
     db::{
-        ai::{
-            add_explain_answer, add_help_log, add_help_log_feedback, create_or_increment_total,
-            explain_from_cache, get_count, help_from_log, help_log_list, set_explain_feedback,
-            AskFeedback, ExplainFeedback, FeedbackTyp, AI_HELP_LIMIT,
+        ai_help::{
+            add_help_log, add_help_log_feedback, create_or_increment_total, get_count,
+            help_from_log, help_log_list, AIHelpFeedback, FeedbackTyp, AI_HELP_LIMIT,
         },
         experiments::get_experiments,
-        model::{AIExplainCacheInsert, AIHelpLogs, AIHelpLogsFeedbackInsert, AIHelpLogsInsert},
+        model::{AIHelpLogs, AIHelpLogsFeedbackInsert, AIHelpLogsInsert},
         SupaPool,
     },
     experiments::Experiments,
 };
 use crate::{
     api::error::ApiError,
-    db::{ai::create_or_increment_limit, users::get_user, Pool},
+    db::{ai_help::create_or_increment_limit, users::get_user, Pool},
 };
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -219,7 +217,10 @@ pub async fn ask(
         current
     };
     if let (Some(client), Some(pool)) = (&**openai_client, &**supabase_pool) {
-        let ChatRequestMessages { mut chat_id, messages } = messages.into_inner();
+        let ChatRequestMessages {
+            mut chat_id,
+            messages,
+        } = messages.into_inner();
         if messages.len() == 1 {
             chat_id = None;
         }
@@ -363,7 +364,7 @@ pub async fn ask_log_list(
 pub async fn ask_feedback(
     user_id: Identity,
     diesel_pool: Data<Pool>,
-    req: Json<AskFeedback>,
+    req: Json<AIHelpFeedback>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = diesel_pool.get()?;
     let user = get_user(&mut conn, user_id.id().unwrap())?;
@@ -378,100 +379,12 @@ pub async fn ask_feedback(
             .thumbs
             .map(|t| Some(t == FeedbackTyp::ThumbsUp)),
     };
-    add_help_log_feedback(&mut conn, &user, &ask_feedback.chat_id, ask_feedback.message_id, &feedback)?;
+    add_help_log_feedback(
+        &mut conn,
+        &user,
+        &ask_feedback.chat_id,
+        ask_feedback.message_id,
+        &feedback,
+    )?;
     Ok(HttpResponse::Created().finish())
-}
-
-pub async fn explain_feedback(
-    diesel_pool: Data<Pool>,
-    req: Json<ExplainFeedback>,
-) -> Result<HttpResponse, ApiError> {
-    let mut conn = diesel_pool.get()?;
-    set_explain_feedback(&mut conn, req.into_inner())?;
-    Ok(HttpResponse::Created().finish())
-}
-
-pub async fn explain(
-    openai_client: Data<Option<Client<OpenAIConfig>>>,
-    diesel_pool: Data<Pool>,
-    req: Json<ExplainRequest>,
-) -> Result<Either<impl Responder, impl Responder>, ApiError> {
-    let explain_request = req.into_inner();
-
-    if verify_explain_request(&explain_request).is_err() {
-        return Err(ApiError::Unauthorized);
-    }
-    let signature = explain_request.signature.clone();
-    let to_be_hashed = if let Some(ref highlighted) = explain_request.highlighted {
-        highlighted
-    } else {
-        &explain_request.sample
-    };
-    let highlighted_hash = hash_highlighted(to_be_hashed.as_str());
-    let hash = highlighted_hash.clone();
-    let language = explain_request.language.clone();
-
-    let mut conn = diesel_pool.get()?;
-    if let Some(hit) = explain_from_cache(&mut conn, &signature, &highlighted_hash)? {
-        if let Some(explanation) = hit.explanation {
-            let parts = vec![
-                sse::Data::new_json(ExplainInitial {
-                    initial: ExplainInitialData { cached: true, hash },
-                })
-                .map_err(OpenAIError::JSONDeserialize)?,
-                sse::Data::new_json(GeneratedChunk::from(explanation.as_str()))
-                    .map_err(OpenAIError::JSONDeserialize)?,
-            ];
-            let stream = futures::stream::iter(parts.into_iter());
-            return Ok(Either::Left(sse::Sse::from_stream(
-                stream.map(|r| Ok::<_, ApiError>(sse::Event::Data(r))),
-            )));
-        }
-    }
-    if let Some(client) = &**openai_client {
-        let explain_req = prepare_explain_req(explain_request, client).await?;
-        let stream = client.chat().create_stream(explain_req).await.unwrap();
-
-        let (tx, mut rx) = mpsc::unbounded_channel::<CreateChatCompletionStreamResponse>();
-
-        actix_web::rt::spawn(async move {
-            let mut answer = vec![];
-            while let Some(mut chunk) = rx.recv().await {
-                if let Some(part) = chunk.choices.pop().and_then(|c| c.delta.content) {
-                    answer.push(part);
-                }
-            }
-            let insert = AIExplainCacheInsert {
-                language,
-                signature,
-                highlighted_hash,
-                explanation: Some(answer.join("")),
-                version: AI_EXPLAIN_VERSION,
-            };
-            if let Err(err) = add_explain_answer(&mut conn, &insert) {
-                error!("AI Explain cache: {err}");
-            }
-        });
-        let initial = stream::once(async move {
-            Ok::<_, OpenAIError>(sse::Event::Data(
-                sse::Data::new_json(ExplainInitial {
-                    initial: ExplainInitialData {
-                        cached: false,
-                        hash,
-                    },
-                })
-                .map_err(OpenAIError::JSONDeserialize)?,
-            ))
-        });
-
-        return Ok(Either::Right(sse::Sse::from_stream(initial.chain(
-            stream.map_ok(move |res| {
-                if let Err(e) = tx.send(res.clone()) {
-                    error!("{e}");
-                }
-                sse::Event::Data(sse::Data::new_json(res).unwrap())
-            }),
-        ))));
-    }
-    Err(ApiError::Artificial)
 }

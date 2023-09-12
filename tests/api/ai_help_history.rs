@@ -7,7 +7,7 @@ use anyhow::Error;
 use diesel::{QueryDsl, RunQueryDsl};
 use rumba::ai::constants::ASK_DEFAULT;
 use rumba::api::root::RootSetIsAdminQuery;
-use rumba::db::ai::{add_help_log, AskFeedback, FeedbackTyp};
+use rumba::db::ai_help::{add_help_log, AIHelpFeedback, FeedbackTyp};
 use rumba::db::model::{AIHelpLogs, AIHelpLogsInsert};
 use rumba::db::schema::ai_help_logs;
 use rumba::db::users::root_set_is_admin;
@@ -108,7 +108,7 @@ async fn test_history() -> Result<(), Error> {
         .post(
             "/api/v1/plus/ai/ask/feedback",
             None,
-            Some(PostPayload::Json(serde_json::to_value(AskFeedback {
+            Some(PostPayload::Json(serde_json::to_value(AIHelpFeedback {
                 thumbs: Some(FeedbackTyp::ThumbsUp),
                 chat_id: CHAT_ID,
                 message_id: 1,
@@ -126,7 +126,7 @@ async fn test_history() -> Result<(), Error> {
         .post(
             "/api/v1/plus/ai/ask/feedback",
             None,
-            Some(PostPayload::Json(serde_json::to_value(AskFeedback {
+            Some(PostPayload::Json(serde_json::to_value(AIHelpFeedback {
                 thumbs: Some(FeedbackTyp::ThumbsDown),
                 chat_id: CHAT_ID,
                 message_id: 1,

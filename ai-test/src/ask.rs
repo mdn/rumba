@@ -13,7 +13,7 @@ use async_openai::{
 use futures::{stream, StreamExt, TryStreamExt};
 use itertools::Itertools;
 use rumba::{
-    ai::ask::{prepare_ask_req, AskRequest},
+    ai::help::{prepare_ask_req, AskRequest},
     db,
     experiments::Experiments,
     settings::SETTINGS,

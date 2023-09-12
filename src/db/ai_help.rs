@@ -5,17 +5,14 @@ use diesel::{insert_into, PgConnection};
 use diesel::{prelude::*, update};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use serde_with::{base64::Base64, serde_as};
 use uuid::Uuid;
 
-use crate::ai::constants::AI_EXPLAIN_VERSION;
 use crate::db::error::DbError;
 use crate::db::model::{
-    AIExplainCacheInsert, AIExplainCacheQuery, AIHelpLimitInsert, AIHelpLogs,
-    AIHelpLogsFeedbackInsert, AIHelpLogsInsert, UserQuery,
+    AIHelpLimitInsert, AIHelpLogs, AIHelpLogsFeedbackInsert, AIHelpLogsInsert, UserQuery,
 };
 use crate::db::schema::ai_help_limits as limits;
-use crate::db::schema::{ai_explain_cache as explain, ai_help_logs};
+use crate::db::schema::ai_help_logs;
 use crate::settings::SETTINGS;
 
 pub const AI_HELP_LIMIT: i64 = 5;
@@ -36,21 +33,11 @@ pub enum FeedbackTyp {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct AskFeedback {
+pub struct AIHelpFeedback {
     pub chat_id: Uuid,
     pub message_id: i32,
     pub feedback: Option<String>,
     pub thumbs: Option<FeedbackTyp>,
-}
-
-#[serde_as]
-#[derive(Serialize, Deserialize)]
-pub struct ExplainFeedback {
-    pub typ: FeedbackTyp,
-    #[serde_as(as = "Base64")]
-    pub hash: Vec<u8>,
-    #[serde_as(as = "Base64")]
-    pub signature: Vec<u8>,
 }
 
 pub fn get_count(conn: &mut PgConnection, user: &UserQuery) -> Result<i64, DbError> {
@@ -134,73 +121,6 @@ pub fn create_or_increment_limit(
         .optional()?;
         Ok(current)
     }
-}
-
-pub fn add_explain_answer(
-    conn: &mut PgConnection,
-    cache: &AIExplainCacheInsert,
-) -> Result<(), DbError> {
-    insert_into(explain::table)
-        .values(cache)
-        .on_conflict_do_nothing()
-        .execute(conn)?;
-    Ok(())
-}
-
-pub fn explain_from_cache(
-    conn: &mut PgConnection,
-    signature: &Vec<u8>,
-    highlighted_hash: &Vec<u8>,
-) -> Result<Option<AIExplainCacheQuery>, DbError> {
-    let hit = update(explain::table)
-        .filter(
-            explain::signature
-                .eq(signature)
-                .and(explain::highlighted_hash.eq(highlighted_hash))
-                .and(explain::version.eq(AI_EXPLAIN_VERSION)),
-        )
-        .set((
-            explain::last_used.eq(Utc::now().naive_utc()),
-            explain::view_count.eq(explain::view_count + 1),
-        ))
-        .returning(explain::all_columns)
-        .get_result(conn)
-        .optional()?;
-    Ok(hit)
-}
-
-pub fn set_explain_feedback(
-    conn: &mut PgConnection,
-    feedback: ExplainFeedback,
-) -> Result<(), DbError> {
-    let ExplainFeedback {
-        typ,
-        hash,
-        signature,
-    } = feedback;
-    match typ {
-        FeedbackTyp::ThumbsDown => update(explain::table)
-            .filter(
-                explain::signature
-                    .eq(signature)
-                    .and(explain::highlighted_hash.eq(hash))
-                    .and(explain::version.eq(AI_EXPLAIN_VERSION)),
-            )
-            .set(explain::thumbs_down.eq(explain::thumbs_down + 1))
-            .execute(conn)
-            .optional()?,
-        FeedbackTyp::ThumbsUp => update(explain::table)
-            .filter(
-                explain::signature
-                    .eq(signature)
-                    .and(explain::highlighted_hash.eq(hash))
-                    .and(explain::version.eq(AI_EXPLAIN_VERSION)),
-            )
-            .set(explain::thumbs_up.eq(explain::thumbs_up + 1))
-            .execute(conn)
-            .optional()?,
-    };
-    Ok(())
 }
 
 pub fn add_help_log(conn: &mut PgConnection, cache: &AIHelpLogsInsert) -> Result<(), DbError> {

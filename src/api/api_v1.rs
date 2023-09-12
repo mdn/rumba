@@ -1,4 +1,5 @@
-use crate::api::ai::{ask, ask_feedback, explain, explain_feedback, quota, ask_log, ask_log_list};
+use crate::api::ai_explain::{explain, explain_feedback};
+use crate::api::ai_help::{ask, ask_feedback, quota, ask_log, ask_log_list};
 use crate::api::experiments::{get_experiments, update_experiments};
 use crate::api::info::information;
 use crate::api::newsletter::{

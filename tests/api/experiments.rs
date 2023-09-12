@@ -1,11 +1,20 @@
-use crate::helpers::app::init_test;
+use crate::helpers::{app::init_test, db::get_pool};
 use crate::helpers::read_json;
 use anyhow::Error;
+use rumba::{db::users::root_set_is_admin, api::root::RootSetIsAdminQuery};
 use serde_json::{json, Value};
 
 #[actix_rt::test]
 async fn test_experiments_config() -> Result<(), Error> {
     let (mut client, stubr) = init_test(vec!["tests/stubs"]).await?;
+    let mut conn = get_pool().get()?;
+    root_set_is_admin(
+        &mut conn,
+        RootSetIsAdminQuery {
+            fxa_uid: "TEST_SUB".into(),
+            is_admin: true,
+        },
+    )?;
     let whoami = client
         .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;

@@ -1,4 +1,4 @@
-pub mod ask;
+pub mod help;
 pub mod constants;
 pub mod embeddings;
 pub mod error;
