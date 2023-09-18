@@ -512,9 +512,9 @@ dependencies = [
 
 [[package]]
 name = "async-openai"
-version = "0.14.1"
+version = "0.14.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9e39a536b0075c2517fb2e7a70a7e77a492395e71b0f3677ff6e2609a836c5b"
+checksum = "7150fb5d9cc4eb0184af43ce75a89620dc3747d3c816e8b0ba200682d0155c05"
 dependencies = [
  "async-convert",
  "backoff",
