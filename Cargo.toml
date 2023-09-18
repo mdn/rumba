@@ -18,7 +18,7 @@ anyhow = "1"
 actix-web = "4"
 actix-http = "3"
 actix-rt = "2"
-actix-identity = "0.5"
+actix-identity = "0.6"
 actix-session = { version = "0.7", features = ["cookie-session"] }
 actix-web-httpauth = "0.8"
 actix-web-lab = "0.19"
