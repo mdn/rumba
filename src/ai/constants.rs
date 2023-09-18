@@ -7,6 +7,25 @@ fn default_make_context(related_docs: Vec<RelatedDoc>) -> String {
     format!("Here is the MDN content:\n{context}")
 }
 
+fn new_make_context(related_docs: Vec<RelatedDoc>) -> String {
+    let context = related_docs
+        .into_iter()
+        .map(|d| format!("---\nurl: {}\n---\n\n{}", d.url, d.content))
+        .join("\n</article>\n<article>\n");
+    format!("<article>\n{}\n</article>", context)
+}
+
+fn new_make_section_context(related_docs: Vec<RelatedDoc>) -> String {
+    let related_docs_with_title = related_docs
+        .into_iter()
+        .map(|d| RelatedDoc {
+            content: format!("# {}\n\n{}", d.title, d.content),
+            ..d
+        })
+        .collect();
+    new_make_context(related_docs_with_title)
+}
+
 // Whenever changing the model: bump the AI_EXPLAIN_VERSION!
 #[derive(Debug, Copy, Clone)]
 pub struct AskConfig {
@@ -42,7 +61,7 @@ const ASK_NEW_PROMPT: AskConfig = AskConfig {
     token_limit: 4_097,
     context_limit: 1_500,
     max_completion_tokens: 1_024,
-    make_context: default_make_context,
+    make_context: new_make_section_context,
 };
 
 const ASK_FULL_DOC: AskConfig = AskConfig {
@@ -54,16 +73,7 @@ const ASK_FULL_DOC: AskConfig = AskConfig {
     token_limit: 16_384,
     context_limit: 12_000,
     max_completion_tokens: 2_048,
-    make_context: |docs| {
-        let context = docs
-            .into_iter()
-            .map(|d| d.content)
-            .join("<article></article>");
-        format!(
-            "Here are the related MDN articles (delimited with XML tags):\n<article>{}</article>",
-            context
-        )
-    },
+    make_context: default_make_context,
 };
 
 const ASK_FULL_DOC_NEW_PROMPT: AskConfig = AskConfig {
@@ -75,7 +85,7 @@ const ASK_FULL_DOC_NEW_PROMPT: AskConfig = AskConfig {
     token_limit: 16_384,
     context_limit: 12_000,
     max_completion_tokens: 2_048,
-    make_context: default_make_context,
+    make_context: new_make_context,
 };
 
 const ASK_GPT4: AskConfig = AskConfig {
@@ -99,7 +109,7 @@ const ASK_GTP4_NEW_PROMPT: AskConfig = AskConfig {
     token_limit: 8_192,
     context_limit: 4_500,
     max_completion_tokens: 1_536,
-    make_context: default_make_context,
+    make_context: new_make_section_context,
 };
 
 const ASK_GPT4_FULL_DOC: AskConfig = AskConfig {
@@ -123,7 +133,7 @@ const ASK_GPT4_FULL_DOC_NEW_PROMPT: AskConfig = AskConfig {
     token_limit: 32_768,
     context_limit: 12_000,
     max_completion_tokens: 4_096,
-    make_context: default_make_context,
+    make_context: new_make_context,
 };
 
 impl From<ExperimentsConfig> for AskConfig {
