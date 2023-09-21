@@ -25,6 +25,16 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
                 .service(
                     web::scope("/ai")
                         .service(
+                            web::scope("/help")
+                                .service(web::resource("").route(web::post().to(ai_help)))
+                                .service(web::resource("/quota").route(web::get().to(quota)))
+                                .service(web::resource("/history/list").route(web::get().to(ai_help_log_list)))
+                                .service(web::resource("/history/{chat_id}").route(web::get().to(ai_help_log)))
+                                .service(
+                                    web::resource("/feedback").route(web::post().to(ai_help_feedback)),
+                                ),
+                        )
+                        .service(
                             web::scope("/ask")
                                 .service(web::resource("").route(web::post().to(ai_help)))
                                 .service(web::resource("/quota").route(web::get().to(quota)))
