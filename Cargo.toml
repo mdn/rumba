@@ -2,6 +2,7 @@
 name = "rumba"
 version = "1.5.1"
 edition = "2021"
+rust-version = "1.72"
 
 [lib]
 path = "src/lib.rs"
@@ -21,8 +22,8 @@ anyhow = "1"
 actix-web = "4"
 actix-http = "3"
 actix-rt = "2"
-actix-identity = "0.5"
-actix-session = { version = "0.7", features = ["cookie-session"] }
+actix-identity = "0.6"
+actix-session = { version = "0.8", features = ["cookie-session"] }
 actix-web-httpauth = "0.8"
 actix-web-lab = "0.19"
 
@@ -78,9 +79,9 @@ sentry-actix = "0.31"
 
 basket = "0.0.5"
 async-openai = "0.14"
-tiktoken-rs = { version = "0.5.3", features = ["async-openai"] }
+tiktoken-rs = { version = "0.5", features = ["async-openai"] }
 
-octocrab = "0.29"
+octocrab = "0.30"
 aes-gcm = { version = "0.10", features = ["default", "std"] }
 hmac = "0.12"
 sha2 = "0.10"
