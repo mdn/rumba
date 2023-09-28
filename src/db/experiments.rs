@@ -21,11 +21,12 @@ pub fn get_experiments(
         .first::<ExperimentsQuery>(conn)
         .optional()
         .map_err(Into::into)
-        .map(|x| x.map(Into::into))
+        .map(|x| x.map(Experiments::from).unwrap_or_default().restrict(user))
 }
 
 pub fn create_or_update_experiments(
     conn: &mut PgConnection,
+    user: &UserQuery,
     experiments: ExperimentsInsert,
 ) -> QueryResult<Option<Experiments>> {
     if let Some(res) = match &experiments.active {
@@ -60,7 +61,11 @@ pub fn create_or_update_experiments(
             .get_result::<ExperimentsQuery>(conn)
             .optional()?,
     } {
-        return Ok(Some(res.into()));
+        return Ok(if res.active {
+            Experiments::from(res).restrict(user)
+        } else {
+            Experiments::default().restrict(user)
+        });
     }
     Ok(None)
 }

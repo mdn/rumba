@@ -84,6 +84,7 @@ diesel::table! {
         created_at -> Timestamp,
         request -> Jsonb,
         response -> Jsonb,
+        debug -> Bool,
         feedback -> Nullable<Text>,
         thumbs -> Nullable<Bool>,
     }

@@ -37,7 +37,7 @@ pub async fn update_experiments(
             active: settings_update.active,
             config: settings_update.config.unwrap_or_default(),
         };
-        let config = create_or_update_experiments(&mut conn_pool, experiments_insert)
+        let config = create_or_update_experiments(&mut conn_pool, &user, experiments_insert)
             .map_err(DbError::from)?;
         return Ok(HttpResponse::Created().json(config));
     }

@@ -62,7 +62,25 @@ impl UserQuery {
     }
 
     pub fn eligible_for_experiments(&self) -> bool {
-        self.is_admin || self.is_fox_food
+        self.is_admin || self.is_mdn_team
+    }
+
+    #[cfg(test)] 
+    pub fn dummy() -> Self {
+        UserQuery {
+            id: 0,
+            created_at: NaiveDateTime::MIN,
+            updated_at: NaiveDateTime::MIN,
+            email: "foo@bar.com".to_string(),
+            fxa_uid: Uuid::nil().to_string(),
+            fxa_refresh_token: Default::default(),
+            avatar_url: None,
+            subscription_type: None,
+            enforce_plus: None,
+            is_admin: false,
+            is_mdn_team: false,
+            is_fox_food: false,
+        }
     }
 }
 
@@ -261,6 +279,7 @@ pub struct AIHelpLogsInsert {
     pub created_at: Option<NaiveDateTime>,
     pub request: Value,
     pub response: Value,
+    pub debug: bool,
 }
 #[derive(Queryable, Serialize, Debug, Default)]
 #[diesel(table_name = ai_help_logs)]
@@ -273,6 +292,7 @@ pub struct AIHelpLogs {
     pub created_at: NaiveDateTime,
     pub request: Value,
     pub response: Value,
+    pub debug: bool,
     pub feedback: Option<String>,
     pub thumbs: Option<bool>,
 }

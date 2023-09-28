@@ -54,6 +54,7 @@ fn add_history_log() -> Result<(), Error> {
                 "content": "To center a div using CSS, ..."}
             }
         ),
+        debug: true,
     };
     let pool = get_pool();
     let mut conn = pool.get()?;

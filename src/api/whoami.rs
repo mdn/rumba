@@ -3,8 +3,8 @@ use actix_identity::Identity;
 use serde::Serialize;
 
 use crate::db;
-use crate::db::Pool;
 use crate::db::experiments::get_experiments;
+use crate::db::Pool;
 use crate::experiments::Experiments;
 use crate::metrics::Metrics;
 use crate::settings::SETTINGS;
@@ -77,11 +77,7 @@ pub async fn whoami(
                     let settings = db::settings::get_settings(&mut conn_pool, &user)?;
                     let subscription_type = user.get_subscription_type().unwrap_or_default();
                     let is_subscriber = user.is_subscriber();
-                    let experiments = match get_experiments(&mut conn_pool, &user)? {
-                        Some(ex) if ex.active  => Some(ex),
-                        _ if user.eligible_for_experiments() => Some(Default::default()),
-                        _ => None,
-                    };
+                    let experiments = get_experiments(&mut conn_pool, &user)?;
                     let response = WhoamiResponse {
                         geo: Option::Some(geo),
                         username: Option::Some(user.fxa_uid),

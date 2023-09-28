@@ -19,8 +19,8 @@ CREATE TABLE ai_help_logs (
     created_at      TIMESTAMP NOT NULL DEFAULT now(),
     request         JSONB NOT NULL DEFAULT '{}'::jsonb,
     response        JSONB NOT NULL DEFAULT '{}'::jsonb,
+    debug           BOOLEAN NOT NULL DEFAULT FALSE,
     feedback        TEXT,
     thumbs          BOOLEAN DEFAULT NULL,
-    -- privacy
     UNIQUE(chat_id, message_id)
 );

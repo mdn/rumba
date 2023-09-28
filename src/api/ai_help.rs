@@ -21,8 +21,8 @@ use uuid::Uuid;
 
 use crate::{
     ai::{
-        help::{prepare_ai_help_req, RefDoc},
         constants::AIHelpConfig,
+        help::{prepare_ai_help_req, RefDoc},
     },
     db::{
         ai_help::{
@@ -106,7 +106,8 @@ impl TryFrom<Vec<AIHelpLogs>> for AIHelpLog {
         let messages = value
             .into_iter()
             .map(|log| {
-                let res: AIHelpLogResponse = serde_json::from_value(log.response).unwrap_or_default();
+                let res: AIHelpLogResponse =
+                    serde_json::from_value(log.response).unwrap_or_default();
                 let mut req: CreateChatCompletionRequest =
                     serde_json::from_value(log.request).unwrap_or_default();
                 if chat_id.is_none() {
@@ -269,6 +270,7 @@ pub async fn ai_help(
                                 },
                             })
                             .unwrap_or(Null),
+                            debug: true,
                         };
                         if let Err(err) = add_help_log(&mut conn, &insert) {
                             error!("AI Help log: {err}");
