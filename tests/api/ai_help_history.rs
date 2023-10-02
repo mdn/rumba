@@ -85,6 +85,7 @@ async fn test_history() -> Result<(), Error> {
             None,
             Some(crate::helpers::http_client::PostPayload::Json(json!({
                 "active": true,
+                "config": { "history": true }
             }))),
         )
         .await;
@@ -93,7 +94,7 @@ async fn test_history() -> Result<(), Error> {
     assert_eq!(json["active"], true);
     let history = logged_in_client
         .get(
-            "/api/v1/plus/ai/ask/history/00000000-0000-0000-0000-000000000000",
+            "/api/v1/plus/ai/help/history/00000000-0000-0000-0000-000000000000",
             None,
         )
         .await;
@@ -107,7 +108,7 @@ async fn test_history() -> Result<(), Error> {
 
     let feedback = logged_in_client
         .post(
-            "/api/v1/plus/ai/ask/feedback",
+            "/api/v1/plus/ai/help/feedback",
             None,
             Some(PostPayload::Json(serde_json::to_value(AIHelpFeedback {
                 thumbs: Some(FeedbackTyp::ThumbsUp),
@@ -125,7 +126,7 @@ async fn test_history() -> Result<(), Error> {
 
     let feedback = logged_in_client
         .post(
-            "/api/v1/plus/ai/ask/feedback",
+            "/api/v1/plus/ai/help/feedback",
             None,
             Some(PostPayload::Json(serde_json::to_value(AIHelpFeedback {
                 thumbs: Some(FeedbackTyp::ThumbsDown),
