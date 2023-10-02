@@ -5,6 +5,8 @@ WORKDIR /usr/src/rumba
 COPY Cargo.toml Cargo.toml
 COPY Cargo.lock Cargo.lock
 
+COPY ai-test/Cargo.toml ai-test/Cargo.toml
+
 RUN mkdir .cargo
 
 RUN cargo vendor > .cargo/config
