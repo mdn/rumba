@@ -34,8 +34,6 @@ enum Commands {
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     let cli = Cli::parse();
-
-    println!("hello tests");
     match cli.command {
         Commands::Test {
             path,
