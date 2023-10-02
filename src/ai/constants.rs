@@ -5,27 +5,25 @@ use crate::{
     experiments::{Experiments, ExperimentsConfig},
 };
 
-fn default_make_context(related_docs: Vec<RelatedDoc>) -> String {
+fn default_make_context(related_docs: impl IntoIterator<Item = RelatedDoc>) -> String {
     let context = related_docs.into_iter().map(|d| d.content).join("\n---\n");
     format!("Here is the MDN content:\n{context}")
 }
 
-fn new_make_context(related_docs: Vec<RelatedDoc>) -> String {
-    let context = related_docs
+fn new_make_context(related_docs: impl IntoIterator<Item = RelatedDoc>) -> String {
+    related_docs
         .into_iter()
-        .map(|d| format!("---\nurl: {}\n---\n\n{}", d.url, d.content))
-        .join("\n</article>\n<article>\n");
-    format!("<article>\n{}\n</article>", context)
+        .map(|d| format!("<article>\n---\nurl: {}\n---\n\n{}\n</article>", d.url, d.content))
+        .join("\n")
 }
 
-fn new_make_section_context(related_docs: Vec<RelatedDoc>) -> String {
+fn new_make_section_context(related_docs: impl IntoIterator<Item = RelatedDoc>) -> String {
     let related_docs_with_title = related_docs
         .into_iter()
         .map(|d| RelatedDoc {
             content: format!("# {}\n\n{}", d.title, d.content),
             ..d
-        })
-        .collect();
+        });
     new_make_context(related_docs_with_title)
 }
 
