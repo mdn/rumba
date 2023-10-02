@@ -29,9 +29,7 @@ async fn test_experiments_config() -> Result<(), Error> {
             }))),
         )
         .await;
-    assert_eq!(experiments.status(), 201);
-    let json = read_json(experiments).await;
-    assert_eq!(json["gpt4"], json!(null));
+    assert_eq!(experiments.status(), 403);
     let active_experiments = client.get("/api/v1/plus/settings/experiments/", None).await;
     assert!(active_experiments.response().status().is_success());
     let json = read_json(active_experiments).await;

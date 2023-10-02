@@ -10,7 +10,7 @@ use crate::{
         model::ExperimentsInsert,
         Pool,
     },
-    experiments::ExperimentsConfig,
+    experiments::{ExperimentsConfig, Experiments},
 };
 
 use super::error::ApiError;
@@ -32,6 +32,9 @@ pub async fn update_experiments(
 
     let settings_update = payload.into_inner();
     if let Ok(user) = user {
+        if !user.eligible_for_experiments() {
+            return Err(ApiError::Forbidden);
+        }
         let experiments_insert = ExperimentsInsert {
             user_id: user.id,
             active: settings_update.active,
@@ -52,6 +55,9 @@ pub async fn get_experiments(
     let mut conn_pool = pool.get()?;
     let user = db::users::get_user(&mut conn_pool, user_id.id().unwrap());
     if let Ok(user) = user {
+        if !user.eligible_for_experiments() {
+            return Ok(HttpResponse::Ok().json(None::<Experiments>))
+        }
         let exp = experiments::get_experiments(&mut conn_pool, &user)?;
         return Ok(HttpResponse::Ok().json(exp));
     }
