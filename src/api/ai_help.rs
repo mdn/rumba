@@ -288,7 +288,10 @@ pub async fn ai_help_log(
     let mut conn = diesel_pool.get()?;
     let user = get_user(&mut conn, user_id.id().unwrap())?;
     let experiments = get_experiments(&mut conn, &user)?;
-    if experiments.map(|e| e.active).unwrap_or_default() {
+    if experiments
+        .map(|e| e.active && e.config.history.unwrap_or_default())
+        .unwrap_or_default()
+    {
         let hit = help_from_log(&mut conn, &user, &chat_id.into_inner())?;
         if !hit.is_empty() {
             let res = AIHelpLog::try_from(hit)?;
@@ -305,7 +308,10 @@ pub async fn ai_help_log_list(
     let mut conn = diesel_pool.get()?;
     let user = get_user(&mut conn, user_id.id().unwrap())?;
     let experiments = get_experiments(&mut conn, &user)?;
-    if experiments.map(|e| e.active).unwrap_or_default() {
+    if experiments
+        .map(|e| e.active && e.config.history.unwrap_or_default())
+        .unwrap_or_default()
+    {
         let hit = help_log_list(&mut conn, &user)?;
         return Ok(HttpResponse::Ok().json(hit));
     }

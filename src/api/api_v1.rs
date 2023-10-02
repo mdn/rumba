@@ -41,6 +41,7 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
                                         .route(web::post().to(ai_help_feedback)),
                                 ),
                         )
+                        // Keep for compat. TODO: remove.
                         .service(
                             web::scope("/ask")
                                 .service(web::resource("").route(web::post().to(ai_help)))

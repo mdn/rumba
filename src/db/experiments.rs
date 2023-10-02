@@ -13,7 +13,7 @@ pub fn get_experiments(
     conn: &mut PgConnection,
     user: &UserQuery,
 ) -> Result<Option<Experiments>, DbError> {
-    if !(user.is_admin || user.is_fox_food || user.is_mdn_team) {
+    if !user.eligible_for_experiments() {
         return Ok(None);
     }
     ex::table
@@ -29,6 +29,9 @@ pub fn create_or_update_experiments(
     user: &UserQuery,
     experiments: ExperimentsInsert,
 ) -> QueryResult<Option<Experiments>> {
+    if !user.eligible_for_experiments() {
+        return Ok(None);
+    }
     if let Some(res) = match &experiments.active {
         Some(false) => insert_into(ex::table)
             .values(&experiments)
