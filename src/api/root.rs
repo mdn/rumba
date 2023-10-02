@@ -74,7 +74,7 @@ async fn set_is_mdn_team(
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
     let me: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
-    if !me.is_mdn_team {
+    if !me.is_admin {
         return Ok(HttpResponse::Forbidden().finish());
     }
     let res = root_set_is_mdn_team(&mut conn_pool, query.into_inner());
@@ -88,7 +88,7 @@ async fn set_is_mdn_team(
 async fn get_is_mdn_team(pool: Data<Pool>, user_id: Identity) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
     let me: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
-    if !me.is_mdn_team {
+    if !me.is_admin {
         return Ok(HttpResponse::Forbidden().finish());
     }
     let res = root_get_is_mdn_team(&mut conn_pool)?;
@@ -102,7 +102,7 @@ async fn set_is_fox_food(
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
     let me: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
-    if !me.is_fox_food {
+    if !me.is_admin {
         return Ok(HttpResponse::Forbidden().finish());
     }
     let res = root_set_is_fox_food(&mut conn_pool, query.into_inner());
@@ -116,7 +116,7 @@ async fn set_is_fox_food(
 async fn get_is_fox_food(pool: Data<Pool>, user_id: Identity) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
     let me: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
-    if !me.is_fox_food {
+    if !me.is_admin {
         return Ok(HttpResponse::Forbidden().finish());
     }
     let res = root_get_is_fox_food(&mut conn_pool)?;
