@@ -6,7 +6,6 @@ use rumba::experiments::Experiments;
 
 use crate::ai_help::ai_help_all;
 
-
 mod ai_help;
 mod prompts;
 

@@ -6,7 +6,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::db::model::{ExperimentsQuery, UserQuery};
 
-#[derive(FromSqlRow, AsExpression, Debug, Copy, Clone, Serialize, Default, Deserialize, PartialEq)]
+#[derive(
+    FromSqlRow, AsExpression, Debug, Copy, Clone, Serialize, Default, Deserialize, PartialEq,
+)]
 #[diesel(sql_type = Jsonb)]
 #[serde(default)]
 pub struct ExperimentsConfig {

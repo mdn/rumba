@@ -8,7 +8,7 @@ use async_openai::{
     Client,
 };
 use futures_util::{stream::FuturesUnordered, TryStreamExt};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     ai::{
@@ -40,7 +40,7 @@ pub async fn prepare_ai_help_req(
     messages: Vec<ChatCompletionRequestMessage>,
     experiments: Option<Experiments>,
 ) -> Result<Option<AIHelpRequest>, AIError> {
-    let config = AIHelpConfig::from(experiments.unwrap_or_default().config);
+    let config = AIHelpConfig::from(experiments);
     let open_ai_messages = sanitize_messages(messages);
 
     // TODO: sign messages os we don't check again
@@ -127,8 +127,5 @@ pub async fn prepare_ai_help_req(
         .temperature(0.0)
         .build()?;
 
-    Ok(Some(AIHelpRequest {
-        req,
-        refs,
-    }))
+    Ok(Some(AIHelpRequest { req, refs }))
 }

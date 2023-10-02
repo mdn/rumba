@@ -1,9 +1,9 @@
-use crate::helpers::{app::init_test, db::get_pool};
 use crate::helpers::read_json;
+use crate::helpers::{app::init_test, db::get_pool};
 use anyhow::Error;
 use rumba::api::root::RootSetIsMdnTeamQuery;
 use rumba::db::users::root_set_is_mdn_team;
-use rumba::{db::users::root_set_is_admin, api::root::RootSetIsAdminQuery};
+use rumba::{api::root::RootSetIsAdminQuery, db::users::root_set_is_admin};
 use serde_json::{json, Value};
 
 #[actix_rt::test]
@@ -11,13 +11,11 @@ async fn test_experiments_config() -> Result<(), Error> {
     let (mut client, stubr) = init_test(vec!["tests/stubs"]).await?;
     let mut conn = get_pool().get()?;
 
-
     // Return null for an regular user
     let active_experiments = client.get("/api/v1/plus/settings/experiments/", None).await;
     assert!(active_experiments.response().status().is_success());
     let json = read_json(active_experiments).await;
     assert_eq!(json, Value::Null);
-
 
     // Enabling experiments fails silently
     let experiments = client

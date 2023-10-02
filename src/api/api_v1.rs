@@ -1,5 +1,5 @@
 use crate::api::ai_explain::{explain, explain_feedback};
-use crate::api::ai_help::{ai_help, ai_help_feedback, quota, ai_help_log, ai_help_log_list};
+use crate::api::ai_help::{ai_help, ai_help_feedback, ai_help_log, ai_help_log_list, quota};
 use crate::api::experiments::{get_experiments, update_experiments};
 use crate::api::info::information;
 use crate::api::newsletter::{
@@ -28,20 +28,34 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
                             web::scope("/help")
                                 .service(web::resource("").route(web::post().to(ai_help)))
                                 .service(web::resource("/quota").route(web::get().to(quota)))
-                                .service(web::resource("/history/list").route(web::get().to(ai_help_log_list)))
-                                .service(web::resource("/history/{chat_id}").route(web::get().to(ai_help_log)))
                                 .service(
-                                    web::resource("/feedback").route(web::post().to(ai_help_feedback)),
+                                    web::resource("/history/list")
+                                        .route(web::get().to(ai_help_log_list)),
+                                )
+                                .service(
+                                    web::resource("/history/{chat_id}")
+                                        .route(web::get().to(ai_help_log)),
+                                )
+                                .service(
+                                    web::resource("/feedback")
+                                        .route(web::post().to(ai_help_feedback)),
                                 ),
                         )
                         .service(
                             web::scope("/ask")
                                 .service(web::resource("").route(web::post().to(ai_help)))
                                 .service(web::resource("/quota").route(web::get().to(quota)))
-                                .service(web::resource("/history/list").route(web::get().to(ai_help_log_list)))
-                                .service(web::resource("/history/{chat_id}").route(web::get().to(ai_help_log)))
                                 .service(
-                                    web::resource("/feedback").route(web::post().to(ai_help_feedback)),
+                                    web::resource("/history/list")
+                                        .route(web::get().to(ai_help_log_list)),
+                                )
+                                .service(
+                                    web::resource("/history/{chat_id}")
+                                        .route(web::get().to(ai_help_log)),
+                                )
+                                .service(
+                                    web::resource("/feedback")
+                                        .route(web::post().to(ai_help_feedback)),
                                 ),
                         )
                         .service(

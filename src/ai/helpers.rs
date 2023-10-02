@@ -1,10 +1,7 @@
 use async_openai::types::{ChatCompletionRequestMessage, Role};
 use tiktoken_rs::async_openai::num_tokens_from_messages;
 
-use crate::ai::{
-    constants::AIHelpConfig,
-    error::AIError,
-};
+use crate::ai::{constants::AIHelpConfig, error::AIError};
 
 pub fn sanitize_messages(
     messages: Vec<ChatCompletionRequestMessage>,

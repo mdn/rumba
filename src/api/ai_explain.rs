@@ -4,21 +4,18 @@ use actix_web::{
 };
 use actix_web_lab::{__reexports::tokio::sync::mpsc, sse};
 use async_openai::{
-    config::OpenAIConfig,
-    error::OpenAIError,
-    types::{ChatCompletionRequestMessage, CreateChatCompletionStreamResponse},
-    Client,
+    config::OpenAIConfig, error::OpenAIError, types::CreateChatCompletionStreamResponse, Client,
 };
 use futures_util::{stream, StreamExt, TryStreamExt};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_with::{base64::Base64, serde_as};
-use uuid::Uuid;
 
 use crate::{
     ai::{
         constants::AI_EXPLAIN_VERSION,
         explain::{hash_highlighted, prepare_explain_req, verify_explain_request, ExplainRequest},
     },
+    api::common::GeneratedChunk,
     db::{
         ai_explain::{
             add_explain_answer, explain_from_cache, set_explain_feedback, ExplainFeedback,
@@ -27,44 +24,6 @@ use crate::{
     },
 };
 use crate::{api::error::ApiError, db::Pool};
-
-#[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct ChatRequestMessages {
-    chat_id: Option<Uuid>,
-    messages: Vec<ChatCompletionRequestMessage>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
-#[serde(rename_all = "lowercase")]
-pub enum MetaType {
-    #[default]
-    Metadata,
-}
-
-#[derive(Serialize, Default)]
-pub struct GeneratedChunkDelta {
-    pub content: String,
-}
-
-#[derive(Serialize, Default)]
-pub struct GeneratedChunkChoice {
-    pub delta: GeneratedChunkDelta,
-    pub finish_reason: Option<String>,
-}
-#[derive(Serialize)]
-pub struct GeneratedChunk {
-    pub choices: Vec<GeneratedChunkChoice>,
-    pub id: i64,
-}
-
-impl Default for GeneratedChunk {
-    fn default() -> Self {
-        Self {
-            choices: Default::default(),
-            id: 1,
-        }
-    }
-}
 
 #[serde_as]
 #[derive(Serialize)]
@@ -76,20 +35,6 @@ pub struct ExplainInitialData {
 #[derive(Serialize)]
 pub struct ExplainInitial {
     initial: ExplainInitialData,
-}
-
-impl From<&str> for GeneratedChunk {
-    fn from(content: &str) -> Self {
-        GeneratedChunk {
-            choices: vec![GeneratedChunkChoice {
-                delta: GeneratedChunkDelta {
-                    content: content.into(),
-                },
-                ..Default::default()
-            }],
-            ..Default::default()
-        }
-    }
 }
 
 pub async fn explain_feedback(

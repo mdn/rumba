@@ -65,7 +65,7 @@ impl UserQuery {
         self.is_admin || self.is_mdn_team
     }
 
-    #[cfg(test)] 
+    #[cfg(test)]
     pub fn dummy() -> Self {
         UserQuery {
             id: 0,

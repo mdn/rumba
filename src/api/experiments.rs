@@ -10,7 +10,7 @@ use crate::{
         model::ExperimentsInsert,
         Pool,
     },
-    experiments::{ExperimentsConfig, Experiments},
+    experiments::{Experiments, ExperimentsConfig},
 };
 
 use super::error::ApiError;
@@ -56,7 +56,7 @@ pub async fn get_experiments(
     let user = db::users::get_user(&mut conn_pool, user_id.id().unwrap());
     if let Ok(user) = user {
         if !user.eligible_for_experiments() {
-            return Ok(HttpResponse::Ok().json(None::<Experiments>))
+            return Ok(HttpResponse::Ok().json(None::<Experiments>));
         }
         let exp = experiments::get_experiments(&mut conn_pool, &user)?;
         return Ok(HttpResponse::Ok().json(exp));

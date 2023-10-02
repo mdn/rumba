@@ -1,6 +1,9 @@
 use itertools::Itertools;
 
-use crate::{ai::embeddings::RelatedDoc, experiments::ExperimentsConfig};
+use crate::{
+    ai::embeddings::RelatedDoc,
+    experiments::{Experiments, ExperimentsConfig},
+};
 
 fn default_make_context(related_docs: Vec<RelatedDoc>) -> String {
     let context = related_docs.into_iter().map(|d| d.content).join("\n---\n");
@@ -136,6 +139,14 @@ const AI_HELP_GPT4_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
     make_context: new_make_context,
 };
 
+impl From<Option<Experiments>> for AIHelpConfig {
+    fn from(ex: Option<Experiments>) -> Self {
+        match ex {
+            Some(ex) if ex.active => ex.config.into(),
+            _ => AI_HELP_DEFAULT,
+        }
+    }
+}
 impl From<ExperimentsConfig> for AIHelpConfig {
     fn from(ex: ExperimentsConfig) -> Self {
         match (

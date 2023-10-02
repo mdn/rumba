@@ -84,3 +84,42 @@ pub async fn get_document_metadata(
         paths,
     })
 }
+
+#[derive(Serialize, Default)]
+pub struct GeneratedChunkDelta {
+    pub content: String,
+}
+
+#[derive(Serialize, Default)]
+pub struct GeneratedChunkChoice {
+    pub delta: GeneratedChunkDelta,
+    pub finish_reason: Option<String>,
+}
+#[derive(Serialize)]
+pub struct GeneratedChunk {
+    pub choices: Vec<GeneratedChunkChoice>,
+    pub id: i64,
+}
+
+impl Default for GeneratedChunk {
+    fn default() -> Self {
+        Self {
+            choices: Default::default(),
+            id: 1,
+        }
+    }
+}
+
+impl From<&str> for GeneratedChunk {
+    fn from(content: &str) -> Self {
+        GeneratedChunk {
+            choices: vec![GeneratedChunkChoice {
+                delta: GeneratedChunkDelta {
+                    content: content.into(),
+                },
+                ..Default::default()
+            }],
+            ..Default::default()
+        }
+    }
+}

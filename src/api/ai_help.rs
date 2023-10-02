@@ -16,7 +16,6 @@ use async_openai::{
 use futures_util::{stream, StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::Value::Null;
-use serde_with::{base64::Base64, serde_as};
 use uuid::Uuid;
 
 use crate::{
@@ -24,6 +23,7 @@ use crate::{
         constants::AIHelpConfig,
         help::{prepare_ai_help_req, RefDoc},
     },
+    api::common::{GeneratedChunk, GeneratedChunkChoice},
     db::{
         ai_help::{
             add_help_log, add_help_log_feedback, create_or_increment_total, get_count,
@@ -124,57 +124,6 @@ impl TryFrom<Vec<AIHelpLogs>> for AIHelpLog {
             chat_id: chat_id.unwrap_or_default(),
             messages,
         })
-    }
-}
-
-#[derive(Serialize, Default)]
-pub struct GeneratedChunkDelta {
-    pub content: String,
-}
-
-#[derive(Serialize, Default)]
-pub struct GeneratedChunkChoice {
-    pub delta: GeneratedChunkDelta,
-    pub finish_reason: Option<String>,
-}
-#[derive(Serialize)]
-pub struct GeneratedChunk {
-    pub choices: Vec<GeneratedChunkChoice>,
-    pub id: i64,
-}
-
-impl Default for GeneratedChunk {
-    fn default() -> Self {
-        Self {
-            choices: Default::default(),
-            id: 1,
-        }
-    }
-}
-
-#[serde_as]
-#[derive(Serialize)]
-pub struct ExplainInitialData {
-    cached: bool,
-    #[serde_as(as = "Base64")]
-    hash: Vec<u8>,
-}
-#[derive(Serialize)]
-pub struct ExplainInitial {
-    initial: ExplainInitialData,
-}
-
-impl From<&str> for GeneratedChunk {
-    fn from(content: &str) -> Self {
-        GeneratedChunk {
-            choices: vec![GeneratedChunkChoice {
-                delta: GeneratedChunkDelta {
-                    content: content.into(),
-                },
-                ..Default::default()
-            }],
-            ..Default::default()
-        }
     }
 }
 
