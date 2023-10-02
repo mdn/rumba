@@ -13,17 +13,20 @@ fn default_make_context(related_docs: impl IntoIterator<Item = RelatedDoc>) -> S
 fn new_make_context(related_docs: impl IntoIterator<Item = RelatedDoc>) -> String {
     related_docs
         .into_iter()
-        .map(|d| format!("<article>\n---\nurl: {}\n---\n\n{}\n</article>", d.url, d.content))
+        .map(|d| {
+            format!(
+                "<article>\n---\nurl: {}\n---\n\n{}\n</article>",
+                d.url, d.content
+            )
+        })
         .join("\n")
 }
 
 fn new_make_section_context(related_docs: impl IntoIterator<Item = RelatedDoc>) -> String {
-    let related_docs_with_title = related_docs
-        .into_iter()
-        .map(|d| RelatedDoc {
-            content: format!("# {}\n\n{}", d.title, d.content),
-            ..d
-        });
+    let related_docs_with_title = related_docs.into_iter().map(|d| RelatedDoc {
+        content: format!("# {}\n\n{}", d.title, d.content),
+        ..d
+    });
     new_make_context(related_docs_with_title)
 }
 
