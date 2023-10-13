@@ -7,10 +7,7 @@ use actix_web_lab::{__reexports::tokio::sync::mpsc, sse};
 use async_openai::{
     config::OpenAIConfig,
     error::OpenAIError,
-    types::{
-        ChatCompletionRequestMessage, CreateChatCompletionRequest,
-        CreateChatCompletionStreamResponse, Role::Assistant,
-    },
+    types::{ChatCompletionRequestMessage, CreateChatCompletionStreamResponse, Role::Assistant},
     Client,
 };
 use futures_util::{stream, StreamExt, TryStreamExt};
@@ -26,11 +23,12 @@ use crate::{
     api::common::{GeneratedChunk, GeneratedChunkChoice},
     db::{
         ai_help::{
-            add_help_log, add_help_log_feedback, create_or_increment_total, get_count,
-            help_from_log, help_log_list, AIHelpFeedback, FeedbackTyp, AI_HELP_LIMIT,
+            add_help_debug_log, add_help_feedback, add_help_history, create_or_increment_total,
+            get_count, help_from_history, help_log_list, AIHelpFeedback, FeedbackTyp,
+            AI_HELP_LIMIT,
         },
         experiments::get_experiments,
-        model::{AIHelpLogs, AIHelpLogsFeedbackInsert, AIHelpLogsInsert},
+        model::{AIHelpDebugLogsInsert, AIHelpFeedbackInsert, AIHelpHistory, AIHelpHistoryInsert},
         SupaPool,
     },
     experiments::Experiments,
@@ -43,6 +41,7 @@ use crate::{
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct ChatRequestMessages {
     chat_id: Option<Uuid>,
+    parent_id: Option<Uuid>,
     messages: Vec<ChatCompletionRequestMessage>,
 }
 
@@ -80,7 +79,8 @@ pub struct AIHelpMeta {
     #[serde(rename = "type")]
     pub typ: MetaType,
     pub chat_id: Uuid,
-    pub message_id: i32,
+    pub message_id: Uuid,
+    pub parent_id: Option<Uuid>,
     pub sources: Vec<RefDoc>,
     pub quota: Option<AIHelpLimit>,
 }
@@ -98,25 +98,33 @@ pub struct AIHelpLog {
     pub messages: Vec<AIHelpLogMessage>,
 }
 
-impl TryFrom<Vec<AIHelpLogs>> for AIHelpLog {
+impl TryFrom<Vec<AIHelpHistory>> for AIHelpLog {
     type Error = ApiError;
 
-    fn try_from(value: Vec<AIHelpLogs>) -> Result<Self, Self::Error> {
+    fn try_from(value: Vec<AIHelpHistory>) -> Result<Self, Self::Error> {
         let mut chat_id = None;
         let messages = value
             .into_iter()
             .map(|log| {
-                let res: AIHelpLogResponse =
+                let assistant: ChatCompletionRequestMessage =
                     serde_json::from_value(log.response).unwrap_or_default();
-                let mut req: CreateChatCompletionRequest =
+                let user: ChatCompletionRequestMessage =
                     serde_json::from_value(log.request).unwrap_or_default();
+                let sources: Vec<RefDoc> = serde_json::from_value(log.sources).unwrap_or_default();
                 if chat_id.is_none() {
-                    chat_id = Some(res.meta.chat_id);
+                    chat_id = Some(log.chat_id);
                 }
                 AIHelpLogMessage {
-                    metadata: res.meta,
-                    user: req.messages.pop().unwrap_or_default(),
-                    assistant: res.answer,
+                    metadata: AIHelpMeta {
+                        typ: MetaType::Metadata,
+                        chat_id: log.chat_id,
+                        message_id: log.message_id,
+                        parent_id: log.parent_id,
+                        sources,
+                        quota: None,
+                    },
+                    user,
+                    assistant,
                 }
             })
             .collect();
@@ -169,12 +177,13 @@ pub async fn ai_help(
     if let (Some(client), Some(pool)) = (&**openai_client, &**supabase_pool) {
         let ChatRequestMessages {
             mut chat_id,
+            parent_id,
             messages,
         } = messages.into_inner();
         if messages.len() == 1 {
             chat_id = None;
         }
-        let message_id = i32::try_from(messages.len()).ok().unwrap_or_default();
+        let message_id = Uuid::new_v4();
         match prepare_ai_help_req(client, pool, messages, experiments).await? {
             Some(ai_help_req) => {
                 let chat_id = chat_id.unwrap_or_else(Uuid::new_v4);
@@ -182,7 +191,8 @@ pub async fn ai_help(
                     typ: MetaType::Metadata,
                     chat_id,
                     message_id,
-                    sources: ai_help_req.refs,
+                    parent_id,
+                    sources: ai_help_req.refs.clone(),
                     quota: current.map(AIHelpLimit::from_count),
                 };
                 let tx = if let Some(Experiments {
@@ -191,7 +201,7 @@ pub async fn ai_help(
                 }) = experiments
                 {
                     let req = ai_help_req.req.clone();
-                    let ai_help_meta_log = ai_help_meta.clone();
+                    let sources = ai_help_req.refs;
                     let ai_help_config = AIHelpConfig::from(config);
 
                     let (tx, mut rx) =
@@ -203,25 +213,38 @@ pub async fn ai_help(
                                 answer.push(part);
                             }
                         }
-                        let insert = AIHelpLogsInsert {
+                        let response = ChatCompletionRequestMessage {
+                            role: Assistant,
+                            content: Some(answer.join("")),
+                            ..Default::default()
+                        };
+                        if config.history.unwrap_or_default() {
+                            let insert = AIHelpHistoryInsert {
+                                user_id: user.id,
+                                chat_id,
+                                message_id,
+                                parent_id,
+                                created_at: None,
+                                sources: serde_json::to_value(&sources).unwrap_or(Null),
+                                request: serde_json::to_value(req.messages.last()).unwrap_or(Null),
+                                response: serde_json::to_value(&response).unwrap_or(Null),
+                            };
+                            if let Err(err) = add_help_history(&mut conn, &insert) {
+                                error!("AI Help log: {err}");
+                            }
+                        }
+                        let insert = AIHelpDebugLogsInsert {
                             user_id: user.id,
                             variant: ai_help_config.name.to_owned(),
                             chat_id,
                             message_id,
+                            parent_id,
                             created_at: None,
-                            request: serde_json::to_value(req).unwrap_or(Null),
-                            response: serde_json::to_value(AIHelpLogResponse {
-                                meta: ai_help_meta_log,
-                                answer: ChatCompletionRequestMessage {
-                                    role: Assistant,
-                                    content: Some(answer.join("")),
-                                    ..Default::default()
-                                },
-                            })
-                            .unwrap_or(Null),
-                            debug: true,
+                            sources: serde_json::to_value(&sources).unwrap_or(Null),
+                            request: serde_json::to_value(&req.messages).unwrap_or(Null),
+                            response: serde_json::to_value(&response).unwrap_or(Null),
                         };
-                        if let Err(err) = add_help_log(&mut conn, &insert) {
+                        if let Err(err) = add_help_debug_log(&mut conn, &insert) {
                             error!("AI Help log: {err}");
                         }
                     });
@@ -252,6 +275,7 @@ pub async fn ai_help(
                         typ: MetaType::Metadata,
                         chat_id: chat_id.unwrap_or_else(Uuid::new_v4),
                         message_id,
+                        parent_id,
                         sources: vec![],
                         quota: current.map(AIHelpLimit::from_count),
                     })
@@ -288,11 +312,12 @@ pub async fn ai_help_log(
     let mut conn = diesel_pool.get()?;
     let user = get_user(&mut conn, user_id.id().unwrap())?;
     let experiments = get_experiments(&mut conn, &user)?;
+
     if experiments
         .map(|e| e.active && e.config.history.unwrap_or_default())
         .unwrap_or_default()
     {
-        let hit = help_from_log(&mut conn, &user, &chat_id.into_inner())?;
+        let hit = help_from_history(&mut conn, &user, &chat_id.into_inner())?;
         if !hit.is_empty() {
             let res = AIHelpLog::try_from(hit)?;
             return Ok(HttpResponse::Ok().json(res));
@@ -330,18 +355,14 @@ pub async fn ai_help_feedback(
         return Ok(HttpResponse::BadRequest().finish());
     }
     let ai_help_feedback = req.into_inner();
-    let feedback = AIHelpLogsFeedbackInsert {
+    let feedback = AIHelpFeedbackInsert {
+        message_id: ai_help_feedback.message_id,
         feedback: ai_help_feedback.feedback.map(Some),
         thumbs: ai_help_feedback
             .thumbs
             .map(|t| Some(t == FeedbackTyp::ThumbsUp)),
     };
-    add_help_log_feedback(
-        &mut conn,
-        &user,
-        &ai_help_feedback.chat_id,
-        ai_help_feedback.message_id,
-        &feedback,
-    )?;
+    add_help_feedback(&mut conn, &user, &feedback)?;
+
     Ok(HttpResponse::Created().finish())
 }

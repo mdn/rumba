@@ -7,8 +7,8 @@ use anyhow::Error;
 use diesel::{QueryDsl, RunQueryDsl};
 use rumba::ai::constants::AI_HELP_DEFAULT;
 use rumba::api::root::RootSetIsAdminQuery;
-use rumba::db::ai_help::{add_help_log, AIHelpFeedback, FeedbackTyp};
-use rumba::db::model::{AIHelpLogs, AIHelpLogsInsert};
+use rumba::db::ai_help::{add_help_history, AIHelpFeedback, FeedbackTyp};
+use rumba::db::model::{AIHelpHistory, AIHelpHistoryInsert};
 use rumba::db::schema::ai_help_logs;
 use rumba::db::users::root_set_is_admin;
 use serde_json::json;
@@ -17,7 +17,7 @@ use uuid::Uuid;
 const CHAT_ID: Uuid = Uuid::nil();
 
 fn add_history_log() -> Result<(), Error> {
-    let insert = AIHelpLogsInsert {
+    let insert = AIHelpHistoryInsert {
         user_id: 1,
         variant: AI_HELP_DEFAULT.name.to_string(),
         chat_id: CHAT_ID,
@@ -58,7 +58,7 @@ fn add_history_log() -> Result<(), Error> {
     };
     let pool = get_pool();
     let mut conn = pool.get()?;
-    add_help_log(&mut conn, &insert)?;
+    add_help_history(&mut conn, &insert)?;
     Ok(())
 }
 
@@ -121,7 +121,7 @@ async fn test_history() -> Result<(), Error> {
     assert!(feedback.status().is_success());
 
     let mut conn = pool.get()?;
-    let row: AIHelpLogs = ai_help_logs::table.first(&mut conn)?;
+    let row: AIHelpHistory = ai_help_logs::table.first(&mut conn)?;
     assert_eq!(row.thumbs, Some(true));
 
     let feedback = logged_in_client
@@ -139,7 +139,7 @@ async fn test_history() -> Result<(), Error> {
     assert!(feedback.status().is_success());
 
     let mut conn = pool.get()?;
-    let row: AIHelpLogs = ai_help_logs::table
+    let row: AIHelpHistory = ai_help_logs::table
         .select(ai_help_logs::all_columns)
         .first(&mut conn)?;
     assert_eq!(row.thumbs, Some(false));

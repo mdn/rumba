@@ -62,12 +62,19 @@ diesel::table! {
     use diesel::sql_types::*;
     use crate::db::types::*;
 
-    ai_help_limits (id) {
+    ai_help_debug_logs (id) {
         id -> Int8,
-        user_id -> Nullable<Int8>,
-        latest_start -> Nullable<Timestamp>,
-        session_questions -> Int8,
-        total_questions -> Int8,
+        user_id -> Int8,
+        variant -> Text,
+        chat_id -> Uuid,
+        message_id -> Uuid,
+        parent_id -> Nullable<Uuid>,
+        created_at -> Timestamp,
+        sources -> Jsonb,
+        request -> Jsonb,
+        response -> Jsonb,
+        feedback -> Nullable<Text>,
+        thumbs -> Nullable<Bool>,
     }
 }
 
@@ -75,18 +82,41 @@ diesel::table! {
     use diesel::sql_types::*;
     use crate::db::types::*;
 
-    ai_help_logs (id) {
+    ai_help_feedback (id) {
         id -> Int8,
-        user_id -> Int8,
-        variant -> Text,
-        chat_id -> Uuid,
-        message_id -> Int4,
-        created_at -> Timestamp,
-        request -> Jsonb,
-        response -> Jsonb,
-        debug -> Bool,
+        message_id -> Nullable<Uuid>,
         feedback -> Nullable<Text>,
         thumbs -> Nullable<Bool>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+
+    ai_help_history (id) {
+        id -> Int8,
+        user_id -> Int8,
+        chat_id -> Uuid,
+        message_id -> Uuid,
+        parent_id -> Nullable<Uuid>,
+        created_at -> Timestamp,
+        sources -> Jsonb,
+        request -> Jsonb,
+        response -> Jsonb,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+
+    ai_help_limits (id) {
+        id -> Int8,
+        user_id -> Nullable<Int8>,
+        latest_start -> Nullable<Timestamp>,
+        session_questions -> Int8,
+        total_questions -> Int8,
     }
 }
 
@@ -296,8 +326,9 @@ diesel::table! {
 }
 
 diesel::joinable!(activity_pings -> users (user_id));
+diesel::joinable!(ai_help_debug_logs -> users (user_id));
+diesel::joinable!(ai_help_history -> users (user_id));
 diesel::joinable!(ai_help_limits -> users (user_id));
-diesel::joinable!(ai_help_logs -> users (user_id));
 diesel::joinable!(bcd_updates -> bcd_features (feature));
 diesel::joinable!(bcd_updates -> browser_releases (browser_release));
 diesel::joinable!(browser_releases -> browsers (browser));
@@ -312,8 +343,10 @@ diesel::joinable!(settings -> users (user_id));
 diesel::allow_tables_to_appear_in_same_query!(
     activity_pings,
     ai_explain_cache,
+    ai_help_debug_logs,
+    ai_help_feedback,
+    ai_help_history,
     ai_help_limits,
-    ai_help_logs,
     bcd_features,
     bcd_updates,
     browser_releases,

@@ -270,36 +270,74 @@ pub struct ExperimentsQuery {
 }
 
 #[derive(Insertable, Serialize, Debug, Default)]
-#[diesel(table_name = ai_help_logs)]
-pub struct AIHelpLogsInsert {
+#[diesel(table_name = ai_help_history)]
+pub struct AIHelpHistoryInsert {
+    pub user_id: i64,
+    pub chat_id: Uuid,
+    pub message_id: Uuid,
+    pub parent_id: Option<Uuid>,
+    pub created_at: Option<NaiveDateTime>,
+    pub sources: Value,
+    pub request: Value,
+    pub response: Value,
+}
+
+#[derive(Queryable, Serialize, Debug, Default)]
+#[diesel(table_name = ai_help_history)]
+pub struct AIHelpHistory {
+    pub id: i64,
+    pub user_id: i64,
+    pub chat_id: Uuid,
+    pub message_id: Uuid,
+    pub parent_id: Option<Uuid>,
+    pub created_at: NaiveDateTime,
+    pub sources: Value,
+    pub request: Value,
+    pub response: Value,
+}
+
+#[derive(Insertable, Serialize, Debug, Default)]
+#[diesel(table_name = ai_help_debug_logs)]
+pub struct AIHelpDebugLogsInsert {
     pub user_id: i64,
     pub variant: String,
     pub chat_id: Uuid,
-    pub message_id: i32,
+    pub message_id: Uuid,
+    pub parent_id: Option<Uuid>,
     pub created_at: Option<NaiveDateTime>,
+    pub sources: Value,
     pub request: Value,
     pub response: Value,
-    pub debug: bool,
 }
+
 #[derive(Queryable, Serialize, Debug, Default)]
-#[diesel(table_name = ai_help_logs)]
-pub struct AIHelpLogs {
+#[diesel(table_name = ai_help_debug_logs)]
+pub struct AIHelpDebugLogs {
     pub id: i64,
     pub user_id: i64,
     pub variant: String,
     pub chat_id: Uuid,
-    pub message_id: i32,
+    pub message_id: Uuid,
+    pub parent_id: Option<Uuid>,
     pub created_at: NaiveDateTime,
+    pub sources: Value,
     pub request: Value,
     pub response: Value,
-    pub debug: bool,
     pub feedback: Option<String>,
     pub thumbs: Option<bool>,
 }
 
 #[derive(Insertable, AsChangeset, Serialize, Debug, Default)]
-#[diesel(table_name = ai_help_logs)]
-pub struct AIHelpLogsFeedbackInsert {
+#[diesel(table_name = ai_help_debug_logs)]
+pub struct AIHelpDebugLogsFeedbackInsert {
+    pub feedback: Option<Option<String>>,
+    pub thumbs: Option<Option<bool>>,
+}
+
+#[derive(Insertable, AsChangeset, Serialize, Debug, Default)]
+#[diesel(table_name = ai_help_feedback)]
+pub struct AIHelpFeedbackInsert {
+    pub message_id: Uuid,
     pub feedback: Option<Option<String>>,
     pub thumbs: Option<Option<bool>>,
 }
