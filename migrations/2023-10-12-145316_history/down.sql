@@ -1,5 +1,6 @@
 DROP TABLE ai_help_debug_logs;
 DROP TABLE ai_help_feedback;
+DROP TABLE ai_help_history_messages;
 DROP TABLE ai_help_history;
 
 CREATE TABLE ai_help_logs (

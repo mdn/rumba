@@ -43,3 +43,7 @@ pub fn cap_messages(
     init_messages.extend(context_messages.into_iter().skip(skip));
     Ok(init_messages)
 }
+
+pub fn get_first_n_chars(input: &str, n: usize) -> String {
+    input.chars().take(n).collect()
+}

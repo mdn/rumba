@@ -1,3 +1,4 @@
+use crate::ai::help::AIHelpHistoryAndMessage;
 use crate::db::types::{FxaEventStatus, Subscription};
 use crate::db::{schema::*, types::FxaEvent};
 use crate::experiments::ExperimentsConfig;
@@ -274,6 +275,27 @@ pub struct ExperimentsQuery {
 pub struct AIHelpHistoryInsert {
     pub user_id: i64,
     pub chat_id: Uuid,
+    pub label: String,
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
+}
+
+#[derive(Queryable, Serialize, Debug, Default)]
+#[diesel(table_name = ai_help_history)]
+pub struct AIHelpHistory {
+    pub id: i64,
+    pub user_id: i64,
+    pub chat_id: Uuid,
+    pub label: Option<String>,
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
+}
+
+#[derive(Insertable, Serialize, Debug, Default)]
+#[diesel(table_name = ai_help_history_messages)]
+pub struct AIHelpHistoryMessageInsert {
+    pub user_id: i64,
+    pub chat_id: Uuid,
     pub message_id: Uuid,
     pub parent_id: Option<Uuid>,
     pub created_at: Option<NaiveDateTime>,
@@ -282,9 +304,24 @@ pub struct AIHelpHistoryInsert {
     pub response: Value,
 }
 
+impl<'a> From<&'a AIHelpHistoryAndMessage<'a>> for AIHelpHistoryMessageInsert {
+    fn from(value: &'a AIHelpHistoryAndMessage<'a>) -> Self {
+        AIHelpHistoryMessageInsert {
+            user_id: value.user_id,
+            chat_id: value.chat_id,
+            message_id: value.message_id,
+            parent_id: value.parent_id,
+            created_at: value.created_at,
+            sources: serde_json::to_value(value.sources).unwrap_or(Value::Null),
+            request: serde_json::to_value(value.request).unwrap_or(Value::Null),
+            response: serde_json::to_value(value.response).unwrap_or(Value::Null),
+        }
+    }
+}
+
 #[derive(Queryable, Serialize, Debug, Default)]
-#[diesel(table_name = ai_help_history)]
-pub struct AIHelpHistory {
+#[diesel(table_name = ai_help_history_messages)]
+pub struct AIHelpHistoryMessage {
     pub id: i64,
     pub user_id: i64,
     pub chat_id: Uuid,

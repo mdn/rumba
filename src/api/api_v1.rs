@@ -1,5 +1,7 @@
 use crate::api::ai_explain::{explain, explain_feedback};
-use crate::api::ai_help::{ai_help, ai_help_feedback, ai_help_log, ai_help_log_list, quota};
+use crate::api::ai_help::{
+    ai_help, ai_help_delete_from_history, ai_help_feedback, ai_help_log, ai_help_log_list, quota,
+};
 use crate::api::experiments::{get_experiments, update_experiments};
 use crate::api::info::information;
 use crate::api::newsletter::{
@@ -29,12 +31,18 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
                                 .service(web::resource("").route(web::post().to(ai_help)))
                                 .service(web::resource("/quota").route(web::get().to(quota)))
                                 .service(
-                                    web::resource("/history/list")
-                                        .route(web::get().to(ai_help_log_list)),
-                                )
-                                .service(
-                                    web::resource("/history/{chat_id}")
-                                        .route(web::get().to(ai_help_log)),
+                                    web::scope("/history")
+                                        .service(
+                                            web::resource("/list")
+                                                .route(web::get().to(ai_help_log_list)),
+                                        )
+                                        .service(
+                                            web::resource("/{chat_id}")
+                                                .route(web::get().to(ai_help_log))
+                                                .route(
+                                                    web::delete().to(ai_help_delete_from_history),
+                                                ),
+                                        ),
                                 )
                                 .service(
                                     web::resource("/feedback")
@@ -47,12 +55,18 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
                                 .service(web::resource("").route(web::post().to(ai_help)))
                                 .service(web::resource("/quota").route(web::get().to(quota)))
                                 .service(
-                                    web::resource("/history/list")
-                                        .route(web::get().to(ai_help_log_list)),
-                                )
-                                .service(
-                                    web::resource("/history/{chat_id}")
-                                        .route(web::get().to(ai_help_log)),
+                                    web::scope("/history")
+                                        .service(
+                                            web::resource("/list")
+                                                .route(web::get().to(ai_help_log_list)),
+                                        )
+                                        .service(
+                                            web::resource("/{chat_id}")
+                                                .route(web::get().to(ai_help_log))
+                                                .route(
+                                                    web::delete().to(ai_help_delete_from_history),
+                                                ),
+                                        ),
                                 )
                                 .service(
                                     web::resource("/feedback")

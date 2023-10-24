@@ -52,7 +52,7 @@ impl ExperimentsConfig {
             gpt4: restrict(self.gpt4, user.is_admin || user.is_mdn_team),
             full_doc: restrict(self.full_doc, user.is_admin || user.is_mdn_team),
             new_prompt: restrict(self.new_prompt, user.is_admin || user.is_mdn_team),
-            history: restrict(self.history, user.is_admin),
+            history: restrict(self.history, user.is_admin || user.is_mdn_team),
         }
     }
 }
