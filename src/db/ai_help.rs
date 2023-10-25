@@ -8,10 +8,12 @@ use uuid::Uuid;
 use crate::ai::help::AIHelpHistoryAndMessage;
 use crate::db::error::DbError;
 use crate::db::model::{
-    AIHelpDebugLogsInsert, AIHelpFeedbackInsert, AIHelpHistoryInsert, AIHelpHistoryMessage,
-    AIHelpHistoryMessageInsert, AIHelpLimitInsert, UserQuery,
+    AIHelpDebugFeedbackInsert, AIHelpDebugLogsInsert, AIHelpFeedbackInsert, AIHelpHistoryInsert,
+    AIHelpHistoryMessage, AIHelpHistoryMessageInsert, AIHelpLimitInsert, UserQuery,
 };
-use crate::db::schema::{ai_help_debug_logs, ai_help_history, ai_help_history_messages};
+use crate::db::schema::{
+    ai_help_debug_feedback, ai_help_debug_logs, ai_help_history, ai_help_history_messages,
+};
 use crate::db::schema::{ai_help_feedback, ai_help_limits as limits};
 use crate::settings::SETTINGS;
 
@@ -124,12 +126,12 @@ pub fn create_or_increment_limit(
 
 pub fn add_help_history(
     conn: &mut PgConnection,
-    cache: &AIHelpHistoryAndMessage,
-) -> Result<(), DbError> {
+    history_and_message: &AIHelpHistoryAndMessage,
+) -> Result<NaiveDateTime, DbError> {
     let history = AIHelpHistoryInsert {
-        user_id: cache.user_id,
-        chat_id: cache.chat_id,
-        label: cache
+        user_id: history_and_message.user_id,
+        chat_id: history_and_message.chat_id,
+        label: history_and_message
             .request
             .and_then(|r| {
                 r.content
@@ -137,30 +139,32 @@ pub fn add_help_history(
                     .map(|c| c.chars().take(100).collect::<String>())
             })
             .unwrap_or_else(|| String::from("No title")),
-        created_at: None,
+        created_at: history_and_message.created_at,
         updated_at: None,
     };
-    insert_into(ai_help_history::table)
+    let updated_at = insert_into(ai_help_history::table)
         .values(history)
         .on_conflict(ai_help_history::chat_id)
         .do_update()
         .set(ai_help_history::updated_at.eq(diesel::dsl::now))
-        .execute(conn)?;
+        .returning(ai_help_history::updated_at)
+        .get_result::<NaiveDateTime>(conn)?;
 
-    let message = AIHelpHistoryMessageInsert::from(cache);
+    let mut message = AIHelpHistoryMessageInsert::from(history_and_message);
+    message.created_at = Some(updated_at);
     insert_into(ai_help_history_messages::table)
         .values(message)
         .on_conflict_do_nothing()
         .execute(conn)?;
-    Ok(())
+    Ok(updated_at)
 }
 
 pub fn add_help_debug_log(
     conn: &mut PgConnection,
-    cache: &AIHelpDebugLogsInsert,
+    debug_log: &AIHelpDebugLogsInsert,
 ) -> Result<(), DbError> {
     insert_into(ai_help_debug_logs::table)
-        .values(cache)
+        .values(debug_log)
         .on_conflict_do_nothing()
         .execute(conn)?;
     Ok(())
@@ -181,28 +185,38 @@ pub fn add_help_feedback(
         .first::<i64>(conn)
         .optional()?
         .is_some()
-        || ai_help_debug_logs::table
-            .filter(
-                ai_help_debug_logs::user_id
-                    .eq(user.id)
-                    .and(ai_help_debug_logs::message_id.eq(feedback.message_id)),
-            )
-            .select(ai_help_debug_logs::id)
-            .first::<i64>(conn)
-            .optional()?
-            .is_some()
     {
         insert_into(ai_help_feedback::table)
             .values(feedback)
-            .on_conflict(ai_help_feedback::message_id)
-            .do_update()
-            .set(feedback)
             .execute(conn)?;
     }
     Ok(())
 }
 
-pub fn help_from_history(
+pub fn add_help_debug_feedback(
+    conn: &mut PgConnection,
+    user: &UserQuery,
+    feedback: &AIHelpDebugFeedbackInsert,
+) -> Result<(), DbError> {
+    if ai_help_debug_logs::table
+        .filter(
+            ai_help_debug_logs::user_id
+                .eq(user.id)
+                .and(ai_help_debug_logs::message_id.eq(feedback.message_id)),
+        )
+        .select(ai_help_debug_logs::id)
+        .first::<i64>(conn)
+        .optional()?
+        .is_some()
+    {
+        insert_into(ai_help_debug_feedback::table)
+            .values(feedback)
+            .execute(conn)?;
+    }
+    Ok(())
+}
+
+pub fn help_history(
     conn: &mut PgConnection,
     user: &UserQuery,
     chat_id: &Uuid,
@@ -225,7 +239,7 @@ pub struct AIHelpHistoryListEntry {
     pub label: String,
 }
 
-pub fn help_history_list(
+pub fn list_help_history(
     conn: &mut PgConnection,
     user: &UserQuery,
 ) -> Result<Vec<AIHelpHistoryListEntry>, DbError> {
@@ -241,7 +255,7 @@ pub fn help_history_list(
         .map_err(Into::into)
 }
 
-pub fn help_delete_history(
+pub fn delete_help_history(
     conn: &mut PgConnection,
     user: &UserQuery,
     chat_id: Uuid,

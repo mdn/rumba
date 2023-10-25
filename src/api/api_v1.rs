@@ -1,6 +1,6 @@
 use crate::api::ai_explain::{explain, explain_feedback};
 use crate::api::ai_help::{
-    ai_help, ai_help_delete_from_history, ai_help_feedback, ai_help_log, ai_help_log_list, quota,
+    ai_help, ai_help_delete_history, ai_help_feedback, ai_help_history, ai_help_list_history, quota,
 };
 use crate::api::experiments::{get_experiments, update_experiments};
 use crate::api::info::information;
@@ -34,14 +34,12 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
                                     web::scope("/history")
                                         .service(
                                             web::resource("/list")
-                                                .route(web::get().to(ai_help_log_list)),
+                                                .route(web::get().to(ai_help_list_history)),
                                         )
                                         .service(
                                             web::resource("/{chat_id}")
-                                                .route(web::get().to(ai_help_log))
-                                                .route(
-                                                    web::delete().to(ai_help_delete_from_history),
-                                                ),
+                                                .route(web::get().to(ai_help_history))
+                                                .route(web::delete().to(ai_help_delete_history)),
                                         ),
                                 )
                                 .service(
@@ -58,14 +56,12 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
                                     web::scope("/history")
                                         .service(
                                             web::resource("/list")
-                                                .route(web::get().to(ai_help_log_list)),
+                                                .route(web::get().to(ai_help_list_history)),
                                         )
                                         .service(
                                             web::resource("/{chat_id}")
-                                                .route(web::get().to(ai_help_log))
-                                                .route(
-                                                    web::delete().to(ai_help_delete_from_history),
-                                                ),
+                                                .route(web::get().to(ai_help_history))
+                                                .route(web::delete().to(ai_help_delete_history)),
                                         ),
                                 )
                                 .service(

@@ -4,61 +4,77 @@ use crate::helpers::http_client::{PostPayload, TestHttpClient};
 use crate::helpers::{read_json, wait_for_stubr};
 use actix_web::test;
 use anyhow::Error;
-use diesel::{QueryDsl, RunQueryDsl};
+use async_openai::types::ChatCompletionRequestMessage;
+use async_openai::types::Role::{Assistant, User};
+use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use rumba::ai::constants::AI_HELP_DEFAULT;
+use rumba::ai::help::{AIHelpHistoryAndMessage, RefDoc};
 use rumba::api::root::RootSetIsAdminQuery;
-use rumba::db::ai_help::{add_help_history, AIHelpFeedback, FeedbackTyp};
-use rumba::db::model::{AIHelpHistory, AIHelpHistoryInsert};
-use rumba::db::schema::ai_help_logs;
+use rumba::db::ai_help::{add_help_debug_log, add_help_history, AIHelpFeedback, FeedbackTyp};
+use rumba::db::model::AIHelpDebugLogsInsert;
+use rumba::db::schema::{ai_help_debug_feedback, ai_help_feedback};
 use rumba::db::users::root_set_is_admin;
 use serde_json::json;
 use uuid::Uuid;
 
 const CHAT_ID: Uuid = Uuid::nil();
+const MESSAGE_ID: Uuid = Uuid::from_u128(1);
 
 fn add_history_log() -> Result<(), Error> {
-    let insert = AIHelpHistoryInsert {
+    let request = ChatCompletionRequestMessage {
+        role: User,
+        content: Some("How to center a div with CSS?".into()),
+        name: None,
+        function_call: None,
+    };
+    let response = ChatCompletionRequestMessage {
+        role: Assistant,
+        content: Some("To center a div using CSS, ...".into()),
+        name: None,
+        function_call: None,
+    };
+    let sources = vec![
+        RefDoc {
+            url: "/en-US/docs/Learn/CSS/Howto/Center_an_item".into(),
+            slug: "Learn/CSS/Howto/Center_an_item".into(),
+            title: "How to center an item".into(),
+        },
+        RefDoc {
+            url: "/en-US/docs/Web/CSS/margin".into(),
+            slug: "Web/CSS/margin".into(),
+            title: "margin".into(),
+        },
+        RefDoc {
+            url: "/en-US/docs/Web/CSS/CSS_grid_layout/Box_alignment_in_grid_layout".into(),
+            slug: "Web/CSS/CSS_grid_layout/Box_alignment_in_grid_layout".into(),
+            title: "Box alignment in grid layout".into(),
+        },
+    ];
+    let insert = AIHelpHistoryAndMessage {
         user_id: 1,
-        variant: AI_HELP_DEFAULT.name.to_string(),
         chat_id: CHAT_ID,
-        message_id: 1,
+        message_id: MESSAGE_ID,
+        parent_id: None,
+        sources: &sources,
         created_at: None,
-        request: json!({
-            "model": "gpt-3.5-turbo",
-            "messages": [{"role": "user", "content": "How to center a div with CSS?"}],
-            "max_tokens": null,
-            "temperature": 0.0
-        }),
-        response: json!({
-            "meta": {
-                "type": "metadata",
-                "quota": null,
-                "chat_id": "00000000-0000-0000-0000-000000000000",
-                "sources": [{
-                        "url": "/en-US/docs/Learn/CSS/Howto/Center_an_item",
-                        "slug": "Learn/CSS/Howto/Center_an_item",
-                        "title": "How to center an item"
-                    }, {
-                        "url": "/en-US/docs/Web/CSS/margin",
-                        "slug": "Web/CSS/margin",
-                        "title": "margin"
-                    }, {
-                        "url": "/en-US/docs/Web/CSS/CSS_grid_layout/Box_alignment_in_grid_layout",
-                        "slug": "Web/CSS/CSS_grid_layout/Box_alignment_in_grid_layout",
-                        "title": "Box alignment in grid layout"
-                    }],
-                "message_id": 1
-                },
-            "answer": {
-                "role": "assistant",
-                "content": "To center a div using CSS, ..."}
-            }
-        ),
-        debug: true,
+        request: Some(&request),
+        response: &response,
+    };
+    let debug_insert = AIHelpDebugLogsInsert {
+        user_id: 1,
+        chat_id: CHAT_ID,
+        message_id: MESSAGE_ID,
+        parent_id: None,
+        sources: serde_json::to_value(&sources)?,
+        created_at: None,
+        request: serde_json::to_value(Some(&request))?,
+        response: serde_json::to_value(&response)?,
+        variant: AI_HELP_DEFAULT.name.to_string(),
     };
     let pool = get_pool();
     let mut conn = pool.get()?;
     add_help_history(&mut conn, &insert)?;
+    add_help_debug_log(&mut conn, &debug_insert)?;
     Ok(())
 }
 
@@ -99,7 +115,7 @@ async fn test_history() -> Result<(), Error> {
         )
         .await;
     assert!(history.status().is_success());
-    let expected = r#"{"chat_id":"00000000-0000-0000-0000-000000000000","messages":[{"metadata":{"type":"metadata","chat_id":"00000000-0000-0000-0000-000000000000","message_id":1,"sources":[{"url":"/en-US/docs/Learn/CSS/Howto/Center_an_item","slug":"Learn/CSS/Howto/Center_an_item","title":"How to center an item"},{"url":"/en-US/docs/Web/CSS/margin","slug":"Web/CSS/margin","title":"margin"},{"url":"/en-US/docs/Web/CSS/CSS_grid_layout/Box_alignment_in_grid_layout","slug":"Web/CSS/CSS_grid_layout/Box_alignment_in_grid_layout","title":"Box alignment in grid layout"}],"quota":null},"user":{"role":"user","content":"How to center a div with CSS?"},"assistant":{"role":"assistant","content":"To center a div using CSS, ..."}}]}"#;
+    let expected = r#"{"chat_id":"00000000-0000-0000-0000-000000000000","messages":[{"metadata":{"type":"metadata","chat_id":"00000000-0000-0000-0000-000000000000","message_id":"00000000-0000-0000-0000-000000000001","parent_id":null,"sources":[{"url":"/en-US/docs/Learn/CSS/Howto/Center_an_item","slug":"Learn/CSS/Howto/Center_an_item","title":"How to center an item"},{"url":"/en-US/docs/Web/CSS/margin","slug":"Web/CSS/margin","title":"margin"},{"url":"/en-US/docs/Web/CSS/CSS_grid_layout/Box_alignment_in_grid_layout","slug":"Web/CSS/CSS_grid_layout/Box_alignment_in_grid_layout","title":"Box alignment in grid layout"}],"quota":null},"user":{"role":"user","content":"How to center a div with CSS?"},"assistant":{"role":"assistant","content":"To center a div using CSS, ..."}}]}"#;
 
     assert_eq!(
         expected,
@@ -112,8 +128,7 @@ async fn test_history() -> Result<(), Error> {
             None,
             Some(PostPayload::Json(serde_json::to_value(AIHelpFeedback {
                 thumbs: Some(FeedbackTyp::ThumbsUp),
-                chat_id: CHAT_ID,
-                message_id: 1,
+                message_id: MESSAGE_ID,
                 feedback: None,
             })?)),
         )
@@ -121,8 +136,16 @@ async fn test_history() -> Result<(), Error> {
     assert!(feedback.status().is_success());
 
     let mut conn = pool.get()?;
-    let row: AIHelpHistory = ai_help_logs::table.first(&mut conn)?;
-    assert_eq!(row.thumbs, Some(true));
+    let thumbs = ai_help_feedback::table
+        .select(ai_help_feedback::thumbs)
+        .order_by(ai_help_feedback::created_at.desc())
+        .first::<Option<bool>>(&mut conn)?;
+    assert_eq!(thumbs, Some(true));
+    let thumbs = ai_help_debug_feedback::table
+        .select(ai_help_debug_feedback::thumbs)
+        .order_by(ai_help_debug_feedback::created_at.desc())
+        .first::<Option<bool>>(&mut conn)?;
+    assert_eq!(thumbs, Some(true));
 
     let feedback = logged_in_client
         .post(
@@ -130,8 +153,7 @@ async fn test_history() -> Result<(), Error> {
             None,
             Some(PostPayload::Json(serde_json::to_value(AIHelpFeedback {
                 thumbs: Some(FeedbackTyp::ThumbsDown),
-                chat_id: CHAT_ID,
-                message_id: 1,
+                message_id: MESSAGE_ID,
                 feedback: None,
             })?)),
         )
@@ -139,10 +161,16 @@ async fn test_history() -> Result<(), Error> {
     assert!(feedback.status().is_success());
 
     let mut conn = pool.get()?;
-    let row: AIHelpHistory = ai_help_logs::table
-        .select(ai_help_logs::all_columns)
-        .first(&mut conn)?;
-    assert_eq!(row.thumbs, Some(false));
+    let thumbs = ai_help_feedback::table
+        .select(ai_help_feedback::thumbs)
+        .order_by(ai_help_feedback::created_at.desc())
+        .first::<Option<bool>>(&mut conn)?;
+    assert_eq!(thumbs, Some(false));
+    let thumbs = ai_help_debug_feedback::table
+        .select(ai_help_debug_feedback::thumbs)
+        .order_by(ai_help_debug_feedback::created_at.desc())
+        .first::<Option<bool>>(&mut conn)?;
+    assert_eq!(thumbs, Some(false));
 
     drop(stubr);
     Ok(())

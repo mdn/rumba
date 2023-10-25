@@ -1,6 +1,6 @@
 mod ai_explain;
 mod ai_help;
-//mod ai_help_history;
+mod ai_help_history;
 mod auth;
 mod experiments;
 mod fxa_webhooks;

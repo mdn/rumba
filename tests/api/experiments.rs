@@ -1,8 +1,6 @@
 use crate::helpers::read_json;
 use crate::helpers::{app::init_test, db::get_pool};
 use anyhow::Error;
-use rumba::api::root::RootSetIsMdnTeamQuery;
-use rumba::db::users::root_set_is_mdn_team;
 use rumba::{api::root::RootSetIsAdminQuery, db::users::root_set_is_admin};
 use serde_json::{json, Value};
 
@@ -32,24 +30,6 @@ async fn test_experiments_config() -> Result<(), Error> {
     assert!(active_experiments.response().status().is_success());
     let json = read_json(active_experiments).await;
     assert_eq!(json, Value::Null);
-
-    // Elevate to MDN team
-    root_set_is_mdn_team(
-        &mut conn,
-        RootSetIsMdnTeamQuery {
-            email: "test@test.com".into(),
-            is_mdn_team: true,
-        },
-    )?;
-
-    // Response reflects permissions
-    let active_experiments = client.get("/api/v1/plus/settings/experiments/", None).await;
-    assert!(active_experiments.response().status().is_success());
-    let json = read_json(active_experiments).await;
-    assert_eq!(json["active"], false);
-    assert_eq!(json["config"]["gpt4"], false);
-    // history is admin only
-    assert_eq!(json["config"]["history"], Value::Null);
 
     // Elevate to Admin
     root_set_is_admin(

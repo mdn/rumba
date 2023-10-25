@@ -360,21 +360,30 @@ pub struct AIHelpDebugLogs {
     pub sources: Value,
     pub request: Value,
     pub response: Value,
-    pub feedback: Option<String>,
-    pub thumbs: Option<bool>,
 }
 
 #[derive(Insertable, AsChangeset, Serialize, Debug, Default)]
-#[diesel(table_name = ai_help_debug_logs)]
-pub struct AIHelpDebugLogsFeedbackInsert {
-    pub feedback: Option<Option<String>>,
-    pub thumbs: Option<Option<bool>>,
+#[diesel(table_name = ai_help_debug_feedback)]
+pub struct AIHelpDebugFeedbackInsert {
+    pub message_id: Uuid,
+    pub feedback: Option<String>,
+    pub thumbs: Option<bool>,
 }
 
 #[derive(Insertable, AsChangeset, Serialize, Debug, Default)]
 #[diesel(table_name = ai_help_feedback)]
 pub struct AIHelpFeedbackInsert {
     pub message_id: Uuid,
-    pub feedback: Option<Option<String>>,
-    pub thumbs: Option<Option<bool>>,
+    pub feedback: Option<String>,
+    pub thumbs: Option<bool>,
+}
+
+impl From<AIHelpFeedbackInsert> for AIHelpDebugFeedbackInsert {
+    fn from(value: AIHelpFeedbackInsert) -> Self {
+        AIHelpDebugFeedbackInsert {
+            message_id: value.message_id,
+            feedback: value.feedback,
+            thumbs: value.thumbs,
+        }
+    }
 }
