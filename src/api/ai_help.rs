@@ -19,21 +19,26 @@ use uuid::Uuid;
 use crate::{
     ai::{
         constants::AIHelpConfig,
-        help::{prepare_ai_help_req, AIHelpHistoryAndMessage, AIHelpRequest, RefDoc},
+        help::{prepare_ai_help_req, prepare_ai_help_summary_req, AIHelpRequest, RefDoc},
     },
     api::common::{GeneratedChunk, GeneratedChunkChoice},
     db::{
         self,
         ai_help::{
             add_help_debug_feedback, add_help_debug_log, add_help_feedback, add_help_history,
-            create_or_increment_total, delete_help_history, get_count, help_history,
-            list_help_history, AIHelpFeedback, FeedbackTyp, AI_HELP_LIMIT,
+            add_help_history_message, create_or_increment_total, delete_help_history, get_count,
+            help_history, help_history_get_message, list_help_history, update_help_history_label,
+            AIHelpFeedback, FeedbackTyp, AI_HELP_LIMIT,
         },
         experiments::get_experiments,
-        model::{AIHelpDebugLogsInsert, AIHelpFeedbackInsert, AIHelpHistoryMessage},
+        model::{
+            AIHelpDebugLogsInsert, AIHelpFeedbackInsert, AIHelpHistoryMessage,
+            AIHelpHistoryMessageInsert, Settings,
+        },
+        settings::get_settings,
         SupaPool,
     },
-    experiments::{Experiments, ExperimentsConfig},
+    experiments::Experiments,
 };
 use crate::{
     api::error::ApiError,
@@ -117,6 +122,28 @@ impl From<db::ai_help::AIHelpHistoryListEntry> for AIHelpHistoryListEntry {
     }
 }
 
+impl From<AIHelpHistoryMessage> for AIHelpLogMessage {
+    fn from(value: AIHelpHistoryMessage) -> Self {
+        let assistant: ChatCompletionRequestMessage =
+            serde_json::from_value(value.response).unwrap_or_default();
+        let user: ChatCompletionRequestMessage =
+            serde_json::from_value(value.request).unwrap_or_default();
+        let sources: Vec<RefDoc> = serde_json::from_value(value.sources).unwrap_or_default();
+        AIHelpLogMessage {
+            metadata: AIHelpMeta {
+                typ: MetaType::Metadata,
+                chat_id: value.chat_id,
+                message_id: value.message_id,
+                parent_id: value.parent_id,
+                sources,
+                quota: None,
+            },
+            user,
+            assistant,
+        }
+    }
+}
+
 impl TryFrom<Vec<AIHelpHistoryMessage>> for AIHelpLog {
     type Error = ApiError;
 
@@ -125,26 +152,11 @@ impl TryFrom<Vec<AIHelpHistoryMessage>> for AIHelpLog {
         let messages = value
             .into_iter()
             .map(|log| {
-                let assistant: ChatCompletionRequestMessage =
-                    serde_json::from_value(log.response).unwrap_or_default();
-                let user: ChatCompletionRequestMessage =
-                    serde_json::from_value(log.request).unwrap_or_default();
-                let sources: Vec<RefDoc> = serde_json::from_value(log.sources).unwrap_or_default();
+                let log_message: AIHelpLogMessage = log.into();
                 if chat_id.is_none() {
-                    chat_id = Some(log.chat_id);
+                    chat_id = Some(log_message.metadata.chat_id);
                 }
-                AIHelpLogMessage {
-                    metadata: AIHelpMeta {
-                        typ: MetaType::Metadata,
-                        chat_id: log.chat_id,
-                        message_id: log.message_id,
-                        parent_id: log.parent_id,
-                        sources,
-                        quota: None,
-                    },
-                    user,
-                    assistant,
-                }
+                log_message
             })
             .collect();
         Ok(AIHelpLog {
@@ -154,10 +166,31 @@ impl TryFrom<Vec<AIHelpHistoryMessage>> for AIHelpLog {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct HelpIds {
+    chat_id: Uuid,
+    message_id: Uuid,
+    parent_id: Option<Uuid>,
+}
+
 #[derive(Serialize, Deserialize, Default)]
 pub struct AIHelpLogResponse {
     meta: AIHelpMeta,
     answer: ChatCompletionRequestMessage,
+}
+
+#[derive(Serialize, Default)]
+pub struct AIHelpHistorySummaryResponse {
+    title: Option<String>,
+}
+
+fn history_enabled(settings: &Option<Settings>) -> bool {
+    if let Some(settings) = settings {
+        if settings.no_ai_help_history {
+            return false;
+        }
+    }
+    true
 }
 
 pub async fn quota(user_id: Identity, diesel_pool: Data<Pool>) -> Result<HttpResponse, ApiError> {
@@ -176,19 +209,41 @@ pub async fn quota(user_id: Identity, diesel_pool: Data<Pool>) -> Result<HttpRes
 fn record(
     pool: Data<Pool>,
     ai_help_req: &AIHelpRequest,
-    config: ExperimentsConfig,
+    history_enabled: bool,
+    experiments: Option<Experiments>,
     user_id: i64,
-    chat_id: Uuid,
-    message_id: Uuid,
-    parent_id: Option<Uuid>,
-) -> Result<mpsc::UnboundedSender<CreateChatCompletionStreamResponse>, ApiError> {
+    help_ids: HelpIds,
+) -> Result<Option<mpsc::UnboundedSender<CreateChatCompletionStreamResponse>>, ApiError> {
+    let (debug, variant) = if let Some(Experiments {
+        active: true,
+        config,
+    }) = experiments
+    {
+        (true, Some(AIHelpConfig::from(config).name))
+    } else {
+        (false, None)
+    };
+    if !debug && !history_enabled {
+        return Ok(None);
+    }
     let req = ai_help_req.req.clone();
     let sources = ai_help_req.refs.clone();
-    let ai_help_config = AIHelpConfig::from(config);
     let mut conn = pool.get()?;
+    let HelpIds {
+        chat_id,
+        message_id,
+        parent_id,
+    } = help_ids;
 
     let (tx, mut rx) = mpsc::unbounded_channel::<CreateChatCompletionStreamResponse>();
     actix_web::rt::spawn(async move {
+        if history_enabled {
+            if let Err(err) = add_help_history(&mut conn, user_id, chat_id) {
+                error!("AI Help log: {err}");
+            }
+        }
+
+        let mut created_at = None;
         let mut answer = vec![];
         while let Some(mut chunk) = rx.recv().await {
             if let Some(part) = chunk.choices.pop().and_then(|c| c.delta.content) {
@@ -200,19 +255,19 @@ fn record(
             content: Some(answer.join("")),
             ..Default::default()
         };
-        let mut created_at = None;
-        if config.history.unwrap_or_default() {
-            let insert = AIHelpHistoryAndMessage {
+
+        if history_enabled {
+            let insert = AIHelpHistoryMessageInsert {
                 user_id,
                 chat_id,
                 message_id,
                 parent_id,
                 created_at,
-                sources: &sources,
-                request: req.messages.last(),
-                response: &response,
+                sources: serde_json::to_value(&sources).unwrap_or(Null),
+                request: serde_json::to_value(req.messages.last()).unwrap_or(Null),
+                response: serde_json::to_value(&response).unwrap_or(Null),
             };
-            match add_help_history(&mut conn, &insert) {
+            match add_help_history_message(&mut conn, insert) {
                 Err(err) => {
                     error!("AI Help log: {err}");
                 }
@@ -221,22 +276,24 @@ fn record(
                 }
             }
         }
-        let insert = AIHelpDebugLogsInsert {
-            user_id,
-            variant: ai_help_config.name.to_owned(),
-            chat_id,
-            message_id,
-            parent_id,
-            created_at,
-            sources: serde_json::to_value(&sources).unwrap_or(Null),
-            request: serde_json::to_value(&req.messages).unwrap_or(Null),
-            response: serde_json::to_value(&response).unwrap_or(Null),
-        };
-        if let Err(err) = add_help_debug_log(&mut conn, &insert) {
-            error!("AI Help log: {err}");
+        if let (true, Some(variant)) = (debug, variant) {
+            let insert = AIHelpDebugLogsInsert {
+                user_id,
+                variant: variant.to_owned(),
+                chat_id,
+                message_id,
+                parent_id,
+                created_at,
+                sources: serde_json::to_value(&sources).unwrap_or(Null),
+                request: serde_json::to_value(&req.messages).unwrap_or(Null),
+                response: serde_json::to_value(&response).unwrap_or(Null),
+            };
+            if let Err(err) = add_help_debug_log(&mut conn, &insert) {
+                error!("AI Help log: {err}");
+            }
         }
     });
-    Ok(tx)
+    Ok(Some(tx))
 }
 
 pub fn sorry_response(
@@ -280,6 +337,7 @@ pub async fn ai_help(
 ) -> Result<Either<impl Responder, impl Responder>, ApiError> {
     let mut conn = diesel_pool.get()?;
     let user = get_user(&mut conn, user_id.id().unwrap())?;
+    let settings = get_settings(&mut conn, &user)?;
     let experiments = get_experiments(&mut conn, &user)?;
     let current = if user.is_subscriber() {
         create_or_increment_total(&mut conn, &user)?;
@@ -312,23 +370,19 @@ pub async fn ai_help(
                     sources: ai_help_req.refs.clone(),
                     quota: current.map(AIHelpLimit::from_count),
                 };
-                let tx = if let Some(Experiments {
-                    active: true,
-                    config,
-                }) = experiments
-                {
-                    Some(record(
-                        diesel_pool,
-                        &ai_help_req,
-                        config,
-                        user.id,
-                        chat_id,
-                        message_id,
-                        parent_id,
-                    )?)
-                } else {
-                    None
+                let help_ids = HelpIds {
+                    chat_id,
+                    message_id,
+                    parent_id,
                 };
+                let tx = record(
+                    diesel_pool,
+                    &ai_help_req,
+                    history_enabled(&settings),
+                    experiments,
+                    user.id,
+                    help_ids,
+                )?;
                 let stream = client.chat().create_stream(ai_help_req.req).await.unwrap();
                 let refs = stream::once(async move {
                     Ok(sse::Event::Data(
@@ -364,6 +418,40 @@ pub async fn ai_help(
     Err(ApiError::NotImplemented)
 }
 
+pub async fn ai_help_title_summary(
+    user_id: Identity,
+    diesel_pool: Data<Pool>,
+    message_id: Path<Uuid>,
+    openai_client: Data<Option<Client<OpenAIConfig>>>,
+) -> Result<HttpResponse, ApiError> {
+    let mut conn = diesel_pool.get()?;
+    let user = get_user(&mut conn, user_id.id().unwrap())?;
+    let settings = get_settings(&mut conn, &user)?;
+
+    if history_enabled(&settings) {
+        if let Some(client) = &**openai_client {
+            let hit = help_history_get_message(&mut conn, &user, &message_id.into_inner())?;
+            if let Some(hit) = hit {
+                let log_message = AIHelpLogMessage::from(hit);
+                let req =
+                    prepare_ai_help_summary_req(vec![log_message.user, log_message.assistant])?;
+                let mut res = client.chat().create(req).await?;
+                let title = res.choices.pop().and_then(|c| c.message.content);
+                if let Some(ref title) = title {
+                    update_help_history_label(
+                        &mut conn,
+                        &user,
+                        log_message.metadata.chat_id,
+                        title,
+                    )?;
+                }
+                return Ok(HttpResponse::Ok().json(AIHelpHistorySummaryResponse { title }));
+            }
+        }
+    }
+    Err(ApiError::NotImplemented)
+}
+
 pub async fn ai_help_history(
     user_id: Identity,
     diesel_pool: Data<Pool>,
@@ -371,12 +459,9 @@ pub async fn ai_help_history(
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = diesel_pool.get()?;
     let user = get_user(&mut conn, user_id.id().unwrap())?;
-    let experiments = get_experiments(&mut conn, &user)?;
+    let settings = get_settings(&mut conn, &user)?;
 
-    if experiments
-        .map(|e| e.active && e.config.history.unwrap_or_default())
-        .unwrap_or_default()
-    {
+    if history_enabled(&settings) {
         let hit = help_history(&mut conn, &user, &chat_id.into_inner())?;
         if !hit.is_empty() {
             let res = AIHelpLog::try_from(hit)?;
@@ -392,11 +477,8 @@ pub async fn ai_help_list_history(
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = diesel_pool.get()?;
     let user = get_user(&mut conn, user_id.id().unwrap())?;
-    let experiments = get_experiments(&mut conn, &user)?;
-    if experiments
-        .map(|e| e.active && e.config.history.unwrap_or_default())
-        .unwrap_or_default()
-    {
+    let settings = get_settings(&mut conn, &user)?;
+    if history_enabled(&settings) {
         let hit = list_help_history(&mut conn, &user)?;
         return Ok(HttpResponse::Ok().json(
             hit.into_iter()

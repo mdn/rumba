@@ -7,10 +7,8 @@ use async_openai::{
     },
     Client,
 };
-use chrono::NaiveDateTime;
 use futures_util::{stream::FuturesUnordered, TryStreamExt};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 use crate::{
     ai::{
@@ -34,19 +32,6 @@ pub struct RefDoc {
 pub struct AIHelpRequest {
     pub req: CreateChatCompletionRequest,
     pub refs: Vec<RefDoc>,
-}
-
-#[derive(Debug, Clone)]
-
-pub struct AIHelpHistoryAndMessage<'a> {
-    pub user_id: i64,
-    pub chat_id: Uuid,
-    pub message_id: Uuid,
-    pub parent_id: Option<Uuid>,
-    pub created_at: Option<NaiveDateTime>,
-    pub sources: &'a Vec<RefDoc>,
-    pub request: Option<&'a ChatCompletionRequestMessage>,
-    pub response: &'a ChatCompletionRequestMessage,
 }
 
 pub async fn prepare_ai_help_req(
@@ -143,4 +128,28 @@ pub async fn prepare_ai_help_req(
         .build()?;
 
     Ok(Some(AIHelpRequest { req, refs }))
+}
+
+pub fn prepare_ai_help_summary_req(
+    messages: Vec<ChatCompletionRequestMessage>,
+) -> Result<CreateChatCompletionRequest, AIError> {
+    let system_message = ChatCompletionRequestMessageArgs::default()
+        .role(Role::System)
+        .content(include_str!("prompts/summary/system.md"))
+        .build()
+        .unwrap();
+    let user_message = ChatCompletionRequestMessageArgs::default()
+        .role(Role::User)
+        .content(include_str!("prompts/summary/user.md"))
+        .build()
+        .unwrap();
+    let messages = [&[system_message], &messages[..], &[user_message]].concat();
+
+    let req = CreateChatCompletionRequestArgs::default()
+        .model("gpt-3.5-turbo")
+        .messages(messages)
+        .temperature(0.0)
+        .build()?;
+
+    Ok(req)
 }

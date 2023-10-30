@@ -1,11 +1,10 @@
 use chrono::{Duration, NaiveDateTime, Utc};
-use diesel::{delete, prelude::*};
+use diesel::{delete, prelude::*, update};
 use diesel::{insert_into, PgConnection};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::ai::help::AIHelpHistoryAndMessage;
 use crate::db::error::DbError;
 use crate::db::model::{
     AIHelpDebugFeedbackInsert, AIHelpDebugLogsInsert, AIHelpFeedbackInsert, AIHelpHistoryInsert,
@@ -126,31 +125,39 @@ pub fn create_or_increment_limit(
 
 pub fn add_help_history(
     conn: &mut PgConnection,
-    history_and_message: &AIHelpHistoryAndMessage,
-) -> Result<NaiveDateTime, DbError> {
+    user_id: i64,
+    chat_id: Uuid,
+) -> Result<(), DbError> {
     let history = AIHelpHistoryInsert {
-        user_id: history_and_message.user_id,
-        chat_id: history_and_message.chat_id,
-        label: history_and_message
-            .request
-            .and_then(|r| {
-                r.content
-                    .as_ref()
-                    .map(|c| c.chars().take(100).collect::<String>())
-            })
-            .unwrap_or_else(|| String::from("No title")),
-        created_at: history_and_message.created_at,
+        user_id,
+        chat_id,
+        label: String::default(),
+        created_at: None,
         updated_at: None,
     };
-    let updated_at = insert_into(ai_help_history::table)
+    insert_into(ai_help_history::table)
         .values(history)
         .on_conflict(ai_help_history::chat_id)
         .do_update()
         .set(ai_help_history::updated_at.eq(diesel::dsl::now))
+        .execute(conn)?;
+
+    Ok(())
+}
+
+pub fn add_help_history_message(
+    conn: &mut PgConnection,
+    mut message: AIHelpHistoryMessageInsert,
+) -> Result<NaiveDateTime, DbError> {
+    let updated_at = update(ai_help_history::table)
+        .filter(
+            ai_help_history::user_id
+                .eq(message.user_id)
+                .and(ai_help_history::chat_id.eq(message.chat_id)),
+        )
+        .set(ai_help_history::updated_at.eq(diesel::dsl::now))
         .returning(ai_help_history::updated_at)
         .get_result::<NaiveDateTime>(conn)?;
-
-    let mut message = AIHelpHistoryMessageInsert::from(history_and_message);
     message.created_at = Some(updated_at);
     insert_into(ai_help_history_messages::table)
         .values(message)
@@ -216,6 +223,22 @@ pub fn add_help_debug_feedback(
     Ok(())
 }
 
+pub fn help_history_get_message(
+    conn: &mut PgConnection,
+    user: &UserQuery,
+    message_id: &Uuid,
+) -> Result<Option<AIHelpHistoryMessage>, DbError> {
+    ai_help_history_messages::table
+        .filter(
+            ai_help_history_messages::user_id
+                .eq(user.id)
+                .and(ai_help_history_messages::message_id.eq(message_id)),
+        )
+        .first(conn)
+        .optional()
+        .map_err(Into::into)
+}
+
 pub fn help_history(
     conn: &mut PgConnection,
     user: &UserQuery,
@@ -277,4 +300,21 @@ pub fn delete_help_history(
     )
     .execute(conn)?
         == 1)
+}
+
+pub fn update_help_history_label(
+    conn: &mut PgConnection,
+    user: &UserQuery,
+    chat_id: Uuid,
+    label: &str,
+) -> Result<(), DbError> {
+    update(ai_help_history::table)
+        .filter(
+            ai_help_history::user_id
+                .eq(user.id)
+                .and(ai_help_history::chat_id.eq(chat_id)),
+        )
+        .set(ai_help_history::label.eq(label))
+        .execute(conn)?;
+    Ok(())
 }

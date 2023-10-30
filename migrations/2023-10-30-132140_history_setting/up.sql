@@ -1,0 +1,1 @@
+ALTER TABLE settings ADD COLUMN no_ai_help_history BOOLEAN NOT NULL DEFAULT FALSE;

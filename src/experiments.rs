@@ -30,12 +30,6 @@ pub struct ExperimentsConfig {
         with = "serde_with::rust::unwrap_or_skip"
     )]
     pub new_prompt: Option<bool>,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        with = "serde_with::rust::unwrap_or_skip"
-    )]
-    pub history: Option<bool>,
 }
 
 fn restrict(experiment: Option<bool>, allowed: bool) -> Option<bool> {
@@ -52,7 +46,6 @@ impl ExperimentsConfig {
             gpt4: restrict(self.gpt4, user.is_admin || user.is_mdn_team),
             full_doc: restrict(self.full_doc, user.is_admin || user.is_mdn_team),
             new_prompt: restrict(self.new_prompt, user.is_admin || user.is_mdn_team),
-            history: restrict(self.history, user.is_admin || user.is_mdn_team),
         }
     }
 }
@@ -63,7 +56,6 @@ impl From<usize> for ExperimentsConfig {
             gpt4: Some(value & 0b0001 != 0),
             full_doc: Some(value & 0b0010 != 0),
             new_prompt: Some(value & 0b0100 != 0),
-            history: Some(value & 0b1000 != 0),
         }
     }
 }

@@ -69,7 +69,6 @@ async fn test_experiments_config() -> Result<(), Error> {
     let json = read_json(active_experiments).await;
     assert_eq!(json["active"], false);
     assert_eq!(json["config"]["gpt4"], false);
-    assert_eq!(json["config"]["history"], false);
 
     let experiments = client
         .post(

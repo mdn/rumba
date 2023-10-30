@@ -8,13 +8,13 @@ use async_openai::types::ChatCompletionRequestMessage;
 use async_openai::types::Role::{Assistant, User};
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use rumba::ai::constants::AI_HELP_DEFAULT;
-use rumba::ai::help::{AIHelpHistoryAndMessage, RefDoc};
+use rumba::ai::help::RefDoc;
 use rumba::api::root::RootSetIsAdminQuery;
-use rumba::db::ai_help::{add_help_debug_log, add_help_history, AIHelpFeedback, FeedbackTyp};
-use rumba::db::model::AIHelpDebugLogsInsert;
+use rumba::db::ai_help::{add_help_debug_log, add_help_history, AIHelpFeedback, FeedbackTyp, add_help_history_message};
+use rumba::db::model::{AIHelpDebugLogsInsert, AIHelpHistoryMessageInsert};
 use rumba::db::schema::{ai_help_debug_feedback, ai_help_feedback};
 use rumba::db::users::root_set_is_admin;
-use serde_json::json;
+use serde_json::{json, Value::Null};
 use uuid::Uuid;
 
 const CHAT_ID: Uuid = Uuid::nil();
@@ -50,15 +50,15 @@ fn add_history_log() -> Result<(), Error> {
             title: "Box alignment in grid layout".into(),
         },
     ];
-    let insert = AIHelpHistoryAndMessage {
+    let message_insert = AIHelpHistoryMessageInsert {
         user_id: 1,
         chat_id: CHAT_ID,
         message_id: MESSAGE_ID,
         parent_id: None,
-        sources: &sources,
         created_at: None,
-        request: Some(&request),
-        response: &response,
+        sources: serde_json::to_value(&sources).unwrap_or(Null),
+        request: serde_json::to_value(&request).unwrap_or(Null),
+        response: serde_json::to_value(&response).unwrap_or(Null),
     };
     let debug_insert = AIHelpDebugLogsInsert {
         user_id: 1,
@@ -73,7 +73,8 @@ fn add_history_log() -> Result<(), Error> {
     };
     let pool = get_pool();
     let mut conn = pool.get()?;
-    add_help_history(&mut conn, &insert)?;
+    add_help_history(&mut conn, 1, CHAT_ID)?;
+    add_help_history_message(&mut conn, message_insert)?;
     add_help_debug_log(&mut conn, &debug_insert)?;
     Ok(())
 }
@@ -101,7 +102,6 @@ async fn test_history() -> Result<(), Error> {
             None,
             Some(crate::helpers::http_client::PostPayload::Json(json!({
                 "active": true,
-                "config": { "history": true }
             }))),
         )
         .await;

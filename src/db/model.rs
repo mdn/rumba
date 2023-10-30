@@ -1,4 +1,3 @@
-use crate::ai::help::AIHelpHistoryAndMessage;
 use crate::db::types::{FxaEventStatus, Subscription};
 use crate::db::{schema::*, types::FxaEvent};
 use crate::experiments::ExperimentsConfig;
@@ -124,6 +123,7 @@ pub struct Settings {
     pub locale_override: Option<Locale>,
     pub mdnplus_newsletter: bool,
     pub no_ads: bool,
+    pub no_ai_help_history: bool,
 }
 
 #[derive(Insertable, AsChangeset, Default)]
@@ -133,6 +133,7 @@ pub struct SettingsInsert {
     pub locale_override: Option<Option<Locale>>,
     pub mdnplus_newsletter: Option<bool>,
     pub no_ads: Option<bool>,
+    pub no_ai_help_history: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -302,21 +303,6 @@ pub struct AIHelpHistoryMessageInsert {
     pub sources: Value,
     pub request: Value,
     pub response: Value,
-}
-
-impl<'a> From<&'a AIHelpHistoryAndMessage<'a>> for AIHelpHistoryMessageInsert {
-    fn from(value: &'a AIHelpHistoryAndMessage<'a>) -> Self {
-        AIHelpHistoryMessageInsert {
-            user_id: value.user_id,
-            chat_id: value.chat_id,
-            message_id: value.message_id,
-            parent_id: value.parent_id,
-            created_at: value.created_at,
-            sources: serde_json::to_value(value.sources).unwrap_or(Value::Null),
-            request: serde_json::to_value(value.request).unwrap_or(Value::Null),
-            response: serde_json::to_value(value.response).unwrap_or(Value::Null),
-        }
-    }
 }
 
 #[derive(Queryable, Serialize, Debug, Default)]

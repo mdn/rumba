@@ -17,6 +17,7 @@ pub struct SettingUpdateRequest {
     pub locale_override: Option<Option<Locale>>,
     pub mdnplus_newsletter: Option<bool>,
     pub no_ads: Option<bool>,
+    pub no_ai_help_history: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -24,6 +25,7 @@ pub struct SettingsResponse {
     pub locale_override: Option<Option<Locale>>,
     pub mdnplus_newsletter: Option<bool>,
     pub no_ads: Option<bool>,
+    pub no_ai_help_history: Option<bool>,
 }
 
 impl From<Settings> for SettingsResponse {
@@ -32,6 +34,7 @@ impl From<Settings> for SettingsResponse {
             locale_override: Some(val.locale_override),
             mdnplus_newsletter: Some(val.mdnplus_newsletter),
             no_ads: Some(val.no_ads),
+            no_ai_help_history: Some(val.no_ai_help_history),
         }
     }
 }
@@ -56,6 +59,7 @@ pub async fn update_settings(
             } else {
                 None
             },
+            no_ai_help_history: settings_update.no_ai_help_history,
         };
         db::settings::create_or_update_settings(&mut conn_pool, settings_insert)
             .map_err(DbError::from)?;
