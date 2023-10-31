@@ -10,7 +10,9 @@ use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use rumba::ai::constants::AI_HELP_DEFAULT;
 use rumba::ai::help::RefDoc;
 use rumba::api::root::RootSetIsAdminQuery;
-use rumba::db::ai_help::{add_help_debug_log, add_help_history, AIHelpFeedback, FeedbackTyp, add_help_history_message};
+use rumba::db::ai_help::{
+    add_help_debug_log, add_help_history, add_help_history_message, AIHelpFeedback, FeedbackTyp,
+};
 use rumba::db::model::{AIHelpDebugLogsInsert, AIHelpHistoryMessageInsert};
 use rumba::db::schema::{ai_help_debug_feedback, ai_help_feedback};
 use rumba::db::users::root_set_is_admin;
