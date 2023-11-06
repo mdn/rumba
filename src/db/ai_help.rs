@@ -278,6 +278,11 @@ pub fn list_help_history(
         .map_err(Into::into)
 }
 
+pub fn delete_full_help_history(conn: &mut PgConnection, user: &UserQuery) -> Result<(), DbError> {
+    delete(ai_help_history::table.filter(ai_help_history::user_id.eq(user.id))).execute(conn)?;
+    Ok(())
+}
+
 pub fn delete_help_history(
     conn: &mut PgConnection,
     user: &UserQuery,

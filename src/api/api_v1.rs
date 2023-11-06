@@ -1,7 +1,7 @@
 use crate::api::ai_explain::{explain, explain_feedback};
 use crate::api::ai_help::{
-    ai_help, ai_help_delete_history, ai_help_feedback, ai_help_history, ai_help_list_history,
-    ai_help_title_summary, quota,
+    ai_help, ai_help_delete_full_history, ai_help_delete_history, ai_help_feedback,
+    ai_help_history, ai_help_list_history, ai_help_title_summary, quota,
 };
 use crate::api::experiments::{get_experiments, update_experiments};
 use crate::api::info::information;
@@ -35,7 +35,10 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
                                     web::scope("/history")
                                         .service(
                                             web::resource("/list")
-                                                .route(web::get().to(ai_help_list_history)),
+                                                .route(web::get().to(ai_help_list_history))
+                                                .route(
+                                                    web::delete().to(ai_help_delete_full_history),
+                                                ),
                                         )
                                         .service(
                                             web::resource("/summary/{chat_id}")

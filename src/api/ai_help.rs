@@ -26,9 +26,10 @@ use crate::{
         self,
         ai_help::{
             add_help_debug_feedback, add_help_debug_log, add_help_feedback, add_help_history,
-            add_help_history_message, create_or_increment_total, delete_help_history, get_count,
-            help_history, help_history_get_message, list_help_history, update_help_history_label,
-            AIHelpFeedback, FeedbackTyp, AI_HELP_LIMIT,
+            add_help_history_message, create_or_increment_total, delete_full_help_history,
+            delete_help_history, get_count, help_history, help_history_get_message,
+            list_help_history, update_help_history_label, AIHelpFeedback, FeedbackTyp,
+            AI_HELP_LIMIT,
         },
         experiments::get_experiments,
         model::{
@@ -501,6 +502,16 @@ pub async fn ai_help_delete_history(
     } else {
         Err(ApiError::NotImplemented)
     }
+}
+
+pub async fn ai_help_delete_full_history(
+    user_id: Identity,
+    diesel_pool: Data<Pool>,
+) -> Result<HttpResponse, ApiError> {
+    let mut conn = diesel_pool.get()?;
+    let user = get_user(&mut conn, user_id.id().unwrap())?;
+    delete_full_help_history(&mut conn, &user)?;
+    Ok(HttpResponse::Created().finish())
 }
 
 pub async fn ai_help_feedback(
