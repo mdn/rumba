@@ -94,7 +94,7 @@ const AI_HELP_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
 
 const AI_HELP_GPT4: AIHelpConfig = AIHelpConfig {
     name: "20230901-gpt4",
-    model: "gpt-4",
+    model: "gpt-4-1106-preview",
     full_doc: false,
     system_prompt: include_str!("prompts/default/system.md"),
     user_prompt: include_str!("prompts/default/user.md"),
@@ -106,7 +106,7 @@ const AI_HELP_GPT4: AIHelpConfig = AIHelpConfig {
 
 const AI_HELP_GTP4_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
     name: "20230901-gpt4-new_prompt",
-    model: "gpt-4",
+    model: "gpt-4-1106-preview",
     full_doc: false,
     system_prompt: include_str!("prompts/new_prompt/system.md"),
     user_prompt: include_str!("prompts/new_prompt/user.md"),
@@ -118,7 +118,7 @@ const AI_HELP_GTP4_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
 
 const AI_HELP_GPT4_FULL_DOC: AIHelpConfig = AIHelpConfig {
     name: "20230901-gpt4-full_doc",
-    model: "gpt-4-32k",
+    model: "gpt-4-1106-preview",
     full_doc: true,
     system_prompt: include_str!("prompts/default/system.md"),
     user_prompt: include_str!("prompts/default/user.md"),
@@ -130,7 +130,7 @@ const AI_HELP_GPT4_FULL_DOC: AIHelpConfig = AIHelpConfig {
 
 const AI_HELP_GPT4_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
     name: "20230901-gpt4-full_doc-new_pormpt",
-    model: "gpt-4-32k",
+    model: "gpt-4-1106-preview",
     full_doc: true,
     system_prompt: include_str!("prompts/new_prompt/system.md"),
     user_prompt: include_str!("prompts/new_prompt/user.md"),
