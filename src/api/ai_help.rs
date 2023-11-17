@@ -360,7 +360,7 @@ pub async fn ai_help(
             chat_id = None;
         }
         let message_id = Uuid::new_v4();
-        match prepare_ai_help_req(client, pool, messages, experiments).await? {
+        match prepare_ai_help_req(client, pool, messages).await? {
             Some(ai_help_req) => {
                 let chat_id = chat_id.unwrap_or_else(Uuid::new_v4);
                 let ai_help_meta = AIHelpMeta {

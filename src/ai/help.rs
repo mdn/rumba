@@ -12,13 +12,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     ai::{
-        constants::AIHelpConfig,
+        constants::AI_HELP_GPT4_FULL_DOC_NEW_PROMPT,
         embeddings::{get_related_docs, get_related_full_docs},
         error::AIError,
         helpers::{cap_messages, into_user_messages, sanitize_messages},
     },
     db::SupaPool,
-    experiments::Experiments,
 };
 
 #[derive(Eq, Hash, PartialEq, Serialize, Deserialize, Debug, Clone)]
@@ -38,9 +37,8 @@ pub async fn prepare_ai_help_req(
     client: &Client<OpenAIConfig>,
     pool: &SupaPool,
     messages: Vec<ChatCompletionRequestMessage>,
-    experiments: Option<Experiments>,
 ) -> Result<Option<AIHelpRequest>, AIError> {
-    let config = AIHelpConfig::from(experiments);
+    let config = AI_HELP_GPT4_FULL_DOC_NEW_PROMPT;
     let open_ai_messages = sanitize_messages(messages);
 
     // TODO: sign messages os we don't check again

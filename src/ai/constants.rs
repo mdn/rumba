@@ -128,7 +128,7 @@ const AI_HELP_GPT4_FULL_DOC: AIHelpConfig = AIHelpConfig {
     make_context: default_make_context,
 };
 
-const AI_HELP_GPT4_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
+pub const AI_HELP_GPT4_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
     name: "20230901-gpt4-full_doc-new_pormpt",
     model: "gpt-4-1106-preview",
     full_doc: true,

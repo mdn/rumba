@@ -15,7 +15,6 @@ use itertools::Itertools;
 use rumba::{
     ai::help::{prepare_ai_help_req, AIHelpRequest},
     db,
-    experiments::Experiments,
     settings::SETTINGS,
 };
 use serde::{Deserialize, Serialize};
@@ -66,7 +65,6 @@ impl Storage {
 pub async fn ai_help_all(
     path: Option<impl AsRef<Path>>,
     out: impl AsRef<Path>,
-    experiments: Option<Experiments>,
 ) -> Result<(), Error> {
     let out = &out;
     std::fs::create_dir_all(out)?;
@@ -97,9 +95,7 @@ pub async fn ai_help_all(
                     function_call: None,
                 })
                 .collect();
-            if let Some(req) =
-                prepare_ai_help_req(openai_client, supabase_pool, messages, experiments).await?
-            {
+            if let Some(req) = prepare_ai_help_req(openai_client, supabase_pool, messages).await? {
                 let mut res = openai_client.chat().create(req.req.clone()).await?;
                 let res = res.choices.pop().map(|res| res.message);
                 let storage = Storage { req, res };

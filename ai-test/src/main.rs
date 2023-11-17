@@ -2,7 +2,6 @@ use std::path::PathBuf;
 
 use anyhow::Error;
 use clap::{Parser, Subcommand};
-use rumba::experiments::Experiments;
 
 use crate::ai_help::ai_help_all;
 
@@ -26,8 +25,6 @@ enum Commands {
         path: Option<PathBuf>,
         #[arg(short, long)]
         out: Option<PathBuf>,
-        #[arg(short, long)]
-        experiments: Option<usize>,
     },
 }
 
@@ -35,17 +32,9 @@ enum Commands {
 async fn main() -> Result<(), Error> {
     let cli = Cli::parse();
     match cli.command {
-        Commands::Test {
-            path,
-            out,
-            experiments,
-        } => {
+        Commands::Test { path, out } => {
             let out = out.unwrap_or_else(|| PathBuf::from("/tmp/test"));
-            let experiments = experiments.map(|i| Experiments {
-                active: true,
-                config: i.into(),
-            });
-            ai_help_all(path, out, experiments).await?;
+            ai_help_all(path, out).await?;
         }
     }
     Ok(())
