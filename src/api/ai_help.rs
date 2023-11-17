@@ -19,7 +19,10 @@ use uuid::Uuid;
 use crate::{
     ai::{
         constants::AIHelpConfig,
-        help::{prepare_ai_help_req, prepare_ai_help_summary_req, AIHelpRequest, RefDoc},
+        help::{
+            is_help_debug_log_enabled, prepare_ai_help_req, prepare_ai_help_summary_req,
+            AIHelpRequest, RefDoc,
+        },
     },
     api::common::{GeneratedChunk, GeneratedChunkChoice},
     db::{
@@ -277,20 +280,22 @@ fn record(
                 }
             }
         }
-        if let (true, Some(variant)) = (debug, variant) {
-            let insert = AIHelpDebugLogsInsert {
-                user_id,
-                variant: variant.to_owned(),
-                chat_id,
-                message_id,
-                parent_id,
-                created_at,
-                sources: serde_json::to_value(&sources).unwrap_or(Null),
-                request: serde_json::to_value(&req.messages).unwrap_or(Null),
-                response: serde_json::to_value(&response).unwrap_or(Null),
-            };
-            if let Err(err) = add_help_debug_log(&mut conn, &insert) {
-                error!("AI Help log: {err}");
+        if is_help_debug_log_enabled() {
+            if let (true, Some(variant)) = (debug, variant) {
+                let insert = AIHelpDebugLogsInsert {
+                    user_id,
+                    variant: variant.to_owned(),
+                    chat_id,
+                    message_id,
+                    parent_id,
+                    created_at,
+                    sources: serde_json::to_value(&sources).unwrap_or(Null),
+                    request: serde_json::to_value(&req.messages).unwrap_or(Null),
+                    response: serde_json::to_value(&response).unwrap_or(Null),
+                };
+                if let Err(err) = add_help_debug_log(&mut conn, &insert) {
+                    error!("AI Help log: {err}");
+                }
             }
         }
     });
@@ -532,7 +537,9 @@ pub async fn ai_help_feedback(
         thumbs: ai_help_feedback.thumbs.map(|t| t == FeedbackTyp::ThumbsUp),
     };
     add_help_feedback(&mut conn, &user, &feedback)?;
-    add_help_debug_feedback(&mut conn, &user, &feedback.into())?;
+    if is_help_debug_log_enabled() {
+        add_help_debug_feedback(&mut conn, &user, &feedback.into())?;
+    }
 
     Ok(HttpResponse::Created().finish())
 }
