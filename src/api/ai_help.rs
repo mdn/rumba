@@ -420,8 +420,9 @@ pub async fn ai_help(
                 return Ok(Either::Right(res));
             }
         }
+    } else {
+        Err(ApiError::NotImplemented)
     }
-    Err(ApiError::NotImplemented)
 }
 
 pub async fn ai_help_title_summary(
@@ -453,9 +454,12 @@ pub async fn ai_help_title_summary(
                 }
                 return Ok(HttpResponse::Ok().json(AIHelpHistorySummaryResponse { title }));
             }
+            return Ok(HttpResponse::NotFound().finish());
         }
+        Err(ApiError::Artificial)
+    } else {
+        Err(ApiError::NotImplemented)
     }
-    Err(ApiError::NotImplemented)
 }
 
 pub async fn ai_help_history(
@@ -471,10 +475,13 @@ pub async fn ai_help_history(
         let hit = help_history(&mut conn, &user, &chat_id.into_inner())?;
         if !hit.is_empty() {
             let res = AIHelpLog::try_from(hit)?;
-            return Ok(HttpResponse::Ok().json(res));
+            Ok(HttpResponse::Ok().json(res))
+        } else {
+            Ok(HttpResponse::NotFound().finish())
         }
+    } else {
+        Err(ApiError::NotImplemented)
     }
-    Err(ApiError::NotImplemented)
 }
 
 pub async fn ai_help_list_history(
@@ -491,8 +498,9 @@ pub async fn ai_help_list_history(
                 .map(AIHelpHistoryListEntry::from)
                 .collect::<Vec<_>>(),
         ));
+    } else {
+        Err(ApiError::NotImplemented)
     }
-    Err(ApiError::NotImplemented)
 }
 
 pub async fn ai_help_delete_history(
@@ -502,8 +510,14 @@ pub async fn ai_help_delete_history(
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = diesel_pool.get()?;
     let user = get_user(&mut conn, user_id.id().unwrap())?;
-    if delete_help_history(&mut conn, &user, chat_id.into_inner())? {
-        Ok(HttpResponse::Created().finish())
+    let settings = get_settings(&mut conn, &user)?;
+
+    if history_enabled(&settings) {
+        if delete_help_history(&mut conn, &user, chat_id.into_inner())? {
+            Ok(HttpResponse::NoContent().finish())
+        } else {
+            Ok(HttpResponse::InternalServerError().finish())
+        }
     } else {
         Err(ApiError::NotImplemented)
     }
