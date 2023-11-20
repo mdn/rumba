@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     ai::{
         constants::AI_HELP_GPT4_FULL_DOC_NEW_PROMPT,
-        embeddings::{get_related_docs, get_related_full_docs},
+        embeddings::{get_related_docs, get_related_macro_docs},
         error::AIError,
         helpers::{cap_messages, into_user_messages, sanitize_messages},
     },
@@ -24,7 +24,6 @@ use crate::{
 #[derive(Eq, Hash, PartialEq, Serialize, Deserialize, Debug, Clone)]
 pub struct RefDoc {
     pub url: String,
-    pub slug: String,
     pub title: String,
 }
 
@@ -74,7 +73,7 @@ pub async fn prepare_ai_help_req(
         .ok_or(AIError::NoUserPrompt)?;
 
     let related_docs = if config.full_doc {
-        get_related_full_docs(client, pool, last_user_message.replace('\n', " ")).await?
+        get_related_macro_docs(client, pool, last_user_message.replace('\n', " ")).await?
     } else {
         get_related_docs(client, pool, last_user_message.replace('\n', " ")).await?
     };
@@ -90,10 +89,9 @@ pub async fn prepare_ai_help_req(
         if token_len >= config.context_limit {
             break;
         }
-        if !refs.iter().any(|r: &RefDoc| r.slug == doc.slug) {
+        if !refs.iter().any(|r: &RefDoc| r.url == doc.url) {
             refs.push(RefDoc {
                 url: doc.url.clone(),
-                slug: doc.slug.clone(),
                 title: doc.title.clone(),
             });
         }

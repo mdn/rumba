@@ -37,13 +37,50 @@ and (mdn_doc.embedding <=> $1) < $2
 order by mdn_doc.embedding <=> $1
 limit $3;";
 
+const MACRO_EMB_DISTANCE: f64 = 0.78;
+const MACRO_EMB_SEC_MIN_LENGTH: i64 = 50;
+const MACRO_EMB_DOC_LIMIT: i64 = 5;
+
+const MACRO_DOCS_QUERY: &str = "select
+mdn_doc_macro.mdn_url as url,
+mdn_doc_macro.title,
+mdn_doc_macro.html as content,
+mdn_doc_macro.embedding <=> $1 as similarity
+from mdn_doc_macro
+where length(mdn_doc_macro.html) >= $4
+and (mdn_doc_macro.embedding <=> $1) < $2
+order by mdn_doc_macro.embedding <=> $1
+limit $3;";
+
 #[derive(sqlx::FromRow, Debug)]
 pub struct RelatedDoc {
     pub url: String,
-    pub slug: String,
     pub title: String,
     pub content: String,
     pub similarity: f64,
+}
+
+pub async fn get_related_macro_docs(
+    client: &Client<OpenAIConfig>,
+    pool: &SupaPool,
+    prompt: String,
+) -> Result<Vec<RelatedDoc>, AIError> {
+    let embedding_req = CreateEmbeddingRequestArgs::default()
+        .model(EMBEDDING_MODEL)
+        .input(prompt)
+        .build()?;
+    let embedding_res = client.embeddings().create(embedding_req).await?;
+
+    let embedding =
+        pgvector::Vector::from(embedding_res.data.into_iter().next().unwrap().embedding);
+    let docs: Vec<RelatedDoc> = sqlx::query_as(MACRO_DOCS_QUERY)
+        .bind(embedding)
+        .bind(MACRO_EMB_DISTANCE)
+        .bind(MACRO_EMB_DOC_LIMIT)
+        .bind(MACRO_EMB_SEC_MIN_LENGTH)
+        .fetch_all(pool)
+        .await?;
+    Ok(docs)
 }
 
 pub async fn get_related_full_docs(
@@ -68,6 +105,7 @@ pub async fn get_related_full_docs(
         .await?;
     Ok(docs)
 }
+
 pub async fn get_related_docs(
     client: &Client<OpenAIConfig>,
     pool: &SupaPool,

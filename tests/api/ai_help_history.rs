@@ -38,17 +38,14 @@ fn add_history_log() -> Result<(), Error> {
     let sources = vec![
         RefDoc {
             url: "/en-US/docs/Learn/CSS/Howto/Center_an_item".into(),
-            slug: "Learn/CSS/Howto/Center_an_item".into(),
             title: "How to center an item".into(),
         },
         RefDoc {
             url: "/en-US/docs/Web/CSS/margin".into(),
-            slug: "Web/CSS/margin".into(),
             title: "margin".into(),
         },
         RefDoc {
             url: "/en-US/docs/Web/CSS/CSS_grid_layout/Box_alignment_in_grid_layout".into(),
-            slug: "Web/CSS/CSS_grid_layout/Box_alignment_in_grid_layout".into(),
             title: "Box alignment in grid layout".into(),
         },
     ];
