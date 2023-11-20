@@ -395,7 +395,7 @@ pub async fn ai_help(
                         sse::Data::new_json(ai_help_meta).map_err(OpenAIError::JSONDeserialize)?,
                     ))
                 });
-                return Ok(Either::Left(sse::Sse::from_stream(refs.chain(
+                Ok(Either::Left(sse::Sse::from_stream(refs.chain(
                     stream.map_ok(move |res| {
                         if let Some(ref tx) = tx {
                             if let Err(e) = tx.send(res.clone()) {
@@ -404,7 +404,7 @@ pub async fn ai_help(
                         }
                         sse::Event::Data(sse::Data::new_json(res).unwrap())
                     }),
-                ))));
+                ))))
             }
             None => {
                 let parts = sorry_response(
@@ -417,7 +417,7 @@ pub async fn ai_help(
                 let res =
                     sse::Sse::from_stream(stream.map(|r| Ok::<_, ApiError>(sse::Event::Data(r))));
 
-                return Ok(Either::Right(res));
+                Ok(Either::Right(res))
             }
         }
     } else {
@@ -493,11 +493,11 @@ pub async fn ai_help_list_history(
     let settings = get_settings(&mut conn, &user)?;
     if history_enabled(&settings) {
         let hit = list_help_history(&mut conn, &user)?;
-        return Ok(HttpResponse::Ok().json(
+        Ok(HttpResponse::Ok().json(
             hit.into_iter()
                 .map(AIHelpHistoryListEntry::from)
                 .collect::<Vec<_>>(),
-        ));
+        ))
     } else {
         Err(ApiError::NotImplemented)
     }
