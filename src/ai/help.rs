@@ -110,12 +110,17 @@ pub async fn prepare_ai_help_req(
         .content((config.make_context)(context))
         .build()
         .unwrap();
-    let user_message = ChatCompletionRequestMessageArgs::default()
-        .role(Role::User)
-        .content(config.user_prompt)
-        .build()
-        .unwrap();
-    let init_messages = vec![system_message, context_message, user_message];
+    let user_message = config.user_prompt.map(|x| {
+        ChatCompletionRequestMessageArgs::default()
+            .role(Role::User)
+            .content(x)
+            .build()
+            .unwrap()
+    });
+    let init_messages = vec![Some(system_message), Some(context_message), user_message]
+        .into_iter()
+        .flatten()
+        .collect();
     let messages = cap_messages(&config, init_messages, context_messages)?;
 
     let req = CreateChatCompletionRequestArgs::default()
