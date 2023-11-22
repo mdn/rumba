@@ -49,6 +49,7 @@ mdn_doc_macro.embedding <=> $1 as similarity
 from mdn_doc_macro
 where length(mdn_doc_macro.html) >= $4
 and (mdn_doc_macro.embedding <=> $1) < $2
+and mdn_doc_macro.mdn_url not like '/en-US/docs/MDN%'
 order by mdn_doc_macro.embedding <=> $1
 limit $3;";
 
