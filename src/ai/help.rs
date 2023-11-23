@@ -97,19 +97,22 @@ pub async fn prepare_ai_help_req(
         }
         context.push(doc);
     }
-    if context.is_empty() {
-        return Ok(None);
-    }
     let system_message = ChatCompletionRequestMessageArgs::default()
         .role(Role::System)
         .content(config.system_prompt)
         .build()
         .unwrap();
-    let context_message = ChatCompletionRequestMessageArgs::default()
-        .role(Role::User)
-        .content((config.make_context)(context))
-        .build()
-        .unwrap();
+    let context_message = if context.is_empty() {
+        None
+    } else {
+        Some(
+            ChatCompletionRequestMessageArgs::default()
+                .role(Role::User)
+                .content((config.make_context)(context))
+                .build()
+                .unwrap(),
+        )
+    };
     let user_message = config.user_prompt.map(|x| {
         ChatCompletionRequestMessageArgs::default()
             .role(Role::User)
@@ -117,7 +120,7 @@ pub async fn prepare_ai_help_req(
             .build()
             .unwrap()
     });
-    let init_messages = vec![Some(system_message), Some(context_message), user_message]
+    let init_messages = vec![Some(system_message), context_message, user_message]
         .into_iter()
         .flatten()
         .collect();
