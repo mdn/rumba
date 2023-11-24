@@ -86,8 +86,10 @@ pub async fn prepare_ai_help_req(
         let bpe = tiktoken_rs::r50k_base().unwrap();
         let tokens = bpe.encode_with_special_tokens(&doc.content).len();
         token_len += tokens;
+        debug!("tokens: {}, token_len: {}", tokens, token_len);
         if token_len >= config.context_limit {
-            break;
+            token_len -= tokens;
+            continue;
         }
         if !refs.iter().any(|r: &RefDoc| r.url == doc.url) {
             refs.push(RefDoc {

@@ -135,7 +135,7 @@ pub const AI_HELP_GPT4_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
     system_prompt: include_str!("prompts/new_prompt/system.md"),
     user_prompt: None,
     token_limit: 32_768,
-    context_limit: 12_000,
+    context_limit: 20_000,
     max_completion_tokens: 4_096,
     make_context: |related_docs| related_docs.into_iter().map(|d| d.content).join("\n"),
 };
