@@ -292,7 +292,7 @@ pub struct AIHelpHistory {
     pub updated_at: Option<NaiveDateTime>,
 }
 
-#[derive(Insertable, Serialize, Debug, Default)]
+#[derive(Insertable, AsChangeset, Serialize, Debug, Default)]
 #[diesel(table_name = ai_help_history_messages)]
 pub struct AIHelpHistoryMessageInsert {
     pub user_id: i64,
@@ -300,9 +300,9 @@ pub struct AIHelpHistoryMessageInsert {
     pub message_id: Uuid,
     pub parent_id: Option<Uuid>,
     pub created_at: Option<NaiveDateTime>,
-    pub sources: Value,
-    pub request: Value,
-    pub response: Value,
+    pub sources: Option<Value>,
+    pub request: Option<Value>,
+    pub response: Option<Value>,
 }
 
 #[derive(Queryable, Serialize, Debug, Default)]

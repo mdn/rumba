@@ -160,8 +160,10 @@ pub fn add_help_history_message(
         .get_result::<NaiveDateTime>(conn)?;
     message.created_at = Some(updated_at);
     insert_into(ai_help_history_messages::table)
-        .values(message)
-        .on_conflict_do_nothing()
+        .values(&message)
+        .on_conflict(ai_help_history_messages::message_id)
+        .do_update()
+        .set(&message)
         .execute(conn)?;
     Ok(updated_at)
 }

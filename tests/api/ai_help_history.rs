@@ -55,9 +55,9 @@ fn add_history_log() -> Result<(), Error> {
         message_id: MESSAGE_ID,
         parent_id: None,
         created_at: None,
-        sources: serde_json::to_value(&sources).unwrap_or(Null),
-        request: serde_json::to_value(&request).unwrap_or(Null),
-        response: serde_json::to_value(&response).unwrap_or(Null),
+        sources: Some(serde_json::to_value(&sources).unwrap_or(Null)),
+        request: Some(serde_json::to_value(&request).unwrap_or(Null)),
+        response: Some(serde_json::to_value(&response).unwrap_or(Null)),
     };
     let debug_insert = AIHelpDebugLogsInsert {
         user_id: 1,

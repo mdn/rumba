@@ -36,7 +36,7 @@ async fn main() -> Result<(), Error> {
     }
 
     init_logging(false);
-    
+
     let cli = Cli::parse();
     match cli.command {
         Commands::Test { path, out } => {
