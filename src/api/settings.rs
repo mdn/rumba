@@ -18,7 +18,6 @@ pub struct SettingUpdateRequest {
     pub mdnplus_newsletter: Option<bool>,
     pub no_ads: Option<bool>,
     pub ai_help_history: Option<bool>,
-    pub no_ai_help_history: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -27,7 +26,6 @@ pub struct SettingsResponse {
     pub mdnplus_newsletter: Option<bool>,
     pub no_ads: Option<bool>,
     pub ai_help_history: Option<bool>,
-    pub no_ai_help_history: Option<bool>,
 }
 
 impl From<Settings> for SettingsResponse {
@@ -37,7 +35,6 @@ impl From<Settings> for SettingsResponse {
             mdnplus_newsletter: Some(val.mdnplus_newsletter),
             no_ads: Some(val.no_ads),
             ai_help_history: Some(val.ai_help_history),
-            no_ai_help_history: Some(!val.ai_help_history),
         }
     }
 }
@@ -62,11 +59,7 @@ pub async fn update_settings(
             } else {
                 None
             },
-            ai_help_history: match (settings_update.ai_help_history, settings_update.no_ai_help_history) {
-                (Some(true), _) => Some(true),
-                (_, Some(true)) => Some(false),
-                _ => Some(false),
-            }
+            ai_help_history: settings_update.ai_help_history,
         };
         db::settings::create_or_update_settings(&mut conn_pool, settings_insert)
             .map_err(DbError::from)?;

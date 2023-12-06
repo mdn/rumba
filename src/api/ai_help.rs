@@ -183,7 +183,7 @@ pub struct AIHelpHistorySummaryResponse {
 
 fn history_enabled(settings: &Option<Settings>) -> bool {
     if let Some(settings) = settings {
-        return settings.ai_help_history
+        return settings.ai_help_history;
     }
     true
 }
