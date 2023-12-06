@@ -123,7 +123,7 @@ pub struct Settings {
     pub locale_override: Option<Locale>,
     pub mdnplus_newsletter: bool,
     pub no_ads: bool,
-    pub no_ai_help_history: bool,
+    pub ai_help_history: bool,
 }
 
 #[derive(Insertable, AsChangeset, Default)]
@@ -133,7 +133,7 @@ pub struct SettingsInsert {
     pub locale_override: Option<Option<Locale>>,
     pub mdnplus_newsletter: Option<bool>,
     pub no_ads: Option<bool>,
-    pub no_ai_help_history: Option<bool>,
+    pub ai_help_history: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize)]

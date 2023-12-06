@@ -307,7 +307,7 @@ diesel::table! {
         locale_override -> Nullable<Locale>,
         mdnplus_newsletter -> Bool,
         no_ads -> Bool,
-        no_ai_help_history -> Bool,
+        ai_help_history -> Bool,
     }
 }
 
