@@ -29,7 +29,6 @@ use crate::{
             help_history, help_history_get_message, list_help_history, update_help_history_label,
             AIHelpFeedback, FeedbackTyp, AI_HELP_LIMIT,
         },
-        experiments::get_experiments,
         model::{AIHelpFeedbackInsert, AIHelpHistoryMessage, AIHelpHistoryMessageInsert, Settings},
         settings::get_settings,
         SupaPool,
@@ -580,10 +579,6 @@ pub async fn ai_help_feedback(
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = diesel_pool.get()?;
     let user = get_user(&mut conn, user_id.id().unwrap())?;
-    let experiments = get_experiments(&mut conn, &user)?;
-    if !experiments.map(|ex| ex.active).unwrap_or_default() {
-        return Ok(HttpResponse::BadRequest().finish());
-    }
     let ai_help_feedback = req.into_inner();
     let feedback = AIHelpFeedbackInsert {
         message_id: ai_help_feedback.message_id,

@@ -95,18 +95,6 @@ async fn test_history() -> Result<(), Error> {
             is_admin: true,
         },
     )?;
-    let experiments = logged_in_client
-        .post(
-            "/api/v1/plus/settings/experiments/",
-            None,
-            Some(crate::helpers::http_client::PostPayload::Json(json!({
-                "active": true,
-            }))),
-        )
-        .await;
-    assert_eq!(experiments.status(), 201);
-    let json = read_json(experiments).await;
-    assert_eq!(json["active"], true);
     let history = logged_in_client
         .get(
             "/api/v1/plus/ai/help/history/00000000-0000-0000-0000-000000000000",

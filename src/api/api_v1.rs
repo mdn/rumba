@@ -3,7 +3,6 @@ use crate::api::ai_help::{
     ai_help, ai_help_delete_full_history, ai_help_delete_history, ai_help_feedback,
     ai_help_history, ai_help_list_history, ai_help_title_summary, quota,
 };
-use crate::api::experiments::{get_experiments, update_experiments};
 use crate::api::info::information;
 use crate::api::newsletter::{
     is_subscribed, subscribe_anonymous_handler, subscribe_handler, unsubscribe_handler,
@@ -76,12 +75,7 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
                 )
                 .service(
                     web::scope("/settings")
-                        .service(web::resource("/").route(web::post().to(update_settings)))
-                        .service(
-                            web::resource("/experiments/")
-                                .route(web::post().to(update_experiments))
-                                .route(web::get().to(get_experiments)),
-                        ),
+                        .service(web::resource("/").route(web::post().to(update_settings))),
                 )
                 .service(
                     web::resource("/newsletter/")

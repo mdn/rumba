@@ -1,34 +1,6 @@
 use itertools::Itertools;
 
-use crate::{
-    ai::embeddings::RelatedDoc,
-    experiments::{Experiments, ExperimentsConfig},
-};
-
-fn default_make_context(related_docs: impl IntoIterator<Item = RelatedDoc>) -> String {
-    let context = related_docs.into_iter().map(|d| d.content).join("\n---\n");
-    format!("Here is the MDN content:\n{context}")
-}
-
-fn new_make_context(related_docs: impl IntoIterator<Item = RelatedDoc>) -> String {
-    related_docs
-        .into_iter()
-        .map(|d| {
-            format!(
-                "<article>\n---\nurl: {}\n---\n\n{}\n</article>",
-                d.url, d.content
-            )
-        })
-        .join("\n")
-}
-
-fn new_make_section_context(related_docs: impl IntoIterator<Item = RelatedDoc>) -> String {
-    let related_docs_with_title = related_docs.into_iter().map(|d| RelatedDoc {
-        content: format!("# {}\n\n{}", d.title, d.content),
-        ..d
-    });
-    new_make_context(related_docs_with_title)
-}
+use crate::ai::embeddings::RelatedDoc;
 
 // Whenever changing the model: bump the AI_EXPLAIN_VERSION!
 #[derive(Debug, Copy, Clone)]
@@ -44,90 +16,6 @@ pub struct AIHelpConfig {
     pub make_context: fn(Vec<RelatedDoc>) -> String,
 }
 
-pub const AI_HELP_DEFAULT: AIHelpConfig = AIHelpConfig {
-    name: "20230901-default",
-    model: "gpt-3.5-turbo",
-    full_doc: false,
-    system_prompt: include_str!("prompts/default/system.md"),
-    user_prompt: Some(include_str!("prompts/default/user.md")),
-    token_limit: 4_097,
-    context_limit: 1_500,
-    max_completion_tokens: 1_024,
-    make_context: default_make_context,
-};
-
-const AI_HELP_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
-    name: "20230901-new_prompt",
-    model: "gpt-3.5-turbo",
-    full_doc: false,
-    system_prompt: include_str!("prompts/new_prompt/system.md"),
-    user_prompt: Some(include_str!("prompts/new_prompt/user.md")),
-    token_limit: 4_097,
-    context_limit: 1_500,
-    max_completion_tokens: 1_024,
-    make_context: new_make_section_context,
-};
-
-const AI_HELP_FULL_DOC: AIHelpConfig = AIHelpConfig {
-    name: "20230901-full_doc",
-    model: "gpt-3.5-turbo-16k",
-    full_doc: true,
-    system_prompt: include_str!("prompts/default/system.md"),
-    user_prompt: Some(include_str!("prompts/default/user.md")),
-    token_limit: 16_384,
-    context_limit: 12_000,
-    max_completion_tokens: 2_048,
-    make_context: default_make_context,
-};
-
-const AI_HELP_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
-    name: "20230901-full_doc-new_prompt",
-    model: "gpt-3.5-turbo-16k",
-    full_doc: true,
-    system_prompt: include_str!("prompts/new_prompt/system.md"),
-    user_prompt: Some(include_str!("prompts/new_prompt/user.md")),
-    token_limit: 16_384,
-    context_limit: 12_000,
-    max_completion_tokens: 2_048,
-    make_context: new_make_context,
-};
-
-const AI_HELP_GPT4: AIHelpConfig = AIHelpConfig {
-    name: "20230901-gpt4",
-    model: "gpt-4-1106-preview",
-    full_doc: false,
-    system_prompt: include_str!("prompts/default/system.md"),
-    user_prompt: Some(include_str!("prompts/default/user.md")),
-    token_limit: 8_192,
-    context_limit: 4_500,
-    max_completion_tokens: 1_536,
-    make_context: default_make_context,
-};
-
-const AI_HELP_GTP4_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
-    name: "20230901-gpt4-new_prompt",
-    model: "gpt-4-1106-preview",
-    full_doc: false,
-    system_prompt: include_str!("prompts/new_prompt/system.md"),
-    user_prompt: Some(include_str!("prompts/new_prompt/user.md")),
-    token_limit: 8_192,
-    context_limit: 4_500,
-    max_completion_tokens: 1_536,
-    make_context: new_make_section_context,
-};
-
-const AI_HELP_GPT4_FULL_DOC: AIHelpConfig = AIHelpConfig {
-    name: "20230901-gpt4-full_doc",
-    model: "gpt-4-1106-preview",
-    full_doc: true,
-    system_prompt: include_str!("prompts/default/system.md"),
-    user_prompt: Some(include_str!("prompts/default/user.md")),
-    token_limit: 32_768,
-    context_limit: 12_000,
-    max_completion_tokens: 4_096,
-    make_context: default_make_context,
-};
-
 pub const AI_HELP_GPT4_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
     name: "20230901-gpt4-full_doc-new_pormpt",
     model: "gpt-4-1106-preview",
@@ -140,37 +28,7 @@ pub const AI_HELP_GPT4_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
     make_context: |related_docs| related_docs.into_iter().map(|d| d.content).join("\n"),
 };
 
-impl From<Option<Experiments>> for AIHelpConfig {
-    fn from(ex: Option<Experiments>) -> Self {
-        match ex {
-            Some(ex) if ex.active => ex.config.into(),
-            _ => AI_HELP_DEFAULT,
-        }
-    }
-}
-impl From<ExperimentsConfig> for AIHelpConfig {
-    fn from(ex: ExperimentsConfig) -> Self {
-        match (
-            ex.gpt4.unwrap_or_default(),
-            ex.full_doc.unwrap_or_default(),
-            ex.new_prompt.unwrap_or_default(),
-        ) {
-            (true, true, true) => AI_HELP_GPT4_FULL_DOC_NEW_PROMPT,
-            (true, true, false) => AI_HELP_GPT4_FULL_DOC,
-            (true, false, true) => AI_HELP_GTP4_NEW_PROMPT,
-            (true, false, false) => AI_HELP_GPT4,
-            (false, true, true) => AI_HELP_FULL_DOC_NEW_PROMPT,
-            (false, true, false) => AI_HELP_FULL_DOC,
-            (false, false, true) => AI_HELP_NEW_PROMPT,
-            (false, false, false) => AI_HELP_DEFAULT,
-        }
-    }
-}
-
 pub const MODEL: &str = "gpt-3.5-turbo";
-pub const MODEL_16K: &str = "gpt-3.5-turbo-16k";
-pub const MODEL_GPT4: &str = "gpt-4";
-pub const MODEL_GPT4_32K: &str = "gpt-4-32k";
 pub const EMBEDDING_MODEL: &str = "text-embedding-ada-002";
 
 pub const AI_HELP_SYSTEM_MESSAGE: &str = "You are a very enthusiastic MDN AI who loves \

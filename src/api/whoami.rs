@@ -3,9 +3,7 @@ use actix_identity::Identity;
 use serde::Serialize;
 
 use crate::db;
-use crate::db::experiments::get_experiments;
 use crate::db::Pool;
-use crate::experiments::Experiments;
 use crate::metrics::Metrics;
 use crate::settings::SETTINGS;
 use crate::util::country_iso_to_name;
@@ -33,8 +31,6 @@ pub struct WhoamiResponse {
     settings: Option<SettingsResponse>,
     #[serde(skip_serializing_if = "Option::is_none")]
     maintenance: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    experiments: Option<Experiments>,
 }
 
 const CLOUDFRONT_COUNTRY_HEADER: &str = "CloudFront-Viewer-Country";
@@ -77,7 +73,6 @@ pub async fn whoami(
                     let settings = db::settings::get_settings(&mut conn_pool, &user)?;
                     let subscription_type = user.get_subscription_type().unwrap_or_default();
                     let is_subscriber = user.is_subscriber();
-                    let experiments = get_experiments(&mut conn_pool, &user)?;
                     let response = WhoamiResponse {
                         geo: Option::Some(geo),
                         username: Option::Some(user.fxa_uid),
@@ -88,7 +83,6 @@ pub async fn whoami(
                         email: Option::Some(user.email),
                         settings: settings.map(Into::into),
                         maintenance: SETTINGS.maintenance.clone(),
-                        experiments,
                     };
                     metrics.incr("whoami.logged_in_success");
                     Ok(HttpResponse::Ok().json(response))

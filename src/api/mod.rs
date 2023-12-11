@@ -6,7 +6,6 @@ pub mod auth;
 pub mod common;
 pub mod elastic;
 pub mod error;
-pub mod experiments;
 pub mod fxa_webhook;
 pub mod healthz;
 pub mod info;

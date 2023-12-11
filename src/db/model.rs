@@ -1,6 +1,5 @@
 use crate::db::types::{FxaEventStatus, Subscription};
 use crate::db::{schema::*, types::FxaEvent};
-use crate::experiments::ExperimentsConfig;
 use crate::helpers::to_utc;
 use chrono::NaiveDateTime;
 
@@ -252,23 +251,6 @@ pub struct AIExplainCacheQuery {
     pub version: i64,
     pub thumbs_up: i64,
     pub thumbs_down: i64,
-}
-
-#[derive(Insertable, AsChangeset, Debug)]
-#[diesel(table_name = experiments)]
-pub struct ExperimentsInsert {
-    pub user_id: i64,
-    pub active: Option<bool>,
-    pub config: ExperimentsConfig,
-}
-
-#[derive(Queryable, Serialize, Debug, Default)]
-#[diesel(table_name = experiments)]
-pub struct ExperimentsQuery {
-    pub id: i64,
-    pub user_id: i64,
-    pub active: bool,
-    pub config: ExperimentsConfig,
 }
 
 #[derive(Insertable, Serialize, Debug, Default)]
