@@ -114,11 +114,13 @@ async fn test_history() -> Result<(), Error> {
         )
         .await;
     assert!(history.status().is_success());
-    let expected = r#"{"chat_id":"00000000-0000-0000-0000-000000000000","messages":[{"metadata":{"type":"metadata","chat_id":"00000000-0000-0000-0000-000000000000","message_id":"00000000-0000-0000-0000-000000000001","parent_id":null,"sources":[{"url":"/en-US/docs/Learn/CSS/Howto/Center_an_item","title":"How to center an item"},{"url":"/en-US/docs/Web/CSS/margin","title":"margin"},{"url":"/en-US/docs/Web/CSS/CSS_grid_layout/Box_alignment_in_grid_layout","title":"Box alignment in grid layout"}],"quota":null},"user":{"role":"user","content":"How to center a div with CSS?"},"assistant":{"role":"assistant","content":"To center a div using CSS, ..."}}]}"#;
+    let expected = r#"{"chat_id":"00000000-0000-0000-0000-000000000000","messages":[{"metadata":{"type":"metadata","chat_id":"00000000-0000-0000-0000-000000000000","message_id":"00000000-0000-0000-0000-000000000000","parent_id":null,"sources":[{"url":"/en-US/docs/Learn/CSS/Howto/Center_an_item","title":"How to center an item"},{"url":"/en-US/docs/Web/CSS/margin","title":"margin"},{"url":"/en-US/docs/Web/CSS/CSS_grid_layout/Box_alignment_in_grid_layout","title":"Box alignment in grid layout"}],"quota":null,"created_at":"0000-00-00T00:00:00.000000Z"},"user":{"role":"user","content":"How to center a div with CSS?"},"assistant":{"role":"assistant","content":"To center a div using CSS, ..."}}]}"#;
 
     assert_eq!(
         expected,
-        String::from_utf8_lossy(test::read_body(history).await.as_ref())
+        normalize_digits(&String::from_utf8_lossy(
+            test::read_body(history).await.as_ref()
+        ))
     );
 
     let feedback = logged_in_client
@@ -173,4 +175,18 @@ async fn test_history() -> Result<(), Error> {
 
     drop(stubr);
     Ok(())
+}
+
+fn normalize_digits(s: &str) -> String {
+    let mut result = String::new();
+
+    for c in s.chars() {
+        if c.is_digit(10) {
+            result.push('0');
+        } else {
+            result.push(c);
+        }
+    }
+
+    result
 }
