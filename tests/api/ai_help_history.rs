@@ -7,10 +7,9 @@ use anyhow::Error;
 use async_openai::types::ChatCompletionRequestMessage;
 use async_openai::types::Role::{Assistant, User};
 use rumba::ai::help::RefDoc;
-use rumba::api::root::RootSetIsAdminQuery;
 use rumba::db::ai_help::{add_help_history, add_help_history_message};
-use rumba::db::model::AIHelpHistoryMessageInsert;
-use rumba::db::users::root_set_is_admin;
+use rumba::db::model::{AIHelpHistoryMessageInsert, SettingsInsert};
+use rumba::db::settings::create_or_update_settings;
 use serde_json::Value::Null;
 use uuid::Uuid;
 
@@ -71,11 +70,12 @@ async fn test_history() -> Result<(), Error> {
     let mut logged_in_client = TestHttpClient::new(service).await;
     add_history_log()?;
     let mut conn = pool.get()?;
-    root_set_is_admin(
+    create_or_update_settings(
         &mut conn,
-        RootSetIsAdminQuery {
-            fxa_uid: "TEST_SUB".into(),
-            is_admin: true,
+        SettingsInsert {
+            user_id: 1,
+            ai_help_history: Some(true),
+            ..Default::default()
         },
     )?;
     let history = logged_in_client
