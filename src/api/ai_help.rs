@@ -184,7 +184,7 @@ fn history_enabled(settings: &Option<Settings>) -> bool {
     if let Some(settings) = settings {
         return settings.ai_help_history;
     }
-    true
+    false
 }
 
 pub async fn quota(user_id: Identity, diesel_pool: Data<Pool>) -> Result<HttpResponse, ApiError> {
