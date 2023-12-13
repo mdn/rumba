@@ -1,6 +1,4 @@
 -- Your SQL goes here
-DROP TABLE ai_help_logs;
-
 CREATE TABLE ai_help_history (
     id              BIGSERIAL PRIMARY KEY,
     user_id         BIGSERIAL REFERENCES users (id) ON DELETE CASCADE,
