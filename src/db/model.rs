@@ -300,11 +300,3 @@ pub struct AIHelpHistoryMessage {
     pub request: Value,
     pub response: Value,
 }
-
-#[derive(Insertable, AsChangeset, Serialize, Debug, Default)]
-#[diesel(table_name = ai_help_feedback)]
-pub struct AIHelpFeedbackInsert {
-    pub message_id: Uuid,
-    pub feedback: Option<String>,
-    pub thumbs: Option<bool>,
-}

@@ -62,19 +62,6 @@ diesel::table! {
     use diesel::sql_types::*;
     use crate::db::types::*;
 
-    ai_help_feedback (id) {
-        id -> Int8,
-        message_id -> Nullable<Uuid>,
-        created_at -> Timestamp,
-        feedback -> Nullable<Text>,
-        thumbs -> Nullable<Bool>,
-    }
-}
-
-diesel::table! {
-    use diesel::sql_types::*;
-    use crate::db::types::*;
-
     ai_help_history (id) {
         id -> Int8,
         user_id -> Int8,
@@ -326,7 +313,6 @@ diesel::joinable!(settings -> users (user_id));
 diesel::allow_tables_to_appear_in_same_query!(
     activity_pings,
     ai_explain_cache,
-    ai_help_feedback,
     ai_help_history,
     ai_help_history_messages,
     ai_help_limits,

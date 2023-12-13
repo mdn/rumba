@@ -7,10 +7,10 @@ use uuid::Uuid;
 
 use crate::db::error::DbError;
 use crate::db::model::{
-    AIHelpFeedbackInsert, AIHelpHistoryInsert, AIHelpHistoryMessage, AIHelpHistoryMessageInsert,
-    AIHelpLimitInsert, UserQuery,
+    AIHelpHistoryInsert, AIHelpHistoryMessage, AIHelpHistoryMessageInsert, AIHelpLimitInsert,
+    UserQuery,
 };
-use crate::db::schema::{ai_help_feedback, ai_help_limits as limits};
+use crate::db::schema::ai_help_limits as limits;
 use crate::db::schema::{ai_help_history, ai_help_history_messages};
 use crate::settings::SETTINGS;
 
@@ -29,13 +29,6 @@ static AI_HELP_RESET_DURATION: Lazy<Duration> = Lazy::new(|| {
 pub enum FeedbackTyp {
     ThumbsDown,
     ThumbsUp,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct AIHelpFeedback {
-    pub message_id: Uuid,
-    pub feedback: Option<String>,
-    pub thumbs: Option<FeedbackTyp>,
 }
 
 pub fn get_count(conn: &mut PgConnection, user: &UserQuery) -> Result<i64, DbError> {
@@ -164,29 +157,6 @@ pub fn add_help_history_message(
         .set(&message)
         .execute(conn)?;
     Ok(updated_at)
-}
-
-pub fn add_help_feedback(
-    conn: &mut PgConnection,
-    user: &UserQuery,
-    feedback: &AIHelpFeedbackInsert,
-) -> Result<(), DbError> {
-    if ai_help_history_messages::table
-        .filter(
-            ai_help_history_messages::user_id
-                .eq(user.id)
-                .and(ai_help_history_messages::message_id.eq(feedback.message_id)),
-        )
-        .select(ai_help_history_messages::id)
-        .first::<i64>(conn)
-        .optional()?
-        .is_some()
-    {
-        insert_into(ai_help_feedback::table)
-            .values(feedback)
-            .execute(conn)?;
-    }
-    Ok(())
 }
 
 pub fn help_history_get_message(

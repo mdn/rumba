@@ -22,12 +22,11 @@ use crate::{
     db::{
         self,
         ai_help::{
-            add_help_feedback, add_help_history, add_help_history_message,
-            create_or_increment_total, delete_full_help_history, delete_help_history, get_count,
-            help_history, help_history_get_message, list_help_history, update_help_history_label,
-            AIHelpFeedback, FeedbackTyp, AI_HELP_LIMIT,
+            add_help_history, add_help_history_message, create_or_increment_total,
+            delete_full_help_history, delete_help_history, get_count, help_history,
+            help_history_get_message, list_help_history, update_help_history_label, AI_HELP_LIMIT,
         },
-        model::{AIHelpFeedbackInsert, AIHelpHistoryMessage, AIHelpHistoryMessageInsert, Settings},
+        model::{AIHelpHistoryMessage, AIHelpHistoryMessageInsert, Settings},
         settings::get_settings,
         SupaPool,
     },
@@ -580,23 +579,5 @@ pub async fn ai_help_delete_full_history(
     let mut conn = diesel_pool.get()?;
     let user = get_user(&mut conn, user_id.id().unwrap())?;
     delete_full_help_history(&mut conn, &user)?;
-    Ok(HttpResponse::Created().finish())
-}
-
-pub async fn ai_help_feedback(
-    user_id: Identity,
-    diesel_pool: Data<Pool>,
-    req: Json<AIHelpFeedback>,
-) -> Result<HttpResponse, ApiError> {
-    let mut conn = diesel_pool.get()?;
-    let user = get_user(&mut conn, user_id.id().unwrap())?;
-    let ai_help_feedback = req.into_inner();
-    let feedback = AIHelpFeedbackInsert {
-        message_id: ai_help_feedback.message_id,
-        feedback: ai_help_feedback.feedback,
-        thumbs: ai_help_feedback.thumbs.map(|t| t == FeedbackTyp::ThumbsUp),
-    };
-    add_help_feedback(&mut conn, &user, &feedback)?;
-
     Ok(HttpResponse::Created().finish())
 }

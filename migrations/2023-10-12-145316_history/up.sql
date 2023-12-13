@@ -24,11 +24,3 @@ CREATE TABLE ai_help_history_messages (
     UNIQUE(chat_id, message_id),
     UNIQUE(message_id)
 );
-
-CREATE TABLE ai_help_feedback (
-    id              BIGSERIAL PRIMARY KEY,
-    message_id      UUID REFERENCES ai_help_history_messages (message_id) ON DELETE CASCADE,
-    created_at      TIMESTAMP NOT NULL DEFAULT now(),
-    feedback        TEXT,
-    thumbs          BOOLEAN DEFAULT NULL
-);

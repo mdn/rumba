@@ -9,9 +9,8 @@ use async_openai::types::Role::{Assistant, User};
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use rumba::ai::help::RefDoc;
 use rumba::api::root::RootSetIsAdminQuery;
-use rumba::db::ai_help::{add_help_history, add_help_history_message, AIHelpFeedback, FeedbackTyp};
+use rumba::db::ai_help::{add_help_history, add_help_history_messagee};
 use rumba::db::model::AIHelpHistoryMessageInsert;
-use rumba::db::schema::ai_help_feedback;
 use rumba::db::users::root_set_is_admin;
 use serde_json::Value::Null;
 use uuid::Uuid;
@@ -95,46 +94,6 @@ async fn test_history() -> Result<(), Error> {
             test::read_body(history).await.as_ref()
         ))
     );
-
-    let feedback = logged_in_client
-        .post(
-            "/api/v1/plus/ai/help/feedback",
-            None,
-            Some(PostPayload::Json(serde_json::to_value(AIHelpFeedback {
-                thumbs: Some(FeedbackTyp::ThumbsUp),
-                message_id: MESSAGE_ID,
-                feedback: None,
-            })?)),
-        )
-        .await;
-    assert!(feedback.status().is_success());
-
-    let mut conn = pool.get()?;
-    let thumbs = ai_help_feedback::table
-        .select(ai_help_feedback::thumbs)
-        .order_by(ai_help_feedback::created_at.desc())
-        .first::<Option<bool>>(&mut conn)?;
-    assert_eq!(thumbs, Some(true));
-
-    let feedback = logged_in_client
-        .post(
-            "/api/v1/plus/ai/help/feedback",
-            None,
-            Some(PostPayload::Json(serde_json::to_value(AIHelpFeedback {
-                thumbs: Some(FeedbackTyp::ThumbsDown),
-                message_id: MESSAGE_ID,
-                feedback: None,
-            })?)),
-        )
-        .await;
-    assert!(feedback.status().is_success());
-
-    let mut conn = pool.get()?;
-    let thumbs = ai_help_feedback::table
-        .select(ai_help_feedback::thumbs)
-        .order_by(ai_help_feedback::created_at.desc())
-        .first::<Option<bool>>(&mut conn)?;
-    assert_eq!(thumbs, Some(false));
 
     drop(stubr);
     Ok(())
