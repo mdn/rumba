@@ -1,12 +1,11 @@
 use crate::helpers::app::test_app_with_login;
 use crate::helpers::db::{get_pool, reset};
-use crate::helpers::http_client::{PostPayload, TestHttpClient};
+use crate::helpers::http_client::TestHttpClient;
 use crate::helpers::wait_for_stubr;
 use actix_web::test;
 use anyhow::Error;
 use async_openai::types::ChatCompletionRequestMessage;
 use async_openai::types::Role::{Assistant, User};
-use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use rumba::ai::help::RefDoc;
 use rumba::api::root::RootSetIsAdminQuery;
 use rumba::db::ai_help::{add_help_history, add_help_history_message};
