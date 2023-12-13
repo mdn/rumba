@@ -9,7 +9,7 @@ use async_openai::types::Role::{Assistant, User};
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use rumba::ai::help::RefDoc;
 use rumba::api::root::RootSetIsAdminQuery;
-use rumba::db::ai_help::{add_help_history, add_help_history_messagee};
+use rumba::db::ai_help::{add_help_history, add_help_history_message};
 use rumba::db::model::AIHelpHistoryMessageInsert;
 use rumba::db::users::root_set_is_admin;
 use serde_json::Value::Null;
