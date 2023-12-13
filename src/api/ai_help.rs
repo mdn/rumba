@@ -291,11 +291,24 @@ fn record_response(
     let (tx, mut rx) = mpsc::unbounded_channel::<CreateChatCompletionStreamResponse>();
     actix_web::rt::spawn(async move {
         let mut answer = vec![];
+        let mut has_finish_reason = false;
+
         while let Some(mut chunk) = rx.recv().await {
-            if let Some(part) = chunk.choices.pop().and_then(|c| c.delta.content) {
-                answer.push(part);
+            if let Some(c) = chunk.choices.pop() {
+                if let Some(part) = c.delta.content {
+                    answer.push(part);
+                }
+                if let Some(finish_reason) = c.finish_reason {
+                    debug!("Finish reason: {finish_reason}");
+                    has_finish_reason = true;
+                }
             }
         }
+
+        if !has_finish_reason {
+            error!("AI Help log: OpenAI stream ended without a finish_reason");
+        }
+
         let response = ChatCompletionRequestMessage {
             role: Assistant,
             content: Some(answer.join("")),
