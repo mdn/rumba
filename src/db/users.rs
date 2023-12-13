@@ -1,6 +1,4 @@
-use crate::api::root::{
-    RootSetEnforcePlusQuery, RootSetIsAdminQuery, RootSetIsFoxFoodQuery, RootSetIsMdnTeamQuery,
-};
+use crate::api::root::{RootSetEnforcePlusQuery, RootSetIsAdminQuery};
 use crate::db::error::DbError;
 use crate::db::model::{User, UserQuery};
 use crate::db::schema;
@@ -25,38 +23,6 @@ pub fn root_set_is_admin(
 pub fn root_get_is_admin(conn: &mut PgConnection) -> QueryResult<Vec<String>> {
     schema::users::table
         .filter(schema::users::is_admin.eq(true))
-        .select(schema::users::email)
-        .get_results(conn)
-}
-
-pub fn root_set_is_fox_food(
-    conn: &mut PgConnection,
-    query: RootSetIsFoxFoodQuery,
-) -> QueryResult<usize> {
-    update(schema::users::table.filter(schema::users::email.eq(query.email)))
-        .set((schema::users::is_fox_food.eq(query.is_fox_food),))
-        .execute(conn)
-}
-
-pub fn root_get_is_fox_food(conn: &mut PgConnection) -> QueryResult<Vec<String>> {
-    schema::users::table
-        .filter(schema::users::is_fox_food.eq(true))
-        .select(schema::users::email)
-        .get_results(conn)
-}
-
-pub fn root_set_is_mdn_team(
-    conn: &mut PgConnection,
-    query: RootSetIsMdnTeamQuery,
-) -> QueryResult<usize> {
-    update(schema::users::table.filter(schema::users::email.eq(query.email)))
-        .set((schema::users::is_mdn_team.eq(query.is_mdn_team),))
-        .execute(conn)
-}
-
-pub fn root_get_is_mdn_team(conn: &mut PgConnection) -> QueryResult<Vec<String>> {
-    schema::users::table
-        .filter(schema::users::is_mdn_team.eq(true))
         .select(schema::users::email)
         .get_results(conn)
 }
@@ -95,8 +61,6 @@ pub fn create_or_update_user(
         subscription_type: sub,
         enforce_plus: None,
         is_admin: None,
-        is_mdn_team: None,
-        is_fox_food: None,
     };
 
     let user_id = insert_into(schema::users::table)

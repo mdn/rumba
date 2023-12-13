@@ -273,8 +273,6 @@ diesel::table! {
         subscription_type -> Nullable<SubscriptionType>,
         enforce_plus -> Nullable<SubscriptionType>,
         is_admin -> Bool,
-        is_mdn_team -> Bool,
-        is_fox_food -> Bool,
     }
 }
 
