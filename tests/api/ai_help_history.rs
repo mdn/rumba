@@ -1,22 +1,19 @@
 use crate::helpers::app::test_app_with_login;
 use crate::helpers::db::{get_pool, reset};
 use crate::helpers::http_client::{PostPayload, TestHttpClient};
-use crate::helpers::{read_json, wait_for_stubr};
+use crate::helpers::wait_for_stubr;
 use actix_web::test;
 use anyhow::Error;
 use async_openai::types::ChatCompletionRequestMessage;
 use async_openai::types::Role::{Assistant, User};
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
-use rumba::ai::constants::AI_HELP_DEFAULT;
 use rumba::ai::help::RefDoc;
 use rumba::api::root::RootSetIsAdminQuery;
-use rumba::db::ai_help::{
-    add_help_debug_log, add_help_history, add_help_history_message, AIHelpFeedback, FeedbackTyp,
-};
-use rumba::db::model::{AIHelpDebugLogsInsert, AIHelpHistoryMessageInsert};
+use rumba::db::ai_help::{add_help_history, add_help_history_message, AIHelpFeedback, FeedbackTyp};
+use rumba::db::model::AIHelpHistoryMessageInsert;
 use rumba::db::schema::{ai_help_debug_feedback, ai_help_feedback};
 use rumba::db::users::root_set_is_admin;
-use serde_json::{json, Value::Null};
+use serde_json::Value::Null;
 use uuid::Uuid;
 
 const CHAT_ID: Uuid = Uuid::nil();
@@ -59,22 +56,10 @@ fn add_history_log() -> Result<(), Error> {
         request: Some(serde_json::to_value(&request).unwrap_or(Null)),
         response: Some(serde_json::to_value(&response).unwrap_or(Null)),
     };
-    let debug_insert = AIHelpDebugLogsInsert {
-        user_id: 1,
-        chat_id: CHAT_ID,
-        message_id: MESSAGE_ID,
-        parent_id: None,
-        sources: serde_json::to_value(&sources)?,
-        created_at: None,
-        request: serde_json::to_value(Some(&request))?,
-        response: serde_json::to_value(&response)?,
-        variant: AI_HELP_DEFAULT.name.to_string(),
-    };
     let pool = get_pool();
     let mut conn = pool.get()?;
     add_help_history(&mut conn, 1, CHAT_ID)?;
     add_help_history_message(&mut conn, message_insert)?;
-    add_help_debug_log(&mut conn, &debug_insert)?;
     Ok(())
 }
 
