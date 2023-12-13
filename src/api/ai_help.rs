@@ -17,14 +17,12 @@ use serde_json::Value::Null;
 use uuid::Uuid;
 
 use crate::{
-    ai::help::{
-        is_help_debug_log_enabled, prepare_ai_help_req, prepare_ai_help_summary_req, RefDoc,
-    },
+    ai::help::{prepare_ai_help_req, prepare_ai_help_summary_req, RefDoc},
     api::common::{GeneratedChunk, GeneratedChunkChoice},
     db::{
         self,
         ai_help::{
-            add_help_debug_feedback, add_help_feedback, add_help_history, add_help_history_message,
+            add_help_feedback, add_help_history, add_help_history_message,
             create_or_increment_total, delete_full_help_history, delete_help_history, get_count,
             help_history, help_history_get_message, list_help_history, update_help_history_label,
             AIHelpFeedback, FeedbackTyp, AI_HELP_LIMIT,
@@ -599,9 +597,6 @@ pub async fn ai_help_feedback(
         thumbs: ai_help_feedback.thumbs.map(|t| t == FeedbackTyp::ThumbsUp),
     };
     add_help_feedback(&mut conn, &user, &feedback)?;
-    if is_help_debug_log_enabled() {
-        add_help_debug_feedback(&mut conn, &user, &feedback.into())?;
-    }
 
     Ok(HttpResponse::Created().finish())
 }

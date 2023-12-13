@@ -11,7 +11,7 @@ use rumba::ai::help::RefDoc;
 use rumba::api::root::RootSetIsAdminQuery;
 use rumba::db::ai_help::{add_help_history, add_help_history_message, AIHelpFeedback, FeedbackTyp};
 use rumba::db::model::AIHelpHistoryMessageInsert;
-use rumba::db::schema::{ai_help_debug_feedback, ai_help_feedback};
+use rumba::db::schema::ai_help_feedback;
 use rumba::db::users::root_set_is_admin;
 use serde_json::Value::Null;
 use uuid::Uuid;
@@ -115,11 +115,6 @@ async fn test_history() -> Result<(), Error> {
         .order_by(ai_help_feedback::created_at.desc())
         .first::<Option<bool>>(&mut conn)?;
     assert_eq!(thumbs, Some(true));
-    let thumbs = ai_help_debug_feedback::table
-        .select(ai_help_debug_feedback::thumbs)
-        .order_by(ai_help_debug_feedback::created_at.desc())
-        .first::<Option<bool>>(&mut conn)?;
-    assert_eq!(thumbs, Some(true));
 
     let feedback = logged_in_client
         .post(
@@ -138,11 +133,6 @@ async fn test_history() -> Result<(), Error> {
     let thumbs = ai_help_feedback::table
         .select(ai_help_feedback::thumbs)
         .order_by(ai_help_feedback::created_at.desc())
-        .first::<Option<bool>>(&mut conn)?;
-    assert_eq!(thumbs, Some(false));
-    let thumbs = ai_help_debug_feedback::table
-        .select(ai_help_debug_feedback::thumbs)
-        .order_by(ai_help_debug_feedback::created_at.desc())
         .first::<Option<bool>>(&mut conn)?;
     assert_eq!(thumbs, Some(false));
 

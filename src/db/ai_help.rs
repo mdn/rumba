@@ -7,13 +7,11 @@ use uuid::Uuid;
 
 use crate::db::error::DbError;
 use crate::db::model::{
-    AIHelpDebugFeedbackInsert, AIHelpDebugLogsInsert, AIHelpFeedbackInsert, AIHelpHistoryInsert,
-    AIHelpHistoryMessage, AIHelpHistoryMessageInsert, AIHelpLimitInsert, UserQuery,
-};
-use crate::db::schema::{
-    ai_help_debug_feedback, ai_help_debug_logs, ai_help_history, ai_help_history_messages,
+    AIHelpFeedbackInsert, AIHelpHistoryInsert, AIHelpHistoryMessage, AIHelpHistoryMessageInsert,
+    AIHelpLimitInsert, UserQuery,
 };
 use crate::db::schema::{ai_help_feedback, ai_help_limits as limits};
+use crate::db::schema::{ai_help_history, ai_help_history_messages};
 use crate::settings::SETTINGS;
 
 pub const AI_HELP_LIMIT: i64 = 5;
@@ -168,17 +166,6 @@ pub fn add_help_history_message(
     Ok(updated_at)
 }
 
-pub fn add_help_debug_log(
-    conn: &mut PgConnection,
-    debug_log: &AIHelpDebugLogsInsert,
-) -> Result<(), DbError> {
-    insert_into(ai_help_debug_logs::table)
-        .values(debug_log)
-        .on_conflict_do_nothing()
-        .execute(conn)?;
-    Ok(())
-}
-
 pub fn add_help_feedback(
     conn: &mut PgConnection,
     user: &UserQuery,
@@ -196,29 +183,6 @@ pub fn add_help_feedback(
         .is_some()
     {
         insert_into(ai_help_feedback::table)
-            .values(feedback)
-            .execute(conn)?;
-    }
-    Ok(())
-}
-
-pub fn add_help_debug_feedback(
-    conn: &mut PgConnection,
-    user: &UserQuery,
-    feedback: &AIHelpDebugFeedbackInsert,
-) -> Result<(), DbError> {
-    if ai_help_debug_logs::table
-        .filter(
-            ai_help_debug_logs::user_id
-                .eq(user.id)
-                .and(ai_help_debug_logs::message_id.eq(feedback.message_id)),
-        )
-        .select(ai_help_debug_logs::id)
-        .first::<i64>(conn)
-        .optional()?
-        .is_some()
-    {
-        insert_into(ai_help_debug_feedback::table)
             .values(feedback)
             .execute(conn)?;
     }

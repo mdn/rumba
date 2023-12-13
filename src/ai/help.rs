@@ -18,7 +18,6 @@ use crate::{
         helpers::{cap_messages, into_user_messages, sanitize_messages},
     },
     db::SupaPool,
-    settings::SETTINGS,
 };
 
 #[derive(Eq, Hash, PartialEq, Serialize, Deserialize, Debug, Clone)]
@@ -159,10 +158,4 @@ pub fn prepare_ai_help_summary_req(
         .build()?;
 
     Ok(req)
-}
-
-pub fn is_help_debug_log_enabled() -> bool {
-    let enabled = SETTINGS.ai.as_ref().map_or(false, |ai| ai.help_debug_log);
-
-    enabled
 }

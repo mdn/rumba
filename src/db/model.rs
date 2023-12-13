@@ -301,57 +301,10 @@ pub struct AIHelpHistoryMessage {
     pub response: Value,
 }
 
-#[derive(Insertable, Serialize, Debug, Default)]
-#[diesel(table_name = ai_help_debug_logs)]
-pub struct AIHelpDebugLogsInsert {
-    pub user_id: i64,
-    pub variant: String,
-    pub chat_id: Uuid,
-    pub message_id: Uuid,
-    pub parent_id: Option<Uuid>,
-    pub created_at: Option<NaiveDateTime>,
-    pub sources: Value,
-    pub request: Value,
-    pub response: Value,
-}
-
-#[derive(Queryable, Serialize, Debug, Default)]
-#[diesel(table_name = ai_help_debug_logs)]
-pub struct AIHelpDebugLogs {
-    pub id: i64,
-    pub user_id: i64,
-    pub variant: String,
-    pub chat_id: Uuid,
-    pub message_id: Uuid,
-    pub parent_id: Option<Uuid>,
-    pub created_at: NaiveDateTime,
-    pub sources: Value,
-    pub request: Value,
-    pub response: Value,
-}
-
-#[derive(Insertable, AsChangeset, Serialize, Debug, Default)]
-#[diesel(table_name = ai_help_debug_feedback)]
-pub struct AIHelpDebugFeedbackInsert {
-    pub message_id: Uuid,
-    pub feedback: Option<String>,
-    pub thumbs: Option<bool>,
-}
-
 #[derive(Insertable, AsChangeset, Serialize, Debug, Default)]
 #[diesel(table_name = ai_help_feedback)]
 pub struct AIHelpFeedbackInsert {
     pub message_id: Uuid,
     pub feedback: Option<String>,
     pub thumbs: Option<bool>,
-}
-
-impl From<AIHelpFeedbackInsert> for AIHelpDebugFeedbackInsert {
-    fn from(value: AIHelpFeedbackInsert) -> Self {
-        AIHelpDebugFeedbackInsert {
-            message_id: value.message_id,
-            feedback: value.feedback,
-            thumbs: value.thumbs,
-        }
-    }
 }
