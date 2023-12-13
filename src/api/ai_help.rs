@@ -166,12 +166,6 @@ pub struct HelpIds {
     parent_id: Option<Uuid>,
 }
 
-#[derive(Serialize, Deserialize, Default)]
-pub struct AIHelpLogResponse {
-    meta: AIHelpMeta,
-    answer: ChatCompletionRequestMessage,
-}
-
 #[derive(Serialize, Default)]
 pub struct AIHelpHistorySummaryResponse {
     title: Option<String>,
@@ -270,7 +264,7 @@ fn record_sources(
     }
 }
 
-fn record_response(
+fn log_errors_and_record_response(
     pool: &Data<Pool>,
     history_enabled: bool,
     user_id: i64,
@@ -427,8 +421,12 @@ pub async fn ai_help(
                     quota: current.map(AIHelpLimit::from_count),
                     created_at,
                 };
-                let tx =
-                    record_response(&diesel_pool, history_enabled(&settings), user.id, help_ids)?;
+                let tx = log_errors_and_record_response(
+                    &diesel_pool,
+                    history_enabled(&settings),
+                    user.id,
+                    help_ids,
+                )?;
                 let stream = client.chat().create_stream(ai_help_req.req).await.unwrap();
                 let refs = stream::once(async move {
                     Ok(sse::Event::Data(
