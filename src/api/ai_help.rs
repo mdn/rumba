@@ -276,15 +276,7 @@ fn record_response(
     user_id: i64,
     help_ids: HelpIds,
 ) -> Result<Option<mpsc::UnboundedSender<CreateChatCompletionStreamResponse>>, ApiError> {
-    if !history_enabled {
-        return Ok(None);
-    }
     let mut conn = pool.get()?;
-    let HelpIds {
-        chat_id,
-        message_id,
-        parent_id,
-    } = help_ids;
     let (tx, mut rx) = mpsc::unbounded_channel::<CreateChatCompletionStreamResponse>();
     actix_web::rt::spawn(async move {
         let mut answer = vec![];
@@ -306,13 +298,17 @@ fn record_response(
             error!("AI Help log: OpenAI stream ended without a finish_reason");
         }
 
-        let response = ChatCompletionRequestMessage {
-            role: Assistant,
-            content: Some(answer.join("")),
-            ..Default::default()
-        };
-
         if history_enabled {
+            let HelpIds {
+                chat_id,
+                message_id,
+                parent_id,
+            } = help_ids;
+            let response = ChatCompletionRequestMessage {
+                role: Assistant,
+                content: Some(answer.join("")),
+                ..Default::default()
+            };
             let insert = AIHelpHistoryMessageInsert {
                 user_id,
                 chat_id,
