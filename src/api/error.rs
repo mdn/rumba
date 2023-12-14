@@ -139,6 +139,8 @@ pub enum ApiError {
     PaymentRequired,
     #[error("Not implemented")]
     NotImplemented,
+    #[error("Forbidden")]
+    Forbidden,
 }
 
 impl ApiError {
@@ -169,6 +171,7 @@ impl ApiError {
             Self::AIError(_) => "AI error",
             Self::PaymentRequired => "Payment required",
             Self::NotImplemented => "Not implemented",
+            Self::Forbidden => "Forbidden",
         }
     }
 }
@@ -189,6 +192,7 @@ impl ResponseError for ApiError {
             Self::LoginRequiredForFeature(_) => StatusCode::UNAUTHORIZED,
             Self::PaymentRequired => StatusCode::PAYMENT_REQUIRED,
             Self::NotImplemented => StatusCode::NOT_IMPLEMENTED,
+            Self::Forbidden => StatusCode::FORBIDDEN,
             Self::PlaygroundError(ref e) => e.status_code(),
             Self::AIError(ref e) => e.status_code(),
             _ => StatusCode::INTERNAL_SERVER_ERROR,

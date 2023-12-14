@@ -20,6 +20,13 @@ pub fn root_set_is_admin(
         .execute(conn)
 }
 
+pub fn root_get_is_admin(conn: &mut PgConnection) -> QueryResult<Vec<String>> {
+    schema::users::table
+        .filter(schema::users::is_admin.eq(true))
+        .select(schema::users::email)
+        .get_results(conn)
+}
+
 pub fn root_enforce_plus(
     conn: &mut PgConnection,
     query: RootSetEnforcePlusQuery,

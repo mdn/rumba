@@ -8,35 +8,36 @@ use async_openai::{
     Client,
 };
 use futures_util::{stream::FuturesUnordered, TryStreamExt};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     ai::{
-        constants::{ASK_SYSTEM_MESSAGE, ASK_USER_MESSAGE, MODEL},
-        embeddings::get_related_docs,
+        constants::AI_HELP_GPT4_FULL_DOC_NEW_PROMPT,
+        embeddings::{get_related_docs, get_related_macro_docs},
         error::AIError,
         helpers::{cap_messages, into_user_messages, sanitize_messages},
     },
     db::SupaPool,
 };
 
-#[derive(Eq, Hash, PartialEq, Serialize)]
+#[derive(Eq, Hash, PartialEq, Serialize, Deserialize, Debug, Clone)]
 pub struct RefDoc {
     pub url: String,
-    pub slug: String,
     pub title: String,
 }
 
-pub struct AskRequest {
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct AIHelpRequest {
     pub req: CreateChatCompletionRequest,
     pub refs: Vec<RefDoc>,
 }
 
-pub async fn prepare_ask_req(
+pub async fn prepare_ai_help_req(
     client: &Client<OpenAIConfig>,
     pool: &SupaPool,
     messages: Vec<ChatCompletionRequestMessage>,
-) -> Result<Option<AskRequest>, AIError> {
+) -> Result<Option<AIHelpRequest>, AIError> {
+    let config = AI_HELP_GPT4_FULL_DOC_NEW_PROMPT;
     let open_ai_messages = sanitize_messages(messages);
 
     // TODO: sign messages os we don't check again
@@ -70,7 +71,11 @@ pub async fn prepare_ask_req(
         .and_then(|msg| msg.content.as_ref())
         .ok_or(AIError::NoUserPrompt)?;
 
-    let related_docs = get_related_docs(client, pool, last_user_message.replace('\n', " ")).await?;
+    let related_docs = if config.full_doc {
+        get_related_macro_docs(client, pool, last_user_message.replace('\n', " ")).await?
+    } else {
+        get_related_docs(client, pool, last_user_message.replace('\n', " ")).await?
+    };
 
     let mut context = vec![];
     let mut refs = vec![];
@@ -80,45 +85,77 @@ pub async fn prepare_ask_req(
         let bpe = tiktoken_rs::r50k_base().unwrap();
         let tokens = bpe.encode_with_special_tokens(&doc.content).len();
         token_len += tokens;
-        if token_len >= 1500 {
-            break;
+        debug!("tokens: {}, token_len: {}", tokens, token_len);
+        if token_len >= config.context_limit {
+            token_len -= tokens;
+            continue;
         }
-        context.push(doc.content);
-        if !refs.iter().any(|r: &RefDoc| r.slug == doc.slug) {
+        if !refs.iter().any(|r: &RefDoc| r.url == doc.url) {
             refs.push(RefDoc {
-                url: doc.url,
-                slug: doc.slug,
-                title: doc.title,
+                url: doc.url.clone(),
+                title: doc.title.clone(),
             });
         }
+        context.push(doc);
     }
-    if context.is_empty() {
-        return Ok(None);
-    }
-    let context = context.join("\n---\n");
     let system_message = ChatCompletionRequestMessageArgs::default()
         .role(Role::System)
-        .content(ASK_SYSTEM_MESSAGE)
+        .content(config.system_prompt)
         .build()
         .unwrap();
-    let context_message = ChatCompletionRequestMessageArgs::default()
-        .role(Role::User)
-        .content(format!("Here is the MDN content:\n{context}"))
-        .build()
-        .unwrap();
-    let user_message = ChatCompletionRequestMessageArgs::default()
-        .role(Role::User)
-        .content(ASK_USER_MESSAGE)
-        .build()
-        .unwrap();
-    let init_messages = vec![system_message, context_message, user_message];
-    let messages = cap_messages(init_messages, context_messages)?;
+    let context_message = if context.is_empty() {
+        None
+    } else {
+        Some(
+            ChatCompletionRequestMessageArgs::default()
+                .role(Role::User)
+                .content((config.make_context)(context))
+                .build()
+                .unwrap(),
+        )
+    };
+    let user_message = config.user_prompt.map(|x| {
+        ChatCompletionRequestMessageArgs::default()
+            .role(Role::User)
+            .content(x)
+            .build()
+            .unwrap()
+    });
+    let init_messages = vec![Some(system_message), context_message, user_message]
+        .into_iter()
+        .flatten()
+        .collect();
+    let messages = cap_messages(&config, init_messages, context_messages)?;
 
     let req = CreateChatCompletionRequestArgs::default()
-        .model(MODEL)
+        .model(config.model)
         .messages(messages)
         .temperature(0.0)
         .build()?;
 
-    Ok(Some(AskRequest { req, refs }))
+    Ok(Some(AIHelpRequest { req, refs }))
+}
+
+pub fn prepare_ai_help_summary_req(
+    messages: Vec<ChatCompletionRequestMessage>,
+) -> Result<CreateChatCompletionRequest, AIError> {
+    let system_message = ChatCompletionRequestMessageArgs::default()
+        .role(Role::System)
+        .content(include_str!("prompts/summary/system.md"))
+        .build()
+        .unwrap();
+    let user_message = ChatCompletionRequestMessageArgs::default()
+        .role(Role::User)
+        .content(include_str!("prompts/summary/user.md"))
+        .build()
+        .unwrap();
+    let messages = [&[system_message], &messages[..], &[user_message]].concat();
+
+    let req = CreateChatCompletionRequestArgs::default()
+        .model("gpt-3.5-turbo")
+        .messages(messages)
+        .temperature(0.0)
+        .build()?;
+
+    Ok(req)
 }

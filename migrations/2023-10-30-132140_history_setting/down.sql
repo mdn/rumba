@@ -1,0 +1,1 @@
+ALTER TABLE settings DROP COLUMN ai_help_history;

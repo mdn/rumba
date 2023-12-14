@@ -1,0 +1,20 @@
+[package]
+name = "ai-test"
+version = "0.0.1"
+edition = "2021"
+
+[[bin]]
+name = "ai-test"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+futures = "0.3"
+async-openai = "0.14"
+itertools = "0.11"
+rumba = { path = "../"}

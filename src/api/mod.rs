@@ -1,5 +1,6 @@
 pub mod admin;
-pub mod ai;
+pub mod ai_explain;
+pub mod ai_help;
 pub mod api_v1;
 pub mod auth;
 pub mod common;

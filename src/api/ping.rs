@@ -3,7 +3,7 @@ use actix_web::{web, HttpResponse};
 use serde::Deserialize;
 use serde_json::{json, Value};
 
-use crate::db::{ping::upsert_activity_ping, users::get_user, Pool};
+use crate::db::{ping::upsert_activity_ping, settings::get_settings, users::get_user, Pool};
 
 use super::error::ApiError;
 
@@ -26,6 +26,16 @@ pub async fn ping(
                     let mut activity_data = json!({
                         "subscription_type": found.get_subscription_type()
                     });
+                    let settings = get_settings(&mut conn_pool, &found)?;
+
+                    if let Some(s) = settings {
+                        if s.ai_help_history {
+                            activity_data["ai_help_history"] = Value::Bool(true);
+                        }
+                        if s.no_ads {
+                            activity_data["no_ads"] = Value::Bool(true);
+                        }
+                    }
 
                     if form.offline.unwrap_or(false) {
                         // careful: we don't include the offline key

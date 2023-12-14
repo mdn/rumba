@@ -1,4 +1,5 @@
-pub mod ai;
+pub mod ai_explain;
+pub mod ai_help;
 pub mod documents;
 pub mod error;
 pub mod fxa_webhook;

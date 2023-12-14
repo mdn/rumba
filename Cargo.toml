@@ -11,6 +11,10 @@ path = "src/lib.rs"
 name = "rumba"
 path = "src/main.rs"
 
+[workspace]
+members = ["ai-test"]
+resolver = "2"
+
 [dependencies]
 thiserror = "1"
 anyhow = "1"
@@ -47,7 +51,7 @@ percent-encoding = "2"
 
 config = "0.13"
 hostname = "0.3"
-slog = { version = "2", features = ["max_level_info", "release_max_level_info", "dynamic-keys"] }
+slog = { version = "2", features = ["max_level_trace", "release_max_level_info", "dynamic-keys"] }
 slog-async = "2"
 slog-envlogger = "2"
 slog-mozlog-json = "0.1"

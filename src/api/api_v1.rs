@@ -1,4 +1,8 @@
-use crate::api::ai::{ask, explain, explain_feedback, quota};
+use crate::api::ai_explain::{explain, explain_feedback};
+use crate::api::ai_help::{
+    ai_help, ai_help_delete_full_history, ai_help_delete_history, ai_help_history,
+    ai_help_list_history, ai_help_title_summary, quota,
+};
 use crate::api::info::information;
 use crate::api::newsletter::{
     is_subscribed, subscribe_anonymous_handler, subscribe_handler, unsubscribe_handler,
@@ -23,8 +27,33 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
                 .service(
                     web::scope("/ai")
                         .service(
+                            web::scope("/help")
+                                .service(web::resource("").route(web::post().to(ai_help)))
+                                .service(web::resource("/quota").route(web::get().to(quota)))
+                                .service(
+                                    web::scope("/history")
+                                        .service(
+                                            web::resource("/list")
+                                                .route(web::get().to(ai_help_list_history))
+                                                .route(
+                                                    web::delete().to(ai_help_delete_full_history),
+                                                ),
+                                        )
+                                        .service(
+                                            web::resource("/summary/{chat_id}")
+                                                .route(web::post().to(ai_help_title_summary)),
+                                        )
+                                        .service(
+                                            web::resource("/{chat_id}")
+                                                .route(web::get().to(ai_help_history))
+                                                .route(web::delete().to(ai_help_delete_history)),
+                                        ),
+                                ),
+                        )
+                        // Keep for compat. TODO: remove.
+                        .service(
                             web::scope("/ask")
-                                .service(web::resource("").route(web::post().to(ask)))
+                                .service(web::resource("").route(web::post().to(ai_help)))
                                 .service(web::resource("/quota").route(web::get().to(quota))),
                         )
                         .service(
@@ -36,7 +65,10 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
                                 ),
                         ),
                 )
-                .service(web::resource("/settings/").route(web::post().to(update_settings)))
+                .service(
+                    web::scope("/settings")
+                        .service(web::resource("/").route(web::post().to(update_settings))),
+                )
                 .service(
                     web::resource("/newsletter/")
                         .route(web::get().to(is_subscribed))

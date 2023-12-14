@@ -5,6 +5,7 @@ use chrono::NaiveDateTime;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use uuid::Uuid;
 
 use super::types::Locale;
 
@@ -54,6 +55,26 @@ impl UserQuery {
             .unwrap_or_default()
             .is_subscriber()
     }
+
+    pub fn eligible_for_experiments(&self) -> bool {
+        self.is_admin
+    }
+
+    #[cfg(test)]
+    pub fn dummy() -> Self {
+        UserQuery {
+            id: 0,
+            created_at: NaiveDateTime::MIN,
+            updated_at: NaiveDateTime::MIN,
+            email: "foo@bar.com".to_string(),
+            fxa_uid: Uuid::nil().to_string(),
+            fxa_refresh_token: Default::default(),
+            avatar_url: None,
+            subscription_type: None,
+            enforce_plus: None,
+            is_admin: false,
+        }
+    }
 }
 
 #[derive(Queryable, Clone)]
@@ -95,6 +116,7 @@ pub struct Settings {
     pub locale_override: Option<Locale>,
     pub mdnplus_newsletter: bool,
     pub no_ads: bool,
+    pub ai_help_history: bool,
 }
 
 #[derive(Insertable, AsChangeset, Default)]
@@ -104,6 +126,7 @@ pub struct SettingsInsert {
     pub locale_override: Option<Option<Locale>>,
     pub mdnplus_newsletter: Option<bool>,
     pub no_ads: Option<bool>,
+    pub ai_help_history: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -222,4 +245,52 @@ pub struct AIExplainCacheQuery {
     pub version: i64,
     pub thumbs_up: i64,
     pub thumbs_down: i64,
+}
+
+#[derive(Insertable, Serialize, Debug, Default)]
+#[diesel(table_name = ai_help_history)]
+pub struct AIHelpHistoryInsert {
+    pub user_id: i64,
+    pub chat_id: Uuid,
+    pub label: String,
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
+}
+
+#[derive(Queryable, Serialize, Debug, Default)]
+#[diesel(table_name = ai_help_history)]
+pub struct AIHelpHistory {
+    pub id: i64,
+    pub user_id: i64,
+    pub chat_id: Uuid,
+    pub label: Option<String>,
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
+}
+
+#[derive(Insertable, AsChangeset, Serialize, Debug, Default)]
+#[diesel(table_name = ai_help_history_messages)]
+pub struct AIHelpHistoryMessageInsert {
+    pub user_id: i64,
+    pub chat_id: Uuid,
+    pub message_id: Uuid,
+    pub parent_id: Option<Uuid>,
+    pub created_at: Option<NaiveDateTime>,
+    pub sources: Option<Value>,
+    pub request: Option<Value>,
+    pub response: Option<Value>,
+}
+
+#[derive(Queryable, Serialize, Debug, Default)]
+#[diesel(table_name = ai_help_history_messages)]
+pub struct AIHelpHistoryMessage {
+    pub id: i64,
+    pub user_id: i64,
+    pub chat_id: Uuid,
+    pub message_id: Uuid,
+    pub parent_id: Option<Uuid>,
+    pub created_at: NaiveDateTime,
+    pub sources: Value,
+    pub request: Value,
+    pub response: Value,
 }

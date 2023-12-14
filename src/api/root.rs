@@ -11,7 +11,9 @@ use crate::{
     db::{
         model::UserQuery,
         types::Subscription,
-        users::{find_user_by_email, get_user, root_enforce_plus, root_set_is_admin},
+        users::{
+            find_user_by_email, get_user, root_enforce_plus, root_get_is_admin, root_set_is_admin,
+        },
         Pool,
     },
 };
@@ -69,6 +71,16 @@ async fn set_is_admin(
     }
 }
 
+async fn get_is_admin(pool: Data<Pool>, user_id: Identity) -> Result<HttpResponse, ApiError> {
+    let mut conn_pool = pool.get()?;
+    let me: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
+    if !me.is_admin {
+        return Ok(HttpResponse::Forbidden().finish());
+    }
+    let res = root_get_is_admin(&mut conn_pool)?;
+    Ok(HttpResponse::Created().json(res))
+}
+
 async fn user_by_email(
     pool: Data<Pool>,
     query: web::Query<RootQuery>,
@@ -86,6 +98,10 @@ async fn user_by_email(
 pub fn root_service() -> impl HttpServiceFactory {
     web::scope("/root")
         .service(web::resource("/").route(web::get().to(user_by_email)))
-        .service(web::resource("/is-admin").route(web::post().to(set_is_admin)))
+        .service(
+            web::resource("/is-admin")
+                .route(web::post().to(set_is_admin))
+                .route(web::get().to(get_is_admin)),
+        )
         .service(web::resource("/enforce-plus").route(web::post().to(set_enforce_plus)))
 }

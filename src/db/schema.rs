@@ -62,6 +62,37 @@ diesel::table! {
     use diesel::sql_types::*;
     use crate::db::types::*;
 
+    ai_help_history (id) {
+        id -> Int8,
+        user_id -> Int8,
+        chat_id -> Uuid,
+        label -> Text,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+
+    ai_help_history_messages (id) {
+        id -> Int8,
+        user_id -> Int8,
+        chat_id -> Uuid,
+        message_id -> Uuid,
+        parent_id -> Nullable<Uuid>,
+        created_at -> Timestamp,
+        sources -> Jsonb,
+        request -> Jsonb,
+        response -> Jsonb,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+
     ai_help_limits (id) {
         id -> Int8,
         user_id -> Nullable<Int8>,
@@ -220,6 +251,7 @@ diesel::table! {
         locale_override -> Nullable<Locale>,
         mdnplus_newsletter -> Bool,
         no_ads -> Bool,
+        ai_help_history -> Bool,
     }
 }
 
@@ -263,6 +295,8 @@ diesel::table! {
 }
 
 diesel::joinable!(activity_pings -> users (user_id));
+diesel::joinable!(ai_help_history -> users (user_id));
+diesel::joinable!(ai_help_history_messages -> users (user_id));
 diesel::joinable!(ai_help_limits -> users (user_id));
 diesel::joinable!(bcd_updates -> bcd_features (feature));
 diesel::joinable!(bcd_updates -> browser_releases (browser_release));
@@ -277,6 +311,8 @@ diesel::joinable!(settings -> users (user_id));
 diesel::allow_tables_to_appear_in_same_query!(
     activity_pings,
     ai_explain_cache,
+    ai_help_history,
+    ai_help_history_messages,
     ai_help_limits,
     bcd_features,
     bcd_updates,

@@ -1,5 +1,6 @@
 mod ai_explain;
 mod ai_help;
+mod ai_help_history;
 mod auth;
 mod fxa_webhooks;
 pub mod healthz;
