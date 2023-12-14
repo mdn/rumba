@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.6.0](https://github.com/mdn/rumba/compare/v1.5.1...v1.6.0) (2023-12-14)
+
+
+### Features
+
+* **ai-help:** release 2.0 ([#373](https://github.com/mdn/rumba/issues/373)) ([9499ee9](https://github.com/mdn/rumba/commit/9499ee9a183bed6bf7389bd83494d1f065f916d2))
+
+
+### Miscellaneous
+
+* **github:** add CODEOWNERS ([#385](https://github.com/mdn/rumba/issues/385)) ([e89284e](https://github.com/mdn/rumba/commit/e89284ed949378503cf4c3af498049ba36e9b62c))
+
 ## [1.5.1](https://github.com/mdn/rumba/compare/v1.5.0...v1.5.1) (2023-08-15)
 
 
