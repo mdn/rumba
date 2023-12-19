@@ -16,6 +16,18 @@ pub struct AIHelpConfig {
     pub make_context: fn(Vec<RelatedDoc>) -> String,
 }
 
+pub const AI_HELP_GPT3_5_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
+    name: "20230901-full_doc-new_prompt",
+    model: "gpt-3.5-turbo-1106",
+    full_doc: true,
+    system_prompt: include_str!("prompts/new_prompt/system.md"),
+    user_prompt: None,
+    token_limit: 16_384,
+    context_limit: 12_000,
+    max_completion_tokens: 2_048,
+    make_context: |related_docs| related_docs.into_iter().map(|d| d.content).join("\n"),
+};
+
 pub const AI_HELP_GPT4_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
     name: "20230901-gpt4-full_doc-new_pormpt",
     model: "gpt-4-1106-preview",
