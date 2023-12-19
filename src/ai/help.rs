@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     ai::{
-        constants::AI_HELP_GPT4_FULL_DOC_NEW_PROMPT,
+        constants::{AI_HELP_GPT3_5_FULL_DOC_NEW_PROMPT,AI_HELP_GPT4_FULL_DOC_NEW_PROMPT},
         embeddings::{get_related_docs, get_related_macro_docs},
         error::AIError,
         helpers::{cap_messages, into_user_messages, sanitize_messages},
@@ -35,9 +35,15 @@ pub struct AIHelpRequest {
 pub async fn prepare_ai_help_req(
     client: &Client<OpenAIConfig>,
     pool: &SupaPool,
+    is_subscriber: bool,
     messages: Vec<ChatCompletionRequestMessage>,
 ) -> Result<Option<AIHelpRequest>, AIError> {
-    let config = AI_HELP_GPT4_FULL_DOC_NEW_PROMPT;
+    let config = if is_subscriber {
+        AI_HELP_GPT4_FULL_DOC_NEW_PROMPT
+    } else {
+        AI_HELP_GPT3_5_FULL_DOC_NEW_PROMPT
+    };
+
     let open_ai_messages = sanitize_messages(messages);
 
     // TODO: sign messages os we don't check again

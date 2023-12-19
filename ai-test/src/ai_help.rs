@@ -95,7 +95,7 @@ pub async fn ai_help_all(
                     function_call: None,
                 })
                 .collect();
-            if let Some(req) = prepare_ai_help_req(openai_client, supabase_pool, messages).await? {
+            if let Some(req) = prepare_ai_help_req(openai_client, supabase_pool, true, messages).await? {
                 let mut res = openai_client.chat().create(req.req.clone()).await?;
                 let res = res.choices.pop().map(|res| res.message);
                 let storage = Storage { req, res };

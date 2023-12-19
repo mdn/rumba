@@ -398,7 +398,7 @@ pub async fn ai_help(
             )?;
         }
 
-        match prepare_ai_help_req(client, pool, messages).await? {
+        match prepare_ai_help_req(client, pool, user.is_subscriber(), messages).await? {
             Some(ai_help_req) => {
                 let sources = ai_help_req.refs;
                 let created_at = match record_sources(
