@@ -17,7 +17,7 @@ pub struct AIHelpConfig {
 }
 
 pub const AI_HELP_GPT3_5_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
-    name: "20230901-gpt4-full_doc-new_pormpt",
+    name: "20230901-full_doc-new_prompt",
     model: "gpt-3.5-turbo-1106",
     full_doc: true,
     system_prompt: include_str!("prompts/new_prompt/system.md"),
