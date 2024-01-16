@@ -19,13 +19,16 @@ resolver = "2"
 thiserror = "1"
 anyhow = "1"
 
-actix-web = "4"
+actix-web = { version = "4", features = ["rustls-0_21"] }
 actix-http = "3"
 actix-rt = "2"
 actix-identity = "0.6"
 actix-session = { version = "0.8", features = ["cookie-session"] }
 actix-web-httpauth = "0.8"
-actix-web-lab = "0.19"
+actix-web-lab = "0.20"
+
+rustls = "0.21"
+rustls-pemfile = "1"
 
 diesel = { version = "2", features = ["postgres", "uuid", "r2d2", "chrono", "serde_json"] }
 diesel_migrations = "2"
@@ -85,6 +88,7 @@ octocrab = "0.30"
 aes-gcm = { version = "0.10", features = ["default", "std"] }
 hmac = "0.12"
 sha2 = "0.10"
+async-stream = "0.3"
 
 [dev-dependencies]
 stubr = "0.6"

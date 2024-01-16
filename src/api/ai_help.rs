@@ -1,7 +1,10 @@
+use std::{default, time::Duration};
+
+use actix_http::HttpMessage;
 use actix_identity::Identity;
 use actix_web::{
     web::{Data, Json, Path},
-    Either, HttpResponse, Responder,
+    Either, HttpResponse, Responder, HttpRequest,
 };
 use actix_web_lab::{__reexports::tokio::sync::mpsc, sse};
 use async_openai::{
@@ -10,8 +13,9 @@ use async_openai::{
     types::{ChatCompletionRequestMessage, CreateChatCompletionStreamResponse, Role::Assistant},
     Client,
 };
+use async_stream::stream;
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
-use futures_util::{stream, StreamExt, TryStreamExt};
+use futures_util::{pin_mut, stream, StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::Value::Null;
 use uuid::Uuid;
@@ -354,7 +358,7 @@ pub fn sorry_response(
     Ok(parts)
 }
 
-pub async fn ai_help(
+pub async fn ai_help2(
     user_id: Identity,
     openai_client: Data<Option<Client<OpenAIConfig>>>,
     supabase_pool: Data<Option<SupaPool>>,
@@ -459,6 +463,57 @@ pub async fn ai_help(
                 Ok(Either::Right(res))
             }
         }
+    } else {
+        Err(ApiError::NotImplemented)
+    }
+}
+
+struct Foo {}
+impl Drop for  Foo {
+    fn drop(&mut self) {
+        println!("dropping the ⚽️")
+    }
+}
+
+pub async fn ai_help(
+    req: HttpRequest,
+    openai_client: Data<Option<Client<OpenAIConfig>>>,
+    supabase_pool: Data<Option<SupaPool>>,
+    diesel_pool: Data<Pool>,
+) -> Result<impl Responder, ApiError> {
+    let mut ex = req.extensions_mut();
+    ex.insert(Foo {});
+    drop(ex);
+    if let (Some(client), Some(pool)) = (&**openai_client, &**supabase_pool) {
+        let chat_id = Uuid::new_v4();
+        let message_id = Uuid::new_v4();
+
+        let stream = stream! {
+            for i in 0..10 {
+                println!("🤷‍♂️ {i}{:?}", &req);
+            yield Ok::<_, OpenAIError>(CreateChatCompletionStreamResponse { id: Default::default(), object: Default::default(), created: Default::default(), model: Default::default(), choices: Default::default() });
+            actix_rt::time::sleep(Duration::from_millis(1000)).await;
+            }
+
+        };
+        let refs = stream::once(async move {
+            Ok(sse::Event::Data(
+                sse::Data::new_json(AIHelpMeta {
+                    typ: MetaType::Metadata,
+                    chat_id,
+                    message_id,
+                    parent_id: None,
+                    sources: Default::default(),
+                    quota: None,
+                    created_at: Default::default(),
+                })
+                .map_err(OpenAIError::JSONDeserialize)?,
+            ))
+        });
+
+        Ok(sse::Sse::from_stream(refs.chain(stream.map_ok(
+            move |res| sse::Event::Data(sse::Data::new_json(res).unwrap()),
+        ))))
     } else {
         Err(ApiError::NotImplemented)
     }

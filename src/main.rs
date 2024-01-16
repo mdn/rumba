@@ -1,6 +1,6 @@
 #![warn(clippy::all)]
 
-use std::sync::Arc;
+use std::{fs::File, io::BufReader, sync::Arc, env};
 
 use actix_identity::IdentityMiddleware;
 use actix_rt::Arbiter;
@@ -28,6 +28,8 @@ use rumba::{
     metrics::{metrics_from_opts, MetricsData},
     settings::{Sentry, SETTINGS},
 };
+use rustls::{ServerConfig, Certificate, PrivateKey};
+use rustls_pemfile::{certs, pkcs8_private_keys};
 use slog_scope::{debug, info};
 
 const MIGRATIONS: diesel_migrations::EmbeddedMigrations = diesel_migrations::embed_migrations!();
@@ -136,6 +138,7 @@ async fn main() -> anyhow::Result<()> {
         add_services(app)
     })
     .bind((SETTINGS.server.host.as_str(), SETTINGS.server.port))?
+    //.bind_rustls_021((SETTINGS.server.host.as_str(), SETTINGS.server.port), load_rustls_config())?
     .run()
     .await?;
 
@@ -143,4 +146,28 @@ async fn main() -> anyhow::Result<()> {
     logging::reset_logging();
 
     Ok(())
+}
+
+fn load_rustls_config() -> ServerConfig {
+    let cert_file = &mut BufReader::new(File::open(env::var("HTTPS_CERT_FILE").unwrap()).unwrap());
+    let key_file = &mut BufReader::new(File::open(env::var("HTTPS_KEY_FILE").unwrap()).unwrap());
+
+    // convert files to key/cert objects
+
+    let cert_chain = certs(cert_file)
+    .unwrap()
+    .into_iter()
+    .map(Certificate)
+    .collect();
+let mut keys: Vec<PrivateKey> = pkcs8_private_keys(key_file)
+    .unwrap()
+    .into_iter()
+    .map(PrivateKey)
+    .collect();
+    
+    ServerConfig::builder()
+    .with_safe_defaults()
+        .with_no_client_auth()
+        .with_single_cert(cert_chain, keys.remove(0))
+        .unwrap()
 }
