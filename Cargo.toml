@@ -2,7 +2,7 @@
 name = "rumba"
 version = "1.6.1"
 edition = "2021"
-rust-version = "1.72"
+rust-version = "1.75"
 
 [lib]
 path = "src/lib.rs"
@@ -22,10 +22,10 @@ anyhow = "1"
 actix-web = "4"
 actix-http = "3"
 actix-rt = "2"
-actix-identity = "0.6"
-actix-session = { version = "0.8", features = ["cookie-session"] }
+actix-identity = "0.7"
+actix-session = { version = "0.9", features = ["cookie-session"] }
 actix-web-httpauth = "0.8"
-actix-web-lab = "0.19"
+actix-web-lab = "0.20"
 
 diesel = { version = "2", features = ["postgres", "uuid", "r2d2", "chrono", "serde_json"] }
 diesel_migrations = "2"
@@ -35,11 +35,11 @@ sqlx = { version = "0.7", features = [ "runtime-tokio-rustls", "postgres"], defa
 
 elasticsearch = "7.17.7-alpha.1"
 harsh = "0.2"
-itertools = "0.11.0"
+itertools = "0.12.0"
 r2d2 = "0.8"
 
 openidconnect = "3"
-jsonwebtoken = "8"
+jsonwebtoken = "9"
 
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -72,16 +72,16 @@ regex = "1"
 const_format = "0.2"
 once_cell = "1"
 
-cadence = "0.29"
+cadence = "1"
 woothee = "0.13"
-sentry = "0.31"
-sentry-actix = "0.31"
+sentry = "0.32"
+sentry-actix = "0.32"
 
 basket = "0.0.5"
 async-openai = "0.14"
 tiktoken-rs = { version = "0.5", features = ["async-openai"] }
 
-octocrab = "0.31"
+octocrab = "0.33"
 aes-gcm = { version = "0.10", features = ["default", "std"] }
 hmac = "0.12"
 sha2 = "0.10"
