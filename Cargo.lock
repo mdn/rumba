@@ -233,9 +233,9 @@ dependencies = [
 
 [[package]]
 name = "actix-web-lab"
-version = "0.19.1"
+version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e9f49571dfcf49ed79c6e7a645e9554ae01925eb55fa6e3b2501ceeed24d7e7"
+checksum = "b6ddd78b365b70614e27f49a128ab8edba32bbc8f9b2abb1fbe07f15dd48cfab"
 dependencies = [
  "actix-http",
  "actix-router",
@@ -254,7 +254,7 @@ dependencies = [
  "futures-util",
  "http",
  "impl-more",
- "itertools 0.10.5",
+ "itertools 0.11.0",
  "local-channel",
  "mediatype",
  "mime",
@@ -265,18 +265,19 @@ dependencies = [
  "serde_html_form",
  "serde_json",
  "tokio",
+ "tokio-stream",
  "tracing",
 ]
 
 [[package]]
 name = "actix-web-lab-derive"
-version = "0.19.0"
+version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16294584c7794939b1e5711f28e7cae84ef30e62a520db3f9af425f85269bcd2"
+checksum = "9aa0b287c8de4a76b691f29dbb5451e8dd5b79d777eaf87350c9b0cbfdb5e968"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 1.0.109",
+ "syn 2.0.28",
 ]
 
 [[package]]
