@@ -37,7 +37,12 @@ pub const AI_HELP_GPT4_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
     token_limit: 32_768,
     context_limit: 20_000,
     max_completion_tokens: 4_096,
-    make_context: |related_docs| related_docs.into_iter().map(|d| d.content).join("\n"),
+    make_context: |related_docs| {
+        related_docs
+            .into_iter()
+            .flat_map(|d| ["<article>".to_string(), d.content, "</article>".to_string()])
+            .join("\n")
+    },
 };
 
 pub const MODEL: &str = "gpt-3.5-turbo";
