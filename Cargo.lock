@@ -3736,6 +3736,7 @@ dependencies = [
  "stubr-attributes",
  "thiserror",
  "tiktoken-rs",
+ "tokio",
  "url",
  "uuid",
  "validator",

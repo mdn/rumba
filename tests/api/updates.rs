@@ -1,10 +1,10 @@
 use std::fs;
 use std::time::Duration;
 
-use crate::helpers::app::test_app_with_login;
+use crate::helpers::app::{drop_stubr, test_app_with_login};
 use crate::helpers::db::reset;
 use crate::helpers::http_client::{PostPayload, TestHttpClient};
-use crate::helpers::{read_json, wait_for_stubr};
+use crate::helpers::read_json;
 use actix_rt::time::{sleep, timeout};
 use actix_web::dev::Service;
 use actix_web::test;
@@ -19,7 +19,6 @@ use stubr::{Config, Stubr};
 
 macro_rules! test_setup {
     () => {{
-        let mut pool = reset()?;
         let stubr = Stubr::start_blocking_with(
             vec!["tests/stubs", "tests/test_specific_stubs/bcd_updates"],
             Config {
@@ -30,7 +29,7 @@ macro_rules! test_setup {
                 verify: false,
             },
         );
-        wait_for_stubr().await?;
+        let mut pool = reset()?;
         let app = test_app_with_login(&pool).await?;
         let service = test::init_service(app).await;
         let mut logged_in_client = TestHttpClient::new(service).await;
@@ -41,7 +40,7 @@ macro_rules! test_setup {
 
 #[actix_rt::test]
 async fn test_bcd_updates_basic_pagination() -> Result<(), Error> {
-    let (mut logged_in_client, _stubr) = test_setup!();
+    let (mut logged_in_client, stubr) = test_setup!();
     let res = logged_in_client.get("/api/v2/updates/", None).await;
     let json = read_json(res).await;
     // 3 browsers x 3 browser releases = 9 total rows, (5 per page so 2 pages total)
@@ -134,12 +133,13 @@ async fn test_bcd_updates_basic_pagination() -> Result<(), Error> {
             }
           }
     )));
+    drop_stubr(stubr).await;
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_bcd_updates_filter_by_collections() -> Result<(), Error> {
-    let (mut logged_in_client, _stubr) = test_setup!();
+    let (mut logged_in_client, stubr) = test_setup!();
     let res = logged_in_client.get("/api/v2/collections/", None).await;
     let vals = read_json(res).await;
     let default_id = &vals.as_array().unwrap()[0]["id"];
@@ -159,6 +159,7 @@ async fn test_bcd_updates_filter_by_collections() -> Result<(), Error> {
         .expect("Json snapshot opened");
     let snapshot_json: Value = serde_json::from_reader(file).expect("Error reading snapshot json");
     assert_eq!(res_json, snapshot_json);
+    drop_stubr(stubr).await;
     Ok(())
 }
 

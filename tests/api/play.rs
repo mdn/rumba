@@ -1,7 +1,7 @@
-use crate::helpers::app::test_app_with_login;
+use crate::helpers::app::{drop_stubr, test_app_with_login};
 use crate::helpers::db::reset;
 use crate::helpers::http_client::TestHttpClient;
-use crate::helpers::{read_json, wait_for_stubr};
+use crate::helpers::read_json;
 use actix_http::StatusCode;
 use actix_web::test;
 use anyhow::Error;
@@ -16,7 +16,6 @@ use serde_json::json;
 #[stubr::mock(port = 4321)]
 async fn test_playground() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut client = TestHttpClient::new(service).await;
@@ -62,6 +61,7 @@ async fn test_playground() -> Result<(), Error> {
     let playground: PlaygroundQuery = schema::playground::table.first(&mut conn)?;
     assert_eq!(playground.user_id, None);
     assert_eq!(playground.deleted_user_id, Some(user_id));
+    drop_stubr(stubr).await;
     Ok(())
 }
 
@@ -69,12 +69,12 @@ async fn test_playground() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn test_invalid_id() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut client = TestHttpClient::new(service).await;
     let res = client.get("/api/v1/play/sssieddidxsx", None).await;
     // This used to panic, now it should just 400
     assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+    drop_stubr(stubr).await;
     Ok(())
 }

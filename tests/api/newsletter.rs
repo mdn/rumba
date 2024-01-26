@@ -1,7 +1,7 @@
-use crate::helpers::app::{init_test, test_app_with_login};
+use crate::helpers::app::{drop_stubr, init_test, test_app_with_login};
 use crate::helpers::db::reset;
 use crate::helpers::http_client::TestHttpClient;
-use crate::helpers::{read_json, wait_for_stubr};
+use crate::helpers::read_json;
 use actix_web::test;
 use anyhow::Error;
 use serde_json::json;
@@ -9,9 +9,8 @@ use stubr::{Config, Stubr};
 
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
-async fn settings_newsletter_test() -> Result<(), Error> {
+async fn settings_newsletter_subscribe() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -39,8 +38,12 @@ async fn settings_newsletter_test() -> Result<(), Error> {
     assert_eq!(newsletter.status(), 201);
     let json = read_json(newsletter).await;
     assert_eq!(json["subscribed"], true);
+    drop_stubr(stubr).await;
+    Ok(())
+}
 
-    drop(stubr);
+#[actix_rt::test]
+async fn settings_newsletter_test() -> Result<(), Error> {
     let stubr = Stubr::start_blocking_with(
         vec![
             "tests/stubs",
@@ -54,7 +57,11 @@ async fn settings_newsletter_test() -> Result<(), Error> {
             verify: false,
         },
     );
-    wait_for_stubr().await?;
+    let pool = reset()?;
+    let app = test_app_with_login(&pool).await?;
+    let service = test::init_service(app).await;
+    let mut logged_in_client = TestHttpClient::new(service).await;
+
     let newsletter = logged_in_client.get("/api/v1/plus/newsletter/", None).await;
 
     assert_eq!(newsletter.status(), 200);
@@ -67,8 +74,7 @@ async fn settings_newsletter_test() -> Result<(), Error> {
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
     assert_eq!(json["settings"]["mdnplus_newsletter"], true);
-
-    drop(stubr);
+    drop_stubr(stubr).await;
     Ok(())
 }
 
@@ -76,7 +82,6 @@ async fn settings_newsletter_test() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn anonymous_newsletter_test() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await.unwrap();
     let service = test::init_service(app).await;
     let request = test::TestRequest::post()
@@ -86,8 +91,7 @@ async fn anonymous_newsletter_test() -> Result<(), Error> {
     let newsletter_res = test::call_service(&service, request).await;
 
     assert!(newsletter_res.status().is_success());
-
-    drop(stubr);
+    drop_stubr(stubr).await;
     Ok(())
 }
 
@@ -109,7 +113,6 @@ async fn anonymous_newsletter_error_test() -> Result<(), Error> {
     let newsletter_res = test::call_service(&service, request).await;
 
     assert!(newsletter_res.status().is_server_error());
-
-    drop(stubr);
+    drop_stubr(stubr).await;
     Ok(())
 }
