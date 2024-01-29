@@ -44,10 +44,10 @@ const MACRO_EMB_DOC_LIMIT: i64 = 5;
 const MACRO_DOCS_QUERY: &str = "select
 mdn_doc_macro.mdn_url as url,
 mdn_doc_macro.title,
-mdn_doc_macro.html as content,
+mdn_doc_macro.markdown as content,
 mdn_doc_macro.embedding <=> $1 as similarity
 from mdn_doc_macro
-where length(mdn_doc_macro.html) >= $4
+where length(mdn_doc_macro.markdown) >= $4
 and (mdn_doc_macro.embedding <=> $1) < $2
 and mdn_doc_macro.mdn_url not like '/en-US/docs/MDN%'
 order by mdn_doc_macro.embedding <=> $1
