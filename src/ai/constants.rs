@@ -29,8 +29,8 @@ pub const AI_HELP_GPT3_5_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
 };
 
 pub const AI_HELP_GPT4_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
-    name: "20230901-gpt4-full_doc-new_pormpt",
-    model: "gpt-4-1106-preview",
+    name: "20240125-gpt4-full_doc-new_prompt",
+    model: "gpt-4-0125-preview",
     full_doc: true,
     system_prompt: include_str!("prompts/new_prompt/system.md"),
     user_prompt: None,
