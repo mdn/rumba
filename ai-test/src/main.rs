@@ -22,10 +22,13 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Test {
+        /// Path to YAML file with list of lists (initial question + follow-up questions).
         #[arg(short, long)]
         path: Option<PathBuf>,
+        /// Path to directory to write the test results as `1.json`, `1.md`, etc.
         #[arg(short, long)]
         out: Option<PathBuf>,
+        /// Perform test as free Core user without subscription.
         #[arg(long, action)]
         no_subscription: bool,
     },
