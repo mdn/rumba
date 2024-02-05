@@ -26,6 +26,8 @@ enum Commands {
         path: Option<PathBuf>,
         #[arg(short, long)]
         out: Option<PathBuf>,
+        #[arg(long, action)]
+        no_subscription: bool,
     },
 }
 
@@ -39,9 +41,13 @@ async fn main() -> Result<(), Error> {
 
     let cli = Cli::parse();
     match cli.command {
-        Commands::Test { path, out } => {
+        Commands::Test {
+            path,
+            out,
+            no_subscription,
+        } => {
             let out = out.unwrap_or_else(|| PathBuf::from("/tmp/test"));
-            ai_help_all(path, out).await?;
+            ai_help_all(path, out, no_subscription).await?;
         }
     }
     Ok(())

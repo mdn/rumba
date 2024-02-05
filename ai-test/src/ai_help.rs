@@ -65,6 +65,7 @@ impl Storage {
 pub async fn ai_help_all(
     path: Option<impl AsRef<Path>>,
     out: impl AsRef<Path>,
+    no_subscription: bool,
 ) -> Result<(), Error> {
     let out = &out;
     std::fs::create_dir_all(out)?;
@@ -96,7 +97,8 @@ pub async fn ai_help_all(
                 })
                 .collect();
             if let Some(req) =
-                prepare_ai_help_req(openai_client, supabase_pool, true, messages).await?
+                prepare_ai_help_req(openai_client, supabase_pool, !no_subscription, messages)
+                    .await?
             {
                 let mut res = openai_client.chat().create(req.req.clone()).await?;
                 let res = res.choices.pop().map(|res| res.message);
