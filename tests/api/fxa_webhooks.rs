@@ -1,6 +1,4 @@
-use std::thread;
-use std::time::Duration;
-
+use crate::helpers::app::drop_stubr;
 use crate::helpers::app::test_app_with_login;
 use crate::helpers::db::reset;
 use crate::helpers::http_client::PostPayload;
@@ -11,13 +9,18 @@ use actix_http::StatusCode;
 use actix_web::test;
 use anyhow::anyhow;
 use anyhow::Error;
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use rumba::db::model::SubscriptionChangeTestQuery;
 use rumba::db::model::WebHookEventQuery;
 use rumba::db::schema;
 use rumba::db::types::FxaEvent;
 use rumba::db::types::FxaEventStatus;
+use rumba::db::types::Subscription;
 use rumba::db::Pool;
 use serde_json::json;
+use std::thread;
+use std::time::Duration;
 use stubr::{Config, Stubr};
 
 const TEN_MS: std::time::Duration = Duration::from_millis(10);
@@ -358,4 +361,99 @@ async fn change_profile_test() -> Result<(), Error> {
 
     drop(stubr);
     Ok(())
+}
+
+#[actix_rt::test]
+async fn record_subscription_state_transitions_test() -> Result<(), Error> {
+    let stubr = Stubr::start_blocking_with(
+        vec!["tests/stubs", "tests/test_specific_stubs/core_user"],
+        Config {
+            port: Some(4321),
+            latency: None,
+            global_delay: None,
+            verbose: true,
+            verify: false,
+        },
+    );
+    let pool = reset()?;
+    let app = test_app_with_login(&pool).await?;
+    let service = test::init_service(app).await;
+    let mut logged_in_client = TestHttpClient::new(service).await;
+    let whoami = logged_in_client
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
+        .await;
+    assert!(whoami.response().status().is_success());
+    let json = read_json(whoami).await;
+    assert_eq!(json["username"], "TEST_SUB");
+    assert_eq!(json["subscription_type"], "core", "Subscription type wrong");
+
+    // verify there are no state transitions in the table
+    let mut conn = pool.get()?;
+    let count = schema::user_subscription_transitions::table
+        .count()
+        .first::<i64>(&mut conn)?;
+    assert_eq!(count, 0);
+
+    // Create a transition to 5m and check if it is recorded.
+    {
+        let set_token =
+            include_str!("../data/set_tokens/set_token_subscription_state_change_to_5m.txt");
+        let res = logged_in_client.trigger_webhook(set_token).await;
+        assert!(res.response().status().is_success());
+
+        // check the transition is recorded
+        let transitions = schema::user_subscription_transitions::table
+            .load::<SubscriptionChangeTestQuery>(&mut conn)?;
+        assert_eq!(transitions.len(), 1);
+        assert_eq!(transitions[0].old_subscription_type, Subscription::Core);
+        assert_eq!(
+            transitions[0].new_subscription_type,
+            Subscription::MdnPlus_5m
+        );
+        assert_eq!(transitions[0].user_id, 1);
+        assert_eq!(
+            transitions[0].created_at,
+            NaiveDateTime::from_timestamp_opt(1654425317, 0).unwrap()
+        );
+    }
+
+    // Now create a transition to 10m and check the table again
+    {
+        // let set_token =
+        //     include_str!("../data/set_tokens/set_token_subscription_state_change_to_10m.txt");
+        // let res = logged_in_client.trigger_webhook(set_token).await;
+        // assert!(res.response().status().is_success());
+
+        // // check the transition is recorded
+        // let transitions = schema::user_subscription_transitions::table
+        //     .load::<SubscriptionChangeTestQuery>(&mut conn)?;
+        // assert_eq!(transitions.len(), 2);
+        // assert_eq!(transitions[0].old_subscription_type, Subscription::Core);
+        // assert_eq!(
+        //     transitions[0].new_subscription_type,
+        //     Subscription::MdnPlus_5m
+        // );
+        // assert_eq!(transitions[0].user_id, 1);
+        // assert_eq!(
+        //     transitions[0].created_at,
+        //     NaiveDateTime::from_timestamp_opt(1654425317, 0).unwrap()
+        // );
+    }
+
+    drop_stubr(stubr).await;
+    Ok(())
+
+    // let res = logged_in_client.trigger_webhook(set_token).await;
+    // assert!(res.response().status().is_success());
+
+    // // The second event must be ignored.
+    // assert_last_fxa_webhook(
+    //     &pool,
+    //     "TEST_SUB",
+    //     FxaEvent::SubscriptionStateChange,
+    //     FxaEventStatus::Ignored,
+    // )?;
+
+    // drop(stubr);
+    // Ok(())
 }

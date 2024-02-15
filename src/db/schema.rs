@@ -263,8 +263,8 @@ diesel::table! {
     user_subscription_transitions (id) {
         id -> Int8,
         user_id -> Int8,
-        old_subscription_type -> Nullable<SubscriptionType>,
-        new_subscription_type -> Nullable<SubscriptionType>,
+        old_subscription_type -> SubscriptionType,
+        new_subscription_type -> SubscriptionType,
         created_at -> Timestamp,
     }
 }
