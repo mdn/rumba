@@ -180,7 +180,6 @@ pub async fn update_subscription_state_from_webhook(
             .count()
             .first::<i64>(&mut conn)?
             != 0;
-        println!("ignore: {}", ignore);
         if !ignore {
             let id = insert_into(schema::webhook_events::table)
                 .values(fxa_event)
