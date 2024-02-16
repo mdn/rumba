@@ -2,7 +2,9 @@
   "aud": "ed18cbc69ec23491",
   "events": {
     "https://schemas.accounts.firefox.com/event/subscription-state-change": {
-      "capabilities": ["mdn_plus_10m"],
+      "capabilities": [
+        "mdn_plus_10m"
+      ],
       "changeTime": 1654425317000,
       "isActive": true
     }

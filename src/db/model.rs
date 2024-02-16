@@ -306,7 +306,7 @@ pub struct SubscriptionChangeInsert {
 
 #[derive(Queryable, Debug)]
 #[diesel(table_name = user_subscription_transitions)]
-pub struct SubscriptionChangeTestQuery {
+pub struct SubscriptionChangeQuery {
     pub id: i64,
     pub user_id: i64,
     pub old_subscription_type: Subscription,
