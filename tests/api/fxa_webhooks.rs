@@ -75,7 +75,6 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
     let set_token =
         token_from_file("tests/data/set_tokens/set_token_subscription_state_change_to_10m.json");
     let pool = reset()?;
-    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -118,8 +117,7 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
         FxaEvent::SubscriptionStateChange,
         FxaEventStatus::Ignored,
     )?;
-
-    drop(stubr);
+    drop_stubr(stubr).await;
     Ok(())
 }
 
@@ -142,7 +140,6 @@ async fn subscription_state_change_to_core_test_inactive() -> Result<(), Error> 
 
 async fn subscription_state_change_to_core_test(set_token: &str) -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -175,7 +172,6 @@ async fn subscription_state_change_to_core_test(set_token: &str) -> Result<(), E
         FxaEvent::SubscriptionStateChange,
         FxaEventStatus::Processed,
     )?;
-
     Ok(())
 }
 
@@ -193,7 +189,8 @@ async fn delete_user_test() -> Result<(), Error> {
             verify: false,
         },
     );
-    wait_for_stubr().await?;
+    let set_token = include_str!("../data/set_tokens/set_token_delete_user.txt");
+    let pool = reset()?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -256,8 +253,7 @@ async fn delete_user_test() -> Result<(), Error> {
         FxaEvent::DeleteUser,
         FxaEventStatus::Processed,
     )?;
-
-    drop(stubr);
+    drop_stubr(stubr).await;
     Ok(())
 }
 
@@ -267,7 +263,6 @@ async fn invalid_set_test() -> Result<(), Error> {
     let set_token =
         invalid_token_from_json_file("tests/data/set_tokens/set_token_delete_user.json");
     let pool = reset()?;
-    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -289,12 +284,12 @@ async fn invalid_set_test() -> Result<(), Error> {
         .select(schema::raw_webhook_events_tokens::token)
         .first::<String>(&mut conn)?;
     assert_eq!(failed_token, set_token);
-    drop(stubr);
+    drop_stubr(stubr).await;
     Ok(())
 }
 
 #[actix_rt::test]
-async fn change_profile_test() -> Result<(), Error> {
+async fn whoami_test() -> Result<(), Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs"],
         Config {
@@ -312,6 +307,9 @@ async fn change_profile_test() -> Result<(), Error> {
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
+    let res = logged_in_client.trigger_webhook(set_token).await;
+    assert!(res.response().status().is_success());
+
     let whoami = logged_in_client
         .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
@@ -319,8 +317,7 @@ async fn change_profile_test() -> Result<(), Error> {
     let json = read_json(whoami).await;
     assert_eq!(json["username"], "TEST_SUB");
     assert_eq!(json["email"], "test@test.com");
-
-    drop(stubr);
+    drop_stubr(stubr).await;
 
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/fxa_webhooks"],
@@ -332,9 +329,11 @@ async fn change_profile_test() -> Result<(), Error> {
             verify: false,
         },
     );
-    wait_for_stubr().await?;
-
-    thread::sleep(TEN_MS);
+    let set_token = include_str!("../data/set_tokens/set_token_profile_change.txt");
+    let pool = reset()?;
+    let app = test_app_with_login(&pool).await?;
+    let service = test::init_service(app).await;
+    let mut logged_in_client = TestHttpClient::new(service).await;
 
     let res = logged_in_client.trigger_webhook(&set_token).await;
     assert!(res.response().status().is_success());
@@ -350,7 +349,7 @@ async fn change_profile_test() -> Result<(), Error> {
         if json["email"] == "foo@bar.com" {
             break;
         }
-        thread::sleep(TEN_MS);
+        sleep(TEN_MS).await;
         tries -= 1;
     }
 
@@ -364,8 +363,7 @@ async fn change_profile_test() -> Result<(), Error> {
         FxaEvent::ProfileChange,
         FxaEventStatus::Processed,
     )?;
-
-    drop(stubr);
+    drop_stubr(stubr).await;
     Ok(())
 }
 

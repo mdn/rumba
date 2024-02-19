@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use actix_http::body::BoxBody;
 use actix_http::Request;
 use actix_identity::IdentityMiddleware;
@@ -27,6 +29,7 @@ use rumba::settings::SETTINGS;
 use slog::{slog_o, Drain};
 use std::time::Duration;
 use stubr::{Config, Stubr};
+use tokio::time::sleep;
 
 use super::db::reset;
 use super::http_client::TestHttpClient;

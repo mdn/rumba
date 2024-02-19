@@ -1,4 +1,4 @@
-use crate::helpers::app::init_test;
+use crate::helpers::app::{drop_stubr, init_test};
 use crate::helpers::read_json;
 use anyhow::Error;
 use serde_json::json;
@@ -38,7 +38,7 @@ async fn test_core_settings() -> Result<(), Error> {
     assert_eq!(json["is_authenticated"], true);
     assert_eq!(json["is_subscriber"], false);
     assert_eq!(json["settings"]["no_ads"], false);
-    drop(stubr);
+    drop_stubr(stubr).await;
     Ok(())
 }
 
@@ -76,6 +76,6 @@ async fn test_subscriber_settings() -> Result<(), Error> {
     assert_eq!(json["is_authenticated"], true);
     assert_eq!(json["is_subscriber"], true);
     assert_eq!(json["settings"]["no_ads"], true);
-    drop(stubr);
+    drop_stubr(stubr).await;
     Ok(())
 }

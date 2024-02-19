@@ -1,9 +1,9 @@
 use crate::helpers::api_assertions::{
     assert_created_with_json_containing, assert_ok_with_json_containing,
 };
+use crate::helpers::app::drop_stubr;
 use crate::helpers::db::{get_pool, reset};
 use crate::helpers::http_client::TestHttpClient;
-use crate::helpers::wait_for_stubr;
 use crate::helpers::{app::test_app_with_login, http_client::PostPayload};
 use actix_http::StatusCode;
 use actix_web::test;
@@ -16,7 +16,6 @@ use serde_json::json;
 #[stubr::mock(port = 4321)]
 async fn find_user() -> Result<(), Error> {
     reset()?;
-    wait_for_stubr().await?;
     let pool = get_pool();
     let mut conn = pool.get()?;
 
@@ -207,6 +206,6 @@ async fn find_user() -> Result<(), Error> {
         }),
     )
     .await;
-    drop(stubr);
+    drop_stubr(stubr).await;
     Ok(())
 }

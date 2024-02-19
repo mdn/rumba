@@ -90,3 +90,4 @@ sha2 = "0.10"
 stubr = "0.6"
 stubr-attributes = "0.6"
 assert-json-diff = "2"
+tokio = { version = "1", features = ["io-util"] }
