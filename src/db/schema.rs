@@ -260,6 +260,20 @@ diesel::table! {
     use crate::db::types::*;
     use super::sql_types::SubscriptionType;
 
+    user_subscription_transitions (id) {
+        id -> Int8,
+        user_id -> Int8,
+        old_subscription_type -> SubscriptionType,
+        new_subscription_type -> SubscriptionType,
+        created_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+    use super::sql_types::SubscriptionType;
+
     users (id) {
         id -> Int8,
         created_at -> Timestamp,
@@ -307,6 +321,7 @@ diesel::joinable!(collection_items -> users (user_id));
 diesel::joinable!(multiple_collections -> users (user_id));
 diesel::joinable!(playground -> users (user_id));
 diesel::joinable!(settings -> users (user_id));
+diesel::joinable!(user_subscription_transitions -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     activity_pings,
@@ -324,6 +339,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     playground,
     raw_webhook_events_tokens,
     settings,
+    user_subscription_transitions,
     users,
     webhook_events,
 );

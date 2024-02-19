@@ -18,6 +18,7 @@ use diesel::prelude::*;
 use diesel::ExpressionMethods;
 use serde_json::json;
 
+use super::model::SubscriptionChangeInsert;
 use super::types::{FxaEventStatus, Subscription};
 
 pub fn log_failed_webhook_event(
@@ -191,7 +192,7 @@ pub async fn update_subscription_state_from_webhook(
             };
             if subscription == Subscription::Core {
                 // drop permissions
-                if let Some(basket) = &**basket {
+                if let Some(basket) = basket.get_ref() {
                     if let Err(e) = newsletter::unsubscribe(&mut conn, &user, basket).await {
                         error!("error unsubscribing user: {}", e);
                     }
@@ -217,7 +218,7 @@ pub async fn update_subscription_state_from_webhook(
                     )
                     .set(schema::webhook_events::status.eq(FxaEventStatus::Processed))
                     .execute(&mut conn)?;
-                    return Ok(());
+                    // return Ok(());
                 }
                 Err(e) => {
                     diesel::update(
@@ -228,6 +229,21 @@ pub async fn update_subscription_state_from_webhook(
                     return Err(e.into());
                 }
             }
+            // Record the subscription state change in its table.
+            let old_subscription = user.get_subscription_type();
+            if let Some(old_subscription) = old_subscription {
+                // We have the user id, the old and new subscription, store it.
+                let subscription_change = SubscriptionChangeInsert {
+                    user_id: user.id,
+                    old_subscription_type: old_subscription,
+                    new_subscription_type: subscription,
+                    created_at: update.change_time.naive_utc(),
+                };
+                insert_into(schema::user_subscription_transitions::table)
+                    .values(subscription_change)
+                    .execute(&mut conn)?;
+            }
+            return Ok(());
         }
     }
 

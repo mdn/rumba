@@ -1,25 +1,31 @@
-use std::thread;
-use std::time::Duration;
-
 use crate::helpers::app::drop_stubr;
 use crate::helpers::app::test_app_with_login;
 use crate::helpers::db::reset;
 use crate::helpers::http_client::PostPayload;
 use crate::helpers::http_client::TestHttpClient;
 use crate::helpers::read_json;
+use crate::helpers::set_tokens::invalid_token_from_json_file;
+use crate::helpers::set_tokens::token_from_claim;
+use crate::helpers::set_tokens::token_from_file;
 use actix_http::StatusCode;
+use actix_rt::time::sleep;
 use actix_web::test;
 use anyhow::anyhow;
 use anyhow::Error;
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use rumba::db::model::SubscriptionChangeQuery;
 use rumba::db::model::WebHookEventQuery;
 use rumba::db::schema;
 use rumba::db::types::FxaEvent;
 use rumba::db::types::FxaEventStatus;
+use rumba::db::types::Subscription;
 use rumba::db::Pool;
 use serde_json::json;
+use serde_json::Value;
+use std::thread;
+use std::time::Duration;
 use stubr::{Config, Stubr};
-use tokio::time::sleep;
 
 const TEN_MS: std::time::Duration = Duration::from_millis(10);
 
@@ -67,7 +73,7 @@ fn assert_last_fxa_webhook_with_retry(
 #[stubr::mock(port = 4321)]
 async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
     let set_token =
-        include_str!("../data/set_tokens/set_token_subscription_state_change_to_10m.txt");
+        token_from_file("tests/data/set_tokens/set_token_subscription_state_change_to_10m.json");
     let pool = reset()?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -83,7 +89,7 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
         "Subscription type wrong"
     );
 
-    let res = logged_in_client.trigger_webhook(set_token).await;
+    let res = logged_in_client.trigger_webhook(&set_token).await;
     assert!(res.response().status().is_success());
 
     let whoami = logged_in_client
@@ -101,7 +107,7 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
         FxaEventStatus::Processed,
     )?;
 
-    let res = logged_in_client.trigger_webhook(set_token).await;
+    let res = logged_in_client.trigger_webhook(&set_token).await;
     assert!(res.response().status().is_success());
 
     // The second event must be ignored.
@@ -119,20 +125,17 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn subscription_state_change_to_core_test_empty_subscription() -> Result<(), Error> {
     let set_token =
-        include_str!("../data/set_tokens/set_token_subscription_state_change_to_core.txt");
-    subscription_state_change_to_core_test(set_token).await?;
-    drop_stubr(stubr).await;
-    Ok(())
+        token_from_file("tests/data/set_tokens/set_token_subscription_state_change_to_core.json");
+    subscription_state_change_to_core_test(&set_token).await
 }
 
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn subscription_state_change_to_core_test_inactive() -> Result<(), Error> {
-    let set_token =
-        include_str!("../data/set_tokens/set_token_subscription_state_change_to_core_inactive.txt");
-    subscription_state_change_to_core_test(set_token).await?;
-    drop_stubr(stubr).await;
-    Ok(())
+    let set_token = token_from_file(
+        "tests/data/set_tokens/set_token_subscription_state_change_to_core_inactive.json",
+    );
+    subscription_state_change_to_core_test(&set_token).await
 }
 
 async fn subscription_state_change_to_core_test(set_token: &str) -> Result<(), Error> {
@@ -184,8 +187,8 @@ async fn delete_user_test() -> Result<(), Error> {
             verify: false,
         },
     );
-    let set_token = include_str!("../data/set_tokens/set_token_delete_user.txt");
     let pool = reset()?;
+    let set_token = token_from_file("tests/data/set_tokens/set_token_delete_user.json");
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -234,7 +237,7 @@ async fn delete_user_test() -> Result<(), Error> {
         .await;
     assert_eq!(res.response().status(), 201);
 
-    let res = logged_in_client.trigger_webhook(set_token).await;
+    let res = logged_in_client.trigger_webhook(&set_token).await;
     assert!(res.response().status().is_success());
 
     let whoami = logged_in_client
@@ -255,7 +258,8 @@ async fn delete_user_test() -> Result<(), Error> {
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn invalid_set_test() -> Result<(), Error> {
-    let set_token = include_str!("../data/set_tokens/set_token_delete_user_invalid.txt");
+    let set_token =
+        invalid_token_from_json_file("tests/data/set_tokens/set_token_delete_user.json");
     let pool = reset()?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -269,7 +273,7 @@ async fn invalid_set_test() -> Result<(), Error> {
     assert_eq!(json["geo"]["country_iso"], "IS");
     assert_eq!(json["is_authenticated"], true);
 
-    let res = logged_in_client.trigger_webhook(set_token).await;
+    let res = logged_in_client.trigger_webhook(&set_token).await;
 
     assert_eq!(res.response().status(), StatusCode::OK);
 
@@ -294,14 +298,11 @@ async fn whoami_test() -> Result<(), Error> {
             verify: false,
         },
     );
-    let set_token = include_str!("../data/set_tokens/set_token_profile_change.txt");
+
     let pool = reset()?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
-    let res = logged_in_client.trigger_webhook(set_token).await;
-    assert!(res.response().status().is_success());
-
     let whoami = logged_in_client
         .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
@@ -321,13 +322,13 @@ async fn whoami_test() -> Result<(), Error> {
             verify: false,
         },
     );
-    let set_token = include_str!("../data/set_tokens/set_token_profile_change.txt");
+    let set_token = token_from_file("tests/data/set_tokens/set_token_profile_change.json");
     let pool = reset()?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
 
-    let res = logged_in_client.trigger_webhook(set_token).await;
+    let res = logged_in_client.trigger_webhook(&set_token).await;
     assert!(res.response().status().is_success());
 
     let mut tries = 100;
@@ -355,6 +356,110 @@ async fn whoami_test() -> Result<(), Error> {
         FxaEvent::ProfileChange,
         FxaEventStatus::Processed,
     )?;
+    drop_stubr(stubr).await;
+    Ok(())
+}
+
+#[actix_rt::test]
+async fn record_subscription_state_transitions_test() -> Result<(), Error> {
+    let stubr = Stubr::start_blocking_with(
+        vec!["tests/stubs", "tests/test_specific_stubs/core_user"],
+        Config {
+            port: Some(4321),
+            latency: None,
+            global_delay: None,
+            verbose: true,
+            verify: false,
+        },
+    );
+    let pool = reset()?;
+    let app = test_app_with_login(&pool).await?;
+    let service = test::init_service(app).await;
+    let mut logged_in_client = TestHttpClient::new(service).await;
+    let whoami = logged_in_client
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
+        .await;
+    assert!(whoami.response().status().is_success());
+    let json = read_json(whoami).await;
+    assert_eq!(json["username"], "TEST_SUB");
+    assert_eq!(json["subscription_type"], "core", "Subscription type wrong");
+
+    // verify there are no state transitions in the table
+    let mut conn = pool.get()?;
+    let count = schema::user_subscription_transitions::table
+        .count()
+        .first::<i64>(&mut conn)?;
+    assert_eq!(count, 0);
+
+    // Create a transition to 5m and check if it is recorded.
+    {
+        let set_token =
+            token_from_file("tests/data/set_tokens/set_token_subscription_state_change_to_5m.json");
+        let res = logged_in_client.trigger_webhook(&set_token).await;
+        assert!(res.response().status().is_success());
+
+        // check the transition is recorded
+        let transitions = schema::user_subscription_transitions::table
+            .load::<SubscriptionChangeQuery>(&mut conn)?;
+        assert_eq!(transitions.len(), 1);
+        assert_eq!(transitions[0].old_subscription_type, Subscription::Core);
+        assert_eq!(
+            transitions[0].new_subscription_type,
+            Subscription::MdnPlus_5m
+        );
+        assert_eq!(transitions[0].user_id, 1);
+        assert_eq!(
+            transitions[0].created_at,
+            NaiveDateTime::from_timestamp_opt(1654425317, 0).unwrap()
+        );
+    }
+
+    // Now create a later transition to 10m and check the table again
+    {
+        let json_str = std::fs::read_to_string(
+            "tests/data/set_tokens/set_token_subscription_state_change_to_10m.json",
+        )
+        .unwrap();
+        let mut claim: Value = serde_json::from_str(&json_str).unwrap();
+        // add time to the event to be sure it is after the previous event
+        claim["iat"] = json!(1654425317000i64 + 300000);
+        claim["events"]["https://schemas.accounts.firefox.com/event/subscription-state-change"]
+            ["changeTime"] = json!(1654425317000i64 + 300000);
+        let set_token = token_from_claim(&claim);
+
+        let res = logged_in_client.trigger_webhook(&set_token).await;
+        assert!(res.response().status().is_success());
+
+        // check the transition is recorded
+        let transitions = schema::user_subscription_transitions::table
+            .order(schema::user_subscription_transitions::created_at)
+            .load::<SubscriptionChangeQuery>(&mut conn)?;
+        assert_eq!(transitions.len(), 2);
+        assert_eq!(transitions[0].old_subscription_type, Subscription::Core);
+        assert_eq!(
+            transitions[0].new_subscription_type,
+            Subscription::MdnPlus_5m
+        );
+        assert_eq!(
+            transitions[1].old_subscription_type,
+            Subscription::MdnPlus_5m
+        );
+        assert_eq!(
+            transitions[1].new_subscription_type,
+            Subscription::MdnPlus_10m
+        );
+        assert_eq!(transitions[0].user_id, 1);
+        assert_eq!(transitions[1].user_id, 1);
+        assert_eq!(
+            transitions[0].created_at,
+            NaiveDateTime::from_timestamp_opt(1654425317, 0).unwrap()
+        );
+        assert_eq!(
+            transitions[1].created_at,
+            NaiveDateTime::from_timestamp_opt(1654425617, 0).unwrap()
+        );
+    }
+
     drop_stubr(stubr).await;
     Ok(())
 }

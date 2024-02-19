@@ -8,6 +8,7 @@ pub mod api_assertions;
 pub mod app;
 pub mod db;
 pub mod http_client;
+pub mod set_tokens;
 
 pub type RumbaTestResponse = ServiceResponse<EitherBody<BoxBody>>;
 

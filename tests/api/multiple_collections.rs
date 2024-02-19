@@ -906,12 +906,10 @@ async fn test_create_and_get_many_collections() -> Result<(), Error> {
     body.as_array().unwrap().iter().reduce(|acc, next| {
         let t1 = DateTime::parse_from_rfc3339(acc["created_at"].as_str().unwrap())
             .unwrap()
-            .timestamp_nanos_opt()
-            .unwrap();
+            .timestamp_nanos_opt();
         let t2 = DateTime::parse_from_rfc3339(next["created_at"].as_str().unwrap())
             .unwrap()
-            .timestamp_nanos_opt()
-            .unwrap();
+            .timestamp_nanos_opt();
         assert!(t1 < t2);
         next
     });
