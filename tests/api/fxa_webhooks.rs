@@ -7,8 +7,8 @@ use crate::helpers::read_json;
 use crate::helpers::set_tokens::invalid_token_from_json_file;
 use crate::helpers::set_tokens::token_from_claim;
 use crate::helpers::set_tokens::token_from_file;
-use crate::helpers::wait_for_stubr;
 use actix_http::StatusCode;
+use actix_rt::time::sleep;
 use actix_web::test;
 use anyhow::anyhow;
 use anyhow::Error;
@@ -177,8 +177,6 @@ async fn subscription_state_change_to_core_test(set_token: &str) -> Result<(), E
 
 #[actix_rt::test]
 async fn delete_user_test() -> Result<(), Error> {
-    let set_token = token_from_file("tests/data/set_tokens/set_token_delete_user.json");
-    let pool = reset()?;
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/collections"],
         Config {
@@ -189,8 +187,8 @@ async fn delete_user_test() -> Result<(), Error> {
             verify: false,
         },
     );
-    let set_token = include_str!("../data/set_tokens/set_token_delete_user.txt");
     let pool = reset()?;
+    let set_token = token_from_file("tests/data/set_tokens/set_token_delete_user.json");
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -300,16 +298,11 @@ async fn whoami_test() -> Result<(), Error> {
             verify: false,
         },
     );
-    wait_for_stubr().await?;
 
-    let set_token = token_from_file("tests/data/set_tokens/set_token_profile_change.json");
     let pool = reset()?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
-    let res = logged_in_client.trigger_webhook(set_token).await;
-    assert!(res.response().status().is_success());
-
     let whoami = logged_in_client
         .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
@@ -329,7 +322,7 @@ async fn whoami_test() -> Result<(), Error> {
             verify: false,
         },
     );
-    let set_token = include_str!("../data/set_tokens/set_token_profile_change.txt");
+    let set_token = token_from_file("tests/data/set_tokens/set_token_profile_change.json");
     let pool = reset()?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
