@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.7.0](https://github.com/mdn/rumba/compare/v1.6.1...v1.7.0) (2024-01-31)
+
+
+### Features
+
+* **ai-help:** bump GPT-4 Turbo model ([#411](https://github.com/mdn/rumba/issues/411)) ([9c9038a](https://github.com/mdn/rumba/commit/9c9038ab258ed5bae635885c56567b425757c619))
+* **ai-help:** switch to markdown context ([#410](https://github.com/mdn/rumba/issues/410)) ([6d71177](https://github.com/mdn/rumba/commit/6d711779d2c635fe18965422838ae79417d07650))
+
+
+### Miscellaneous
+
+* **workflows:** enable RUST_BACKTRACE for tests ([#390](https://github.com/mdn/rumba/issues/390)) ([3e7ab07](https://github.com/mdn/rumba/commit/3e7ab0704d12fa99905ec872960faf7bb89f4dcc))
+
 ## [1.6.1](https://github.com/mdn/rumba/compare/v1.6.0...v1.6.1) (2023-12-19)
 
 

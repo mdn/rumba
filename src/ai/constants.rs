@@ -16,6 +16,13 @@ pub struct AIHelpConfig {
     pub make_context: fn(Vec<RelatedDoc>) -> String,
 }
 
+fn join_with_tags(related_docs: Vec<RelatedDoc>) -> String {
+    related_docs
+        .into_iter()
+        .flat_map(|d| ["<article>".to_string(), d.content, "</article>".to_string()])
+        .join("\n")
+}
+
 pub const AI_HELP_GPT3_5_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
     name: "20230901-full_doc-new_prompt",
     model: "gpt-3.5-turbo-1106",
@@ -25,19 +32,19 @@ pub const AI_HELP_GPT3_5_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
     token_limit: 16_384,
     context_limit: 12_000,
     max_completion_tokens: 2_048,
-    make_context: |related_docs| related_docs.into_iter().map(|d| d.content).join("\n"),
+    make_context: join_with_tags,
 };
 
 pub const AI_HELP_GPT4_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
-    name: "20230901-gpt4-full_doc-new_pormpt",
-    model: "gpt-4-1106-preview",
+    name: "20240125-gpt4-full_doc-new_prompt",
+    model: "gpt-4-0125-preview",
     full_doc: true,
     system_prompt: include_str!("prompts/new_prompt/system.md"),
     user_prompt: None,
     token_limit: 32_768,
     context_limit: 20_000,
     max_completion_tokens: 4_096,
-    make_context: |related_docs| related_docs.into_iter().map(|d| d.content).join("\n"),
+    make_context: join_with_tags,
 };
 
 pub const MODEL: &str = "gpt-3.5-turbo";
@@ -69,3 +76,42 @@ outputted in markdown format.\
 ";
 
 pub const AI_EXPLAIN_VERSION: i64 = 1;
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_join() {
+        let related_docs = vec![
+            RelatedDoc {
+                url: "".into(),
+                title: "".into(),
+                content: "content1".into(),
+                similarity: 0f64,
+            },
+            RelatedDoc {
+                url: "".into(),
+                title: "".into(),
+                content: "content2".into(),
+                similarity: 0f64,
+            },
+            RelatedDoc {
+                url: "".into(),
+                title: "".into(),
+                content: "content3".into(),
+                similarity: 0f64,
+            },
+        ];
+        let expected = r#"<article>
+content1
+</article>
+<article>
+content2
+</article>
+<article>
+content3
+</article>"#;
+        assert_eq!(join_with_tags(related_docs), expected)
+    }
+}
