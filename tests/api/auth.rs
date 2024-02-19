@@ -4,14 +4,15 @@ use actix_web::test;
 use anyhow::Error;
 use url::Url;
 
-use crate::helpers::{app::test_app_with_login, db::reset, http_client::check_stubr_initialized};
+use crate::helpers::{
+    app::{drop_stubr, test_app_with_login},
+    db::reset,
+};
 
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
 async fn test_next() -> Result<(), Error> {
     let pool = reset()?;
-    let _stubr_ok = check_stubr_initialized().await;
-
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
 
@@ -53,5 +54,6 @@ async fn test_next() -> Result<(), Error> {
             .and_then(|l| l.to_str().ok()),
         Some("http://localhost:8000/foo")
     );
+    drop_stubr(stubr).await;
     Ok(())
 }

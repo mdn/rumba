@@ -1,7 +1,6 @@
-use crate::helpers::app::test_app_with_login;
+use crate::helpers::app::{drop_stubr, test_app_with_login};
 use crate::helpers::db::reset;
 use crate::helpers::http_client::{PostPayload, TestHttpClient};
-use crate::helpers::wait_for_stubr;
 use actix_web::test;
 use anyhow::Error;
 use diesel::prelude::*;
@@ -12,7 +11,6 @@ use serde_json::{json, Value};
 #[stubr::mock(port = 4321)]
 async fn test_empty() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -28,8 +26,7 @@ async fn test_empty() -> Result<(), Error> {
         .select(schema::activity_pings::activity)
         .first::<Value>(&mut conn)?;
     assert_eq!(activity_data, json!({ "subscription_type": "mdn_plus_5m" }));
-
-    drop(stubr);
+    drop_stubr(stubr).await;
     Ok(())
 }
 
@@ -37,7 +34,6 @@ async fn test_empty() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn test_garbage() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -57,8 +53,7 @@ async fn test_garbage() -> Result<(), Error> {
         .select(schema::activity_pings::activity)
         .first::<Value>(&mut conn)?;
     assert_eq!(activity_data, json!({ "subscription_type": "mdn_plus_5m" }));
-
-    drop(stubr);
+    drop_stubr(stubr).await;
     Ok(())
 }
 
@@ -66,7 +61,6 @@ async fn test_garbage() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn test_offline_disabled() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -86,8 +80,7 @@ async fn test_offline_disabled() -> Result<(), Error> {
         .select(schema::activity_pings::activity)
         .first::<Value>(&mut conn)?;
     assert_eq!(activity_data, json!({ "subscription_type": "mdn_plus_5m" }));
-
-    drop(stubr);
+    drop_stubr(stubr).await;
     Ok(())
 }
 
@@ -95,7 +88,6 @@ async fn test_offline_disabled() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn test_offline_enabled() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -118,8 +110,7 @@ async fn test_offline_enabled() -> Result<(), Error> {
         activity_data,
         json!({ "subscription_type": "mdn_plus_5m", "offline": true })
     );
-
-    drop(stubr);
+    drop_stubr(stubr).await;
     Ok(())
 }
 
@@ -127,7 +118,6 @@ async fn test_offline_enabled() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn test_offline_upsert() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr().await?;
 
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -189,7 +179,6 @@ async fn test_offline_upsert() -> Result<(), Error> {
         .count()
         .first::<i64>(&mut conn)?;
     assert_eq!(count, 1);
-
-    drop(stubr);
+    drop_stubr(stubr).await;
     Ok(())
 }
