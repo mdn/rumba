@@ -283,8 +283,17 @@ async fn invalid_set_test() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
 async fn whoami_test() -> Result<(), Error> {
+    let stubr = Stubr::start_blocking_with(
+        vec!["tests/stubs"],
+        Config {
+            port: Some(4321),
+            latency: None,
+            global_delay: None,
+            verbose: true,
+            verify: false,
+        },
+    );
     let set_token = include_str!("../data/set_tokens/set_token_profile_change.txt");
     let pool = reset()?;
     let app = test_app_with_login(&pool).await?;
@@ -301,11 +310,7 @@ async fn whoami_test() -> Result<(), Error> {
     assert_eq!(json["username"], "TEST_SUB");
     assert_eq!(json["email"], "test@test.com");
     drop_stubr(stubr).await;
-    Ok(())
-}
 
-#[actix_rt::test]
-async fn change_profile_test() -> Result<(), Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs", "tests/test_specific_stubs/fxa_webhooks"],
         Config {
