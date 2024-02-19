@@ -126,6 +126,7 @@ pub fn add_help_history(
         created_at: None,
         updated_at: None,
     };
+    warn!("add_help_history: history: {history:?}");
     insert_into(ai_help_history::table)
         .values(history)
         .on_conflict(ai_help_history::chat_id)
@@ -140,6 +141,8 @@ pub fn add_help_history_message(
     conn: &mut PgConnection,
     mut message: AIHelpHistoryMessageInsert,
 ) -> Result<NaiveDateTime, DbError> {
+    warn!("add_help_history_message: message: {message:?}");
+
     let updated_at = update(ai_help_history::table)
         .filter(
             ai_help_history::user_id

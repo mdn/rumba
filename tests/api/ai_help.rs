@@ -13,12 +13,12 @@ async fn test_quota() -> Result<(), Error> {
     let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/core_user"]).await?;
 
-    let quota = client.get("/api/v1/plus/ai/ask/quota", None).await;
+    let quota = client.get("/api/v1/plus/ai/help/quota", None).await;
     assert_ok_with_json_containing(quota, json!({"quota": { "count": 0, "limit": 5}})).await;
 
     let ai_help = client
         .post(
-            "/api/v1/plus/ai/ask",
+            "/api/v1/plus/ai/help",
             None,
             Some(crate::helpers::http_client::PostPayload::Json(json!({
                 "messages": [{ "role": "user", "content": "Foo?" }]
@@ -26,13 +26,13 @@ async fn test_quota() -> Result<(), Error> {
         )
         .await;
     assert_eq!(ai_help.status(), StatusCode::NOT_IMPLEMENTED);
-    let quota = client.get("/api/v1/plus/ai/ask/quota", None).await;
+    let quota = client.get("/api/v1/plus/ai/help/quota", None).await;
     assert_ok_with_json_containing(quota, json!({"quota": { "count": 1, "limit": 5}})).await;
 
     for i in 2..6 {
         let ai_help = client
             .post(
-                "/api/v1/plus/ai/ask",
+                "/api/v1/plus/ai/help",
                 None,
                 Some(crate::helpers::http_client::PostPayload::Json(json!({
                     "messages": [{ "role": "user", "content": "Foo?" }]
@@ -40,7 +40,7 @@ async fn test_quota() -> Result<(), Error> {
             )
             .await;
         assert_eq!(ai_help.status(), StatusCode::NOT_IMPLEMENTED);
-        let quota = client.get("/api/v1/plus/ai/ask/quota", None).await;
+        let quota = client.get("/api/v1/plus/ai/help/quota", None).await;
         assert_ok_with_json_containing(
             quota,
             json!({"quota": { "count": i, "limit": 5, "remaining": 5 - i}}),
@@ -50,7 +50,7 @@ async fn test_quota() -> Result<(), Error> {
 
     let ai_help = client
         .post(
-            "/api/v1/plus/ai/ask",
+            "/api/v1/plus/ai/help",
             None,
             Some(crate::helpers::http_client::PostPayload::Json(json!({
                 "messages": [{ "role": "user", "content": "Foo?" }]
@@ -67,12 +67,12 @@ async fn test_quota_rest() -> Result<(), Error> {
     let (mut client, stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/core_user"]).await?;
 
-    let quota = client.get("/api/v1/plus/ai/ask/quota", None).await;
+    let quota = client.get("/api/v1/plus/ai/help/quota", None).await;
     assert_ok_with_json_containing(quota, json!({"quota": { "count": 0, "limit": 5}})).await;
 
     let ai_help = client
         .post(
-            "/api/v1/plus/ai/ask",
+            "/api/v1/plus/ai/help",
             None,
             Some(crate::helpers::http_client::PostPayload::Json(json!({
                 "messages": [{ "role": "user", "content": "Foo?" }]
@@ -80,13 +80,13 @@ async fn test_quota_rest() -> Result<(), Error> {
         )
         .await;
     assert_eq!(ai_help.status(), StatusCode::NOT_IMPLEMENTED);
-    let quota = client.get("/api/v1/plus/ai/ask/quota", None).await;
+    let quota = client.get("/api/v1/plus/ai/help/quota", None).await;
     assert_ok_with_json_containing(quota, json!({"quota": { "count": 1, "limit": 5}})).await;
 
     for i in 2..6 {
         let ai_help = client
             .post(
-                "/api/v1/plus/ai/ask",
+                "/api/v1/plus/ai/help",
                 None,
                 Some(crate::helpers::http_client::PostPayload::Json(json!({
                     "messages": [{ "role": "user", "content": "Foo?" }]
@@ -94,7 +94,7 @@ async fn test_quota_rest() -> Result<(), Error> {
             )
             .await;
         assert_eq!(ai_help.status(), StatusCode::NOT_IMPLEMENTED);
-        let quota = client.get("/api/v1/plus/ai/ask/quota", None).await;
+        let quota = client.get("/api/v1/plus/ai/help/quota", None).await;
         assert_ok_with_json_containing(
             quota,
             json!({"quota": { "count": i, "limit": 5, "remaining": 5 - i}}),
@@ -104,7 +104,7 @@ async fn test_quota_rest() -> Result<(), Error> {
 
     let ai_help = client
         .post(
-            "/api/v1/plus/ai/ask",
+            "/api/v1/plus/ai/help",
             None,
             Some(crate::helpers::http_client::PostPayload::Json(json!({
                 "messages": [{ "role": "user", "content": "Foo?" }]
@@ -124,7 +124,7 @@ async fn test_quota_rest() -> Result<(), Error> {
     ))
     .await;
 
-    let quota = client.get("/api/v1/plus/ai/ask/quota", None).await;
+    let quota = client.get("/api/v1/plus/ai/help/quota", None).await;
     assert_ok_with_json_containing(
         quota,
         json!({"quota": { "count": 0, "limit": 5, "remaining": 5}}),
@@ -132,7 +132,7 @@ async fn test_quota_rest() -> Result<(), Error> {
     .await;
     let ai_help = client
         .post(
-            "/api/v1/plus/ai/ask",
+            "/api/v1/plus/ai/help",
             None,
             Some(crate::helpers::http_client::PostPayload::Json(json!({
                 "messages": [{ "role": "user", "content": "Foo?" }]
@@ -140,7 +140,7 @@ async fn test_quota_rest() -> Result<(), Error> {
         )
         .await;
     assert_eq!(ai_help.status(), StatusCode::NOT_IMPLEMENTED);
-    let quota = client.get("/api/v1/plus/ai/ask/quota", None).await;
+    let quota = client.get("/api/v1/plus/ai/help/quota", None).await;
     assert_ok_with_json_containing(quota, json!({"quota": { "count": 1, "limit": 5}})).await;
     drop(stubr);
     Ok(())
