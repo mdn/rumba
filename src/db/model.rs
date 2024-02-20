@@ -1,4 +1,4 @@
-use crate::db::types::{FxaEventStatus, Subscription};
+use crate::db::types::{AiHelpMessageStatus, FxaEventStatus, Subscription};
 use crate::db::{schema::*, types::FxaEvent};
 use crate::helpers::to_utc;
 use chrono::NaiveDateTime;
@@ -312,4 +312,21 @@ pub struct SubscriptionChangeQuery {
     pub old_subscription_type: Subscription,
     pub new_subscription_type: Subscription,
     pub created_at: NaiveDateTime,
+}
+
+#[derive(Insertable, Default, Debug)]
+#[diesel(table_name = ai_help_message_meta)]
+pub struct AiHelpMessageMetaInsert<'a> {
+    pub user_id: i64,
+    pub chat_id: Uuid,
+    pub message_id: Uuid,
+    pub parent_id: Option<Uuid>,
+    pub created_at: Option<NaiveDateTime>,
+    pub search_duration: i64,
+    pub response_duration: i64,
+    pub query_len: i64,
+    pub context_len: i64,
+    pub response_len: i64,
+    pub status: AiHelpMessageStatus,
+    pub sources: Option<&'a Value>,
 }

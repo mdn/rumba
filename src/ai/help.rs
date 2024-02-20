@@ -1,3 +1,5 @@
+use std::time::{Duration, Instant};
+
 use async_openai::{
     config::OpenAIConfig,
     types::{
@@ -37,7 +39,7 @@ pub async fn prepare_ai_help_req(
     pool: &SupaPool,
     is_subscriber: bool,
     messages: Vec<ChatCompletionRequestMessage>,
-) -> Result<Option<AIHelpRequest>, AIError> {
+) -> Result<(AIHelpRequest, Duration), AIError> {
     let config = if is_subscriber {
         AI_HELP_GPT4_FULL_DOC_NEW_PROMPT
     } else {
@@ -77,11 +79,13 @@ pub async fn prepare_ai_help_req(
         .and_then(|msg| msg.content.as_ref())
         .ok_or(AIError::NoUserPrompt)?;
 
+    let start = Instant::now();
     let related_docs = if config.full_doc {
         get_related_macro_docs(client, pool, last_user_message.replace('\n', " ")).await?
     } else {
         get_related_docs(client, pool, last_user_message.replace('\n', " ")).await?
     };
+    let search_duration = start.elapsed();
 
     let mut context = vec![];
     let mut refs = vec![];
@@ -139,7 +143,7 @@ pub async fn prepare_ai_help_req(
         .temperature(0.0)
         .build()?;
 
-    Ok(Some(AIHelpRequest { req, refs }))
+    Ok((AIHelpRequest { req, refs }, search_duration))
 }
 
 pub fn prepare_ai_help_summary_req(

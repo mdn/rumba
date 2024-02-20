@@ -191,3 +191,22 @@ pub enum EngineType {
     #[serde(other)]
     Unknown,
 }
+
+#[derive(
+    Copy, Clone, diesel_derive_enum::DbEnum, Debug, Deserialize, Eq, Default, PartialEq, Serialize,
+)]
+#[ExistingTypePath = "crate::db::schema::sql_types::AiHelpMessageStatus"]
+#[serde(rename_all = "snake_case")]
+pub enum AiHelpMessageStatus {
+    Success,
+    SearchError,
+    OpenAiApiError,
+    CompletionError,
+    ModerationError,
+    NoUserPromptError,
+    TokenLimitError,
+    Stopped,
+    Timeout,
+    #[default]
+    Unknown,
+}

@@ -2,6 +2,10 @@
 
 pub mod sql_types {
     #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "ai_help_message_status"))]
+    pub struct AiHelpMessageStatus;
+
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "bcd_event_type"))]
     pub struct BcdEventType;
 
@@ -99,6 +103,28 @@ diesel::table! {
         latest_start -> Nullable<Timestamp>,
         session_questions -> Int8,
         total_questions -> Int8,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::db::types::*;
+    use super::sql_types::AiHelpMessageStatus;
+
+    ai_help_message_meta (id) {
+        id -> Int8,
+        user_id -> Int8,
+        chat_id -> Uuid,
+        message_id -> Uuid,
+        parent_id -> Nullable<Uuid>,
+        created_at -> Timestamp,
+        search_duration -> Int8,
+        response_duration -> Int8,
+        query_len -> Int8,
+        context_len -> Int8,
+        response_len -> Int8,
+        status -> AiHelpMessageStatus,
+        sources -> Jsonb,
     }
 }
 
@@ -312,6 +338,7 @@ diesel::joinable!(activity_pings -> users (user_id));
 diesel::joinable!(ai_help_history -> users (user_id));
 diesel::joinable!(ai_help_history_messages -> users (user_id));
 diesel::joinable!(ai_help_limits -> users (user_id));
+diesel::joinable!(ai_help_message_meta -> users (user_id));
 diesel::joinable!(bcd_updates -> bcd_features (feature));
 diesel::joinable!(bcd_updates -> browser_releases (browser_release));
 diesel::joinable!(browser_releases -> browsers (browser));
@@ -329,6 +356,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     ai_help_history,
     ai_help_history_messages,
     ai_help_limits,
+    ai_help_message_meta,
     bcd_features,
     bcd_updates,
     browser_releases,

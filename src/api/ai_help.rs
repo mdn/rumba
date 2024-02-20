@@ -1,7 +1,9 @@
+use std::{future, time::Instant};
+
 use actix_identity::Identity;
 use actix_web::{
     web::{Data, Json, Path},
-    Either, HttpResponse, Responder,
+    HttpResponse, Responder,
 };
 use actix_web_lab::{__reexports::tokio::sync::mpsc, sse};
 use async_openai::{
@@ -11,9 +13,9 @@ use async_openai::{
     Client,
 };
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
-use futures_util::{stream, StreamExt, TryStreamExt};
+use futures_util::{stream, StreamExt};
 use serde::{Deserialize, Serialize};
-use serde_json::Value::Null;
+use serde_json::Value::{self, Null};
 use uuid::Uuid;
 
 use crate::{
@@ -22,11 +24,14 @@ use crate::{
     db::{
         self,
         ai_help::{
-            add_help_history, add_help_history_message, create_or_increment_total,
-            delete_full_help_history, delete_help_history, get_count, help_history,
-            help_history_get_message, list_help_history, update_help_history_label, AI_HELP_LIMIT,
+            add_help_history, add_help_history_message, add_help_message_meta,
+            create_or_increment_total, delete_full_help_history, delete_help_history, get_count,
+            help_history, help_history_get_message, list_help_history, update_help_history_label,
+            AI_HELP_LIMIT,
         },
-        model::{AIHelpHistoryMessage, AIHelpHistoryMessageInsert, Settings},
+        model::{
+            AIHelpHistoryMessage, AIHelpHistoryMessageInsert, AiHelpMessageMetaInsert, Settings,
+        },
         settings::get_settings,
         SupaPool,
     },
@@ -270,6 +275,9 @@ fn log_errors_and_record_response(
     user_id: i64,
     help_ids: HelpIds,
 ) -> Result<Option<mpsc::UnboundedSender<CreateChatCompletionStreamResponse>>, ApiError> {
+    if !history_enabled {
+        return Ok(None);
+    }
     let mut conn = pool.get()?;
     let (tx, mut rx) = mpsc::unbounded_channel::<CreateChatCompletionStreamResponse>();
     actix_web::rt::spawn(async move {
@@ -360,7 +368,7 @@ pub async fn ai_help(
     supabase_pool: Data<Option<SupaPool>>,
     diesel_pool: Data<Pool>,
     messages: Json<ChatRequestMessages>,
-) -> Result<Either<impl Responder, impl Responder>, ApiError> {
+) -> Result<impl Responder, ApiError> {
     let mut conn = diesel_pool.get()?;
     let user = get_user(&mut conn, user_id.id().unwrap())?;
     let settings = get_settings(&mut conn, &user)?;
@@ -398,8 +406,8 @@ pub async fn ai_help(
             )?;
         }
 
-        match prepare_ai_help_req(client, pool, user.is_subscriber(), messages).await? {
-            Some(ai_help_req) => {
+        match prepare_ai_help_req(client, pool, user.is_subscriber(), messages).await {
+            Ok((ai_help_req, search_duration)) => {
                 let sources = ai_help_req.refs;
                 let created_at = match record_sources(
                     &diesel_pool,
@@ -412,6 +420,15 @@ pub async fn ai_help(
                     None => Utc::now(),
                 };
 
+                let tx = log_errors_and_record_response(
+                    &diesel_pool,
+                    history_enabled(&settings),
+                    user.id,
+                    help_ids,
+                )?;
+                let start = Instant::now();
+                let stream = client.chat().create_stream(ai_help_req.req).await.unwrap();
+                let sources_value = serde_json::to_value(&sources).unwrap_or(Value::Null);
                 let ai_help_meta = AIHelpMeta {
                     typ: MetaType::Metadata,
                     chat_id,
@@ -421,42 +438,93 @@ pub async fn ai_help(
                     quota: current.map(AIHelpLimit::from_count),
                     created_at,
                 };
-                let tx = log_errors_and_record_response(
-                    &diesel_pool,
-                    history_enabled(&settings),
-                    user.id,
-                    help_ids,
-                )?;
-                let stream = client.chat().create_stream(ai_help_req.req).await.unwrap();
                 let refs = stream::once(async move {
-                    Ok(sse::Event::Data(
+                    Ok::<_, OpenAIError>(sse::Event::Data(
                         sse::Data::new_json(ai_help_meta).map_err(OpenAIError::JSONDeserialize)?,
                     ))
                 });
 
-                Ok(Either::Left(sse::Sse::from_stream(refs.chain(
-                    stream.map_ok(move |res| {
-                        if let Some(ref tx) = tx {
-                            if let Err(e) = tx.send(res.clone()) {
-                                error!("{e}");
-                            }
-                        }
-                        sse::Event::Data(sse::Data::new_json(res).unwrap())
-                    }),
-                ))))
+                Ok(sse::Sse::from_stream(
+                    refs.chain(
+                        stream
+                            .map(Some) // Wrapping response chunks in some.
+                            .chain(stream::once(async move { None })) // Adding a None at the end.
+                            .scan(0, move |response_len, res| {
+                                future::ready(match res {
+                                    Some(Ok(res)) => {
+                                        if let Some(ref tx) = tx {
+                                            if let Err(e) = tx.send(res.clone()) {
+                                                error!("{e}");
+                                            }
+                                        }
+                                        if let Some(c) = res.choices.first() {
+                                            if let Some(part) = &c.delta.content {
+                                                *response_len += part.len();
+                                            }
+                                        }
+                                        Some(Ok(sse::Event::Data(
+                                            sse::Data::new_json(res).unwrap(),
+                                        )))
+                                    }
+                                    Some(Err(e)) => Some(Err(e)),
+                                    None => {
+                                        let response_duration = start.elapsed();
+                                        let ai_help_message_meta = AiHelpMessageMetaInsert {
+                                            user_id: user.id,
+                                            chat_id,
+                                            message_id,
+                                            parent_id,
+                                            created_at: Some(created_at.naive_utc()),
+                                            search_duration: i64::try_from(
+                                                search_duration.as_millis(),
+                                            )
+                                            .unwrap_or(-1),
+                                            response_duration: i64::try_from(
+                                                response_duration.as_millis(),
+                                            )
+                                            .unwrap_or(-1),
+                                            response_len: i64::try_from(*response_len)
+                                                .unwrap_or(-1),
+                                            status: db::types::AiHelpMessageStatus::Success,
+                                            sources: Some(&sources_value),
+                                            ..Default::default()
+                                        };
+                                        add_help_message_meta(&mut conn, ai_help_message_meta);
+                                        None
+                                    }
+                                })
+                            }),
+                    ),
+                ))
             }
-            None => {
-                let parts = sorry_response(
-                    Some(chat_id),
+            Err(e) => {
+                let ai_help_message_meta = AiHelpMessageMetaInsert {
+                    user_id: user.id,
+                    chat_id,
                     message_id,
                     parent_id,
-                    current.map(AIHelpLimit::from_count),
-                )?;
-                let stream = futures::stream::iter(parts.into_iter());
-                let res =
-                    sse::Sse::from_stream(stream.map(|r| Ok::<_, ApiError>(sse::Event::Data(r))));
-
-                Ok(Either::Right(res))
+                    status: match e {
+                        crate::ai::error::AIError::OpenAIError(_) => {
+                            db::types::AiHelpMessageStatus::OpenAiApiError
+                        }
+                        crate::ai::error::AIError::SqlXError(_) => {
+                            db::types::AiHelpMessageStatus::SearchError
+                        }
+                        crate::ai::error::AIError::FlaggedError => {
+                            db::types::AiHelpMessageStatus::ModerationError
+                        }
+                        crate::ai::error::AIError::NoUserPrompt => {
+                            db::types::AiHelpMessageStatus::NoUserPromptError
+                        }
+                        crate::ai::error::AIError::TokenLimit
+                        | crate::ai::error::AIError::TiktokenError(_) => {
+                            db::types::AiHelpMessageStatus::TokenLimitError
+                        }
+                    },
+                    ..Default::default()
+                };
+                add_help_message_meta(&mut conn, ai_help_message_meta);
+                Err(e.into())
             }
         }
     } else {

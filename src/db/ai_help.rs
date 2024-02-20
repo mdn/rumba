@@ -8,10 +8,10 @@ use uuid::Uuid;
 use crate::db::error::DbError;
 use crate::db::model::{
     AIHelpHistoryInsert, AIHelpHistoryMessage, AIHelpHistoryMessageInsert, AIHelpLimitInsert,
-    UserQuery,
+    AiHelpMessageMetaInsert, UserQuery,
 };
-use crate::db::schema::ai_help_limits as limits;
 use crate::db::schema::{ai_help_history, ai_help_history_messages};
+use crate::db::schema::{ai_help_limits as limits, ai_help_message_meta};
 use crate::settings::SETTINGS;
 
 pub const AI_HELP_LIMIT: i64 = 5;
@@ -258,4 +258,15 @@ pub fn update_help_history_label(
         .set(ai_help_history::label.eq(label))
         .execute(conn)?;
     Ok(())
+}
+
+pub fn add_help_message_meta(conn: &mut PgConnection, meta: AiHelpMessageMetaInsert) {
+    if let Err(e) = insert_into(ai_help_message_meta::table)
+        .values(&meta)
+        .on_conflict(ai_help_message_meta::message_id)
+        .do_nothing()
+        .execute(conn)
+    {
+        error!("{}", e)
+    }
 }

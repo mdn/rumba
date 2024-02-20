@@ -95,17 +95,15 @@ pub async fn ai_help_all(
                     function_call: None,
                 })
                 .collect();
-            if let Some(req) =
-                prepare_ai_help_req(openai_client, supabase_pool, true, messages).await?
-            {
-                let mut res = openai_client.chat().create(req.req.clone()).await?;
-                let res = res.choices.pop().map(|res| res.message);
-                let storage = Storage { req, res };
-                println!("writing: {}", json_out.display());
-                fs::write(json_out, serde_json::to_vec_pretty(&storage)?).await?;
-                println!("writing: {}", md_out.display());
-                fs::write(md_out, storage.to_md().as_bytes()).await?;
-            }
+            let (req, _) =
+                prepare_ai_help_req(openai_client, supabase_pool, true, messages).await?;
+            let mut res = openai_client.chat().create(req.req.clone()).await?;
+            let res = res.choices.pop().map(|res| res.message);
+            let storage = Storage { req, res };
+            println!("writing: {}", json_out.display());
+            fs::write(json_out, serde_json::to_vec_pretty(&storage)?).await?;
+            println!("writing: {}", md_out.display());
+            fs::write(md_out, storage.to_md().as_bytes()).await?;
             Ok(())
         })
         .await?;
