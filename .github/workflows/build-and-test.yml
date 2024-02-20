@@ -36,6 +36,14 @@ jobs:
           toolchain: 1.76.0
           override: true
           components: rustfmt, clippy
+      - name: Cache Cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.4
       - name: FMT
