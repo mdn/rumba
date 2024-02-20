@@ -463,6 +463,41 @@ async fn record_subscription_state_transitions_test() -> Result<(), Error> {
         );
     }
 
+    // Now, reate an event where the new subscription is matching the old one.
+    // We do not record those.
+    {
+        let json_str = std::fs::read_to_string(
+            "tests/data/set_tokens/set_token_subscription_state_change_to_10m.json",
+        )
+        .unwrap();
+        let mut claim: Value = serde_json::from_str(&json_str).unwrap();
+        // Add some time to the event to be sure it is after the previous event.
+        claim["iat"] = json!(1654425317000i64 + 600000);
+        claim["events"]["https://schemas.accounts.firefox.com/event/subscription-state-change"]
+            ["changeTime"] = json!(1654425317000i64 + 600000);
+        // We also add some unknown capability to the event to check that they are ignored correctly.
+        claim["events"]["https://schemas.accounts.firefox.com/event/subscription-state-change"]
+            ["capabilities"] = json!(["mdn_plus_10m"]);
+        let set_token = token_from_claim(&claim);
+
+        let res = logged_in_client.trigger_webhook(&set_token).await;
+        assert!(res.response().status().is_success());
+
+        // check the transition is not recorded
+        let transitions = schema::user_subscription_transitions::table
+            .order(schema::user_subscription_transitions::created_at)
+            .load::<SubscriptionChangeQuery>(&mut conn)?;
+        assert_eq!(transitions.len(), 2);
+        assert_eq!(
+            transitions[0].created_at,
+            NaiveDateTime::from_timestamp_opt(1654425317, 0).unwrap()
+        );
+        assert_eq!(
+            transitions[1].created_at,
+            NaiveDateTime::from_timestamp_opt(1654425617, 0).unwrap()
+        );
+    }
+
     drop_stubr(stubr).await;
     Ok(())
 }
