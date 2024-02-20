@@ -25,7 +25,7 @@ actix-rt = "2"
 actix-identity = "0.6"
 actix-session = { version = "0.8", features = ["cookie-session"] }
 actix-web-httpauth = "0.8"
-actix-web-lab = "0.19"
+actix-web-lab = "0.20"
 
 diesel = { version = "2", features = [
     "postgres",
