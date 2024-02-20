@@ -188,15 +188,14 @@ pub async fn update_subscription_state_from_webhook(
             // Filter out any unknown subscription types we get passed in
             // before we try to get the interesting first element of the
             // capabilities array.
-            let filtered_capabilities = update
+            let capability = update
                 .capabilities
                 .into_iter()
                 .filter(|&c| c != fxa::types::Subscription::Unknown)
-                .collect::<Vec<_>>();
-            let subscription: Subscription = match (update.is_active, filtered_capabilities.first())
-            {
+                .next();
+            let subscription: Subscription = match (update.is_active, capability) {
                 (false, _) => Subscription::Core,
-                (true, Some(&c)) => Subscription::from(c),
+                (true, Some(c)) => Subscription::from(c),
                 (true, None) => Subscription::Core,
             };
             if subscription == Subscription::Core {
