@@ -8,7 +8,7 @@ use crate::db::settings::create_or_update_settings;
 use crate::db::types::FxaEvent;
 use crate::db::users::get_user_opt;
 use crate::db::{schema, Pool};
-use crate::fxa::LoginManager;
+use crate::fxa::{self, LoginManager};
 use actix_rt::ArbiterHandle;
 use actix_web::web;
 use basket::Basket;
@@ -185,9 +185,16 @@ pub async fn update_subscription_state_from_webhook(
                 .values(fxa_event)
                 .returning(schema::webhook_events::id)
                 .get_result::<i64>(&mut conn)?;
-            let subscription: Subscription = match (update.is_active, update.capabilities.first()) {
+            // Filter out any unknown subscription types we get passed in
+            // before we try to get the interesting first element of the
+            // capabilities array.
+            let capability = update
+                .capabilities
+                .into_iter()
+                .find(|&c| c != fxa::types::Subscription::Unknown);
+            let subscription: Subscription = match (update.is_active, capability) {
                 (false, _) => Subscription::Core,
-                (true, Some(c)) => Subscription::from(*c),
+                (true, Some(c)) => Subscription::from(c),
                 (true, None) => Subscription::Core,
             };
             if subscription == Subscription::Core {
