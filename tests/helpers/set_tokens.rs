@@ -19,11 +19,11 @@ pub fn invalid_token_from_json_file(json_path: &str) -> String {
 
 /// Returns a proper token from a json string.
 pub fn token_from_json(json_str: &str) -> String {
-    token_from_json_string_and_pem(&json_str, Pem::Valid)
+    token_from_json_string_and_pem(json_str, Pem::Valid)
 }
 /// Returns an invalid token from a json string.
 pub fn invalid_token_from_json(json_str: &str) -> String {
-    token_from_json_string_and_pem(&json_str, Pem::Invalid)
+    token_from_json_string_and_pem(json_str, Pem::Invalid)
 }
 
 enum Pem {
@@ -32,7 +32,7 @@ enum Pem {
 }
 
 fn token_from_json_string_and_pem(json_str: &str, pem_variant: Pem) -> String {
-    let claims: Value = serde_json::from_str(&json_str).unwrap();
+    let claims: Value = serde_json::from_str(json_str).unwrap();
     token_from_claim_and_pem(&claims, pem_variant)
 }
 
@@ -94,7 +94,7 @@ mod tests {
             "tests/data/set_tokens/test/set_token_delete_user_invalid.txt",
             "tests/data/set_tokens/set_token_delete_user.json",
         )];
-        println!("");
+        println!();
         for (set_token, json_file) in proper {
             let token = fs::read_to_string(set_token).unwrap();
             let generated = token_from_file(json_file);
