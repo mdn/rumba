@@ -46,7 +46,8 @@ pub fn create_or_update_user(
     }
 
     let sub: Subscription = fxa_user
-        .subscriptions.first()
+        .subscriptions
+        .first()
         .cloned()
         .unwrap_or_default()
         .into();
