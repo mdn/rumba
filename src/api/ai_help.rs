@@ -269,6 +269,10 @@ fn log_errors_and_record_response(
     user_id: i64,
     help_ids: HelpIds,
 ) -> Result<Option<mpsc::UnboundedSender<CreateChatCompletionStreamResponse>>, ApiError> {
+    if !history_enabled {
+        return Ok(None);
+    }
+
     let mut conn = pool.get()?;
     let (tx, mut rx) = mpsc::unbounded_channel::<CreateChatCompletionStreamResponse>();
     actix_web::rt::spawn(async move {
