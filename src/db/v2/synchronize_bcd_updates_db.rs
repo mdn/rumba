@@ -389,7 +389,7 @@ async fn synchronize_path_mappings(
 
             for path in paths {
                 path_map.insert(
-                    path.as_str().unwrap().try_into().unwrap(),
+                    path.as_str().unwrap().into(),
                     (
                         String::from_str(filtered["mdn_url"].as_str().unwrap()).unwrap(),
                         String::from_str(filtered["short_title"].as_str().unwrap()).unwrap(),
