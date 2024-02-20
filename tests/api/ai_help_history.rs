@@ -48,9 +48,9 @@ fn add_history_log() -> Result<(), Error> {
         message_id: MESSAGE_ID,
         parent_id: None,
         created_at: None,
-        sources: Some(serde_json::to_value(&sources).unwrap_or(Null)),
-        request: Some(serde_json::to_value(&request).unwrap_or(Null)),
-        response: Some(serde_json::to_value(&response).unwrap_or(Null)),
+        sources: Some(serde_json::to_value(sources).unwrap_or(Null)),
+        request: Some(serde_json::to_value(request).unwrap_or(Null)),
+        response: Some(serde_json::to_value(response).unwrap_or(Null)),
     };
     let pool = get_pool();
     let mut conn = pool.get()?;
@@ -99,7 +99,7 @@ fn normalize_digits(s: &str) -> String {
     let mut result = String::new();
 
     for c in s.chars() {
-        if c.is_digit(10) {
+        if c.is_ascii_digit() {
             result.push('0');
         } else {
             result.push(c);
