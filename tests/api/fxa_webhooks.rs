@@ -414,17 +414,20 @@ async fn record_subscription_state_transitions_test() -> Result<(), Error> {
         );
     }
 
-    // Now create a later transition to 10m and check the table again
+    // Now create a later transition to 10m and check the table again.
     {
         let json_str = std::fs::read_to_string(
             "tests/data/set_tokens/set_token_subscription_state_change_to_10m.json",
         )
         .unwrap();
         let mut claim: Value = serde_json::from_str(&json_str).unwrap();
-        // add time to the event to be sure it is after the previous event
+        // Add some time to the event to be sure it is after the previous event.
         claim["iat"] = json!(1654425317000i64 + 300000);
         claim["events"]["https://schemas.accounts.firefox.com/event/subscription-state-change"]
             ["changeTime"] = json!(1654425317000i64 + 300000);
+        // We also add some unknown capability to the event to check that they are ignored correctly.
+        claim["events"]["https://schemas.accounts.firefox.com/event/subscription-state-change"]
+            ["capabilities"] = json!(["something_unknown", "mdn_plus_10m"]);
         let set_token = token_from_claim(&claim);
 
         let res = logged_in_client.trigger_webhook(&set_token).await;
