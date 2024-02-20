@@ -191,8 +191,7 @@ pub async fn update_subscription_state_from_webhook(
             let capability = update
                 .capabilities
                 .into_iter()
-                .filter(|&c| c != fxa::types::Subscription::Unknown)
-                .next();
+                .find(|&c| c != fxa::types::Subscription::Unknown);
             let subscription: Subscription = match (update.is_active, capability) {
                 (false, _) => Subscription::Core,
                 (true, Some(c)) => Subscription::from(c),
