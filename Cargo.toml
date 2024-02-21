@@ -91,7 +91,7 @@ sentry = "0.32"
 sentry-actix = "0.32"
 
 basket = "0.0.5"
-async-openai = "0.14"
+async-openai = "0.18"
 tiktoken-rs = { version = "0.5", features = ["async-openai"] }
 
 octocrab = "0.34"

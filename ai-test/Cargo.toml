@@ -15,6 +15,6 @@ serde_json = "1"
 tokio = { version = "1", features = ["full"] }
 anyhow = "1"
 futures = "0.3"
-async-openai = "0.14"
+async-openai = "0.18"
 itertools = "0.11"
 rumba = { path = "../"}

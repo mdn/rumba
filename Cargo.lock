@@ -355,7 +355,7 @@ name = "ai-test"
 version = "1.7.0"
 dependencies = [
  "anyhow",
- "async-openai",
+ "async-openai 0.18.3",
  "clap",
  "futures",
  "itertools 0.11.0",
@@ -620,6 +620,31 @@ dependencies = [
  "rand 0.8.5",
  "reqwest",
  "reqwest-eventsource",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tracing",
+]
+
+[[package]]
+name = "async-openai"
+version = "0.18.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dea5c9223f84965c603fd58c4c9ddcd1907efb2e54acf6fb47039358cd374df4"
+dependencies = [
+ "async-convert",
+ "backoff",
+ "base64 0.21.7",
+ "bytes",
+ "derive_builder",
+ "futures",
+ "rand 0.8.5",
+ "reqwest",
+ "reqwest-eventsource",
+ "secrecy",
  "serde",
  "serde_json",
  "thiserror",
@@ -4045,7 +4070,7 @@ dependencies = [
  "aes-gcm",
  "anyhow",
  "assert-json-diff",
- "async-openai",
+ "async-openai 0.18.3",
  "base64 0.21.7",
  "basket",
  "cadence",
@@ -4328,6 +4353,7 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9bd1c54ea06cfd2f6b63219704de0b9b4f72dcc2b8fdef820be6cd799780e91e"
 dependencies = [
+ "serde",
  "zeroize",
 ]
 
@@ -5310,7 +5336,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "40894b788eb28bbb7e36bdc8b7b1b1488b9c93fa3730f315ab965330c94c0842"
 dependencies = [
  "anyhow",
- "async-openai",
+ "async-openai 0.14.3",
  "base64 0.21.7",
  "bstr",
  "fancy-regex",
