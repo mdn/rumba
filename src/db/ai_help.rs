@@ -128,6 +128,9 @@ pub fn add_help_history(
     };
     insert_into(ai_help_history::table)
         .values(history)
+        .on_conflict(ai_help_history::chat_id)
+        .do_update()
+        .set(ai_help_history::updated_at.eq(diesel::dsl::now))
         .execute(conn)?;
     Ok(())
 }
@@ -152,7 +155,23 @@ pub fn add_help_history_message(
     conn: &mut PgConnection,
     message: AIHelpHistoryMessageInsert,
 ) -> Result<NaiveDateTime, DbError> {
-    //message.created_at = Some(Utc::now().naive_utc());
+    // If a `parent_id` is present, we execute an update on the help history
+    // record because one of these are true:
+    // * We created a history record at the beginning of the conversation.
+    // * History was switched off, we did not create a record and the update
+    //   will simply not match/change any record.
+    //
+    // With no `parent_id`, we create a new record because at this point, history
+    // _is_ enabled and we are at the start of a new conversation.
+    let res = if message.parent_id.is_some() {
+        update_help_history(conn, message.user_id, message.chat_id)
+    } else {
+        add_help_history(conn, message.user_id, message.chat_id)
+    };
+    if let Err(err) = res {
+        error!("AI Help log: {err}");
+    }
+
     let res = insert_into(ai_help_history_messages::table)
         .values(&message)
         .on_conflict(ai_help_history_messages::message_id)
@@ -162,18 +181,12 @@ pub fn add_help_history_message(
         .get_result::<NaiveDateTime>(conn);
     match res {
         Ok(created_at) => Ok(created_at),
+        // Ignore foreign key violations deliberately
+        // because of the edge cases described above
         Err(diesel::result::Error::DatabaseError(
             diesel::result::DatabaseErrorKind::ForeignKeyViolation,
             _info,
-        )) => {
-            // We have reached an edge case where the ai help history record
-            // is missing. Most likely the user had history turned off
-            // at the start of the conversation, causing a foreign key violation
-            // now.
-            // Handling that specific case here spares us to do a pre-flight check
-            // on every call, keeping the happy path fast.
-            Ok(Utc::now().naive_utc())
-        }
+        )) => Ok(Utc::now().naive_utc()),
         Err(e) => Err(e.into()),
     }
 }
