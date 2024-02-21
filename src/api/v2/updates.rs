@@ -92,7 +92,7 @@ pub struct BcdUpdate {
     #[serde(flatten)]
     pub browser: Option<BrowserInfo>,
     pub events: BcdUpdateEvent,
-    pub release_date: NaiveDate,
+    pub release_date: Option<NaiveDate>,
 }
 
 fn query_contains_restricted_filters(query: &BcdUpdatesQueryParams) -> bool {
@@ -154,7 +154,7 @@ pub async fn get_updates(
                     release_notes: "".to_string(),
                     version: key.5,
                 }),
-                release_date: key.4,
+                release_date: Some(key.4),
                 events: BcdUpdateEvent { added, removed },
             }
         })

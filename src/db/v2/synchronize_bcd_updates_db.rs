@@ -93,25 +93,19 @@ async fn synchronize_browers_and_releases(
         for (release, value) in v["releases"].as_object().unwrap() {
             match value["engine"].as_str() {
                 Some(_) => (),
-                None => debug!("No engine for {:?}", value),
-            }
-            match value["release_date"].as_str() {
-                Some(_) => (),
-                None => debug!("No release_date for {:?}", value),
+                None => println!("No engine for {:?}", value),
             }
             let _release_date: Option<NaiveDate> = value["release_date"]
                 .as_str()
                 .map_or_else(|| None, |v| Some(NaiveDate::from_str(v).unwrap()));
-            if _release_date.is_none() {
-                return;
-            }
+
             releases.push((
                 browser_releases::browser.eq(k.as_str()),
                 browser_releases::engine.eq(value["engine"].as_str().unwrap_or("Unknown")),
                 browser_releases::engine_version
                     .eq(value["engine_version"].as_str().unwrap_or("Unknown")),
                 browser_releases::release_id.eq(release),
-                browser_releases::release_date.eq(_release_date.unwrap()),
+                browser_releases::release_date.eq(_release_date),
                 browser_releases::release_notes.eq(value["release_notes"].as_str()),
                 browser_releases::status.eq(value["status"].as_str()),
             ));

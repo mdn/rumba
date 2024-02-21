@@ -146,7 +146,7 @@ diesel::table! {
         engine -> Text,
         engine_version -> Text,
         release_id -> Text,
-        release_date -> Date,
+        release_date -> Nullable<Date>,
         release_notes -> Nullable<Text>,
         status -> Nullable<Text>,
     }
