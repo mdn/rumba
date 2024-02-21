@@ -5,9 +5,12 @@ use actix_web::test;
 use anyhow::Error;
 use async_openai::types::ChatCompletionRequestMessage;
 use async_openai::types::Role::{Assistant, User};
+use diesel::prelude::*;
+use diesel::ExpressionMethods;
 use rumba::ai::help::RefDoc;
 use rumba::db::ai_help::{add_help_history, add_help_history_message};
 use rumba::db::model::{AIHelpHistoryMessageInsert, SettingsInsert};
+use rumba::db::schema::ai_help_history_messages;
 use rumba::db::settings::create_or_update_settings;
 use serde_json::Value::Null;
 use uuid::Uuid;
@@ -91,6 +94,48 @@ async fn test_history() -> Result<(), Error> {
             test::read_body(history).await.as_ref()
         ))
     );
+    drop_stubr(stubr).await;
+    Ok(())
+}
+
+#[actix_rt::test]
+#[stubr::mock(port = 4321)]
+async fn test_history_message_without_parent() -> Result<(), Error> {
+    let pool = reset()?;
+    let app = test_app_with_login(&pool).await.unwrap();
+    let service = test::init_service(app).await;
+    let mut _logged_in_client = TestHttpClient::new(service).await;
+
+    let mut conn = pool.get()?;
+    // Make sure that history is enabled
+    create_or_update_settings(
+        &mut conn,
+        SettingsInsert {
+            user_id: 1,
+            ai_help_history: Some(true),
+            ..Default::default()
+        },
+    )?;
+
+    // create a message with a non-existing parent
+    let message = AIHelpHistoryMessageInsert {
+        user_id: 1,
+        chat_id: CHAT_ID,
+        message_id: MESSAGE_ID,
+        parent_id: Some(Uuid::from_u128(2)),
+        created_at: None,
+        sources: None,
+        request: None,
+        response: None,
+    };
+    let res = add_help_history_message(&mut conn, message);
+    // We return OK, but the message should not be recorded.
+    assert!(res.is_ok());
+    let message_count = ai_help_history_messages::table
+        .filter(ai_help_history_messages::user_id.eq(1))
+        .count()
+        .get_result::<i64>(&mut conn)?;
+    assert_eq!(message_count, 0);
     drop_stubr(stubr).await;
     Ok(())
 }

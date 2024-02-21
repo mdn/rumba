@@ -140,6 +140,21 @@ pub fn add_help_history_message(
     conn: &mut PgConnection,
     mut message: AIHelpHistoryMessageInsert,
 ) -> Result<NaiveDateTime, DbError> {
+    // Check if the parent message exists in the database first.
+    // We could end up with a non-existing parent message if the
+    // user enables history after the conversation has already
+    // started. Do not try to store the message in that case.
+    if let Some(parent_id) = message.parent_id {
+        let parent_message_count = ai_help_history_messages::table
+            .filter(ai_help_history_messages::message_id.eq(&parent_id))
+            .count()
+            .get_result::<i64>(conn)?;
+        if parent_message_count == 0 {
+            return Ok(Utc::now().naive_utc());
+        }
+    }
+
+    // Ok, we are good on the parent message.
     let updated_at = update(ai_help_history::table)
         .filter(
             ai_help_history::user_id
