@@ -468,6 +468,7 @@ pub async fn ai_help(
                                     }
                                     Some(Err(e)) => Some(Err(e)),
                                     None => {
+                                        // This is the added artificial chunk.
                                         let response_duration = start.elapsed();
                                         let ai_help_message_meta = AiHelpMessageMetaInsert {
                                             user_id: user.id,
@@ -503,24 +504,7 @@ pub async fn ai_help(
                     chat_id,
                     message_id,
                     parent_id,
-                    status: match e {
-                        crate::ai::error::AIError::OpenAIError(_) => {
-                            db::types::AiHelpMessageStatus::OpenAiApiError
-                        }
-                        crate::ai::error::AIError::SqlXError(_) => {
-                            db::types::AiHelpMessageStatus::SearchError
-                        }
-                        crate::ai::error::AIError::FlaggedError => {
-                            db::types::AiHelpMessageStatus::ModerationError
-                        }
-                        crate::ai::error::AIError::NoUserPrompt => {
-                            db::types::AiHelpMessageStatus::NoUserPromptError
-                        }
-                        crate::ai::error::AIError::TokenLimit
-                        | crate::ai::error::AIError::TiktokenError(_) => {
-                            db::types::AiHelpMessageStatus::TokenLimitError
-                        }
-                    },
+                    status: (&e).into(),
                     ..Default::default()
                 };
                 add_help_message_meta(&mut conn, ai_help_message_meta);
