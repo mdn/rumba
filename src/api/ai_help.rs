@@ -26,7 +26,7 @@ use crate::{
             delete_full_help_history, delete_help_history, get_count, help_history,
             help_history_get_message, list_help_history, update_help_history_label, AI_HELP_LIMIT,
         },
-        model::{AIHelpHistoryMessage, AIHelpHistoryMessageInsert, Settings},
+        model::{AIHelpHistoryMessage, AIHelpHistoryMessageInsert, Settings, UserQuery},
         settings::get_settings,
         SupaPool,
     },
@@ -195,7 +195,7 @@ fn record_question(
     pool: &Data<Pool>,
     message: &ChatCompletionRequestMessage,
     history_enabled: bool,
-    user_id: i64,
+    user: &UserQuery,
     help_ids: HelpIds,
 ) -> Result<Option<NaiveDateTime>, ApiError> {
     if !history_enabled {
@@ -207,11 +207,22 @@ fn record_question(
         message_id,
         parent_id,
     } = help_ids;
-    if let Err(err) = add_help_history(&mut conn, user_id, chat_id) {
+
+    // Check if our message has a parent message.
+    // If not, we are in a conversation that started while history was disabled.
+    // We do not store either the history/chat nor the message itself in this case.
+    if let Some(parent_id) = parent_id {
+        let parent_message = help_history_get_message(&mut conn, user, &parent_id)?;
+        if parent_message.is_none() {
+            return Ok(None);
+        }
+    }
+
+    if let Err(err) = add_help_history(&mut conn, user.id, chat_id) {
         error!("AI Help log: {err}");
     }
     let insert = AIHelpHistoryMessageInsert {
-        user_id,
+        user_id: user.id,
         chat_id,
         message_id,
         parent_id,
@@ -233,20 +244,28 @@ fn record_sources(
     pool: &Data<Pool>,
     sources: &Vec<RefDoc>,
     history_enabled: bool,
-    user_id: i64,
+    user: &UserQuery,
     help_ids: HelpIds,
 ) -> Result<Option<NaiveDateTime>, ApiError> {
     if !history_enabled {
         return Ok(None);
     }
     let mut conn = pool.get()?;
+
     let HelpIds {
         chat_id,
         message_id,
         parent_id,
     } = help_ids;
+    if let Some(parent_id) = parent_id {
+        let parent_message = help_history_get_message(&mut conn, user, &parent_id)?;
+        if parent_message.is_none() {
+            return Ok(None);
+        }
+    }
+
     let insert = AIHelpHistoryMessageInsert {
-        user_id,
+        user_id: user.id,
         chat_id,
         message_id,
         parent_id,
@@ -393,7 +412,7 @@ pub async fn ai_help(
                 &diesel_pool,
                 question,
                 history_enabled(&settings),
-                user.id,
+                &user,
                 help_ids,
             )?;
         }
@@ -405,7 +424,7 @@ pub async fn ai_help(
                     &diesel_pool,
                     &sources,
                     history_enabled(&settings),
-                    user.id,
+                    &user,
                     help_ids,
                 )? {
                     Some(x) => Utc.from_utc_datetime(&x),
