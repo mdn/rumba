@@ -128,35 +128,54 @@ pub fn add_help_history(
     };
     insert_into(ai_help_history::table)
         .values(history)
-        .on_conflict(ai_help_history::chat_id)
-        .do_update()
+        .execute(conn)?;
+    Ok(())
+}
+
+pub fn update_help_history(
+    conn: &mut PgConnection,
+    user_id: i64,
+    chat_id: Uuid,
+) -> Result<(), DbError> {
+    update(ai_help_history::table)
+        .filter(
+            ai_help_history::user_id
+                .eq(user_id)
+                .and(ai_help_history::chat_id.eq(chat_id)),
+        )
         .set(ai_help_history::updated_at.eq(diesel::dsl::now))
         .execute(conn)?;
-
     Ok(())
 }
 
 pub fn add_help_history_message(
     conn: &mut PgConnection,
-    mut message: AIHelpHistoryMessageInsert,
+    message: AIHelpHistoryMessageInsert,
 ) -> Result<NaiveDateTime, DbError> {
-    let updated_at = update(ai_help_history::table)
-        .filter(
-            ai_help_history::user_id
-                .eq(message.user_id)
-                .and(ai_help_history::chat_id.eq(message.chat_id)),
-        )
-        .set(ai_help_history::updated_at.eq(diesel::dsl::now))
-        .returning(ai_help_history::updated_at)
-        .get_result::<NaiveDateTime>(conn)?;
-    message.created_at = Some(updated_at);
-    insert_into(ai_help_history_messages::table)
+    //message.created_at = Some(Utc::now().naive_utc());
+    let res = insert_into(ai_help_history_messages::table)
         .values(&message)
         .on_conflict(ai_help_history_messages::message_id)
         .do_update()
         .set(&message)
-        .execute(conn)?;
-    Ok(updated_at)
+        .returning(ai_help_history_messages::created_at)
+        .get_result::<NaiveDateTime>(conn);
+    match res {
+        Ok(created_at) => Ok(created_at),
+        Err(diesel::result::Error::DatabaseError(
+            diesel::result::DatabaseErrorKind::ForeignKeyViolation,
+            _info,
+        )) => {
+            // We have reached an edge case where the ai help history record
+            // is missing. Most likely the user had history turned off
+            // at the start of the conversation, causing a foreign key violation
+            // now.
+            // Handling that specific case here spares us to do a pre-flight check
+            // on every call, keeping the happy path fast.
+            Ok(Utc::now().naive_utc())
+        }
+        Err(e) => Err(e.into()),
+    }
 }
 
 pub fn help_history_get_message(
@@ -255,7 +274,10 @@ pub fn update_help_history_label(
                 .eq(user.id)
                 .and(ai_help_history::chat_id.eq(chat_id)),
         )
-        .set(ai_help_history::label.eq(label))
+        .set((
+            ai_help_history::label.eq(label),
+            ai_help_history::updated_at.eq(diesel::dsl::now),
+        ))
         .execute(conn)?;
     Ok(())
 }

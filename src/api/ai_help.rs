@@ -24,7 +24,8 @@ use crate::{
         ai_help::{
             add_help_history, add_help_history_message, create_or_increment_total,
             delete_full_help_history, delete_help_history, get_count, help_history,
-            help_history_get_message, list_help_history, update_help_history_label, AI_HELP_LIMIT,
+            help_history_get_message, list_help_history, update_help_history,
+            update_help_history_label, AI_HELP_LIMIT,
         },
         model::{AIHelpHistoryMessage, AIHelpHistoryMessageInsert, Settings, UserQuery},
         settings::get_settings,
@@ -208,19 +209,24 @@ fn record_question(
         parent_id,
     } = help_ids;
 
-    // Check if our message has a parent message.
-    // If not, we are in a conversation that started while history was disabled.
-    // We do not store either the history/chat nor the message itself in this case.
-    if let Some(parent_id) = parent_id {
-        let parent_message = help_history_get_message(&mut conn, user, &parent_id)?;
-        if parent_message.is_none() {
-            return Ok(None);
-        }
-    }
+    // If a `parent_id` is present, we execute an update on the help history
+    // record because one of these are true:
+    // * We created a history record at the beginning of the conversation.
+    // * History was switched off, we did not create a record and the update
+    //   will simply not match/change any record.
+    //
+    // With no `parent_id`, we create a new record because at this point, history
+    // _is_ enabled and we are at the start of a new conversation.
+    let res = if parent_id.is_some() {
+        update_help_history(&mut conn, user.id, chat_id)
+    } else {
+        add_help_history(&mut conn, user.id, chat_id)
+    };
 
-    if let Err(err) = add_help_history(&mut conn, user.id, chat_id) {
+    if let Err(err) = res {
         error!("AI Help log: {err}");
     }
+
     let insert = AIHelpHistoryMessageInsert {
         user_id: user.id,
         chat_id,
