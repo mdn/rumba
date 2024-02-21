@@ -222,7 +222,6 @@ fn record_question(
     } else {
         add_help_history(&mut conn, user.id, chat_id)
     };
-
     if let Err(err) = res {
         error!("AI Help log: {err}");
     }
@@ -257,18 +256,11 @@ fn record_sources(
         return Ok(None);
     }
     let mut conn = pool.get()?;
-
     let HelpIds {
         chat_id,
         message_id,
         parent_id,
     } = help_ids;
-    if let Some(parent_id) = parent_id {
-        let parent_message = help_history_get_message(&mut conn, user, &parent_id)?;
-        if parent_message.is_none() {
-            return Ok(None);
-        }
-    }
 
     let insert = AIHelpHistoryMessageInsert {
         user_id: user.id,
