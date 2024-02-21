@@ -20,7 +20,6 @@ use uuid::Uuid;
 
 use crate::{
     ai::help::{prepare_ai_help_req, prepare_ai_help_summary_req, RefDoc},
-    api::common::{GeneratedChunk, GeneratedChunkChoice},
     db::{
         self,
         ai_help::{
@@ -327,39 +326,6 @@ fn log_errors_and_record_response(
         }
     });
     Ok(Some(tx))
-}
-
-pub fn sorry_response(
-    chat_id: Option<Uuid>,
-    message_id: Uuid,
-    parent_id: Option<Uuid>,
-    quota: Option<AIHelpLimit>,
-) -> Result<Vec<sse::Data>, ApiError> {
-    let parts = vec![
-        sse::Data::new_json(AIHelpMeta {
-            typ: MetaType::Metadata,
-            chat_id: chat_id.unwrap_or_else(Uuid::new_v4),
-            message_id,
-            parent_id,
-            sources: vec![],
-            quota,
-            created_at: Utc::now(),
-        })
-        .map_err(OpenAIError::JSONDeserialize)?,
-        sse::Data::new_json(GeneratedChunk::from(
-            "Sorry, I don't know how to help with that.",
-        ))
-        .map_err(OpenAIError::JSONDeserialize)?,
-        sse::Data::new_json(GeneratedChunk {
-            choices: vec![GeneratedChunkChoice {
-                finish_reason: Some("stop".to_owned()),
-                ..Default::default()
-            }],
-            ..Default::default()
-        })
-        .map_err(OpenAIError::JSONDeserialize)?,
-    ];
-    Ok(parts)
 }
 
 pub async fn ai_help(
