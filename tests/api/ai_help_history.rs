@@ -1,7 +1,6 @@
-use crate::helpers::app::test_app_with_login;
+use crate::helpers::app::{drop_stubr, test_app_with_login};
 use crate::helpers::db::{get_pool, reset};
 use crate::helpers::http_client::TestHttpClient;
-use crate::helpers::wait_for_stubr;
 use actix_web::test;
 use anyhow::Error;
 use async_openai::types::ChatCompletionRequestMessage;
@@ -49,9 +48,9 @@ fn add_history_log() -> Result<(), Error> {
         message_id: MESSAGE_ID,
         parent_id: None,
         created_at: None,
-        sources: Some(serde_json::to_value(&sources).unwrap_or(Null)),
-        request: Some(serde_json::to_value(&request).unwrap_or(Null)),
-        response: Some(serde_json::to_value(&response).unwrap_or(Null)),
+        sources: Some(serde_json::to_value(sources).unwrap_or(Null)),
+        request: Some(serde_json::to_value(request).unwrap_or(Null)),
+        response: Some(serde_json::to_value(response).unwrap_or(Null)),
     };
     let pool = get_pool();
     let mut conn = pool.get()?;
@@ -64,7 +63,6 @@ fn add_history_log() -> Result<(), Error> {
 #[stubr::mock(port = 4321)]
 async fn test_history() -> Result<(), Error> {
     let pool = reset()?;
-    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await.unwrap();
     let service = test::init_service(app).await;
     let mut logged_in_client = TestHttpClient::new(service).await;
@@ -93,8 +91,7 @@ async fn test_history() -> Result<(), Error> {
             test::read_body(history).await.as_ref()
         ))
     );
-
-    drop(stubr);
+    drop_stubr(stubr).await;
     Ok(())
 }
 
@@ -102,7 +99,7 @@ fn normalize_digits(s: &str) -> String {
     let mut result = String::new();
 
     for c in s.chars() {
-        if c.is_digit(10) {
+        if c.is_ascii_digit() {
             result.push('0');
         } else {
             result.push(c);

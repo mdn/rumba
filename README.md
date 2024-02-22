@@ -21,6 +21,26 @@ Before you can start working with Rumba, you need to:
 7. To create an authenticated session navigate to http://localhost:8000/users/fxa/login/authenticate/?next=%2F and login with your firefox staging account
 8. To check you are logged in and ready to go navigate to http://localhost:8000/api/v1/whoami you should see your logged in user information.
 
+## Formatting & Linting
+
+All changes to Rumba are required to be formatted with [Rustfmt](https://doc.rust-lang.org/stable/clippy/index.html) (`cargo fmt --all`) and free of [Clippy](https://doc.rust-lang.org/stable/clippy/index.html) linting errors or warnings (`cargo clippy --all --all-features -- -D warnings`).
+
+To avoid committing unformatted or unlinted changes, we recommend setting up a pre-commit [Git hook](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) in your local repository checkout:
+
+```sh
+touch .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+cat <<EOF >> .git/hooks/pre-commit
+#!/usr/bin/env bash
+
+echo "Running cargo fmt..."
+cargo fmt --all -- --check
+
+echo "Running cargo clippy..."
+cargo clippy --all --all-features -- -D warnings
+EOF
+```
+
 ## Testing
 
 See [tests](./tests/)

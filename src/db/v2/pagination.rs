@@ -36,7 +36,7 @@ impl<T> Paginated<T> {
     {
         let per_page = self.per_page;
         let results = self.load::<(U, i64)>(conn)?;
-        let total = results.get(0).map(|x| x.1).unwrap_or(0);
+        let total = results.first().map(|x| x.1).unwrap_or(0);
         let total_pages = (total as f64 / per_page as f64).ceil() as i64;
         Ok(total_pages)
     }

@@ -8,7 +8,7 @@ use crate::db::settings::create_or_update_settings;
 use crate::db::types::FxaEvent;
 use crate::db::users::get_user_opt;
 use crate::db::{schema, Pool};
-use crate::fxa::LoginManager;
+use crate::fxa::{self, LoginManager};
 use actix_rt::ArbiterHandle;
 use actix_web::web;
 use basket::Basket;
@@ -18,6 +18,7 @@ use diesel::prelude::*;
 use diesel::ExpressionMethods;
 use serde_json::json;
 
+use super::model::SubscriptionChangeInsert;
 use super::types::{FxaEventStatus, Subscription};
 
 pub fn log_failed_webhook_event(
@@ -166,6 +167,7 @@ pub async fn update_subscription_state_from_webhook(
         status: FxaEventStatus::Pending,
         payload: serde_json::value::to_value(&update).unwrap(),
     };
+    debug!("Got subscription state change event: {:?}", update);
 
     if let Some(user) = user {
         let ignore = schema::webhook_events::table
@@ -184,14 +186,21 @@ pub async fn update_subscription_state_from_webhook(
                 .values(fxa_event)
                 .returning(schema::webhook_events::id)
                 .get_result::<i64>(&mut conn)?;
-            let subscription: Subscription = match (update.is_active, update.capabilities.first()) {
+            // Filter out any unknown subscription types we get passed in
+            // before we try to get the interesting first element of the
+            // capabilities array.
+            let capability = update
+                .capabilities
+                .into_iter()
+                .find(|&c| c != fxa::types::Subscription::Unknown);
+            let subscription: Subscription = match (update.is_active, capability) {
                 (false, _) => Subscription::Core,
-                (true, Some(c)) => Subscription::from(*c),
+                (true, Some(c)) => Subscription::from(c),
                 (true, None) => Subscription::Core,
             };
             if subscription == Subscription::Core {
                 // drop permissions
-                if let Some(basket) = &**basket {
+                if let Some(basket) = basket.get_ref() {
                     if let Err(e) = newsletter::unsubscribe(&mut conn, &user, basket).await {
                         error!("error unsubscribing user: {}", e);
                     }
@@ -217,7 +226,7 @@ pub async fn update_subscription_state_from_webhook(
                     )
                     .set(schema::webhook_events::status.eq(FxaEventStatus::Processed))
                     .execute(&mut conn)?;
-                    return Ok(());
+                    // return Ok(());
                 }
                 Err(e) => {
                     diesel::update(
@@ -228,6 +237,30 @@ pub async fn update_subscription_state_from_webhook(
                     return Err(e.into());
                 }
             }
+            // Record the subscription state change in its table.
+            let old_subscription = user.get_subscription_type();
+            if let Some(old_subscription) = old_subscription {
+                // Do not record transitions that are not transitioning anything.
+                // This can happen if the user cancels, but their subscription
+                // has some time left (monthly/yearly subscription).
+                // When the subscription actually ends, the system will send us a
+                // new event.
+                if old_subscription == subscription {
+                    return Ok(());
+                }
+                // We have the user id, the old and new subscription,
+                // they are different, so go ahead storing it.
+                let subscription_change = SubscriptionChangeInsert {
+                    user_id: user.id,
+                    old_subscription_type: old_subscription,
+                    new_subscription_type: subscription,
+                    created_at: update.change_time.naive_utc(),
+                };
+                insert_into(schema::user_subscription_transitions::table)
+                    .values(subscription_change)
+                    .execute(&mut conn)?;
+            }
+            return Ok(());
         }
     }
 

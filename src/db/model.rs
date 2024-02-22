@@ -294,3 +294,22 @@ pub struct AIHelpHistoryMessage {
     pub request: Value,
     pub response: Value,
 }
+
+#[derive(Insertable)]
+#[diesel(table_name = user_subscription_transitions)]
+pub struct SubscriptionChangeInsert {
+    pub user_id: i64,
+    pub old_subscription_type: Subscription,
+    pub new_subscription_type: Subscription,
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Queryable, Debug)]
+#[diesel(table_name = user_subscription_transitions)]
+pub struct SubscriptionChangeQuery {
+    pub id: i64,
+    pub user_id: i64,
+    pub old_subscription_type: Subscription,
+    pub new_subscription_type: Subscription,
+    pub created_at: NaiveDateTime,
+}

@@ -1,6 +1,7 @@
 use actix_http::body::BoxBody;
 use actix_http::Request;
 use actix_identity::IdentityMiddleware;
+use actix_rt::time::sleep;
 use actix_rt::Arbiter;
 use actix_session::storage::CookieSessionStore;
 use actix_session::SessionMiddleware;
@@ -24,6 +25,7 @@ use rumba::db::{Pool, SupaPool};
 use rumba::fxa::LoginManager;
 use rumba::settings::SETTINGS;
 use slog::{slog_o, Drain};
+use std::time::Duration;
 use stubr::{Config, Stubr};
 
 use super::db::reset;
@@ -159,4 +161,14 @@ pub async fn init_test(
     let service = test::init_service(app).await;
     let logged_in_client = TestHttpClient::new(service).await;
     Ok((logged_in_client, stubr))
+}
+
+// We drop the stubr instances explicitly and add a small
+// delay to give it time to shutdown. This is necessary to fix
+// flaky tests that fail because leftover stubr instances are still
+// holding on the network port in some cases.
+const STUBR_POST_DROP_SLEEP: std::time::Duration = Duration::from_millis(10);
+pub async fn drop_stubr(stubr: Stubr) {
+    drop(stubr);
+    sleep(STUBR_POST_DROP_SLEEP).await;
 }

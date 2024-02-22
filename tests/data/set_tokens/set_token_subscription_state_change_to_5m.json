@@ -3,7 +3,7 @@
   "events": {
     "https://schemas.accounts.firefox.com/event/subscription-state-change": {
       "capabilities": [
-        "mdn_plus_10m"
+        "mdn_plus_5m"
       ],
       "changeTime": 1654425317000,
       "isActive": true

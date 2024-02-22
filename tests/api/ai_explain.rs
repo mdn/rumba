@@ -1,6 +1,5 @@
-use crate::helpers::app::test_app_with_login;
+use crate::helpers::app::{drop_stubr, test_app_with_login};
 use crate::helpers::db::{get_pool, reset};
-use crate::helpers::wait_for_stubr;
 use actix_web::test;
 use anyhow::Error;
 use diesel::{QueryDsl, RunQueryDsl};
@@ -49,7 +48,6 @@ fn add_explain_cache() -> Result<(), Error> {
 async fn test_explain() -> Result<(), Error> {
     let pool = reset()?;
     add_explain_cache()?;
-    wait_for_stubr().await?;
     let app = test_app_with_login(&pool).await.unwrap();
     let service = test::init_service(app).await;
     let request = test::TestRequest::post()
@@ -123,7 +121,6 @@ async fn test_explain() -> Result<(), Error> {
         .first(&mut conn)?;
     assert_eq!(row.thumbs_up, 1);
     assert_eq!(row.thumbs_down, 1);
-
-    drop(stubr);
+    drop_stubr(stubr).await;
     Ok(())
 }

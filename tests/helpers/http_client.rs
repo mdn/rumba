@@ -6,8 +6,6 @@ use actix_web::{test, Error};
 use rumba::settings::SETTINGS;
 use std::collections::HashMap;
 
-use reqwest::{Client, Method, StatusCode};
-
 use serde_json::Value;
 use url::Url;
 
@@ -25,8 +23,6 @@ pub enum PostPayload {
 
 impl<T: Service<Request, Response = RumbaTestResponse, Error = Error>> TestHttpClient<T> {
     pub async fn new(service: T) -> Self {
-        let _stubr_ok = check_stubr_initialized().await;
-
         let login_req = test::TestRequest::get()
             .uri("/users/fxa/login/authenticate/")
             .to_request();
@@ -154,14 +150,4 @@ impl<T: Service<Request, Response = RumbaTestResponse, Error = Error>> TestHttpC
         }
         base
     }
-}
-
-pub async fn check_stubr_initialized() -> Result<(), ()> {
-    //Hardcoded for now. We will 'always' spin stubr at localhost:4321.
-    let res = Client::new()
-        .request(Method::GET, "http://localhost:4321/healthz")
-        .send()
-        .await;
-    assert_eq!(res.unwrap().status(), StatusCode::OK);
-    Ok(())
 }
