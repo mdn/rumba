@@ -123,6 +123,7 @@ diesel::table! {
         query_len -> Int8,
         context_len -> Int8,
         response_len -> Int8,
+        model -> Text,
         status -> AiHelpMessageStatus,
         sources -> Jsonb,
     }

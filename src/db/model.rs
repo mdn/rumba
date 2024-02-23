@@ -327,6 +327,7 @@ pub struct AiHelpMessageMetaInsert<'a> {
     pub query_len: i64,
     pub context_len: i64,
     pub response_len: i64,
+    pub model: &'a str,
     pub status: AiHelpMessageStatus,
     pub sources: Option<&'a Value>,
 }

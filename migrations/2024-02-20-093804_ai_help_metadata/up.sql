@@ -23,6 +23,7 @@ CREATE TABLE ai_help_message_meta (
     query_len           BIGINT NOT NULL,
     context_len         BIGINT NOT NULL,
     response_len        BIGINT NOT NULL,
+    model               text NOT NULL,
     status              ai_help_message_status NOT NULL DEFAULT 'unknown',
     sources             JSONB NOT NULL DEFAULT '[]'::jsonb,
     UNIQUE(message_id)

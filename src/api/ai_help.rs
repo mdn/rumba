@@ -375,6 +375,7 @@ pub async fn ai_help(
         match prepare_ai_help_req(client, pool, user.is_subscriber(), messages).await {
             Ok((ai_help_req, search_duration)) => {
                 let sources = ai_help_req.refs;
+                let model = ai_help_req.req.model.clone();
                 let created_at = match record_sources(
                     &diesel_pool,
                     &sources,
@@ -452,6 +453,7 @@ pub async fn ai_help(
                                             .unwrap_or(-1),
                                             response_len: i64::try_from(*response_len)
                                                 .unwrap_or(-1),
+                                            model: &model,
                                             status: db::types::AiHelpMessageStatus::Success,
                                             sources: Some(&sources_value),
                                             ..Default::default()
