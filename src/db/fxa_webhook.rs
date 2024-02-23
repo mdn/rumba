@@ -167,6 +167,7 @@ pub async fn update_subscription_state_from_webhook(
         status: FxaEventStatus::Pending,
         payload: serde_json::value::to_value(&update).unwrap(),
     };
+    debug!("Got subscription state change event: {:?}", update);
 
     if let Some(user) = user {
         let ignore = schema::webhook_events::table
@@ -239,7 +240,16 @@ pub async fn update_subscription_state_from_webhook(
             // Record the subscription state change in its table.
             let old_subscription = user.get_subscription_type();
             if let Some(old_subscription) = old_subscription {
-                // We have the user id, the old and new subscription, store it.
+                // Do not record transitions that are not transitioning anything.
+                // This can happen if the user cancels, but their subscription
+                // has some time left (monthly/yearly subscription).
+                // When the subscription actually ends, the system will send us a
+                // new event.
+                if old_subscription == subscription {
+                    return Ok(());
+                }
+                // We have the user id, the old and new subscription,
+                // they are different, so go ahead storing it.
                 let subscription_change = SubscriptionChangeInsert {
                     user_id: user.id,
                     old_subscription_type: old_subscription,
