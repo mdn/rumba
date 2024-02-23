@@ -26,7 +26,7 @@ use crate::{
             delete_help_history, get_count, help_history, help_history_get_message,
             list_help_history, update_help_history_label, AI_HELP_LIMIT,
         },
-        model::{AIHelpHistoryMessage, AIHelpHistoryMessageInsert, Settings, UserQuery},
+        model::{AIHelpHistoryMessage, AIHelpHistoryMessageInsert, Settings},
         settings::get_settings,
         SupaPool,
     },
@@ -195,7 +195,7 @@ fn record_question(
     pool: &Data<Pool>,
     message: &ChatCompletionRequestMessage,
     history_enabled: bool,
-    user: &UserQuery,
+    user_id: i64,
     help_ids: HelpIds,
 ) -> Result<Option<NaiveDateTime>, ApiError> {
     if !history_enabled {
@@ -209,7 +209,7 @@ fn record_question(
     } = help_ids;
 
     let insert = AIHelpHistoryMessageInsert {
-        user_id: user.id,
+        user_id,
         chat_id,
         message_id,
         parent_id,
@@ -231,7 +231,7 @@ fn record_sources(
     pool: &Data<Pool>,
     sources: &Vec<RefDoc>,
     history_enabled: bool,
-    user: &UserQuery,
+    user_id: i64,
     help_ids: HelpIds,
 ) -> Result<Option<NaiveDateTime>, ApiError> {
     if !history_enabled {
@@ -245,7 +245,7 @@ fn record_sources(
     } = help_ids;
 
     let insert = AIHelpHistoryMessageInsert {
-        user_id: user.id,
+        user_id,
         chat_id,
         message_id,
         parent_id,
@@ -392,7 +392,7 @@ pub async fn ai_help(
                 &diesel_pool,
                 question,
                 history_enabled(&settings),
-                &user,
+                user.id,
                 help_ids,
             )?;
         }
@@ -404,7 +404,7 @@ pub async fn ai_help(
                     &diesel_pool,
                     &sources,
                     history_enabled(&settings),
-                    &user,
+                    user.id,
                     help_ids,
                 )? {
                     Some(x) => Utc.from_utc_datetime(&x),

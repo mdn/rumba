@@ -287,10 +287,7 @@ pub fn update_help_history_label(
                 .eq(user.id)
                 .and(ai_help_history::chat_id.eq(chat_id)),
         )
-        .set((
-            ai_help_history::label.eq(label),
-            ai_help_history::updated_at.eq(diesel::dsl::now),
-        ))
+        .set(ai_help_history::label.eq(label))
         .execute(conn)?;
     Ok(())
 }
