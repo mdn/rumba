@@ -132,31 +132,63 @@ pub fn add_help_history(
         .do_update()
         .set(ai_help_history::updated_at.eq(diesel::dsl::now))
         .execute(conn)?;
+    Ok(())
+}
 
+pub fn update_help_history(
+    conn: &mut PgConnection,
+    user_id: i64,
+    chat_id: Uuid,
+) -> Result<(), DbError> {
+    update(ai_help_history::table)
+        .filter(
+            ai_help_history::user_id
+                .eq(user_id)
+                .and(ai_help_history::chat_id.eq(chat_id)),
+        )
+        .set(ai_help_history::updated_at.eq(diesel::dsl::now))
+        .execute(conn)?;
     Ok(())
 }
 
 pub fn add_help_history_message(
     conn: &mut PgConnection,
-    mut message: AIHelpHistoryMessageInsert,
+    message: AIHelpHistoryMessageInsert,
 ) -> Result<NaiveDateTime, DbError> {
-    let updated_at = update(ai_help_history::table)
-        .filter(
-            ai_help_history::user_id
-                .eq(message.user_id)
-                .and(ai_help_history::chat_id.eq(message.chat_id)),
-        )
-        .set(ai_help_history::updated_at.eq(diesel::dsl::now))
-        .returning(ai_help_history::updated_at)
-        .get_result::<NaiveDateTime>(conn)?;
-    message.created_at = Some(updated_at);
-    insert_into(ai_help_history_messages::table)
+    // If a `parent_id` is present, we execute an update on the help history
+    // record because one of these are true:
+    // * We created a history record at the beginning of the conversation.
+    // * History was switched off, we did not create a record and the update
+    //   will simply not match/change any record.
+    //
+    // With no `parent_id`, we create a new record because at this point, history
+    // _is_ enabled and we are at the start of a new conversation.
+    let res = if message.parent_id.is_some() {
+        update_help_history(conn, message.user_id, message.chat_id)
+    } else {
+        add_help_history(conn, message.user_id, message.chat_id)
+    };
+    if let Err(err) = res {
+        error!("AI Help log: {err}");
+    }
+
+    let res = insert_into(ai_help_history_messages::table)
         .values(&message)
         .on_conflict(ai_help_history_messages::message_id)
         .do_update()
         .set(&message)
-        .execute(conn)?;
-    Ok(updated_at)
+        .returning(ai_help_history_messages::created_at)
+        .get_result::<NaiveDateTime>(conn);
+    match res {
+        Ok(created_at) => Ok(created_at),
+        // Ignore foreign key violations deliberately
+        // because of the edge cases described above
+        Err(diesel::result::Error::DatabaseError(
+            diesel::result::DatabaseErrorKind::ForeignKeyViolation,
+            _info,
+        )) => Ok(Utc::now().naive_utc()),
+        Err(e) => Err(e.into()),
+    }
 }
 
 pub fn help_history_get_message(
