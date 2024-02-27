@@ -371,7 +371,7 @@ pub async fn ai_help(
         }
 
         match prepare_ai_help_req(client, pool, user.is_subscriber(), messages).await {
-            Ok((ai_help_req, search_duration)) => {
+            Ok((ai_help_req, ai_help_req_meta)) => {
                 let sources = ai_help_req.refs;
                 let model = ai_help_req.req.model.clone();
                 let created_at = match record_sources(
@@ -442,11 +442,17 @@ pub async fn ai_help(
                                             parent_id,
                                             created_at: Some(created_at.naive_utc()),
                                             search_duration: i64::try_from(
-                                                search_duration.as_millis(),
+                                                ai_help_req_meta.search_duration.as_millis(),
                                             )
                                             .unwrap_or(-1),
                                             response_duration: i64::try_from(
                                                 response_duration.as_millis(),
+                                            )
+                                            .unwrap_or(-1),
+                                            query_len: i64::try_from(ai_help_req_meta.query_len)
+                                                .unwrap_or(-1),
+                                            context_len: i64::try_from(
+                                                ai_help_req_meta.context_len,
                                             )
                                             .unwrap_or(-1),
                                             response_len: i64::try_from(*response_len)
@@ -454,7 +460,6 @@ pub async fn ai_help(
                                             model: &model,
                                             status: db::types::AiHelpMessageStatus::Success,
                                             sources: Some(&sources_value),
-                                            ..Default::default()
                                         };
                                         add_help_message_meta(&mut conn, ai_help_message_meta);
                                         None
