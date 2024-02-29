@@ -100,8 +100,8 @@ pub async fn get_related_macro_docs(
     Ok(docs)
 }
 
-fn get_duplicate_titles<'a>(titles: &'a [RelatedDoc]) -> Vec<String> {
-    titles
+fn get_duplicate_titles<'a>(docs: &'a [RelatedDoc]) -> Vec<String> {
+    docs
         .iter()
         .map(|x| &x.title)
         .sorted()
