@@ -87,7 +87,11 @@ pub async fn get_related_macro_docs(
         .fetch_all(pool)
         .await?;
 
-    let duplicate_titles = get_duplicate_titles(&docs);
+    let duplicate_titles: Vec<String> = docs
+        .iter()
+        .map(|x| x.title.to_string())
+        .duplicates()
+        .collect();
 
     docs.iter_mut().for_each(|doc| {
         if let (true, Some(title_parent)) =
@@ -98,13 +102,6 @@ pub async fn get_related_macro_docs(
     });
 
     Ok(docs)
-}
-
-fn get_duplicate_titles(docs: &[RelatedDoc]) -> Vec<String> {
-    docs.iter()
-        .map(|x| x.title.to_string())
-        .duplicates()
-        .collect()
 }
 
 pub async fn get_related_full_docs(
