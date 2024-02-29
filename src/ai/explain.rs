@@ -1,7 +1,8 @@
 use async_openai::{
     config::OpenAIConfig,
     types::{
-        ChatCompletionRequestMessageArgs, CreateChatCompletionRequest,
+        ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs,
+        ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequest,
         CreateChatCompletionRequestArgs, CreateModerationRequestArgs, Role,
     },
     Client,
@@ -87,24 +88,28 @@ pub async fn prepare_explain_req(
     if moderation.results.iter().any(|r| r.flagged) {
         return Err(AIError::FlaggedError);
     }
-    let system_message = ChatCompletionRequestMessageArgs::default()
+    let system_message = ChatCompletionRequestSystemMessageArgs::default()
         .role(Role::System)
         .content(EXPLAIN_SYSTEM_MESSAGE)
         .build()
         .unwrap();
-    let context_message = ChatCompletionRequestMessageArgs::default()
+    let context_message = ChatCompletionRequestUserMessageArgs::default()
         .role(Role::User)
         .content(context_prompt)
         .build()
         .unwrap();
-    let user_message = ChatCompletionRequestMessageArgs::default()
+    let user_message = ChatCompletionRequestUserMessageArgs::default()
         .role(Role::User)
         .content(user_prompt)
         .build()
         .unwrap();
     let req = CreateChatCompletionRequestArgs::default()
         .model(MODEL)
-        .messages(vec![system_message, context_message, user_message])
+        .messages(vec![
+            ChatCompletionRequestMessage::System(system_message),
+            ChatCompletionRequestMessage::User(context_message),
+            ChatCompletionRequestMessage::User(user_message),
+        ])
         .temperature(0.0)
         .build()?;
     Ok(req)

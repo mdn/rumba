@@ -1,7 +1,8 @@
 use async_openai::{
     config::OpenAIConfig,
     types::{
-        ChatCompletionRequestMessage, ChatCompletionRequestMessageArgs,
+        ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs,
+        ChatCompletionRequestUserMessageArgs, ChatCompletionRequestUserMessageContent,
         CreateChatCompletionRequest, CreateChatCompletionRequestArgs, CreateModerationRequestArgs,
         Role,
     },
@@ -51,7 +52,13 @@ pub async fn prepare_ai_help_req(
     let moderations = FuturesUnordered::from_iter(
         context_messages
             .iter()
-            .filter_map(|msg| msg.content.clone())
+            .filter_map(|msg| match msg {
+                ChatCompletionRequestMessage::User(msg) => match msg.content.clone() {
+                    ChatCompletionRequestUserMessageContent::Text(content) => Some(content),
+                    _ => None,
+                },
+                _ => None,
+            })
             .map(|content| {
                 CreateModerationRequestArgs::default()
                     .input(content)
@@ -74,7 +81,13 @@ pub async fn prepare_ai_help_req(
     let last_user_message = context_messages
         .iter()
         .last()
-        .and_then(|msg| msg.content.as_ref())
+        .and_then(|msg| match msg {
+            ChatCompletionRequestMessage::User(msg) => match msg.content.clone() {
+                ChatCompletionRequestUserMessageContent::Text(content) => Some(content),
+                _ => None,
+            },
+            _ => None,
+        })
         .ok_or(AIError::NoUserPrompt)?;
 
     let related_docs = if config.full_doc {
@@ -104,7 +117,7 @@ pub async fn prepare_ai_help_req(
         }
         context.push(doc);
     }
-    let system_message = ChatCompletionRequestMessageArgs::default()
+    let system_message = ChatCompletionRequestSystemMessageArgs::default()
         .role(Role::System)
         .content(config.system_prompt)
         .build()
@@ -113,7 +126,7 @@ pub async fn prepare_ai_help_req(
         None
     } else {
         Some(
-            ChatCompletionRequestMessageArgs::default()
+            ChatCompletionRequestUserMessageArgs::default()
                 .role(Role::User)
                 .content((config.make_context)(context))
                 .build()
@@ -121,16 +134,20 @@ pub async fn prepare_ai_help_req(
         )
     };
     let user_message = config.user_prompt.map(|x| {
-        ChatCompletionRequestMessageArgs::default()
+        ChatCompletionRequestUserMessageArgs::default()
             .role(Role::User)
             .content(x)
             .build()
             .unwrap()
     });
-    let init_messages = vec![Some(system_message), context_message, user_message]
-        .into_iter()
-        .flatten()
-        .collect();
+    let init_messages = vec![
+        Some(ChatCompletionRequestMessage::System(system_message)),
+        context_message.map(|message| ChatCompletionRequestMessage::User(message)),
+        user_message.map(|message| ChatCompletionRequestMessage::User(message)),
+    ]
+    .into_iter()
+    .flatten()
+    .collect();
     let messages = cap_messages(&config, init_messages, context_messages)?;
 
     let req = CreateChatCompletionRequestArgs::default()
@@ -145,17 +162,22 @@ pub async fn prepare_ai_help_req(
 pub fn prepare_ai_help_summary_req(
     messages: Vec<ChatCompletionRequestMessage>,
 ) -> Result<CreateChatCompletionRequest, AIError> {
-    let system_message = ChatCompletionRequestMessageArgs::default()
+    let system_message = ChatCompletionRequestSystemMessageArgs::default()
         .role(Role::System)
         .content(include_str!("prompts/summary/system.md"))
         .build()
         .unwrap();
-    let user_message = ChatCompletionRequestMessageArgs::default()
+    let user_message = ChatCompletionRequestUserMessageArgs::default()
         .role(Role::User)
         .content(include_str!("prompts/summary/user.md"))
         .build()
         .unwrap();
-    let messages = [&[system_message], &messages[..], &[user_message]].concat();
+    let messages = [
+        &[ChatCompletionRequestMessage::System(system_message)],
+        &messages[..],
+        &[ChatCompletionRequestMessage::User(user_message)],
+    ]
+    .concat();
 
     let req = CreateChatCompletionRequestArgs::default()
         .model("gpt-3.5-turbo")

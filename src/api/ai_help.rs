@@ -7,7 +7,10 @@ use actix_web_lab::{__reexports::tokio::sync::mpsc, sse};
 use async_openai::{
     config::OpenAIConfig,
     error::OpenAIError,
-    types::{ChatCompletionRequestMessage, CreateChatCompletionStreamResponse, Role::Assistant},
+    types::{
+        ChatCompletionRequestAssistantMessage, ChatCompletionRequestMessage,
+        CreateChatCompletionStreamResponse, Role::Assistant,
+    },
     Client,
 };
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
@@ -282,7 +285,7 @@ fn log_errors_and_record_response(
                     answer.push(part);
                 }
                 if let Some(finish_reason) = c.finish_reason {
-                    debug!("Finish reason: {finish_reason}");
+                    //debug!("Finish reason: {}", finish_reason);
                     has_finish_reason = true;
                 }
             }
@@ -298,11 +301,12 @@ fn log_errors_and_record_response(
                 message_id,
                 parent_id,
             } = help_ids;
-            let response = ChatCompletionRequestMessage {
-                role: Assistant,
-                content: Some(answer.join("")),
-                ..Default::default()
-            };
+            let response =
+                ChatCompletionRequestMessage::Assistant(ChatCompletionRequestAssistantMessage {
+                    role: Assistant,
+                    content: Some(answer.join("")),
+                    ..Default::default()
+                });
             let insert = AIHelpHistoryMessageInsert {
                 user_id,
                 chat_id,

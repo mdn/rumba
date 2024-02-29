@@ -1,4 +1,4 @@
-use async_openai::types::{ChatCompletionRequestMessage, Role};
+use async_openai::types::ChatCompletionRequestMessage;
 use tiktoken_rs::async_openai::num_tokens_from_messages;
 
 use crate::ai::{constants::AIHelpConfig, error::AIError};
@@ -8,7 +8,11 @@ pub fn sanitize_messages(
 ) -> Vec<ChatCompletionRequestMessage> {
     messages
         .into_iter()
-        .filter(|message| message.role == Role::User || message.role == Role::Assistant)
+        .filter(|message| match message {
+            ChatCompletionRequestMessage::User(_) => true,
+            ChatCompletionRequestMessage::Assistant(_) => true,
+            _ => false,
+        })
         .collect()
 }
 
@@ -17,7 +21,10 @@ pub fn into_user_messages(
 ) -> Vec<ChatCompletionRequestMessage> {
     messages
         .into_iter()
-        .filter(|message| message.role == Role::User)
+        .filter(|message| match message {
+            ChatCompletionRequestMessage::User(msg) => true,
+            _ => false,
+        })
         .collect()
 }
 
