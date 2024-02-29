@@ -25,7 +25,7 @@ fn join_with_tags(related_docs: Vec<RelatedDoc>) -> String {
 
 pub const AI_HELP_GPT3_5_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
     name: "20230901-full_doc-new_prompt",
-    model: "gpt-3.5-turbo-1106",
+    model: "gpt-3.5-turbo-0125",
     full_doc: true,
     system_prompt: include_str!("prompts/new_prompt/system.md"),
     user_prompt: None,
