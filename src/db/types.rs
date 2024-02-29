@@ -202,13 +202,13 @@ pub enum EngineType {
 pub enum AiHelpMessageStatus {
     Success,
     SearchError,
-    OpenAiApiError,
+    AiApiError,
     CompletionError,
     ModerationError,
     NoUserPromptError,
     TokenLimitError,
-    Stopped,
-    Timeout,
+    UserStopped,
+    UserTimeout,
     #[default]
     Unknown,
 }
@@ -216,9 +216,7 @@ pub enum AiHelpMessageStatus {
 impl From<&AIError> for AiHelpMessageStatus {
     fn from(e: &AIError) -> Self {
         match e {
-            crate::ai::error::AIError::OpenAIError(_) => {
-                db::types::AiHelpMessageStatus::OpenAiApiError
-            }
+            crate::ai::error::AIError::OpenAIError(_) => db::types::AiHelpMessageStatus::AiApiError,
             crate::ai::error::AIError::SqlXError(_) => db::types::AiHelpMessageStatus::SearchError,
             crate::ai::error::AIError::FlaggedError => {
                 db::types::AiHelpMessageStatus::ModerationError

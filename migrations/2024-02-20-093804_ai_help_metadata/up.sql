@@ -1,13 +1,13 @@
 CREATE TYPE ai_help_message_status AS ENUM (
     'success',
     'search_error',
-    'open_ai_api_error',
+    'ai_api_error',
     'completion_error',
     'moderation_error',
     'no_user_prompt_error',
     'token_limit_error',
-    'stopped',
-    'timeout',
+    'user_stopped',
+    'user_timeout',
     'unknown'
 );
 
