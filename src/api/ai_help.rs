@@ -22,9 +22,9 @@ use crate::{
     db::{
         self,
         ai_help::{
-            add_help_history, add_help_history_message, create_or_increment_total,
-            delete_full_help_history, delete_help_history, get_count, help_history,
-            help_history_get_message, list_help_history, update_help_history_label, AI_HELP_LIMIT,
+            add_help_history_message, create_or_increment_total, delete_full_help_history,
+            delete_help_history, get_count, help_history, help_history_get_message,
+            list_help_history, update_help_history_label, AI_HELP_LIMIT,
         },
         model::{AIHelpHistoryMessage, AIHelpHistoryMessageInsert, Settings},
         settings::get_settings,
@@ -207,9 +207,7 @@ fn record_question(
         message_id,
         parent_id,
     } = help_ids;
-    if let Err(err) = add_help_history(&mut conn, user_id, chat_id) {
-        error!("AI Help log: {err}");
-    }
+
     let insert = AIHelpHistoryMessageInsert {
         user_id,
         chat_id,
@@ -245,6 +243,7 @@ fn record_sources(
         message_id,
         parent_id,
     } = help_ids;
+
     let insert = AIHelpHistoryMessageInsert {
         user_id,
         chat_id,

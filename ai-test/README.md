@@ -10,9 +10,10 @@ To understand how this tool works, run: `cargo run -p ai-test -- test --help`
 Usage: ai-test test [OPTIONS]
 
 Options:
-  -p, --path <PATH>  
-  -o, --out <OUT>    
-  -h, --help         Print help
+  -p, --path <PATH>      Path to YAML file with list of lists (initial question + follow-up questions)
+  -o, --out <OUT>        Path to directory to write the test results as `1.json`, `1.md`, etc
+      --no-subscription  Perform test as free Core user without subscription
+  -h, --help             Print help
 ```
 
 For example, to request answers for all questions in the [prompts.yaml](./data/prompts.yaml) file, run (from the repository root):
