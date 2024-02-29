@@ -96,9 +96,11 @@ pub async fn prepare_ai_help_req(
 
     let mut context = vec![];
     let mut refs = vec![];
+    let mut context_len = 0;
     let mut context_token_len = 0;
     for doc in related_docs.into_iter() {
         debug!("url: {}", doc.url);
+        context_len += doc.content.len();
         let bpe = tiktoken_rs::r50k_base().unwrap();
         let tokens = bpe.encode_with_special_tokens(&doc.content).len();
         context_token_len += tokens;
@@ -154,7 +156,7 @@ pub async fn prepare_ai_help_req(
         AIHelpRequest { req, refs },
         AIHelpRequestMeta {
             query_len,
-            context_len: context_token_len,
+            context_len,
             search_duration,
         },
     ))
