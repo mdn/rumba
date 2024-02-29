@@ -115,7 +115,6 @@ pub fn create_or_increment_limit(
 }
 
 pub fn decrement_limit_total(conn: &mut PgConnection, user: &UserQuery) -> Result<(), DbError> {
-    warn!("Reinstating limits");
     if user.is_subscriber() {
         update(limits::table)
             .filter(limits::user_id.eq(&user.id))
