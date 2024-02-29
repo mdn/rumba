@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-
 use async_openai::{config::OpenAIConfig, types::CreateEmbeddingRequestArgs, Client};
+use itertools::Itertools;
 
 use crate::{
     ai::{constants::EMBEDDING_MODEL, error::AIError},
@@ -88,33 +87,32 @@ pub async fn get_related_macro_docs(
         .fetch_all(pool)
         .await?;
 
-    let duplicate_titles =
-        get_duplicate_titles(docs.clone().into_iter().map(|doc| doc.title).collect());
+    let duplicate_titles = get_duplicate_titles(&docs);
 
-    docs = docs
-        .into_iter()
-        .map(|doc| RelatedDoc {
-            title: match (duplicate_titles.contains(&doc.title), &doc.title_parent) {
-                (true, Some(title_parent)) => format!("{} ({})", doc.title, title_parent),
-                _ => doc.title,
-            },
-            ..doc
-        })
-        .collect();
+    docs.iter_mut().for_each(|doc| {
+        if let (true, Some(title_parent)) =
+            (duplicate_titles.contains(&doc.title), &doc.title_parent)
+        {
+            doc.title = format!("{} ({})", doc.title, title_parent);
+        }
+    });
 
     Ok(docs)
 }
 
-fn get_duplicate_titles(titles: Vec<String>) -> Vec<String> {
-    let mut counts: HashMap<String, u8> = HashMap::new();
-    for title in titles.iter() {
-        let count = counts.entry(title.to_string()).or_insert(0);
-        *count += 1;
-    }
-    counts
-        .into_iter()
-        .filter(|(_, count)| count > &1)
-        .map(|(title, _)| title)
+fn get_duplicate_titles<'a>(titles: &'a [RelatedDoc]) -> Vec<String> {
+    titles
+        .iter()
+        .map(|x| &x.title)
+        .sorted()
+        .dedup_by_with_count(|a, b| a == b)
+        .filter_map(|(count, title)| {
+            if count > 1 {
+                Some(title.to_string())
+            } else {
+                None
+            }
+        })
         .collect()
 }
 
