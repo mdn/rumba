@@ -56,7 +56,7 @@ WHERE LENGTH(doc.markdown) >= $4
 ORDER BY doc.embedding <=> $1
 LIMIT $3;";
 
-#[derive(sqlx::FromRow, Clone, Debug)]
+#[derive(sqlx::FromRow, Debug)]
 pub struct RelatedDoc {
     pub url: String,
     pub title: String,
