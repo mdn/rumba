@@ -87,18 +87,21 @@ mod test {
             RelatedDoc {
                 url: "".into(),
                 title: "".into(),
+                title_parent: None,
                 content: "content1".into(),
                 similarity: 0f64,
             },
             RelatedDoc {
                 url: "".into(),
                 title: "".into(),
+                title_parent: None,
                 content: "content2".into(),
                 similarity: 0f64,
             },
             RelatedDoc {
                 url: "".into(),
                 title: "".into(),
+                title_parent: None,
                 content: "content3".into(),
                 similarity: 0f64,
             },
