@@ -115,20 +115,13 @@ pub fn create_or_increment_limit(
 }
 
 pub fn decrement_limit_total(conn: &mut PgConnection, user: &UserQuery) -> Result<(), DbError> {
-    if user.is_subscriber() {
-        update(limits::table)
-            .filter(limits::user_id.eq(&user.id))
-            .set(limits::total_questions.eq(limits::total_questions - 1))
-            .execute(conn)?;
-    } else {
-        update(limits::table)
-            .filter(limits::user_id.eq(&user.id))
-            .set((
-                (limits::total_questions.eq(limits::total_questions - 1)),
-                (limits::session_questions.eq(limits::session_questions - 1)),
-            ))
-            .execute(conn)?;
-    }
+    update(limits::table)
+        .filter(limits::user_id.eq(&user.id))
+        .set((
+            (limits::total_questions.eq(limits::total_questions - 1)),
+            (limits::session_questions.eq(limits::session_questions - 1)),
+        ))
+        .execute(conn)?;
     Ok(())
 }
 
