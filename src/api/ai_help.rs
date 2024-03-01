@@ -22,9 +22,9 @@ use crate::{
     db::{
         self,
         ai_help::{
-            add_help_history_message, create_or_increment_total, delete_full_help_history,
-            delete_help_history, get_count, help_history, help_history_get_message,
-            list_help_history, update_help_history_label, AI_HELP_LIMIT,
+            add_help_history_message, create_or_increment_total, decrement_limit,
+            delete_full_help_history, delete_help_history, get_count, help_history,
+            help_history_get_message, list_help_history, update_help_history_label, AI_HELP_LIMIT,
         },
         model::{AIHelpHistoryMessage, AIHelpHistoryMessageInsert, Settings},
         settings::get_settings,
@@ -397,7 +397,22 @@ pub async fn ai_help(
             )?;
         }
 
-        match prepare_ai_help_req(client, pool, user.is_subscriber(), messages).await? {
+        let prepare_res = prepare_ai_help_req(client, pool, user.is_subscriber(), messages).await;
+        // Reinstate the user quota if we fail to do the preparation step.
+        // Flagged/moderation errors DO count towards the limit, otherwise
+        // it is on us.
+        match prepare_res {
+            Err(crate::ai::error::AIError::OpenAIError(_))
+            | Err(crate::ai::error::AIError::TiktokenError(_))
+            | Err(crate::ai::error::AIError::TokenLimit)
+            | Err(crate::ai::error::AIError::SqlXError(_))
+            | Err(crate::ai::error::AIError::NoUserPrompt) => {
+                let _ = decrement_limit(&mut conn, &user);
+            }
+            _ => (),
+        }
+
+        match prepare_res? {
             Some(ai_help_req) => {
                 let sources = ai_help_req.refs;
                 let created_at = match record_sources(
@@ -428,9 +443,16 @@ pub async fn ai_help(
                 )?;
                 let stream = client.chat().create_stream(ai_help_req.req).await.unwrap();
                 let refs = stream::once(async move {
-                    Ok(sse::Event::Data(
-                        sse::Data::new_json(ai_help_meta).map_err(OpenAIError::JSONDeserialize)?,
-                    ))
+                    let sse_data =
+                        sse::Data::new_json(ai_help_meta).map_err(OpenAIError::JSONDeserialize);
+                    match sse_data {
+                        Ok(sse_data) => Ok(sse::Event::Data(sse_data)),
+                        Err(err) => {
+                            // reinstate the user quota and pass on the error
+                            let _ = decrement_limit(&mut conn, &user);
+                            Err(err)
+                        }
+                    }
                 });
 
                 Ok(Either::Left(sse::Sse::from_stream(refs.chain(
