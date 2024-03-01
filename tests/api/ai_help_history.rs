@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use crate::helpers::app::{drop_stubr, test_app_with_login};
 use crate::helpers::db::{get_pool, reset};
 use crate::helpers::http_client::TestHttpClient;
@@ -7,7 +5,7 @@ use actix_web::test;
 use anyhow::Error;
 use async_openai::types::ChatCompletionRequestMessage;
 use async_openai::types::Role::{Assistant, User};
-use chrono::{Months, Utc};
+use chrono::Utc;
 use diesel::dsl::count;
 use diesel::prelude::*;
 use diesel::{insert_into, ExpressionMethods, RunQueryDsl};
@@ -18,6 +16,8 @@ use rumba::db::schema::ai_help_history;
 use rumba::db::settings::create_or_update_settings;
 use rumba::settings::SETTINGS;
 use serde_json::Value::Null;
+use std::ops::Sub;
+use std::time::Duration;
 use uuid::Uuid;
 
 const CHAT_ID: Uuid = Uuid::nil();
@@ -112,10 +112,15 @@ async fn test_history_deletion() -> Result<(), Error> {
     let mut _logged_in_client = TestHttpClient::new(&service).await;
     let mut conn = pool.get()?;
 
-    // Add an old chat history entry.
+    let history_deletion_period_in_sec = &SETTINGS
+        .ai
+        .as_ref()
+        .map(|ai| ai.history_deletion_period_in_sec)
+        .expect("ai.history_deletion_period_in_sec missing");
+
+    // Add an old chat history entry, double our configured period ago.
     let ts = Utc::now()
-        .checked_sub_months(Months::new(7))
-        .unwrap()
+        .sub(Duration::from_secs(history_deletion_period_in_sec * 2))
         .naive_utc();
     let history = AIHelpHistoryInsert {
         user_id: 1,
@@ -128,17 +133,17 @@ async fn test_history_deletion() -> Result<(), Error> {
         .values(history)
         .execute(&mut conn)?;
 
-    // Add a newer chat history entry.
+    // Add a newer chat history entry, half of our configured period ago.
     let ts = Utc::now()
-        .checked_sub_months(Months::new(2))
-        .unwrap()
+        // .checked_sub_months(Months::new(2))
+        .sub(Duration::from_secs(history_deletion_period_in_sec / 2))
         .naive_utc();
     let history = AIHelpHistoryInsert {
         user_id: 1,
         chat_id: Uuid::from_u128(2),
         created_at: Some(ts),
         updated_at: Some(ts),
-        label: "old entry".to_string(),
+        label: "new entry".to_string(),
     };
     insert_into(ai_help_history::table)
         .values(history)
