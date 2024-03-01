@@ -24,8 +24,9 @@ use crate::{
         self,
         ai_help::{
             add_help_history_message, add_help_message_meta, create_or_increment_total,
-            delete_full_help_history, delete_help_history, get_count, help_history,
-            help_history_get_message, list_help_history, update_help_history_label, AI_HELP_LIMIT,
+            decrement_limit, delete_full_help_history, delete_help_history, get_count,
+            help_history, help_history_get_message, list_help_history, update_help_history_label,
+            AI_HELP_LIMIT,
         },
         model::{
             AIHelpHistoryMessage, AIHelpHistoryMessageInsert, AiHelpMessageMetaInsert, Settings,
@@ -370,7 +371,22 @@ pub async fn ai_help(
             )?;
         }
 
-        match prepare_ai_help_req(client, pool, user.is_subscriber(), messages).await {
+        let prepare_res = prepare_ai_help_req(client, pool, user.is_subscriber(), messages).await;
+        // Reinstate the user quota if we fail to do the preparation step.
+        // Flagged/moderation errors DO count towards the limit, otherwise
+        // it is on us.
+        match prepare_res {
+            Err(crate::ai::error::AIError::OpenAIError(_))
+            | Err(crate::ai::error::AIError::TiktokenError(_))
+            | Err(crate::ai::error::AIError::TokenLimit)
+            | Err(crate::ai::error::AIError::SqlXError(_))
+            | Err(crate::ai::error::AIError::NoUserPrompt) => {
+                let _ = decrement_limit(&mut conn, &user);
+            }
+            _ => (),
+        }
+
+        match prepare_res {
             Ok((ai_help_req, ai_help_req_meta)) => {
                 let sources = ai_help_req.refs;
                 let model = ai_help_req.req.model.clone();
@@ -431,7 +447,11 @@ pub async fn ai_help(
                                             sse::Data::new_json(res).unwrap(),
                                         )))
                                     }
-                                    Some(Err(e)) => Some(Err(e)),
+                                    Some(Err(e)) => {
+                                        // reinstate the user quota and pass on the error
+                                        let _ = decrement_limit(&mut conn, &user);
+                                        Some(Err(e))
+                                    }
                                     None => {
                                         // This is the added artificial chunk.
                                         let response_duration = start.elapsed();
