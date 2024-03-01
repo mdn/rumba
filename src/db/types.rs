@@ -1,4 +1,5 @@
 #![allow(non_camel_case_types)]
+use async_openai::error::OpenAIError;
 use serde::{Deserialize, Serialize};
 
 use crate::{ai::error::AIError, db};
@@ -228,5 +229,11 @@ impl From<&AIError> for AiHelpMessageStatus {
                 db::types::AiHelpMessageStatus::TokenLimitError
             }
         }
+    }
+}
+
+impl From<&OpenAIError> for AiHelpMessageStatus {
+    fn from(_: &OpenAIError) -> Self {
+        db::types::AiHelpMessageStatus::AiApiError
     }
 }

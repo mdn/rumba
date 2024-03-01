@@ -450,6 +450,34 @@ pub async fn ai_help(
                                     Some(Err(e)) => {
                                         // reinstate the user quota and pass on the error
                                         let _ = decrement_limit(&mut conn, &user);
+                                        let response_duration = start.elapsed();
+                                        let ai_help_message_meta = AiHelpMessageMetaInsert {
+                                            user_id: user.id,
+                                            chat_id,
+                                            message_id,
+                                            parent_id,
+                                            created_at: Some(created_at.naive_utc()),
+                                            search_duration: i64::try_from(
+                                                ai_help_req_meta.search_duration.as_millis(),
+                                            )
+                                            .unwrap_or(-1),
+                                            response_duration: i64::try_from(
+                                                response_duration.as_millis(),
+                                            )
+                                            .unwrap_or(-1),
+                                            query_len: i64::try_from(ai_help_req_meta.query_len)
+                                                .unwrap_or(-1),
+                                            context_len: i64::try_from(
+                                                ai_help_req_meta.context_len,
+                                            )
+                                            .unwrap_or(-1),
+                                            response_len: i64::try_from(*response_len)
+                                                .unwrap_or(-1),
+                                            model: &model,
+                                            status: (&e).into(),
+                                            sources: Some(&sources_value),
+                                        };
+                                        add_help_message_meta(&mut conn, ai_help_message_meta);
                                         Some(Err(e))
                                     }
                                     None => {
