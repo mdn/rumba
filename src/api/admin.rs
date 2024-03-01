@@ -1,3 +1,4 @@
+use crate::db::v2::ai_history::delete_old_ai_history;
 use crate::db::v2::synchronize_bcd_updates_db::update_bcd;
 use crate::settings::SETTINGS;
 use actix_web::dev::{HttpServiceFactory, ServiceRequest};
@@ -22,4 +23,5 @@ pub fn admin_service() -> impl HttpServiceFactory {
     web::scope("/admin-api")
         .wrap(HttpAuthentication::bearer(validator))
         .service(web::resource("/v2/updates/").route(web::post().to(update_bcd)))
+        .service(web::resource("/v2/ai-history/").route(web::post().to(delete_old_ai_history)))
 }

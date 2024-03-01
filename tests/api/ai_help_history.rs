@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use crate::helpers::app::{drop_stubr, test_app_with_login};
 use crate::helpers::db::{get_pool, reset};
 use crate::helpers::http_client::TestHttpClient;
@@ -5,10 +7,16 @@ use actix_web::test;
 use anyhow::Error;
 use async_openai::types::ChatCompletionRequestMessage;
 use async_openai::types::Role::{Assistant, User};
+use chrono::{Months, Utc};
+use diesel::dsl::count;
+use diesel::prelude::*;
+use diesel::{insert_into, ExpressionMethods, RunQueryDsl};
 use rumba::ai::help::RefDoc;
 use rumba::db::ai_help::{add_help_history, add_help_history_message};
-use rumba::db::model::{AIHelpHistoryMessageInsert, SettingsInsert};
+use rumba::db::model::{AIHelpHistoryInsert, AIHelpHistoryMessageInsert, SettingsInsert};
+use rumba::db::schema::ai_help_history;
 use rumba::db::settings::create_or_update_settings;
+use rumba::settings::SETTINGS;
 use serde_json::Value::Null;
 use uuid::Uuid;
 
@@ -91,6 +99,82 @@ async fn test_history() -> Result<(), Error> {
             test::read_body(history).await.as_ref()
         ))
     );
+    drop_stubr(stubr).await;
+    Ok(())
+}
+
+#[actix_rt::test]
+#[stubr::mock(port = 4321)]
+async fn test_history_deletion() -> Result<(), Error> {
+    let pool = reset()?;
+    let app = test_app_with_login(&pool).await.unwrap();
+    let service = test::init_service(app).await;
+    let mut _logged_in_client = TestHttpClient::new(&service).await;
+    let mut conn = pool.get()?;
+
+    // Add an old chat history entry.
+    let ts = Utc::now()
+        .checked_sub_months(Months::new(7))
+        .unwrap()
+        .naive_utc();
+    let history = AIHelpHistoryInsert {
+        user_id: 1,
+        chat_id: Uuid::from_u128(1),
+        created_at: Some(ts),
+        updated_at: Some(ts),
+        label: "old entry".to_string(),
+    };
+    insert_into(ai_help_history::table)
+        .values(history)
+        .execute(&mut conn)?;
+
+    // Add a newer chat history entry.
+    let ts = Utc::now()
+        .checked_sub_months(Months::new(2))
+        .unwrap()
+        .naive_utc();
+    let history = AIHelpHistoryInsert {
+        user_id: 1,
+        chat_id: Uuid::from_u128(2),
+        created_at: Some(ts),
+        updated_at: Some(ts),
+        label: "old entry".to_string(),
+    };
+    insert_into(ai_help_history::table)
+        .values(history)
+        .execute(&mut conn)?;
+
+    // check the history count before we run the delete job
+    let rec_count = ai_help_history::table
+        .filter(ai_help_history::user_id.eq(1))
+        .select(count(ai_help_history::user_id))
+        .first::<i64>(&mut conn)?;
+
+    assert_eq!(2, rec_count);
+
+    // Now, run the delete job.
+    let req = test::TestRequest::post()
+        .uri("/admin-api/v2/ai-history/")
+        .insert_header((
+            "Authorization",
+            format!("Bearer {}", SETTINGS.auth.admin_update_bearer_token),
+        ))
+        .to_request();
+
+    let res = test::call_service(&service, req).await;
+    assert!(res.response().status().is_success());
+
+    // Wait, the process runs asynchronous.
+    actix_rt::time::sleep(Duration::from_millis(100)).await;
+
+    // Check database that the old entry is gone.
+    let rec_count = ai_help_history::table
+        .filter(ai_help_history::user_id.eq(1))
+        .select(count(ai_help_history::user_id))
+        .first::<i64>(&mut conn)?;
+
+    assert_eq!(1, rec_count);
+
     drop_stubr(stubr).await;
     Ok(())
 }
