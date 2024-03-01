@@ -372,19 +372,6 @@ pub async fn ai_help(
         }
 
         let prepare_res = prepare_ai_help_req(client, pool, user.is_subscriber(), messages).await;
-        // Reinstate the user quota if we fail to do the preparation step.
-        // Flagged/moderation errors DO count towards the limit, otherwise
-        // it is on us.
-        match prepare_res {
-            Err(crate::ai::error::AIError::OpenAIError(_))
-            | Err(crate::ai::error::AIError::TiktokenError(_))
-            | Err(crate::ai::error::AIError::TokenLimit)
-            | Err(crate::ai::error::AIError::SqlXError(_))
-            | Err(crate::ai::error::AIError::NoUserPrompt) => {
-                let _ = decrement_limit(&mut conn, &user);
-            }
-            _ => (),
-        }
 
         match prepare_res {
             Ok((ai_help_req, ai_help_req_meta)) => {
@@ -527,6 +514,21 @@ pub async fn ai_help(
                     ..Default::default()
                 };
                 add_help_message_meta(&mut conn, ai_help_message_meta);
+
+                // Reinstate the user quota if we fail to do the preparation step.
+                // Flagged/moderation errors DO count towards the limit, otherwise
+                // it is on us.
+                match e {
+                    crate::ai::error::AIError::OpenAIError(_)
+                    | crate::ai::error::AIError::TiktokenError(_)
+                    | crate::ai::error::AIError::TokenLimit
+                    | crate::ai::error::AIError::SqlXError(_)
+                    | crate::ai::error::AIError::NoUserPrompt => {
+                        let _ = decrement_limit(&mut conn, &user);
+                    }
+                    _ => (),
+                }
+
                 Err(e.into())
             }
         }
