@@ -22,7 +22,7 @@ use crate::{
     db::{
         self,
         ai_help::{
-            add_help_history_message, create_or_increment_total, decrement_limit_total,
+            add_help_history_message, create_or_increment_total, decrement_limit,
             delete_full_help_history, delete_help_history, get_count, help_history,
             help_history_get_message, list_help_history, update_help_history_label, AI_HELP_LIMIT,
         },
@@ -407,7 +407,7 @@ pub async fn ai_help(
             | Err(crate::ai::error::AIError::TokenLimit)
             | Err(crate::ai::error::AIError::SqlXError(_))
             | Err(crate::ai::error::AIError::NoUserPrompt) => {
-                let _ = decrement_limit_total(&mut conn, &user);
+                let _ = decrement_limit(&mut conn, &user);
             }
             _ => (),
         }
@@ -449,7 +449,7 @@ pub async fn ai_help(
                         Ok(sse_data) => Ok(sse::Event::Data(sse_data)),
                         Err(err) => {
                             // reinstate the user quota and pass on the error
-                            let _ = decrement_limit_total(&mut conn, &user);
+                            let _ = decrement_limit(&mut conn, &user);
                             Err(err)
                         }
                     }

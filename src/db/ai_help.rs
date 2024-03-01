@@ -114,7 +114,7 @@ pub fn create_or_increment_limit(
     }
 }
 
-pub fn decrement_limit_total(conn: &mut PgConnection, user: &UserQuery) -> Result<(), DbError> {
+pub fn decrement_limit(conn: &mut PgConnection, user: &UserQuery) -> Result<(), DbError> {
     update(limits::table)
         .filter(limits::user_id.eq(&user.id))
         .set((
