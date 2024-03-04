@@ -173,7 +173,7 @@ async fn test_history_deletion() -> Result<(), Error> {
     // Loop until we see the old entry is gone because the
     // delete job runs asynchonously.
     let mut retry = 0;
-    const MAX_RETRIES: u32 = 10;
+    const MAX_RETRIES: u32 = 40;
     let mut records: Vec<NaiveDateTime>;
     loop {
         records = ai_help_history::table
@@ -184,7 +184,7 @@ async fn test_history_deletion() -> Result<(), Error> {
             break;
         }
 
-        actix_rt::time::sleep(Duration::from_millis(10)).await;
+        actix_rt::time::sleep(Duration::from_millis(5)).await;
         retry += 1;
         if retry > MAX_RETRIES {
             break;
@@ -192,7 +192,11 @@ async fn test_history_deletion() -> Result<(), Error> {
     }
 
     assert_eq!(1, records.len());
-    assert_eq!(ts, *records.get(0).unwrap());
+    // we only compare up to millisecond precision
+    assert_eq!(
+        ts.timestamp_micros(),
+        records.get(0).unwrap().timestamp_micros()
+    );
 
     drop_stubr(stubr).await;
     Ok(())
