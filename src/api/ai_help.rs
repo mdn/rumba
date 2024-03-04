@@ -295,30 +295,28 @@ fn log_errors_and_record_response(
             error!("AI Help log: OpenAI stream ended without a finish_reason");
         }
 
-        if history_enabled {
-            let HelpIds {
-                chat_id,
-                message_id,
-                parent_id,
-            } = help_ids;
-            let response = ChatCompletionRequestMessage {
-                role: Assistant,
-                content: Some(answer.join("")),
-                ..Default::default()
-            };
-            let insert = AIHelpHistoryMessageInsert {
-                user_id,
-                chat_id,
-                message_id,
-                parent_id,
-                created_at: None,
-                sources: None,
-                request: None,
-                response: Some(serde_json::to_value(response).unwrap_or(Null)),
-            };
-            if let Err(err) = add_help_history_message(&mut conn, insert) {
-                error!("AI Help log: {err}");
-            }
+        let HelpIds {
+            chat_id,
+            message_id,
+            parent_id,
+        } = help_ids;
+        let response = ChatCompletionRequestMessage {
+            role: Assistant,
+            content: Some(answer.join("")),
+            ..Default::default()
+        };
+        let insert = AIHelpHistoryMessageInsert {
+            user_id,
+            chat_id,
+            message_id,
+            parent_id,
+            created_at: None,
+            sources: None,
+            request: None,
+            response: Some(serde_json::to_value(response).unwrap_or(Null)),
+        };
+        if let Err(err) = add_help_history_message(&mut conn, insert) {
+            error!("AI Help log: {err}");
         }
     });
     Ok(Some(tx))
