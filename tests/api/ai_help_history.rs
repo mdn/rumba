@@ -5,7 +5,7 @@ use actix_web::test;
 use anyhow::Error;
 use async_openai::types::ChatCompletionRequestMessage;
 use async_openai::types::Role::{Assistant, User};
-use chrono::Utc;
+use chrono::{NaiveDateTime, Utc};
 use diesel::dsl::count;
 use diesel::prelude::*;
 use diesel::{insert_into, ExpressionMethods, RunQueryDsl};
@@ -169,16 +169,30 @@ async fn test_history_deletion() -> Result<(), Error> {
     let res = test::call_service(&service, req).await;
     assert!(res.response().status().is_success());
 
-    // Wait, the process runs asynchronous.
-    actix_rt::time::sleep(Duration::from_millis(100)).await;
-
     // Check database that the old entry is gone.
-    let rec_count = ai_help_history::table
-        .filter(ai_help_history::user_id.eq(1))
-        .select(count(ai_help_history::user_id))
-        .first::<i64>(&mut conn)?;
+    // Loop until we see the old entry is gone because the
+    // delete job runs asynchonously.
+    let mut retry = 0;
+    const MAX_RETRIES: u32 = 10;
+    let mut records: Vec<NaiveDateTime>;
+    loop {
+        records = ai_help_history::table
+            .filter(ai_help_history::user_id.eq(1))
+            .select(ai_help_history::updated_at)
+            .get_results(&mut conn)?;
+        if records.len() == 1 {
+            break;
+        }
 
-    assert_eq!(1, rec_count);
+        actix_rt::time::sleep(Duration::from_millis(10)).await;
+        retry += 1;
+        if retry > MAX_RETRIES {
+            break;
+        }
+    }
+
+    assert_eq!(1, records.len());
+    assert_eq!(ts, *records.get(0).unwrap());
 
     drop_stubr(stubr).await;
     Ok(())

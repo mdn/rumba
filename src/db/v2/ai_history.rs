@@ -41,8 +41,6 @@ async fn do_delete_old_ai_history(pool: Data<Pool>) -> Result<(), ApiError> {
         ai_help_history::table.filter(ai_help_history::updated_at.lt(oldest_timestamp)),
     )
     .execute(&mut conn)?;
-
-    info!("Deleted old history: {affected_rows} old ai history record(s) removed.");
-
+    info!("Deleted old AI history: {affected_rows} old record(s) deleted.");
     Ok(())
 }
