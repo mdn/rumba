@@ -159,7 +159,7 @@ async fn test_history_deletion() -> Result<(), Error> {
 
     // Now, run the delete job.
     let req = test::TestRequest::post()
-        .uri("/admin-api/v2/ai-history/")
+        .uri("/admin-api/ai-history/")
         .insert_header((
             "Authorization",
             format!("Bearer {}", SETTINGS.auth.admin_update_bearer_token),
