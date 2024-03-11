@@ -7,7 +7,10 @@ use actix_web_lab::{__reexports::tokio::sync::mpsc, sse};
 use async_openai::{
     config::OpenAIConfig,
     error::OpenAIError,
-    types::{ChatCompletionRequestMessage, CreateChatCompletionStreamResponse, Role::Assistant},
+    types::{
+        ChatCompletionRequestMessage, CreateChatCompletionStreamResponse,
+        Role::{self, Assistant},
+    },
     Client,
 };
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
@@ -30,6 +33,7 @@ use crate::{
         settings::get_settings,
         SupaPool,
     },
+    settings::SETTINGS,
 };
 use crate::{
     api::error::ApiError,
@@ -414,6 +418,8 @@ pub async fn ai_help(
 
         match prepare_res? {
             Some(ai_help_req) => {
+                qa_check_for_error_trigger(&ai_help_req.req.messages)?;
+
                 let sources = ai_help_req.refs;
                 let created_at = match record_sources(
                     &diesel_pool,
@@ -595,4 +601,27 @@ pub async fn ai_help_delete_full_history(
     let user = get_user(&mut conn, user_id.id().unwrap())?;
     delete_full_help_history(&mut conn, &user)?;
     Ok(HttpResponse::Created().finish())
+}
+
+// This function is for QA purposes only, it enables QA to trigger
+// an error based on the input message. The message can be optionally
+// set in the settings `ai.trigger_error_for_chat_term`. Nothing
+// will be triggered if the setting is missing, which should be the
+// situation in production-like environments.
+fn qa_check_for_error_trigger(
+    messages: &[ChatCompletionRequestMessage],
+) -> Result<(), crate::api::error::ApiError> {
+    if let Some(ref ai) = SETTINGS.ai {
+        if let Some(ref magic_words) = ai.trigger_error_for_chat_term {
+            let last_user_message = messages.iter().filter(|m| m.role == Role::User).last();
+            if let Some(msg) = last_user_message {
+                if let Some(ref msg_text) = msg.content {
+                    if msg_text == magic_words {
+                        return Err(crate::api::error::ApiError::Artificial);
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
 }

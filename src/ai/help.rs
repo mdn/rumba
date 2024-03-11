@@ -18,6 +18,7 @@ use crate::{
         helpers::{cap_messages, into_user_messages, sanitize_messages},
     },
     db::SupaPool,
+    settings::SETTINGS,
 };
 
 #[derive(Eq, Hash, PartialEq, Serialize, Deserialize, Debug, Clone)]
@@ -43,6 +44,10 @@ pub async fn prepare_ai_help_req(
     } else {
         AI_HELP_GPT3_5_FULL_DOC_NEW_PROMPT
     };
+
+    // // check for secret error trigger in the last message
+    // // just for QA purposes
+    qa_check_for_error_trigger(&messages)?;
 
     let open_ai_messages = sanitize_messages(messages);
 
@@ -164,4 +169,34 @@ pub fn prepare_ai_help_summary_req(
         .build()?;
 
     Ok(req)
+}
+
+// This function is for QA purposes only, it enables QA to trigger
+// an error based on the input message. The message can be optionally
+// set in the settings `ai.trigger_error_for_search_term`. Nothing
+// will be triggered if the setting is missing, which should be the
+// situation in production-like environments.
+fn qa_check_for_error_trigger(
+    messages: &[ChatCompletionRequestMessage],
+) -> Result<(), async_openai::error::OpenAIError> {
+    if let Some(ref ai) = SETTINGS.ai {
+        if let Some(ref magic_words) = ai.trigger_error_for_search_term {
+            let last_user_message = messages.iter().filter(|m| m.role == Role::User).last();
+            if let Some(msg) = last_user_message {
+                if let Some(ref msg_text) = msg.content {
+                    if msg_text == magic_words {
+                        return Err(async_openai::error::OpenAIError::ApiError(
+                            async_openai::error::ApiError {
+                                message: "Artificial QA error in search phase".to_string(),
+                                r#type: None,
+                                param: None,
+                                code: None,
+                            },
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
 }
