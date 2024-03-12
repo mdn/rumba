@@ -603,7 +603,7 @@ pub async fn ai_help_delete_full_history(
     Ok(HttpResponse::Created().finish())
 }
 
-// This function is for QA purposes only, it enables QA to trigger
+// This function is for QA purposes only, it triggering
 // an error based on the input message. The message can be optionally
 // set in the settings `ai.trigger_error_for_chat_term`. Nothing
 // will be triggered if the setting is missing, which should be the

@@ -171,7 +171,7 @@ pub fn prepare_ai_help_summary_req(
     Ok(req)
 }
 
-// This function is for QA purposes only, it enables QA to trigger
+// This function is for QA purposes only, it enables triggering
 // an error based on the input message. The message can be optionally
 // set in the settings `ai.trigger_error_for_search_term`. Nothing
 // will be triggered if the setting is missing, which should be the
