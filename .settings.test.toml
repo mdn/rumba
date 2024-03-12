@@ -52,5 +52,5 @@ flag_repo = "flags"
 limit_reset_duration_in_sec = 5
 api_key = ""
 explain_sign_key = "kmMAMku9PB/fTtaoLg82KjTvShg8CSZCBUNuJhUz5Pg="
-trigger_error_for_search_term = "Please give me an error in the search phase of AI conversation"
+trigger_error_for_search_term = "Please give me an error in the search phase of the AI conversation"
 trigger_error_for_chat_term = "Please give me an error in the chat phase of the AI conversation"
