@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.8.0](https://github.com/mdn/rumba/compare/v1.7.0...v1.8.0) (2024-03-04)
+
+
+### Features
+
+* **ai-help:** add parent short_title for duplicate source titles ([#428](https://github.com/mdn/rumba/issues/428)) ([f523d52](https://github.com/mdn/rumba/commit/f523d5273390f2465b396db1a969bb5baa18e78b))
+* **ai-help:** bump GPT-3.5 Turbo model ([#429](https://github.com/mdn/rumba/issues/429)) ([688e35d](https://github.com/mdn/rumba/commit/688e35d8669ea3caa011c3847fb501fc338223c2))
+* **ai-test:** add --no-subscription flag ([#413](https://github.com/mdn/rumba/issues/413)) ([e6874e6](https://github.com/mdn/rumba/commit/e6874e602d488df67d74c44591b42b0e5b486f8c))
+* **plus:** user subscription transitions ([#415](https://github.com/mdn/rumba/issues/415)) ([604b0e7](https://github.com/mdn/rumba/commit/604b0e7e4672e49a3501987aa5faef6ef07686a2))
+* **plus:** user subscription transitions ([#421](https://github.com/mdn/rumba/issues/421)) ([5a307ca](https://github.com/mdn/rumba/commit/5a307cac964a693657f40b9d59f02fc837ed4b88))
+
+
+### Bug Fixes
+
+* **ai-help:** reset user quota on openai api error ([#430](https://github.com/mdn/rumba/issues/430)) ([cd6fdf8](https://github.com/mdn/rumba/commit/cd6fdf8e34b7bc17379e03efa922b99b54f8091d))
+* **ai:** history fix ([#423](https://github.com/mdn/rumba/issues/423)) ([83f95a5](https://github.com/mdn/rumba/commit/83f95a51dd4f799777291b88044f268a5d5c24f7))
+* **plus:** user subscription transitions ([#417](https://github.com/mdn/rumba/issues/417)) ([47b5a0b](https://github.com/mdn/rumba/commit/47b5a0b1d3d3bb8ed3267ccc4e9546c090fab33a))
+* **tests:** add 10ms delay after we are done with stubr ([#408](https://github.com/mdn/rumba/issues/408)) ([18d8fda](https://github.com/mdn/rumba/commit/18d8fda52e2c419b9aeda7b3546704208d761f1f))
+
+
+### Enhancements
+
+* **ai-help:** format answers to off-topic questions ([#427](https://github.com/mdn/rumba/issues/427)) ([a545d66](https://github.com/mdn/rumba/commit/a545d66e1d91c9d0d76d89f85e459cc1fa34f5eb))
+
+
+### Miscellaneous
+
+* **deps:** update minor depedency versions ([#418](https://github.com/mdn/rumba/issues/418)) ([8994fc5](https://github.com/mdn/rumba/commit/8994fc5d5ed88ef425da0e1b9e9fb73486e7e886))
+* **deps:** update non-breaking major deps ([#419](https://github.com/mdn/rumba/issues/419)) ([cda0c26](https://github.com/mdn/rumba/commit/cda0c26a7d79a9b0f13b628f296c4a907d4f1605))
+* **workflows:** cache build artifacts ([#420](https://github.com/mdn/rumba/issues/420)) ([d32d6cf](https://github.com/mdn/rumba/commit/d32d6cf9f5d8349e650eef344a2494a3f3c9786e))
+
 ## [1.7.0](https://github.com/mdn/rumba/compare/v1.6.1...v1.7.0) (2024-01-31)
 
 
