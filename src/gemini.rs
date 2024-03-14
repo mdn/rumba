@@ -1,9 +1,15 @@
 // Inspired by async-openai.
 
-use async_openai::types::{ChatCompletionRequestMessage, CreateChatCompletionRequest};
+use async_openai::types::{
+    ChatCompletionRequestMessage, ChatCompletionResponseStreamMessage,
+    ChatCompletionStreamResponseDelta, CreateChatCompletionRequest,
+    CreateChatCompletionStreamResponse,
+};
+
 use futures::Stream;
+use itertools::Itertools;
 use reqwest::Client;
-use reqwest_streams::*;
+use reqwest_streams::{error::StreamBodyError, *};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::{collections::HashMap, pin::Pin};
@@ -13,7 +19,7 @@ pub struct GeminiClient<C: Config> {
 }
 
 pub type GenerateContentResponseStream =
-    Pin<Box<dyn Stream<Item = Result<GenerateContentResponse, error::StreamBodyError>> + Send>>;
+    Pin<Box<dyn Stream<Item = Result<GenerateContentResponse, StreamBodyError>> + Send>>;
 
 impl<C: Config> GeminiClient<C> {
     pub fn with_config(config: C) -> Self {
@@ -107,7 +113,7 @@ pub struct RequestContent {
     pub parts: Vec<Part>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub enum Part {
     Text(String),
@@ -165,56 +171,69 @@ impl From<CreateChatCompletionRequest> for GenerateContentRequest {
 impl From<ChatCompletionRequestMessage> for RequestContent {
     fn from(value: ChatCompletionRequestMessage) -> Self {
         RequestContent {
-            role: Some(
-                match value.role {
-                    async_openai::types::Role::System => "system",
-                    async_openai::types::Role::User => "user",
-                    async_openai::types::Role::Assistant => "assistant",
-                    async_openai::types::Role::Function => "function",
-                }
-                .to_string(),
-            ),
+            role: Some(from_openai_role(value.role)),
             parts: value.content.map_or(vec![], |text| vec![Part::Text(text)]),
         }
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+fn from_openai_role(role: async_openai::types::Role) -> String {
+    match role {
+        async_openai::types::Role::System => "system",
+        async_openai::types::Role::User => "user",
+        async_openai::types::Role::Assistant => "assistant",
+        async_openai::types::Role::Function => "function",
+    }
+    .to_string()
+}
+fn to_openai_role(role: String) -> Option<async_openai::types::Role> {
+    match role.as_str() {
+        "system" => Some(async_openai::types::Role::System),
+        "user" => Some(async_openai::types::Role::User),
+        "assistant" => Some(async_openai::types::Role::Assistant),
+        "function" => Some(async_openai::types::Role::Function),
+        _ => None,
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(untagged)]
 pub enum GenerateContentResponse {
     Chunk(GenerateContentResponseChunk),
     Error(GenerateContentResponseError),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct GenerateContentResponseChunk {
     pub candidates: Vec<Candidate>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub usage_metadata: Option<UsageMetadata>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Candidate {
     pub content: Option<CandidateContent>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub citation_metadata: Option<CitationMetadata>,
     pub safety_ratings: Option<Vec<SafetyRating>>,
     pub finish_reason: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CandidateContent {
     pub role: String,
     pub parts: Vec<Part>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SafetyRating {
     pub category: String,
     pub probability: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Citation {
     end_index: u32,
@@ -223,13 +242,13 @@ pub struct Citation {
     uri: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CitationMetadata {
     pub citation_sources: Vec<Citation>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct UsageMetadata {
     candidates_token_count: Option<i32>,
@@ -237,16 +256,58 @@ pub struct UsageMetadata {
     total_token_count: i32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct GenerateContentResponseError {
     pub error: GenerateContentResponseErrorDetails,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct GenerateContentResponseErrorDetails {
     pub code: i32,
     pub message: String,
     pub status: String,
+}
+
+impl From<GenerateContentResponse> for CreateChatCompletionStreamResponse {
+    fn from(value: GenerateContentResponse) -> Self {
+        CreateChatCompletionStreamResponse {
+            id: uuid::Uuid::new_v4().to_string(),
+            object: "chat.completion.chunk".to_string(),
+            created: chrono::Utc::now().timestamp() as u32,
+            model: "gemini".to_string(),
+            choices: match value.clone() {
+                GenerateContentResponse::Chunk(chunk) => chunk
+                    .candidates
+                    .into_iter()
+                    .filter_map(|candidate| match candidate.content {
+                        Some(content) => {
+                            let msg = ChatCompletionResponseStreamMessage {
+                                index: 0, // todo
+                                delta: ChatCompletionStreamResponseDelta {
+                                    role: to_openai_role(content.role),
+                                    content: Some(
+                                        content
+                                            .parts
+                                            .into_iter()
+                                            .filter_map(|p| match p {
+                                                Part::Text(text) => Some(text),
+                                                _ => None,
+                                            })
+                                            .join(""),
+                                    ),
+                                    function_call: None,
+                                },
+                                finish_reason: None,
+                            };
+                            Some(msg)
+                        }
+                        None => None,
+                    })
+                    .collect(),
+                GenerateContentResponse::Error(_) => vec![],
+            },
+        }
+    }
 }
