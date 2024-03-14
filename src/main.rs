@@ -24,6 +24,7 @@ use rumba::{
     api::error::{error_handler, ERROR_ID_HEADER_NAME_STR},
     db,
     fxa::LoginManager,
+    gemini,
     logging::{self, init_logging},
     metrics::{metrics_from_opts, MetricsData},
     settings::{Sentry, SETTINGS},
@@ -99,6 +100,17 @@ async fn main() -> anyhow::Result<()> {
             async_openai::Client::with_config(OpenAIConfig::new().with_api_key(&c.api_key))
         }));
 
+    let gemini_client = Data::new(SETTINGS.ai.as_ref().map(|c| {
+        let mut config = gemini::GeminiConfig::new();
+        if let Some(api_key) = &c.gemini_api_key {
+            config = config.with_api_key(api_key);
+        }
+        if let Some(model) = &c.gemini_model {
+            config = config.with_model(model);
+        }
+        gemini::Client::with_config(config)
+    }));
+
     let github_client = Data::new(SETTINGS.playground.as_ref().and_then(|p| {
         OctocrabBuilder::new()
             .personal_token(p.github_token.clone())
@@ -124,6 +136,7 @@ async fn main() -> anyhow::Result<()> {
             )
             .wrap(Logger::new(LOG_FMT).exclude("/healthz"))
             .app_data(Data::clone(&openai_client))
+            .app_data(Data::clone(&gemini_client))
             .app_data(Data::clone(&github_client))
             .app_data(Data::clone(&basket_client))
             .app_data(Data::clone(&metrics))

@@ -14,6 +14,7 @@ pub mod api;
 pub mod db;
 pub mod error;
 pub mod fxa;
+pub mod gemini;
 mod helpers;
 pub mod ids;
 pub mod logging;

@@ -78,6 +78,8 @@ pub struct Basket {
 #[derive(Debug, Deserialize)]
 pub struct AI {
     pub api_key: String,
+    pub gemini_api_key: Option<String>,
+    pub gemini_model: Option<String>,
     pub limit_reset_duration_in_sec: i64,
     #[serde_as(as = "Base64")]
     pub explain_sign_key: [u8; 32],
