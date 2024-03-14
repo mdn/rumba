@@ -30,6 +30,7 @@ use crate::{
         settings::get_settings,
         SupaPool,
     },
+    gemini::{GeminiClient, GeminiConfig, GenerateContentRequest},
 };
 use crate::{
     api::error::ApiError,
@@ -356,6 +357,7 @@ pub fn sorry_response(
 pub async fn ai_help(
     user_id: Identity,
     openai_client: Data<Option<Client<OpenAIConfig>>>,
+    gemini_client: Data<Option<GeminiClient<GeminiConfig>>>,
     supabase_pool: Data<Option<SupaPool>>,
     diesel_pool: Data<Pool>,
     messages: Json<ChatRequestMessages>,
@@ -373,7 +375,9 @@ pub async fn ai_help(
         }
         current
     };
-    if let (Some(client), Some(pool)) = (&**openai_client, &**supabase_pool) {
+    if let (Some(client), Some(pool), Some(gemini_client)) =
+        (&**openai_client, &**supabase_pool, &**gemini_client)
+    {
         let ChatRequestMessages {
             chat_id: chat_id_opt,
             parent_id,
@@ -441,6 +445,10 @@ pub async fn ai_help(
                     user.id,
                     help_ids,
                 )?;
+
+                let gemini_req: GenerateContentRequest = ai_help_req.req.clone().into();
+                let _gemini_stream = gemini_client.create_stream(gemini_req).await.unwrap();
+
                 let stream = client.chat().create_stream(ai_help_req.req).await.unwrap();
                 let refs = stream::once(async move {
                     let sse_data =

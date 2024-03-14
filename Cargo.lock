@@ -912,6 +912,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "cargo-husky"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b02b629252fe8ef6460461409564e2c21d0c8e77e0944f3d189ff06c4e932ad"
+
+[[package]]
 name = "cc"
 version = "1.0.83"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3957,6 +3963,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "reqwest-streams"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f23352f6f584a5c7deba2ab434f605efafaa28c60327a07702a7dad618f2d114"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "cargo-husky",
+ "futures",
+ "futures-util",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-util",
+]
+
+[[package]]
 name = "rfc6979"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4069,6 +4093,7 @@ dependencies = [
  "r2d2",
  "regex",
  "reqwest",
+ "reqwest-streams",
  "sentry",
  "sentry-actix",
  "serde",

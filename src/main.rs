@@ -108,7 +108,7 @@ async fn main() -> anyhow::Result<()> {
         if let Some(model) = &c.gemini_model {
             config = config.with_model(model);
         }
-        gemini::Client::with_config(config)
+        gemini::GeminiClient::with_config(config)
     }));
 
     let github_client = Data::new(SETTINGS.playground.as_ref().and_then(|p| {
