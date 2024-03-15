@@ -450,6 +450,8 @@ pub async fn ai_help(
                 let _gemini_stream = gemini_client.create_stream(gemini_req).await.unwrap();
 
                 let stream = client.chat().create_stream(ai_help_req.req).await.unwrap();
+
+                // Consulted MDN content.
                 let refs = stream::once(async move {
                     let sse_data =
                         sse::Data::new_json(ai_help_meta).map_err(OpenAIError::JSONDeserialize);
@@ -462,17 +464,19 @@ pub async fn ai_help(
                         }
                     }
                 });
-
-                Ok(Either::Left(sse::Sse::from_stream(refs.chain(
-                    stream.map_ok(move |res| {
-                        if let Some(ref tx) = tx {
-                            if let Err(e) = tx.send(res.clone()) {
-                                error!("{e}");
-                            }
+                
+                // Actual response.
+                let answer = stream.map_ok(move |res| {
+                    if let Some(ref tx) = tx {
+                        if let Err(e) = tx.send(res.clone()) {
+                            error!("{e}");
                         }
-                        sse::Event::Data(sse::Data::new_json(res).unwrap())
-                    }),
-                ))))
+                    }
+                    sse::Event::Data(sse::Data::new_json(res).unwrap())
+                });
+
+                let res = sse::Sse::from_stream(refs.chain(answer));
+                Ok(Either::Left(res))
             }
             None => {
                 let parts = sorry_response(
