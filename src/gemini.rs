@@ -156,7 +156,16 @@ impl From<CreateChatCompletionRequest> for GenerateContentRequest {
                 .clone()
                 .into_iter()
                 .map(RequestContent::from)
-                .collect(),
+                .fold(Vec::new(), |mut acc, item| {
+                    if let Some(prev_item) = acc.last_mut() {
+                        if item.role == prev_item.role {
+                            prev_item.parts.extend(item.parts);
+                            return acc;
+                        }
+                    }
+                    acc.push(item);
+                    acc
+                }),
             generation_config: Some(&value).map(|v| GenerationConfig {
                 temperature: v.temperature,
                 max_output_tokens: v.max_tokens,
@@ -171,27 +180,25 @@ impl From<CreateChatCompletionRequest> for GenerateContentRequest {
 impl From<ChatCompletionRequestMessage> for RequestContent {
     fn from(value: ChatCompletionRequestMessage) -> Self {
         RequestContent {
-            role: Some(from_openai_role(value.role)),
+            role: from_openai_role(value.role.clone()),
             parts: value.content.map_or(vec![], |text| vec![Part::Text(text)]),
         }
     }
 }
 
-fn from_openai_role(role: async_openai::types::Role) -> String {
+fn from_openai_role(role: async_openai::types::Role) -> Option<String> {
     match role {
-        async_openai::types::Role::System => "system",
-        async_openai::types::Role::User => "user",
-        async_openai::types::Role::Assistant => "assistant",
-        async_openai::types::Role::Function => "function",
+        async_openai::types::Role::System | async_openai::types::Role::User => {
+            Some("user".to_string())
+        }
+        async_openai::types::Role::Assistant => Some("model".to_string()),
+        async_openai::types::Role::Function => None,
     }
-    .to_string()
 }
 fn to_openai_role(role: String) -> Option<async_openai::types::Role> {
     match role.as_str() {
-        "system" => Some(async_openai::types::Role::System),
         "user" => Some(async_openai::types::Role::User),
-        "assistant" => Some(async_openai::types::Role::Assistant),
-        "function" => Some(async_openai::types::Role::Function),
+        "model" => Some(async_openai::types::Role::Assistant),
         _ => None,
     }
 }
@@ -299,7 +306,7 @@ impl From<GenerateContentResponse> for CreateChatCompletionStreamResponse {
                                     ),
                                     function_call: None,
                                 },
-                                finish_reason: None,
+                                finish_reason: candidate.finish_reason,
                             };
                             Some(msg)
                         }
