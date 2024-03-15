@@ -447,9 +447,14 @@ pub async fn ai_help(
                 )?;
 
                 let gemini_req: GenerateContentRequest = ai_help_req.req.clone().into();
-                let _gemini_stream = gemini_client.create_stream(gemini_req).await.unwrap();
+                let gemini_stream = gemini_client.create_stream(gemini_req).await.unwrap();
 
-                let stream = client.chat().create_stream(ai_help_req.req).await.unwrap();
+                let stream = Box::pin(
+                    gemini_stream
+                        .map_ok(CreateChatCompletionStreamResponse::from)
+                        .map_err(|_| OpenAIError::StreamError(String::new()))
+                        .into_stream(),
+                );
 
                 // Consulted MDN content.
                 let refs = stream::once(async move {
@@ -464,7 +469,7 @@ pub async fn ai_help(
                         }
                     }
                 });
-                
+
                 // Actual response.
                 let answer = stream.map_ok(move |res| {
                     if let Some(ref tx) = tx {
