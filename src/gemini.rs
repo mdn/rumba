@@ -14,6 +14,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::{collections::HashMap, pin::Pin};
 
+use crate::settings::SETTINGS;
+
 pub struct GeminiClient<C: Config> {
     config: C,
 }
@@ -283,7 +285,11 @@ impl From<GenerateContentResponse> for CreateChatCompletionStreamResponse {
             id: uuid::Uuid::new_v4().to_string(),
             object: "chat.completion.chunk".to_string(),
             created: chrono::Utc::now().timestamp() as u32,
-            model: "gemini".to_string(),
+            model: SETTINGS
+                .ai
+                .as_ref()
+                .and_then(|ai| ai.gemini_model.clone())
+                .unwrap_or("gemini".to_string()),
             choices: match value.clone() {
                 GenerateContentResponse::Chunk(chunk) => chunk
                     .candidates

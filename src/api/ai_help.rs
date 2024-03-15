@@ -34,6 +34,7 @@ use crate::{
         SupaPool,
     },
     gemini::{GeminiClient, GeminiConfig, GenerateContentRequest},
+    settings::SETTINGS,
 };
 use crate::{
     api::error::ApiError,
@@ -489,7 +490,11 @@ pub async fn ai_help(
                         id: uuid::Uuid::new_v4().to_string(),
                         object: "chat.completion.chunk".to_string(),
                         created: chrono::Utc::now().timestamp() as u32,
-                        model: "gemini".to_string(),
+                        model: SETTINGS
+                            .ai
+                            .as_ref()
+                            .and_then(|ai| ai.gemini_model.clone())
+                            .unwrap_or("gemini".to_string()),
                         choices: vec![ChatCompletionResponseStreamMessage {
                             index: 0,
                             delta: ChatCompletionStreamResponseDelta {
