@@ -450,16 +450,6 @@ pub async fn ai_help(
                     help_ids,
                 )?;
 
-                let gemini_req: GenerateContentRequest = ai_help_req.req.clone().into();
-                let gemini_stream = gemini_client.create_stream(gemini_req).await.unwrap();
-
-                let stream = Box::pin(
-                    gemini_stream
-                        .map_ok(CreateChatCompletionStreamResponse::from)
-                        .map_err(|_| OpenAIError::StreamError(String::new()))
-                        .into_stream(),
-                );
-
                 // Consulted MDN content.
                 let refs = stream::once(async move {
                     let sse_data =
@@ -475,39 +465,51 @@ pub async fn ai_help(
                 });
 
                 Ok(Either::Left(sse::Sse::from_stream(
-                    refs.chain(stream.map_ok(move |res| {
-                        // Actual response.
-                        if let Some(ref tx) = tx {
-                            if let Err(e) = tx.send(res.clone()) {
-                                error!("{e}");
-                            }
-                        }
-                        sse::Event::Data(sse::Data::new_json(res).unwrap())
-                    }))
-                    .chain(stream::once(async move {
+                    refs.chain(
+                        // Actual answer.
+                        gemini_client
+                            .create_stream(GenerateContentRequest::from(ai_help_req.req.clone()))
+                            .await
+                            .unwrap()
+                            .map_ok(move |res| {
+                                let res = CreateChatCompletionStreamResponse::from(res);
+                                // Actual response.
+                                if let Some(ref tx) = tx {
+                                    if let Err(e) = tx.send(res.clone()) {
+                                        error!("{e}");
+                                    }
+                                }
+                                sse::Event::Data(sse::Data::new_json(res).unwrap())
+                            })
+                            .map_err(|_| OpenAIError::StreamError(String::new()))
+                            .into_stream(),
+                    )
+                    .chain(
                         // Artificial finish chunk.
-                        let res = CreateChatCompletionStreamResponse {
-                            id: uuid::Uuid::new_v4().to_string(),
-                            object: "chat.completion.chunk".to_string(),
-                            created: chrono::Utc::now().timestamp() as u32,
-                            model: SETTINGS
-                                .ai
-                                .as_ref()
-                                .and_then(|ai| ai.gemini_model.clone())
-                                .unwrap_or("gemini".to_string()),
-                            choices: vec![ChatCompletionResponseStreamMessage {
-                                index: 0,
-                                delta: ChatCompletionStreamResponseDelta {
-                                    role: None,
-                                    content: None,
-                                    function_call: None,
-                                },
-                                finish_reason: Some("stop".to_owned()),
-                            }],
-                        };
-                        let sse_data = sse::Data::new_json(res);
-                        Ok(sse::Event::Data(sse_data.unwrap()))
-                    })),
+                        stream::once(async move {
+                            let res = CreateChatCompletionStreamResponse {
+                                id: uuid::Uuid::new_v4().to_string(),
+                                object: "chat.completion.chunk".to_string(),
+                                created: chrono::Utc::now().timestamp() as u32,
+                                model: SETTINGS
+                                    .ai
+                                    .as_ref()
+                                    .and_then(|ai| ai.gemini_model.clone())
+                                    .unwrap_or("gemini".to_string()),
+                                choices: vec![ChatCompletionResponseStreamMessage {
+                                    index: 0,
+                                    delta: ChatCompletionStreamResponseDelta {
+                                        role: None,
+                                        content: None,
+                                        function_call: None,
+                                    },
+                                    finish_reason: Some("stop".to_owned()),
+                                }],
+                            };
+                            let sse_data = sse::Data::new_json(res);
+                            Ok(sse::Event::Data(sse_data.unwrap()))
+                        }),
+                    ),
                 )))
             }
             None => {
