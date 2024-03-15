@@ -7,7 +7,10 @@ use actix_web_lab::{__reexports::tokio::sync::mpsc, sse};
 use async_openai::{
     config::OpenAIConfig,
     error::OpenAIError,
-    types::{ChatCompletionRequestMessage, CreateChatCompletionStreamResponse, Role::Assistant},
+    types::{
+        ChatCompletionRequestMessage, ChatCompletionResponseStreamMessage,
+        ChatCompletionStreamResponseDelta, CreateChatCompletionStreamResponse, Role::Assistant,
+    },
     Client,
 };
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
@@ -480,7 +483,27 @@ pub async fn ai_help(
                     sse::Event::Data(sse::Data::new_json(res).unwrap())
                 });
 
-                let res = sse::Sse::from_stream(refs.chain(answer));
+                // Artificial finish chunk.
+                let finish = stream::once(async move {
+                    let sse_data = sse::Data::new_json(CreateChatCompletionStreamResponse {
+                        id: uuid::Uuid::new_v4().to_string(),
+                        object: "chat.completion.chunk".to_string(),
+                        created: chrono::Utc::now().timestamp() as u32,
+                        model: "gemini".to_string(),
+                        choices: vec![ChatCompletionResponseStreamMessage {
+                            index: 0,
+                            delta: ChatCompletionStreamResponseDelta {
+                                role: None,
+                                content: None,
+                                function_call: None,
+                            },
+                            finish_reason: Some("stop".to_owned()),
+                        }],
+                    });
+                    Ok(sse::Event::Data(sse_data.unwrap()))
+                });
+
+                let res = sse::Sse::from_stream(refs.chain(answer).chain(finish));
                 Ok(Either::Left(res))
             }
             None => {

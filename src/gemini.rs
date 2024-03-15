@@ -306,7 +306,7 @@ impl From<GenerateContentResponse> for CreateChatCompletionStreamResponse {
                                     ),
                                     function_call: None,
                                 },
-                                finish_reason: candidate.finish_reason,
+                                finish_reason: None,
                             };
                             Some(msg)
                         }
