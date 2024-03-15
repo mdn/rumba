@@ -474,42 +474,41 @@ pub async fn ai_help(
                     }
                 });
 
-                // Actual response.
-                let answer = stream.map_ok(move |res| {
-                    if let Some(ref tx) = tx {
-                        if let Err(e) = tx.send(res.clone()) {
-                            error!("{e}");
+                Ok(Either::Left(sse::Sse::from_stream(
+                    refs.chain(stream.map_ok(move |res| {
+                        // Actual response.
+                        if let Some(ref tx) = tx {
+                            if let Err(e) = tx.send(res.clone()) {
+                                error!("{e}");
+                            }
                         }
-                    }
-                    sse::Event::Data(sse::Data::new_json(res).unwrap())
-                });
-
-                // Artificial finish chunk.
-                let finish = stream::once(async move {
-                    let sse_data = sse::Data::new_json(CreateChatCompletionStreamResponse {
-                        id: uuid::Uuid::new_v4().to_string(),
-                        object: "chat.completion.chunk".to_string(),
-                        created: chrono::Utc::now().timestamp() as u32,
-                        model: SETTINGS
-                            .ai
-                            .as_ref()
-                            .and_then(|ai| ai.gemini_model.clone())
-                            .unwrap_or("gemini".to_string()),
-                        choices: vec![ChatCompletionResponseStreamMessage {
-                            index: 0,
-                            delta: ChatCompletionStreamResponseDelta {
-                                role: None,
-                                content: None,
-                                function_call: None,
-                            },
-                            finish_reason: Some("stop".to_owned()),
-                        }],
-                    });
-                    Ok(sse::Event::Data(sse_data.unwrap()))
-                });
-
-                let res = sse::Sse::from_stream(refs.chain(answer).chain(finish));
-                Ok(Either::Left(res))
+                        sse::Event::Data(sse::Data::new_json(res).unwrap())
+                    }))
+                    .chain(stream::once(async move {
+                        // Artificial finish chunk.
+                        let res = CreateChatCompletionStreamResponse {
+                            id: uuid::Uuid::new_v4().to_string(),
+                            object: "chat.completion.chunk".to_string(),
+                            created: chrono::Utc::now().timestamp() as u32,
+                            model: SETTINGS
+                                .ai
+                                .as_ref()
+                                .and_then(|ai| ai.gemini_model.clone())
+                                .unwrap_or("gemini".to_string()),
+                            choices: vec![ChatCompletionResponseStreamMessage {
+                                index: 0,
+                                delta: ChatCompletionStreamResponseDelta {
+                                    role: None,
+                                    content: None,
+                                    function_call: None,
+                                },
+                                finish_reason: Some("stop".to_owned()),
+                            }],
+                        };
+                        let sse_data = sse::Data::new_json(res);
+                        Ok(sse::Event::Data(sse_data.unwrap()))
+                    })),
+                )))
             }
             None => {
                 let parts = sorry_response(
