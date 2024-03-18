@@ -83,6 +83,7 @@ pub struct AI {
     pub limit_reset_duration_in_sec: i64,
     #[serde_as(as = "Base64")]
     pub explain_sign_key: [u8; 32],
+    pub history_deletion_period_in_sec: u64,
 }
 
 #[serde_as]
