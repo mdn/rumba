@@ -179,22 +179,26 @@ pub fn prepare_ai_help_summary_req(
 fn qa_check_for_error_trigger(
     messages: &[ChatCompletionRequestMessage],
 ) -> Result<(), async_openai::error::OpenAIError> {
-    if let Some(ref ai) = SETTINGS.ai {
-        if let Some(ref magic_words) = ai.trigger_error_for_search_term {
-            let last_user_message = messages.iter().filter(|m| m.role == Role::User).last();
-            if let Some(msg) = last_user_message {
-                if let Some(ref msg_text) = msg.content {
-                    if msg_text == magic_words {
-                        return Err(async_openai::error::OpenAIError::ApiError(
-                            async_openai::error::ApiError {
-                                message: "Artificial QA error in search phase".to_string(),
-                                r#type: None,
-                                param: None,
-                                code: None,
-                            },
-                        ));
-                    }
-                }
+    if let Some(magic_words) = SETTINGS
+        .ai
+        .as_ref()
+        .and_then(|ai| ai.trigger_error_for_chat_term.as_ref())
+    {
+        if let Some(msg_text) = messages
+            .iter()
+            .filter(|m| m.role == Role::User)
+            .last()
+            .and_then(|m| m.content.as_ref())
+        {
+            if msg_text == magic_words {
+                return Err(async_openai::error::OpenAIError::ApiError(
+                    async_openai::error::ApiError {
+                        message: "Artificial QA error in search phase".to_string(),
+                        r#type: None,
+                        param: None,
+                        code: None,
+                    },
+                ));
             }
         }
     }
