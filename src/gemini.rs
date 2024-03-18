@@ -1,9 +1,9 @@
 // Inspired by async-openai.
 
 use async_openai::types::{
-    ChatCompletionRequestMessage, ChatCompletionResponseStreamMessage,
-    ChatCompletionStreamResponseDelta, CreateChatCompletionRequest,
-    CreateChatCompletionStreamResponse,
+    ChatChoice, ChatCompletionRequestMessage, ChatCompletionResponseMessage,
+    ChatCompletionResponseStreamMessage, ChatCompletionStreamResponseDelta,
+    CreateChatCompletionRequest, CreateChatCompletionResponse, CreateChatCompletionStreamResponse,
 };
 
 use futures::Stream;
@@ -21,11 +21,34 @@ pub struct GeminiClient<C: Config> {
 }
 
 pub type GenerateContentResponseStream =
-    Pin<Box<dyn Stream<Item = Result<GenerateContentResponse, StreamBodyError>> + Send>>;
+    Pin<Box<dyn Stream<Item = Result<GenerateContentStreamResponse, StreamBodyError>> + Send>>;
 
 impl<C: Config> GeminiClient<C> {
     pub fn with_config(config: C) -> Self {
         Self { config }
+    }
+
+    pub async fn create(&self, request: GenerateContentRequest) -> GenerateContentResponse {
+        let client = Client::new();
+        let api_key = self.config.api_key();
+        let model = self.config.model();
+        let url = format!(
+            "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent",
+            model
+        );
+
+        let input = json!(request);
+        let res = client
+            .post(url)
+            .query(&[("key", &api_key)])
+            .json(&input)
+            .send()
+            .await
+            .expect("Request failed");
+
+        res.json::<GenerateContentResponse>()
+            .await
+            .expect("Response isn't JSON")
     }
 
     pub async fn create_stream(
@@ -49,7 +72,7 @@ impl<C: Config> GeminiClient<C> {
             .await;
 
         let stream = res
-            .map(|res| res.json_array_stream::<GenerateContentResponse>(1024 * 1024))
+            .map(|res| res.json_array_stream::<GenerateContentStreamResponse>(1024 * 1024))
             .map_err(|_| ());
 
         stream
@@ -101,14 +124,14 @@ impl Default for GeminiConfig {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct GenerateContentRequest {
     pub contents: Vec<RequestContent>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub generation_config: Option<GenerationConfig>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RequestContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub role: Option<String>,
@@ -133,7 +156,7 @@ pub enum Part {
     },
 }
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct GenerationConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -205,12 +228,11 @@ fn to_openai_role(role: String) -> Option<async_openai::types::Role> {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(untagged)]
-pub enum GenerateContentResponse {
-    Chunk(GenerateContentResponseChunk),
-    Error(GenerateContentResponseError),
-}
+pub type GenerateContentResponse =
+    Result<GenerateContentResponseChunk, GenerateContentResponseError>;
+
+pub type GenerateContentStreamResponse =
+    Result<GenerateContentResponseChunk, GenerateContentResponseError>;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -279,8 +301,53 @@ pub struct GenerateContentResponseErrorDetails {
     pub status: String,
 }
 
-impl From<GenerateContentResponse> for CreateChatCompletionStreamResponse {
-    fn from(value: GenerateContentResponse) -> Self {
+impl From<GenerateContentResponseChunk> for CreateChatCompletionResponse {
+    fn from(chunk: GenerateContentResponseChunk) -> Self {
+        CreateChatCompletionResponse {
+            id: uuid::Uuid::new_v4().to_string(),
+            object: "chat.completion.chunk".to_string(),
+            created: chrono::Utc::now().timestamp() as u32,
+            model: SETTINGS
+                .ai
+                .as_ref()
+                .and_then(|ai| ai.gemini_model.clone())
+                .unwrap_or("gemini".to_string()),
+            choices: chunk
+                .candidates
+                .into_iter()
+                .filter_map(|candidate| match candidate.content {
+                    Some(content) => {
+                        let msg = ChatChoice {
+                            index: 0,
+                            message: ChatCompletionResponseMessage {
+                                role: to_openai_role(content.role)
+                                    .expect("Candidate content without role"),
+                                content: Some(
+                                    content
+                                        .parts
+                                        .into_iter()
+                                        .filter_map(|p| match p {
+                                            Part::Text(text) => Some(text),
+                                            _ => None,
+                                        })
+                                        .join(""),
+                                ),
+                                function_call: None,
+                            },
+                            finish_reason: None,
+                        };
+                        Some(msg)
+                    }
+                    None => None,
+                })
+                .collect(),
+            usage: None,
+        }
+    }
+}
+
+impl From<GenerateContentResponseChunk> for CreateChatCompletionStreamResponse {
+    fn from(chunk: GenerateContentResponseChunk) -> Self {
         CreateChatCompletionStreamResponse {
             id: uuid::Uuid::new_v4().to_string(),
             object: "chat.completion.chunk".to_string(),
@@ -290,37 +357,114 @@ impl From<GenerateContentResponse> for CreateChatCompletionStreamResponse {
                 .as_ref()
                 .and_then(|ai| ai.gemini_model.clone())
                 .unwrap_or("gemini".to_string()),
-            choices: match value.clone() {
-                GenerateContentResponse::Chunk(chunk) => chunk
-                    .candidates
-                    .into_iter()
-                    .filter_map(|candidate| match candidate.content {
-                        Some(content) => {
-                            let msg = ChatCompletionResponseStreamMessage {
-                                index: 0, // todo
-                                delta: ChatCompletionStreamResponseDelta {
-                                    role: to_openai_role(content.role),
-                                    content: Some(
-                                        content
-                                            .parts
-                                            .into_iter()
-                                            .filter_map(|p| match p {
-                                                Part::Text(text) => Some(text),
-                                                _ => None,
-                                            })
-                                            .join(""),
-                                    ),
-                                    function_call: None,
-                                },
-                                finish_reason: None,
-                            };
-                            Some(msg)
-                        }
-                        None => None,
-                    })
-                    .collect(),
-                GenerateContentResponse::Error(_) => vec![],
-            },
+            choices: chunk
+                .candidates
+                .into_iter()
+                .filter_map(|candidate| match candidate.content {
+                    Some(content) => {
+                        let msg = ChatCompletionResponseStreamMessage {
+                            index: 0, // todo
+                            delta: ChatCompletionStreamResponseDelta {
+                                role: to_openai_role(content.role),
+                                content: Some(
+                                    content
+                                        .parts
+                                        .into_iter()
+                                        .filter_map(|p| match p {
+                                            Part::Text(text) => Some(text),
+                                            _ => None,
+                                        })
+                                        .join(""),
+                                ),
+                                function_call: None,
+                            },
+                            finish_reason: None,
+                        };
+                        Some(msg)
+                    }
+                    None => None,
+                })
+                .collect(),
+        }
+    }
+}
+
+impl From<GenerateContentRequest> for CreateChatCompletionRequest {
+    fn from(value: GenerateContentRequest) -> Self {
+        CreateChatCompletionRequest {
+            model: SETTINGS
+                .ai
+                .as_ref()
+                .and_then(|ai| ai.gemini_model.clone())
+                .unwrap_or("gemini".to_string()),
+            messages: value.contents.into_iter().map(|c| c.into()).collect(),
+            functions: None,
+            function_call: None,
+            temperature: value.generation_config.as_ref().and_then(|c| c.temperature),
+            top_p: value.generation_config.as_ref().and_then(|c| c.top_p),
+            n: value
+                .generation_config
+                .as_ref()
+                .and_then(|c| c.candidate_count),
+            stream: Some(false),
+            stop: None,
+            max_tokens: value
+                .generation_config
+                .as_ref()
+                .and_then(|c| c.max_output_tokens),
+            ..Default::default()
+        }
+    }
+}
+
+impl From<RequestContent> for ChatCompletionRequestMessage {
+    fn from(value: RequestContent) -> Self {
+        ChatCompletionRequestMessage {
+            role: to_openai_role(value.role.clone().expect("RequestContent without role"))
+                .expect("RequestContent without equivalent OpenAI role"),
+            content: value.clone().into(),
+            ..Default::default()
+        }
+    }
+}
+
+impl From<RequestContent> for Option<String> {
+    fn from(value: RequestContent) -> Self {
+        Some(
+            value
+                .parts
+                .into_iter()
+                .filter_map(|text| match text {
+                    Part::Text(text) => Some(text),
+                    _ => None,
+                })
+                .join("\n\n"),
+        )
+    }
+}
+
+impl From<CandidateContent> for Option<String> {
+    fn from(value: CandidateContent) -> Self {
+        Some(
+            value
+                .parts
+                .into_iter()
+                .filter_map(|text| match text {
+                    Part::Text(text) => Some(text),
+                    _ => None,
+                })
+                .join("\n\n"),
+        )
+    }
+}
+
+impl From<CandidateContent> for ChatCompletionResponseMessage {
+    fn from(value: CandidateContent) -> Self {
+        ChatCompletionResponseMessage {
+            role: to_openai_role(value.role.clone())
+                .expect("CandidateContent without equivalent OpenAI role"),
+            content: value.clone().into(),
+            function_call: None,
         }
     }
 }

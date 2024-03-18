@@ -8,6 +8,7 @@ use std::{
 use anyhow::Error;
 use async_openai::{
     config::OpenAIConfig,
+    error::OpenAIError,
     types::{ChatCompletionRequestMessage, ChatCompletionResponseMessage, Role::User},
 };
 use futures::{stream, StreamExt, TryStreamExt};
@@ -15,6 +16,7 @@ use itertools::Itertools;
 use rumba::{
     ai::help::{prepare_ai_help_req, AIHelpRequest},
     db,
+    gemini::{self, GenerateContentRequest},
     settings::SETTINGS,
 };
 use serde::{Deserialize, Serialize};
@@ -78,6 +80,23 @@ pub async fn ai_help_all(
         OpenAIConfig::new().with_api_key(&SETTINGS.ai.as_ref().expect("no ai settings").api_key),
     ));
 
+    let gemini_client = &Arc::new(
+        SETTINGS
+            .ai
+            .as_ref()
+            .map(|c| {
+                let mut config = gemini::GeminiConfig::new();
+                if let Some(api_key) = &c.gemini_api_key {
+                    config = config.with_api_key(api_key);
+                }
+                if let Some(model) = &c.gemini_model {
+                    config = config.with_model(model);
+                }
+                gemini::GeminiClient::with_config(config)
+            })
+            .unwrap(),
+    );
+
     let prompts = prompts::read(path)?;
     let total_samples = prompts.len();
     let before = Instant::now();
@@ -100,9 +119,25 @@ pub async fn ai_help_all(
                 prepare_ai_help_req(openai_client, supabase_pool, !no_subscription, messages)
                     .await?
             {
-                let mut res = openai_client.chat().create(req.req.clone()).await?;
-                let res = res.choices.pop().map(|res| res.message);
-                let storage = Storage { req, res };
+                let gemini_req = GenerateContentRequest::from(req.req.clone());
+
+                let mut gemini_res = gemini_client
+                    .create(gemini_req.clone())
+                    .await
+                    .map_err(|_| OpenAIError::StreamError(String::new()))?;
+
+                let res: Option<ChatCompletionResponseMessage> = gemini_res
+                    .candidates
+                    .pop()
+                    .and_then(|res| res.content)
+                    .map(|content| -> ChatCompletionResponseMessage { content.into() });
+                let storage = Storage {
+                    req: AIHelpRequest {
+                        req: gemini_req.clone().into(),
+                        refs: req.refs,
+                    },
+                    res,
+                };
                 println!("writing: {}", json_out.display());
                 fs::write(json_out, serde_json::to_vec_pretty(&storage)?).await?;
                 println!("writing: {}", md_out.display());

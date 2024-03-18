@@ -475,7 +475,7 @@ pub async fn ai_help(
                             .await
                             .unwrap()
                             .map_ok(move |res| {
-                                let res = CreateChatCompletionStreamResponse::from(res);
+                                let res = CreateChatCompletionStreamResponse::from(res.unwrap());
                                 // Actual response.
                                 if let Some(ref tx) = tx {
                                     if let Err(e) = tx.send(res.clone()) {
