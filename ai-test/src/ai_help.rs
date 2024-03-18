@@ -100,26 +100,30 @@ pub async fn ai_help_all(
     let prompts = prompts::read(path)?;
     let total_samples = prompts.len();
     let before = Instant::now();
-    stream::iter(prompts.into_iter().enumerate())
-        .map(Ok::<(usize, Vec<String>), Error>)
-        .try_for_each_concurrent(10, |(i, prompts)| async move {
-            println!("processing: {:0>2}", i);
-            let json_out = PathBuf::from(out.as_ref()).join(format!("{:0>2}.json", i));
-            let md_out = PathBuf::from(out.as_ref()).join(format!("{:0>2}.md", i));
-            let messages = prompts
-                .into_iter()
-                .map(|prompt| ChatCompletionRequestMessage {
-                    role: User,
-                    content: Some(prompt),
-                    name: None,
-                    function_call: None,
-                })
-                .collect();
-            if let Some(req) =
-                prepare_ai_help_req(openai_client, supabase_pool, !no_subscription, messages)
-                    .await?
-            {
-                let gemini_req = GenerateContentRequest::from(req.req.clone());
+    stream::iter(
+        prompts
+            .into_iter()
+            .enumerate()
+            .filter(|(i, _val)| std::fs::metadata(json_path(out, *i)).is_err()),
+    )
+    .map(Ok::<(usize, Vec<String>), Error>)
+    .try_for_each_concurrent(10, |(i, prompts)| async move {
+        println!("processing: {:0>2}", i);
+        let json_out = json_path(out, i);
+        let md_out = md_path(out, i);
+        let messages = prompts
+            .into_iter()
+            .map(|prompt| ChatCompletionRequestMessage {
+                role: User,
+                content: Some(prompt),
+                name: None,
+                function_call: None,
+            })
+            .collect();
+        if let Some(req) =
+            prepare_ai_help_req(openai_client, supabase_pool, !no_subscription, messages).await?
+        {
+            let gemini_req = GenerateContentRequest::from(req.req.clone());
 
             let mut gemini_res = gemini_client
                 .create(gemini_req.clone())
@@ -153,4 +157,12 @@ pub async fn ai_help_all(
         after.duration_since(before).as_secs()
     );
     Ok(())
+}
+
+fn json_path(out: &impl AsRef<Path>, i: usize) -> PathBuf {
+    PathBuf::from(out.as_ref()).join(format!("{:0>2}.json", i))
+}
+
+fn md_path(out: &impl AsRef<Path>, i: usize) -> PathBuf {
+    PathBuf::from(out.as_ref()).join(format!("{:0>2}.md", i))
 }
