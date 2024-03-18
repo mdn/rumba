@@ -611,15 +611,19 @@ pub async fn ai_help_delete_full_history(
 fn qa_check_for_error_trigger(
     messages: &[ChatCompletionRequestMessage],
 ) -> Result<(), crate::api::error::ApiError> {
-    if let Some(ref ai) = SETTINGS.ai {
-        if let Some(ref magic_words) = ai.trigger_error_for_chat_term {
-            let last_user_message = messages.iter().filter(|m| m.role == Role::User).last();
-            if let Some(msg) = last_user_message {
-                if let Some(ref msg_text) = msg.content {
-                    if msg_text == magic_words {
-                        return Err(crate::api::error::ApiError::Artificial);
-                    }
-                }
+    if let Some(magic_words) = SETTINGS
+        .ai
+        .as_ref()
+        .and_then(|ai| ai.trigger_error_for_chat_term.as_ref())
+    {
+        if let Some(msg_text) = messages
+            .iter()
+            .filter(|m| m.role == Role::User)
+            .last()
+            .and_then(|m| m.content.as_ref())
+        {
+            if msg_text == magic_words {
+                return Err(crate::api::error::ApiError::Artificial);
             }
         }
     }
