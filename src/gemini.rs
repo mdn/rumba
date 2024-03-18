@@ -28,7 +28,7 @@ impl<C: Config> GeminiClient<C> {
         Self { config }
     }
 
-    pub async fn create(&self, request: GenerateContentRequest) -> GenerateContentResponse {
+    pub async fn create(&self, request: GenerateContentRequest) -> GenerateContentResult {
         let client = Client::new();
         let api_key = self.config.api_key();
         let model = self.config.model();
@@ -49,6 +49,7 @@ impl<C: Config> GeminiClient<C> {
         res.json::<GenerateContentResponse>()
             .await
             .expect("Response isn't JSON")
+            .into()
     }
 
     pub async fn create_stream(
@@ -228,11 +229,46 @@ fn to_openai_role(role: String) -> Option<async_openai::types::Role> {
     }
 }
 
-pub type GenerateContentResponse =
+pub type GenerateContentResult = Result<GenerateContentResponseChunk, GenerateContentResponseError>;
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(untagged)]
+pub enum GenerateContentResponse {
+    Ok(GenerateContentResponseChunk),
+    Err(GenerateContentResponseError),
+}
+
+impl From<GenerateContentResponse>
+    for Result<GenerateContentResponseChunk, GenerateContentResponseError>
+{
+    fn from(value: GenerateContentResponse) -> Self {
+        match value {
+            GenerateContentResponse::Ok(chunk) => Ok(chunk),
+            GenerateContentResponse::Err(err) => Err(err),
+        }
+    }
+}
+
+pub type GenerateContentStreamResult =
     Result<GenerateContentResponseChunk, GenerateContentResponseError>;
 
-pub type GenerateContentStreamResponse =
-    Result<GenerateContentResponseChunk, GenerateContentResponseError>;
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(untagged)]
+pub enum GenerateContentStreamResponse {
+    Ok(GenerateContentResponseChunk),
+    Err(GenerateContentResponseError),
+}
+
+impl From<GenerateContentStreamResponse>
+    for Result<GenerateContentResponseChunk, GenerateContentResponseError>
+{
+    fn from(value: GenerateContentStreamResponse) -> Self {
+        match value {
+            GenerateContentStreamResponse::Ok(chunk) => Ok(chunk),
+            GenerateContentStreamResponse::Err(err) => Err(err),
+        }
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]

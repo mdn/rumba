@@ -121,31 +121,31 @@ pub async fn ai_help_all(
             {
                 let gemini_req = GenerateContentRequest::from(req.req.clone());
 
-                let mut gemini_res = gemini_client
-                    .create(gemini_req.clone())
-                    .await
-                    .map_err(|_| OpenAIError::StreamError(String::new()))?;
+            let mut gemini_res = gemini_client
+                .create(gemini_req.clone())
+                .await
+                .map_err(|_| OpenAIError::StreamError(String::new()))?;
 
-                let res: Option<ChatCompletionResponseMessage> = gemini_res
-                    .candidates
-                    .pop()
-                    .and_then(|res| res.content)
-                    .map(|content| -> ChatCompletionResponseMessage { content.into() });
-                let storage = Storage {
-                    req: AIHelpRequest {
-                        req: gemini_req.clone().into(),
-                        refs: req.refs,
-                    },
-                    res,
-                };
-                println!("writing: {}", json_out.display());
-                fs::write(json_out, serde_json::to_vec_pretty(&storage)?).await?;
-                println!("writing: {}", md_out.display());
-                fs::write(md_out, storage.to_md().as_bytes()).await?;
-            }
-            Ok(())
-        })
-        .await?;
+            let res: Option<ChatCompletionResponseMessage> = gemini_res
+                .candidates
+                .pop()
+                .and_then(|res| res.content)
+                .map(|content| -> ChatCompletionResponseMessage { content.into() });
+            let storage = Storage {
+                req: AIHelpRequest {
+                    req: gemini_req.clone().into(),
+                    refs: req.refs,
+                },
+                res,
+            };
+            println!("writing: {}", json_out.display());
+            fs::write(json_out, serde_json::to_vec_pretty(&storage)?).await?;
+            println!("writing: {}", md_out.display());
+            fs::write(md_out, storage.to_md().as_bytes()).await?;
+        }
+        Ok(())
+    })
+    .await?;
     let after = Instant::now();
     println!(
         "Tested {} prompts in {} seconds",

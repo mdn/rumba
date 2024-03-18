@@ -34,7 +34,7 @@ use crate::{
         settings::get_settings,
         SupaPool,
     },
-    gemini::{GeminiClient, GeminiConfig, GenerateContentRequest},
+    gemini::{GeminiClient, GeminiConfig, GenerateContentRequest, GenerateContentStreamResponse},
     settings::SETTINGS,
 };
 use crate::{
@@ -474,17 +474,24 @@ pub async fn ai_help(
                             .create_stream(GenerateContentRequest::from(ai_help_req.req.clone()))
                             .await
                             .unwrap()
-                            .map_ok(move |res| {
-                                let res = CreateChatCompletionStreamResponse::from(res.unwrap());
-                                // Actual response.
-                                if let Some(ref tx) = tx {
-                                    if let Err(e) = tx.send(res.clone()) {
-                                        error!("{e}");
+                            .map(move |res| {
+                                match res {
+                                    Ok(GenerateContentStreamResponse::Ok(chunk)) => {
+                                        let res = CreateChatCompletionStreamResponse::from(chunk);
+                                        // Actual response.
+                                        if let Some(ref tx) = tx {
+                                            if let Err(e) = tx.send(res.clone()) {
+                                                error!("{e}");
+                                            }
+                                        }
+                                        Ok(sse::Event::Data(sse::Data::new_json(res).unwrap()))
                                     }
+                                    Ok(GenerateContentStreamResponse::Err(err)) => {
+                                        Err(OpenAIError::StreamError(err.error.message))
+                                    }
+                                    Err(_) => Err(OpenAIError::StreamError(String::new())),
                                 }
-                                sse::Event::Data(sse::Data::new_json(res).unwrap())
                             })
-                            .map_err(|_| OpenAIError::StreamError(String::new()))
                             .into_stream(),
                     )
                     .chain(
