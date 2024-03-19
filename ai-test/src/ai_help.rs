@@ -136,7 +136,9 @@ pub async fn ai_help_all(
                     println!("failed: {:0>2} ({} {} - {})", i, code, status, message);
                     println!("retrying: {:0>2} (in {} ms)", i, duration.as_millis());
                     tokio::time::sleep(duration).await;
-                    duration = duration.mul_f32(2_f32);
+                    if duration.as_secs() < 64 {
+                        duration = duration.mul_f32(2_f32);
+                    }
                     continue;
                 }
 
