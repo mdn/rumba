@@ -51,5 +51,6 @@ flag_repo = "flags"
 [ai]
 api_key = ""
 limit_reset_duration_in_sec = 3600
+history_deletion_period_in_sec = 15_778_476
 trigger_error_for_search_term = "Please give me an error in the search phase of AI conversation"
 trigger_error_for_chat_term = "Please give me an error in the chat phase of the AI conversation"
