@@ -182,7 +182,7 @@ fn qa_check_for_error_trigger(
     if let Some(magic_words) = SETTINGS
         .ai
         .as_ref()
-        .and_then(|ai| ai.trigger_error_for_chat_term.as_ref())
+        .and_then(|ai| ai.trigger_error_for_search_term.as_ref())
     {
         if let Some(msg_text) = messages
             .iter()
