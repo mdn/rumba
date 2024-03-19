@@ -59,7 +59,7 @@ static CIPHER: Lazy<Option<Aes256Gcm>> = Lazy::new(|| {
 });
 
 fn encrypt(gist_id: &str) -> Result<String, PlaygroundError> {
-    if let Some(cipher) = &*CIPHER {
+    if let Some(cipher) = CIPHER.as_ref() {
         let mut nonce = vec![0; NONCE_LEN];
         OsRng.fill_bytes(&mut nonce);
         let nonce = Nonce::from_slice(&nonce);
@@ -73,7 +73,7 @@ fn encrypt(gist_id: &str) -> Result<String, PlaygroundError> {
 }
 
 fn decrypt(encoded: &str) -> Result<String, PlaygroundError> {
-    if let Some(cipher) = &*CIPHER {
+    if let Some(cipher) = CIPHER.as_ref() {
         let data = STANDARD.decode(encoded)?;
         if NONCE_LEN > data.len() {
             return Err(PlaygroundError::NoNonceError);
@@ -166,7 +166,7 @@ pub async fn save(
     pool: web::Data<Pool>,
     github_client: web::Data<Option<Octocrab>>,
 ) -> Result<HttpResponse, ApiError> {
-    if let Some(client) = &**github_client {
+    if let Some(client) = github_client.as_ref() {
         if let Some(user_id) = id {
             let gist =
                 create_gist(client, serde_json::to_string_pretty(&save.into_inner())?).await?;
@@ -196,7 +196,7 @@ pub async fn load(
     gist_id: web::Path<String>,
     github_client: web::Data<Option<Octocrab>>,
 ) -> Result<HttpResponse, ApiError> {
-    if let Some(client) = &**github_client {
+    if let Some(client) = github_client.as_ref() {
         let id = decrypt(&gist_id.into_inner())?;
         let gist = load_gist(client, &id).await?;
         Ok(HttpResponse::Ok().json(gist.code))
@@ -210,7 +210,7 @@ pub async fn flag(
     pool: web::Data<Pool>,
     github_client: web::Data<Option<Octocrab>>,
 ) -> Result<HttpResponse, ApiError> {
-    if let Some(client) = &**github_client {
+    if let Some(client) = github_client.as_ref() {
         let PlayFlagRequest { id, reason } = flag.into_inner();
         let gist_id = decrypt(&id)?;
         let mut conn = pool.get()?;

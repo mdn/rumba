@@ -83,7 +83,7 @@ pub async fn explain(
             )));
         }
     }
-    if let Some(client) = &**openai_client {
+    if let Some(client) = openai_client.as_ref() {
         let explain_req = prepare_explain_req(explain_request, client).await?;
         let stream = client.chat().create_stream(explain_req).await.unwrap();
 

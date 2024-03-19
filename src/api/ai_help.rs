@@ -377,7 +377,7 @@ pub async fn ai_help(
         }
         current
     };
-    if let (Some(client), Some(pool)) = (&**openai_client, &**supabase_pool) {
+    if let (Some(client), Some(pool)) = (openai_client.as_ref(), supabase_pool.as_ref()) {
         let ChatRequestMessages {
             chat_id: chat_id_opt,
             parent_id,
@@ -503,7 +503,7 @@ pub async fn ai_help_title_summary(
     let settings = get_settings(&mut conn, &user)?;
 
     if history_enabled(&settings) {
-        if let Some(client) = &**openai_client {
+        if let Some(client) = openai_client.as_ref() {
             let hit = help_history_get_message(&mut conn, &user, &message_id.into_inner())?;
             if let Some(hit) = hit {
                 let log_message = AIHelpLogMessage::from(hit);

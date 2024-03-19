@@ -43,7 +43,7 @@ pub async fn subscribe_handler(
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = pool.get()?;
     let user = get_user(&mut conn, user_id.id()?)?;
-    if let Some(basket) = &**basket {
+    if let Some(basket) = basket.as_ref() {
         return subscribe(&mut conn, &user, basket).await;
     }
     Ok(HttpResponse::NotImplemented().finish())
@@ -53,7 +53,7 @@ pub async fn subscribe_anonymous_handler(
     basket: Data<Option<Basket>>,
     subscription_req: web::Json<SubscriptionRequest>,
 ) -> Result<HttpResponse, ApiError> {
-    if let Some(basket) = &**basket {
+    if let Some(basket) = basket.as_ref() {
         basket
             .subscribe(
                 &subscription_req.email,
@@ -110,7 +110,7 @@ pub async fn unsubscribe_handler(
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = pool.get()?;
     let user = get_user(&mut conn, user_id.id()?)?;
-    if let Some(basket) = &**basket {
+    if let Some(basket) = basket.as_ref() {
         return unsubscribe(&mut conn, &user, basket).await;
     }
     Ok(HttpResponse::NotImplemented().finish())
@@ -151,7 +151,7 @@ pub async fn is_subscribed(
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = pool.get()?;
     let user = get_user(&mut conn, user_id.id()?)?;
-    if let Some(basket) = &**basket {
+    if let Some(basket) = basket.as_ref() {
         let value = basket.lookup_user(&user.email).await;
         let subscribed = match value {
             Ok(value) => {
