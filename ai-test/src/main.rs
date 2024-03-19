@@ -31,6 +31,9 @@ enum Commands {
         /// Perform test as free Core user without subscription.
         #[arg(long, action)]
         no_subscription: bool,
+        /// Number of tests to run in parallel (default: 10).
+        #[arg(short, long)]
+        limit: Option<usize>,
     },
 }
 
@@ -48,9 +51,10 @@ async fn main() -> Result<(), Error> {
             path,
             out,
             no_subscription,
+            limit,
         } => {
             let out = out.unwrap_or_else(|| PathBuf::from("/tmp/test"));
-            ai_help_all(path, out, no_subscription).await?;
+            ai_help_all(path, out, limit, no_subscription).await?;
         }
     }
     Ok(())

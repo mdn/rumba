@@ -66,6 +66,7 @@ impl Storage {
 pub async fn ai_help_all(
     path: Option<impl AsRef<Path>>,
     out: impl AsRef<Path>,
+    limit: Option<usize>,
     no_subscription: bool,
 ) -> Result<(), Error> {
     let out = &out;
@@ -106,7 +107,7 @@ pub async fn ai_help_all(
             .filter(|(i, _val)| std::fs::metadata(json_path(out, *i)).is_err()),
     )
     .map(Ok::<(usize, Vec<String>), Error>)
-    .try_for_each_concurrent(10, |(i, prompts)| async move {
+    .try_for_each_concurrent(limit.unwrap_or(10), |(i, prompts)| async move {
         println!("processing: {:0>2}", i);
         let messages = prompts
             .into_iter()
