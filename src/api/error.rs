@@ -5,6 +5,7 @@ use crate::db::error::DbError;
 use crate::error::ErrorResponse;
 
 use actix_http::header::HeaderValue;
+use actix_identity::error::GetIdentityError;
 use actix_web::http::header::HeaderName;
 use actix_web::http::StatusCode;
 use actix_web::middleware::{ErrorHandlerResponse, ErrorHandlers};
@@ -141,6 +142,8 @@ pub enum ApiError {
     NotImplemented,
     #[error("Forbidden")]
     Forbidden,
+    #[error("Lost identity")]
+    IdentityError(#[from] GetIdentityError),
 }
 
 impl ApiError {
@@ -172,6 +175,7 @@ impl ApiError {
             Self::PaymentRequired => "Payment required",
             Self::NotImplemented => "Not implemented",
             Self::Forbidden => "Forbidden",
+            Self::IdentityError(_) => "Lost identity",
         }
     }
 }

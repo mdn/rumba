@@ -20,7 +20,7 @@ pub async fn ping(
     match id {
         Some(id) => {
             let mut conn_pool = pool.get()?;
-            let user = get_user(&mut conn_pool, id.id().unwrap());
+            let user = get_user(&mut conn_pool, id.id()?);
             match user {
                 Ok(found) => {
                     let mut activity_data = json!({

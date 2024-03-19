@@ -46,7 +46,7 @@ pub async fn update_settings(
     payload: web::Json<SettingUpdateRequest>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user = db::users::get_user(&mut conn_pool, user_id.id().unwrap());
+    let user = db::users::get_user(&mut conn_pool, user_id.id()?);
 
     let settings_update = payload.into_inner();
     if let Ok(user) = user {

@@ -212,7 +212,7 @@ pub async fn get_collections(
     pool: web::Data<Pool>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id()?)?;
     let res: Vec<MultipleCollectionInfo> =
         get_multiple_collections_for_user(&user, &mut conn_pool)?
             .into_iter()
@@ -228,7 +228,7 @@ pub async fn get_collection_by_id(
     query: web::Query<CollectionItemQueryParams>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id()?)?;
     let collection_id = id.into_inner();
     let collection_info =
         get_multiple_collection_by_id_for_user(&user, &mut conn_pool, &collection_id.get()?)?;
@@ -257,7 +257,7 @@ pub async fn get_collection_item_in_collection_by_id(
     path: web::Path<EncodedCollectionAndItemId>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id()?)?;
     let ids = &path.into_inner();
     let CollectionAndItemId {
         collection_id,
@@ -282,7 +282,7 @@ pub async fn create_multiple_collection(
 ) -> Result<HttpResponse, ApiError> {
     data.validate()?;
     let mut conn_pool = pool.get()?;
-    let user = get_user(&mut conn_pool, user_id.id().unwrap())?;
+    let user = get_user(&mut conn_pool, user_id.id()?)?;
     let req = data.into_inner();
     let count = get_count_of_multiple_collections_for_user(&user, &mut conn_pool)?;
     let core_sub = Some(Subscription::Core) == user.get_subscription_type();
@@ -310,7 +310,7 @@ pub async fn modify_collection(
 ) -> Result<HttpResponse, ApiError> {
     data.validate()?;
     let mut conn_pool = pool.get()?;
-    let user = get_user(&mut conn_pool, user_id.id().unwrap())?;
+    let user = get_user(&mut conn_pool, user_id.id()?)?;
     let req = data.into_inner();
     let c_id = collection_id.into_inner();
 
@@ -343,7 +343,7 @@ pub async fn modify_collection_item_in_collection(
 ) -> Result<HttpResponse, ApiError> {
     data.validate()?;
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id()?)?;
     let ids = &path.into_inner();
     let CollectionAndItemId {
         collection_id,
@@ -366,7 +366,7 @@ pub async fn add_collection_item_to_collection(
 ) -> Result<HttpResponse, ApiError> {
     data.validate()?;
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id()?)?;
     let c_id = collection_id.into_inner();
     let collection_exists = multiple_collection_exists(&user, &c_id.get()?, &mut conn_pool)?;
     if !collection_exists {
@@ -402,7 +402,7 @@ pub async fn remove_collection_item_from_collection(
     path: web::Path<EncodedCollectionAndItemId>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id()?)?;
     let ids = &path.into_inner();
     let CollectionAndItemId {
         collection_id,
@@ -422,7 +422,7 @@ pub async fn delete_collection(
     collection_id: web::Path<EncodedId>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
+    let user: UserQuery = get_user(&mut conn_pool, user_id.id()?)?;
     let collection_id = collection_id.into_inner().get()?;
     // REMOVE this once Migration to V2 is completed.
     if is_default_collection(&mut conn_pool, &user, collection_id)? {
@@ -445,7 +445,7 @@ pub async fn lookup_collections_containing_article(
     page: web::Query<MultipleCollectionLookupQueryParams>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user = get_user(&mut conn_pool, user_id.id().unwrap())?;
+    let user = get_user(&mut conn_pool, user_id.id()?)?;
     let ids = get_collections_and_items_containing_url(&user, &mut conn_pool, page.url.as_str())?;
     let entries: Vec<LookupEntry> = ids.iter().map(|val| val.into()).collect();
     Ok(HttpResponse::Ok().json(MultipleCollectionLookupQueryResponse { results: entries }))

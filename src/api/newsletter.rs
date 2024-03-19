@@ -42,7 +42,7 @@ pub async fn subscribe_handler(
     basket: Data<Option<Basket>>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = pool.get()?;
-    let user = get_user(&mut conn, user_id.id().unwrap())?;
+    let user = get_user(&mut conn, user_id.id()?)?;
     if let Some(basket) = &**basket {
         return subscribe(&mut conn, &user, basket).await;
     }
@@ -109,7 +109,7 @@ pub async fn unsubscribe_handler(
     basket: Data<Option<Basket>>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = pool.get()?;
-    let user = get_user(&mut conn, user_id.id().unwrap())?;
+    let user = get_user(&mut conn, user_id.id()?)?;
     if let Some(basket) = &**basket {
         return unsubscribe(&mut conn, &user, basket).await;
     }
@@ -150,7 +150,7 @@ pub async fn is_subscribed(
     basket: Data<Option<Basket>>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = pool.get()?;
-    let user = get_user(&mut conn, user_id.id().unwrap())?;
+    let user = get_user(&mut conn, user_id.id()?)?;
     if let Some(basket) = &**basket {
         let value = basket.lookup_user(&user.email).await;
         let subscribed = match value {

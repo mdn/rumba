@@ -41,7 +41,7 @@ async fn set_enforce_plus(
     user_id: Identity,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let me: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
+    let me: UserQuery = get_user(&mut conn_pool, user_id.id()?)?;
     if !me.is_admin {
         return Ok(HttpResponse::Forbidden().finish());
     }
@@ -59,7 +59,7 @@ async fn set_is_admin(
     user_id: Identity,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let me: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
+    let me: UserQuery = get_user(&mut conn_pool, user_id.id()?)?;
     if !me.is_admin {
         return Ok(HttpResponse::Forbidden().finish());
     }
@@ -73,7 +73,7 @@ async fn set_is_admin(
 
 async fn get_is_admin(pool: Data<Pool>, user_id: Identity) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let me: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
+    let me: UserQuery = get_user(&mut conn_pool, user_id.id()?)?;
     if !me.is_admin {
         return Ok(HttpResponse::Forbidden().finish());
     }
@@ -87,7 +87,7 @@ async fn user_by_email(
     user_id: Identity,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let me: UserQuery = get_user(&mut conn_pool, user_id.id().unwrap())?;
+    let me: UserQuery = get_user(&mut conn_pool, user_id.id()?)?;
     if !me.is_admin {
         return Ok(HttpResponse::Forbidden().finish());
     }

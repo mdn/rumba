@@ -171,7 +171,7 @@ pub async fn save(
             let gist =
                 create_gist(client, serde_json::to_string_pretty(&save.into_inner())?).await?;
             let mut conn = pool.get()?;
-            let user = db::users::get_user(&mut conn, user_id.id().unwrap())?;
+            let user = db::users::get_user(&mut conn, user_id.id()?)?;
             create_playground(
                 &mut conn,
                 PlaygroundInsert {

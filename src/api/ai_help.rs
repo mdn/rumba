@@ -184,7 +184,7 @@ fn history_enabled(settings: &Option<Settings>) -> bool {
 
 pub async fn quota(user_id: Identity, diesel_pool: Data<Pool>) -> Result<HttpResponse, ApiError> {
     let mut conn = diesel_pool.get()?;
-    let user = get_user(&mut conn, user_id.id().unwrap())?;
+    let user = get_user(&mut conn, user_id.id()?)?;
     if user.is_subscriber() {
         Ok(HttpResponse::Ok().json(AIHelpQuota { quota: None }))
     } else {
@@ -365,7 +365,7 @@ pub async fn ai_help(
     messages: Json<ChatRequestMessages>,
 ) -> Result<Either<impl Responder, impl Responder>, ApiError> {
     let mut conn = diesel_pool.get()?;
-    let user = get_user(&mut conn, user_id.id().unwrap())?;
+    let user = get_user(&mut conn, user_id.id()?)?;
     let settings = get_settings(&mut conn, &user)?;
     let current = if user.is_subscriber() {
         create_or_increment_total(&mut conn, &user)?;
@@ -447,6 +447,7 @@ pub async fn ai_help(
                     user.id,
                     help_ids,
                 )?;
+
                 let stream = client.chat().create_stream(ai_help_req.req).await.unwrap();
                 let refs = stream::once(async move {
                     let sse_data =
@@ -498,7 +499,7 @@ pub async fn ai_help_title_summary(
     openai_client: Data<Option<Client<OpenAIConfig>>>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = diesel_pool.get()?;
-    let user = get_user(&mut conn, user_id.id().unwrap())?;
+    let user = get_user(&mut conn, user_id.id()?)?;
     let settings = get_settings(&mut conn, &user)?;
 
     if history_enabled(&settings) {
@@ -538,7 +539,7 @@ pub async fn ai_help_history(
     chat_id: Path<Uuid>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = diesel_pool.get()?;
-    let user = get_user(&mut conn, user_id.id().unwrap())?;
+    let user = get_user(&mut conn, user_id.id()?)?;
     let settings = get_settings(&mut conn, &user)?;
 
     if history_enabled(&settings) {
@@ -559,7 +560,7 @@ pub async fn ai_help_list_history(
     diesel_pool: Data<Pool>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = diesel_pool.get()?;
-    let user = get_user(&mut conn, user_id.id().unwrap())?;
+    let user = get_user(&mut conn, user_id.id()?)?;
     let settings = get_settings(&mut conn, &user)?;
     if history_enabled(&settings) {
         let hit = list_help_history(&mut conn, &user)?;
@@ -579,7 +580,7 @@ pub async fn ai_help_delete_history(
     chat_id: Path<Uuid>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = diesel_pool.get()?;
-    let user = get_user(&mut conn, user_id.id().unwrap())?;
+    let user = get_user(&mut conn, user_id.id()?)?;
     let settings = get_settings(&mut conn, &user)?;
 
     if history_enabled(&settings) {
@@ -598,7 +599,7 @@ pub async fn ai_help_delete_full_history(
     diesel_pool: Data<Pool>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn = diesel_pool.get()?;
-    let user = get_user(&mut conn, user_id.id().unwrap())?;
+    let user = get_user(&mut conn, user_id.id()?)?;
     delete_full_help_history(&mut conn, &user)?;
     Ok(HttpResponse::Created().finish())
 }
