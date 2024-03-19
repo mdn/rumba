@@ -8,7 +8,6 @@ use async_openai::types::{
 
 use futures::Stream;
 use itertools::Itertools;
-use reqwest::Client;
 use reqwest_streams::{error::StreamBodyError, *};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -17,6 +16,7 @@ use std::{collections::HashMap, pin::Pin};
 use crate::settings::SETTINGS;
 
 pub struct GeminiClient<C: Config> {
+    http_client: reqwest::Client,
     config: C,
 }
 
@@ -25,11 +25,13 @@ pub type GenerateContentResponseStream =
 
 impl<C: Config> GeminiClient<C> {
     pub fn with_config(config: C) -> Self {
-        Self { config }
+        Self {
+            http_client: reqwest::Client::new(),
+            config,
+        }
     }
 
     pub async fn create(&self, request: GenerateContentRequest) -> GenerateContentResult {
-        let client = Client::new();
         let api_key = self.config.api_key();
         let model = self.config.model();
         let url = format!(
@@ -38,7 +40,8 @@ impl<C: Config> GeminiClient<C> {
         );
 
         let input = json!(request);
-        let res = client
+        let res = self
+            .http_client
             .post(url)
             .query(&[("key", &api_key)])
             .json(&input)
@@ -56,7 +59,6 @@ impl<C: Config> GeminiClient<C> {
         &self,
         request: GenerateContentRequest,
     ) -> Result<GenerateContentResponseStream, ()> {
-        let client = Client::new();
         let api_key = self.config.api_key();
         let model = self.config.model();
         let url = format!(
@@ -65,7 +67,8 @@ impl<C: Config> GeminiClient<C> {
         );
 
         let input = json!(request);
-        let res = client
+        let res = self
+            .http_client
             .post(url)
             .query(&[("key", &api_key)])
             .json(&input)
