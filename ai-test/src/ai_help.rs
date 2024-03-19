@@ -2,13 +2,12 @@ use std::{
     iter,
     path::{Path, PathBuf},
     sync::Arc,
-    time::Instant,
+    time::{Duration, Instant},
 };
 
 use anyhow::Error;
 use async_openai::{
     config::OpenAIConfig,
-    error::OpenAIError,
     types::{ChatCompletionRequestMessage, ChatCompletionResponseMessage, Role::User},
 };
 use futures::{stream, StreamExt, TryStreamExt};
@@ -16,7 +15,7 @@ use itertools::Itertools;
 use rumba::{
     ai::help::{prepare_ai_help_req, AIHelpRequest},
     db,
-    gemini::{self, GenerateContentRequest},
+    gemini::{self, GenerateContentRequest, GenerateContentResponseErrorDetails},
     settings::SETTINGS,
 };
 use serde::{Deserialize, Serialize};
@@ -109,8 +108,6 @@ pub async fn ai_help_all(
     .map(Ok::<(usize, Vec<String>), Error>)
     .try_for_each_concurrent(10, |(i, prompts)| async move {
         println!("processing: {:0>2}", i);
-        let json_out = json_path(out, i);
-        let md_out = md_path(out, i);
         let messages = prompts
             .into_iter()
             .map(|prompt| ChatCompletionRequestMessage {
@@ -125,27 +122,45 @@ pub async fn ai_help_all(
         {
             let gemini_req = GenerateContentRequest::from(req.req.clone());
 
-            let mut gemini_res = gemini_client
-                .create(gemini_req.clone())
-                .await
-                .map_err(|_| OpenAIError::StreamError(String::new()))?;
+            let mut duration = Duration::from_millis(1000);
+            loop {
+                let gemini_res = gemini_client.create(gemini_req.clone()).await;
 
-            let res: Option<ChatCompletionResponseMessage> = gemini_res
-                .candidates
-                .pop()
-                .and_then(|res| res.content)
-                .map(|content| -> ChatCompletionResponseMessage { content.into() });
-            let storage = Storage {
-                req: AIHelpRequest {
-                    req: gemini_req.clone().into(),
-                    refs: req.refs,
-                },
-                res,
-            };
-            println!("writing: {}", json_out.display());
-            fs::write(json_out, serde_json::to_vec_pretty(&storage)?).await?;
-            println!("writing: {}", md_out.display());
-            fs::write(md_out, storage.to_md().as_bytes()).await?;
+                if let Err(err) = gemini_res {
+                    let GenerateContentResponseErrorDetails {
+                        code,
+                        status,
+                        message,
+                    } = err.error;
+                    println!("failed: {:0>2} ({} {} - {})", i, code, status, message);
+                    println!("retrying: {:0>2} (in {} ms)", i, duration.as_millis());
+                    tokio::time::sleep(duration).await;
+                    duration = duration.mul_f32(2_f32);
+                    continue;
+                }
+
+                let res: Option<ChatCompletionResponseMessage> = gemini_res
+                    .unwrap()
+                    .candidates
+                    .pop()
+                    .and_then(|res| res.content)
+                    .map(|content| -> ChatCompletionResponseMessage { content.into() });
+                let storage = Storage {
+                    req: AIHelpRequest {
+                        req: gemini_req.clone().into(),
+                        refs: req.refs.clone(),
+                    },
+                    res,
+                };
+
+                let json_out = json_path(out, i);
+                let md_out = md_path(out, i);
+                println!("writing: {}", json_out.display());
+                fs::write(json_out, serde_json::to_vec_pretty(&storage)?).await?;
+                println!("writing: {}", md_out.display());
+                fs::write(md_out, storage.to_md().as_bytes()).await?;
+                break;
+            }
         }
         Ok(())
     })
