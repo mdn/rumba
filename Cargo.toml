@@ -94,7 +94,7 @@ basket = "0.0.5"
 async-openai = "0.14"
 tiktoken-rs = { version = "0.5", features = ["async-openai"] }
 
-octocrab = "0.34"
+octocrab = "0.36"
 aes-gcm = { version = "0.10", features = ["default", "std"] }
 hmac = "0.12"
 sha2 = "0.10"
