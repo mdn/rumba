@@ -15,6 +15,10 @@ path = "src/main.rs"
 members = ["ai-test"]
 resolver = "2"
 
+[features]
+default = []
+llamafile = []
+
 [dependencies]
 thiserror = "1"
 anyhow = "1"

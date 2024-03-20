@@ -447,6 +447,14 @@ pub async fn ai_help(
                     user.id,
                     help_ids,
                 )?;
+
+                #[cfg(feature = "llamafile")]
+                let client = Client::with_config(
+                    OpenAIConfig::new()
+                        .with_api_key("")
+                        .with_api_base("http://localhost:8080/v1"),
+                );
+
                 let stream = client.chat().create_stream(ai_help_req.req).await.unwrap();
                 let refs = stream::once(async move {
                     let sse_data =
