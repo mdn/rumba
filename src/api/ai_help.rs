@@ -418,8 +418,6 @@ pub async fn ai_help(
 
         match prepare_res? {
             Some(ai_help_req) => {
-                qa_check_for_error_trigger(&ai_help_req.req.messages)?;
-
                 let sources = ai_help_req.refs;
                 let created_at = match record_sources(
                     &diesel_pool,
@@ -447,10 +445,15 @@ pub async fn ai_help(
                     user.id,
                     help_ids,
                 )?;
+                let qa_error_triggered =
+                    qa_check_for_error_trigger(&ai_help_req.req.messages).is_err();
                 let stream = client.chat().create_stream(ai_help_req.req).await.unwrap();
                 let refs = stream::once(async move {
-                    let sse_data =
-                        sse::Data::new_json(ai_help_meta).map_err(OpenAIError::JSONDeserialize);
+                    let sse_data = if qa_error_triggered {
+                        Err(OpenAIError::InvalidArgument("Artificial Error".to_owned()))
+                    } else {
+                        sse::Data::new_json(ai_help_meta).map_err(OpenAIError::JSONDeserialize)
+                    };
                     match sse_data {
                         Ok(sse_data) => Ok(sse::Event::Data(sse_data)),
                         Err(err) => {
