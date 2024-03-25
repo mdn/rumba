@@ -207,8 +207,10 @@ pub enum AiHelpMessageStatus {
     ModerationError,
     NoUserPromptError,
     TokenLimitError,
-    Stopped,
     Timeout,
+    FinishedTooLong,
+    FinishedContentFilter,
+    FinishedNoReason,
     #[default]
     Unknown,
 }

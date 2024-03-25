@@ -44,6 +44,12 @@ use crate::{
     db::{ai_help::create_or_increment_limit, users::get_user, Pool},
 };
 
+#[derive(Debug, Clone, Copy, Default)]
+struct ResponseContext {
+    len: usize,
+    status: db::types::AiHelpMessageStatus,
+}
+
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct ChatRequestMessages {
     chat_id: Option<Uuid>,
@@ -444,7 +450,7 @@ pub async fn ai_help(
                         stream
                             .map(Some) // Wrapping response chunks in some.
                             .chain(stream::once(async move { None })) // Adding a None at the end.
-                            .scan(0, move |response_len, res| {
+                            .scan(ResponseContext::default(), move |context, res| {
                                 future::ready(match res {
                                     Some(Ok(res)) => {
                                         if let Some(ref tx) = tx {
@@ -454,7 +460,20 @@ pub async fn ai_help(
                                         }
                                         if let Some(c) = res.choices.first() {
                                             if let Some(part) = &c.delta.content {
-                                                *response_len += part.len();
+                                                context.len += part.len();
+                                            }
+                                             context.status = match c.finish_reason.as_deref() {
+                                                Some("length") => {
+                                                    db::types::AiHelpMessageStatus::FinishedTooLong
+                                                },
+                                                Some("stop") => {
+                                                     db::types::AiHelpMessageStatus::Success
+                                                },
+                                                Some("content_filter") => {
+                                                     db::types::AiHelpMessageStatus::FinishedContentFilter
+                                                },
+                                                Some(_) => db::types::AiHelpMessageStatus::Unknown,
+                                                None =>  db::types::AiHelpMessageStatus::FinishedNoReason,
                                             }
                                         }
                                         Some(Ok(sse::Event::Data(
@@ -471,18 +490,15 @@ pub async fn ai_help(
                                             message_id,
                                             parent_id,
                                             created_at: Some(created_at.naive_utc()),
-                                            search_duration: i64::try_from(
+                                            search_duration: default_meta_big_int(
                                                 search_duration.as_millis(),
-                                            )
-                                            .unwrap_or(-1),
-                                            response_duration: i64::try_from(
+                                            ),
+                                            response_duration: default_meta_big_int(
                                                 response_duration.as_millis(),
-                                            )
-                                            .unwrap_or(-1),
-                                            response_len: i64::try_from(*response_len)
-                                                .unwrap_or(-1),
+                                            ),
+                                            response_len: default_meta_big_int(context.len),
                                             model: &model,
-                                            status: db::types::AiHelpMessageStatus::Success,
+                                            status: context.status,
                                             sources: Some(&sources_value),
                                             ..Default::default()
                                         };
@@ -649,4 +665,8 @@ fn qa_check_for_error_trigger(
         }
     }
     Ok(())
+}
+
+fn default_meta_big_int(value: impl TryInto<i64>) -> i64 {
+    value.try_into().unwrap_or(-1)
 }
