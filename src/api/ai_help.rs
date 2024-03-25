@@ -428,7 +428,8 @@ pub async fn ai_help(
                 )?;
                 let qa_error_triggered =
                     qa_check_for_error_trigger(&ai_help_req.req.messages).is_err();
-                let ai_help_res_stream = client.chat().create_stream(ai_help_req.req).await.unwrap();
+                let ai_help_res_stream =
+                    client.chat().create_stream(ai_help_req.req).await.unwrap();
                 let refs_sse_data = if qa_error_triggered {
                     Err(OpenAIError::InvalidArgument("Artificial Error".to_owned()))
                 } else {
