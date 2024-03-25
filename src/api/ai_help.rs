@@ -479,15 +479,15 @@ pub async fn ai_help(
                                     }
                                     res => {
                                         let response_duration = start.elapsed();
-                                        let status = if let Some(Err(e)) = res {
-                                        // reinstate the user quota and pass on the error
-                                        let _ = decrement_limit(&mut conn, &user);
-                                        (&e).into()
+                                        let status = if let Some(Err(e)) = &res {
+                                            // reinstate the user quota and pass on the error
+                                            let _ = decrement_limit(&mut conn, &user);
+                                            e.into()
                                         } else {
                                             context.status
                                         };
                                         let ai_help_message_meta = AiHelpMessageMetaInsert {
-                                            user_id: user.id,
+                                            user_id,
                                             chat_id,
                                             message_id,
                                             parent_id,
