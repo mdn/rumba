@@ -428,7 +428,7 @@ pub async fn ai_help(
                 )?;
                 let qa_error_triggered =
                     qa_check_for_error_trigger(&ai_help_req.req.messages).is_err();
-                let stream = client.chat().create_stream(ai_help_req.req).await.unwrap();
+                let ai_help_res_stream = client.chat().create_stream(ai_help_req.req).await.unwrap();
                 let refs_sse_data = if qa_error_triggered {
                     Err(OpenAIError::InvalidArgument("Artificial Error".to_owned()))
                 } else {
@@ -442,81 +442,75 @@ pub async fn ai_help(
 
                 let refs = stream::once(async move { refs_sse_data });
 
-                Ok(sse::Sse::from_stream(
-                    refs.chain(
-                        stream
-                            .map(Some) // Wrapping response chunks in some.
-                            .chain(stream::once(async move { None })) // Adding a None at the end.
-                            .scan(ResponseContext::default(), move |context, res| {
-                                future::ready(match res {
-                                    Some(Ok(res)) => {
-                                        if let Some(ref tx) = tx {
-                                            if let Err(e) = tx.send(res.clone()) {
-                                                error!("{e}");
-                                            }
-                                        }
-                                        if let Some(c) = res.choices.first() {
-                                            if let Some(part) = &c.delta.content {
-                                                context.len += part.len();
-                                            }
-                                             context.status = match c.finish_reason.as_deref() {
-                                                Some("length") => {
-                                                    db::types::AiHelpMessageStatus::FinishedTooLong
-                                                },
-                                                Some("stop") => {
-                                                     db::types::AiHelpMessageStatus::Success
-                                                },
-                                                Some("content_filter") => {
-                                                     db::types::AiHelpMessageStatus::FinishedContentFilter
-                                                },
-                                                Some(_) => db::types::AiHelpMessageStatus::Unknown,
-                                                None =>  db::types::AiHelpMessageStatus::FinishedNoReason,
-                                            }
-                                        }
-                                        Some(Ok(sse::Event::Data(
-                                            sse::Data::new_json(res).unwrap(),
-                                        )))
+                let res_stream = ai_help_res_stream
+                    .map(Some) // Wrapping response chunks in some.
+                    .chain(stream::once(async move { None })) // Adding a None at the end.
+                    .scan(ResponseContext::default(), move |context, res| {
+                        future::ready(match res {
+                            Some(Ok(res)) => {
+                                if let Some(ref tx) = tx {
+                                    if let Err(e) = tx.send(res.clone()) {
+                                        error!("{e}");
                                     }
-                                    res => {
-                                        let response_duration = start.elapsed();
-                                        let status = if let Some(Err(e)) = &res {
-                                            // reinstate the user quota and pass on the error
-                                            let _ = decrement_limit(&mut conn, &user);
-                                            e.into()
-                                        } else {
-                                            context.status
-                                        };
-                                        let ai_help_message_meta = AiHelpMessageMetaInsert {
-                                            user_id,
-                                            chat_id,
-                                            message_id,
-                                            parent_id,
-                                            created_at: Some(created_at.naive_utc()),
-                                            search_duration: default_meta_big_int(
-                                                ai_help_req_meta.search_duration.as_millis(),
-                                            ),
-                                            response_duration: default_meta_big_int(
-                                                response_duration.as_millis(),
-                                            ),
-                                            query_len: default_meta_big_int(ai_help_req_meta.query_len),
-                                            context_len: default_meta_big_int(ai_help_req_meta.context_len),
-                                            response_len: default_meta_big_int(context.len),
-                                            model: &model,
-                                            status,
-                                            sources: Some(&sources_value),
-                                        };
-                                        add_help_message_meta(&mut conn, ai_help_message_meta);
+                                }
+                                if let Some(c) = res.choices.first() {
+                                    if let Some(part) = &c.delta.content {
+                                        context.len += part.len();
+                                    }
+                                    context.status = match c.finish_reason.as_deref() {
+                                        Some("length") => {
+                                            db::types::AiHelpMessageStatus::FinishedTooLong
+                                        }
+                                        Some("stop") => db::types::AiHelpMessageStatus::Success,
+                                        Some("content_filter") => {
+                                            db::types::AiHelpMessageStatus::FinishedContentFilter
+                                        }
+                                        Some(_) => db::types::AiHelpMessageStatus::Unknown,
+                                        None => db::types::AiHelpMessageStatus::FinishedNoReason,
+                                    }
+                                }
+                                Some(Ok(sse::Event::Data(sse::Data::new_json(res).unwrap())))
+                            }
+                            res => {
+                                let response_duration = start.elapsed();
+                                let status = if let Some(Err(e)) = &res {
+                                    // reinstate the user quota and pass on the error
+                                    let _ = decrement_limit(&mut conn, &user);
+                                    e.into()
+                                } else {
+                                    context.status
+                                };
+                                let ai_help_message_meta = AiHelpMessageMetaInsert {
+                                    user_id,
+                                    chat_id,
+                                    message_id,
+                                    parent_id,
+                                    created_at: Some(created_at.naive_utc()),
+                                    search_duration: default_meta_big_int(
+                                        ai_help_req_meta.search_duration.as_millis(),
+                                    ),
+                                    response_duration: default_meta_big_int(
+                                        response_duration.as_millis(),
+                                    ),
+                                    query_len: default_meta_big_int(ai_help_req_meta.query_len),
+                                    context_len: default_meta_big_int(ai_help_req_meta.context_len),
+                                    response_len: default_meta_big_int(context.len),
+                                    model: &model,
+                                    status,
+                                    sources: Some(&sources_value),
+                                };
+                                add_help_message_meta(&mut conn, ai_help_message_meta);
 
-                                        if let Some(Err(e)) = res {
-                                            Some(Err(e))
-                                        } else {
-                                            None
-                                        }
-                                    }
-                                })
-                            }),
-                    ),
-                ))
+                                if let Some(Err(e)) = res {
+                                    Some(Err(e))
+                                } else {
+                                    None
+                                }
+                            }
+                        })
+                    });
+
+                Ok(sse::Sse::from_stream(refs.chain(res_stream)))
             }
             Err(e) => {
                 let ai_help_message_meta = AiHelpMessageMetaInsert {

@@ -208,12 +208,12 @@ pub enum AiHelpMessageStatus {
     ModerationError,
     NoUserPromptError,
     TokenLimitError,
-    Timeout,
+    Timeout, // not yet used
     FinishedTooLong,
     FinishedContentFilter,
     FinishedNoReason,
-    UserStopped,
-    UserTimeout,
+    UserStopped, // not yet used
+    UserTimeout, // not yet used
     #[default]
     Unknown,
 }
