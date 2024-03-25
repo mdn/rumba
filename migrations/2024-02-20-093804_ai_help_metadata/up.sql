@@ -1,7 +1,7 @@
 CREATE TYPE ai_help_message_status AS ENUM (
     'success',
     'search_error',
-    'open_ai_api_error',
+    'ai_api_error',
     'completion_error',
     'moderation_error',
     'no_user_prompt_error',
@@ -10,6 +10,8 @@ CREATE TYPE ai_help_message_status AS ENUM (
     'finished_too_long',
     'finished_content_filter',
     'finished_no_reason',
+    'user_stopped',
+    'user_timeout',
     'unknown'
 );
 

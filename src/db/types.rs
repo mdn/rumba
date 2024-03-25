@@ -1,4 +1,5 @@
 #![allow(non_camel_case_types)]
+use async_openai::error::OpenAIError;
 use serde::{Deserialize, Serialize};
 
 use crate::{ai::error::AIError, db};
@@ -202,7 +203,7 @@ pub enum EngineType {
 pub enum AiHelpMessageStatus {
     Success,
     SearchError,
-    OpenAiApiError,
+    AiApiError,
     CompletionError,
     ModerationError,
     NoUserPromptError,
@@ -211,6 +212,8 @@ pub enum AiHelpMessageStatus {
     FinishedTooLong,
     FinishedContentFilter,
     FinishedNoReason,
+    UserStopped,
+    UserTimeout,
     #[default]
     Unknown,
 }
@@ -218,9 +221,7 @@ pub enum AiHelpMessageStatus {
 impl From<&AIError> for AiHelpMessageStatus {
     fn from(e: &AIError) -> Self {
         match e {
-            crate::ai::error::AIError::OpenAIError(_) => {
-                db::types::AiHelpMessageStatus::OpenAiApiError
-            }
+            crate::ai::error::AIError::OpenAIError(_) => db::types::AiHelpMessageStatus::AiApiError,
             crate::ai::error::AIError::SqlXError(_) => db::types::AiHelpMessageStatus::SearchError,
             crate::ai::error::AIError::FlaggedError => {
                 db::types::AiHelpMessageStatus::ModerationError
@@ -232,5 +233,11 @@ impl From<&AIError> for AiHelpMessageStatus {
                 db::types::AiHelpMessageStatus::TokenLimitError
             }
         }
+    }
+}
+
+impl From<&OpenAIError> for AiHelpMessageStatus {
+    fn from(_: &OpenAIError) -> Self {
+        db::types::AiHelpMessageStatus::AiApiError
     }
 }

@@ -283,9 +283,6 @@ fn log_errors_and_record_response(
     user_id: i64,
     help_ids: HelpIds,
 ) -> Result<Option<mpsc::UnboundedSender<CreateChatCompletionStreamResponse>>, ApiError> {
-    if !history_enabled {
-        return Ok(None);
-    }
     let mut conn = pool.get()?;
     let (tx, mut rx) = mpsc::unbounded_channel::<CreateChatCompletionStreamResponse>();
     actix_web::rt::spawn(async move {
@@ -398,7 +395,7 @@ pub async fn ai_help(
         let user_id = user.id;
 
         match prepare_res {
-            Ok((ai_help_req, search_duration)) => {
+            Ok((ai_help_req, ai_help_req_meta)) => {
                 let sources = ai_help_req.refs;
                 let model = ai_help_req.req.model.clone();
                 let created_at = match record_sources(
@@ -480,30 +477,41 @@ pub async fn ai_help(
                                             sse::Data::new_json(res).unwrap(),
                                         )))
                                     }
-                                    Some(Err(e)) => Some(Err(e)),
-                                    None => {
-                                        // This is the added artificial chunk.
+                                    res => {
                                         let response_duration = start.elapsed();
+                                        let status = if let Some(Err(e)) = res {
+                                        // reinstate the user quota and pass on the error
+                                        let _ = decrement_limit(&mut conn, &user);
+                                        (&e).into()
+                                        } else {
+                                            context.status
+                                        };
                                         let ai_help_message_meta = AiHelpMessageMetaInsert {
-                                            user_id,
+                                            user_id: user.id,
                                             chat_id,
                                             message_id,
                                             parent_id,
                                             created_at: Some(created_at.naive_utc()),
                                             search_duration: default_meta_big_int(
-                                                search_duration.as_millis(),
+                                                ai_help_req_meta.search_duration.as_millis(),
                                             ),
                                             response_duration: default_meta_big_int(
                                                 response_duration.as_millis(),
                                             ),
+                                            query_len: default_meta_big_int(ai_help_req_meta.query_len),
+                                            context_len: default_meta_big_int(ai_help_req_meta.context_len),
                                             response_len: default_meta_big_int(context.len),
                                             model: &model,
-                                            status: context.status,
+                                            status,
                                             sources: Some(&sources_value),
-                                            ..Default::default()
                                         };
                                         add_help_message_meta(&mut conn, ai_help_message_meta);
-                                        None
+
+                                        if let Some(Err(e)) = res {
+                                            Some(Err(e))
+                                        } else {
+                                            None
+                                        }
                                     }
                                 })
                             }),
@@ -520,6 +528,21 @@ pub async fn ai_help(
                     ..Default::default()
                 };
                 add_help_message_meta(&mut conn, ai_help_message_meta);
+
+                // Reinstate the user quota if we fail to do the preparation step.
+                // Flagged/moderation errors DO count towards the limit, otherwise
+                // it is on us.
+                match e {
+                    crate::ai::error::AIError::OpenAIError(_)
+                    | crate::ai::error::AIError::TiktokenError(_)
+                    | crate::ai::error::AIError::TokenLimit
+                    | crate::ai::error::AIError::SqlXError(_)
+                    | crate::ai::error::AIError::NoUserPrompt => {
+                        let _ = decrement_limit(&mut conn, &user);
+                    }
+                    _ => (),
+                }
+
                 Err(e.into())
             }
         }

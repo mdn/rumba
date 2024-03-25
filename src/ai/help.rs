@@ -35,12 +35,18 @@ pub struct AIHelpRequest {
     pub refs: Vec<RefDoc>,
 }
 
+pub struct AIHelpRequestMeta {
+    pub query_len: usize,
+    pub context_len: usize,
+    pub search_duration: Duration,
+}
+
 pub async fn prepare_ai_help_req(
     client: &Client<OpenAIConfig>,
     pool: &SupaPool,
     is_subscriber: bool,
     messages: Vec<ChatCompletionRequestMessage>,
-) -> Result<(AIHelpRequest, Duration), AIError> {
+) -> Result<(AIHelpRequest, AIHelpRequestMeta), AIError> {
     let config = if is_subscriber {
         AI_HELP_GPT4_FULL_DOC_NEW_PROMPT
     } else {
@@ -83,6 +89,7 @@ pub async fn prepare_ai_help_req(
         .last()
         .and_then(|msg| msg.content.as_ref())
         .ok_or(AIError::NoUserPrompt)?;
+    let query_len = last_user_message.len();
 
     let start = Instant::now();
     let related_docs = if config.full_doc {
@@ -94,15 +101,17 @@ pub async fn prepare_ai_help_req(
 
     let mut context = vec![];
     let mut refs = vec![];
-    let mut token_len = 0;
+    let mut context_len = 0;
+    let mut context_token_len = 0;
     for doc in related_docs.into_iter() {
         debug!("url: {}", doc.url);
+        context_len += doc.content.len();
         let bpe = tiktoken_rs::r50k_base().unwrap();
         let tokens = bpe.encode_with_special_tokens(&doc.content).len();
-        token_len += tokens;
-        debug!("tokens: {}, token_len: {}", tokens, token_len);
-        if token_len >= config.context_limit {
-            token_len -= tokens;
+        context_token_len += tokens;
+        debug!("tokens: {}, token_len: {}", tokens, context_token_len);
+        if context_token_len >= config.context_limit {
+            context_token_len -= tokens;
             continue;
         }
         if !refs.iter().any(|r: &RefDoc| r.url == doc.url) {
@@ -148,7 +157,14 @@ pub async fn prepare_ai_help_req(
         .temperature(0.0)
         .build()?;
 
-    Ok((AIHelpRequest { req, refs }, search_duration))
+    Ok((
+        AIHelpRequest { req, refs },
+        AIHelpRequestMeta {
+            query_len,
+            context_len,
+            search_duration,
+        },
+    ))
 }
 
 pub fn prepare_ai_help_summary_req(
