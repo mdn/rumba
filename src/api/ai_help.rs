@@ -9,7 +9,10 @@ use actix_web_lab::{__reexports::tokio::sync::mpsc, sse};
 use async_openai::{
     config::OpenAIConfig,
     error::OpenAIError,
-    types::{ChatCompletionRequestMessage, CreateChatCompletionStreamResponse, Role::Assistant},
+    types::{
+        ChatCompletionRequestMessage, CreateChatCompletionStreamResponse,
+        Role::{self, Assistant},
+    },
     Client,
 };
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
@@ -24,8 +27,9 @@ use crate::{
         self,
         ai_help::{
             add_help_history_message, add_help_message_meta, create_or_increment_total,
-            delete_full_help_history, delete_help_history, get_count, help_history,
-            help_history_get_message, list_help_history, update_help_history_label, AI_HELP_LIMIT,
+            decrement_limit, delete_full_help_history, delete_help_history, get_count,
+            help_history, help_history_get_message, list_help_history, update_help_history_label,
+            AI_HELP_LIMIT,
         },
         model::{
             AIHelpHistoryMessage, AIHelpHistoryMessageInsert, AiHelpMessageMetaInsert, Settings,
@@ -33,6 +37,7 @@ use crate::{
         settings::get_settings,
         SupaPool,
     },
+    settings::SETTINGS,
 };
 use crate::{
     api::error::ApiError,
@@ -370,7 +375,23 @@ pub async fn ai_help(
             )?;
         }
 
-        match prepare_ai_help_req(client, pool, user.is_subscriber(), messages).await {
+        let prepare_res = prepare_ai_help_req(client, pool, user.is_subscriber(), messages).await;
+        // Reinstate the user quota if we fail to do the preparation step.
+        // Flagged/moderation errors DO count towards the limit, otherwise
+        // it is on us.
+        match prepare_res {
+            Err(crate::ai::error::AIError::OpenAIError(_))
+            | Err(crate::ai::error::AIError::TiktokenError(_))
+            | Err(crate::ai::error::AIError::TokenLimit)
+            | Err(crate::ai::error::AIError::SqlXError(_))
+            | Err(crate::ai::error::AIError::NoUserPrompt) => {
+                let _ = decrement_limit(&mut conn, &user);
+            }
+            _ => (),
+        }
+        let user_id = user.id;
+
+        match prepare_res {
             Ok((ai_help_req, search_duration)) => {
                 let sources = ai_help_req.refs;
                 let model = ai_help_req.req.model.clone();
@@ -385,14 +406,7 @@ pub async fn ai_help(
                     None => Utc::now(),
                 };
 
-                let tx = log_errors_and_record_response(
-                    &diesel_pool,
-                    history_enabled(&settings),
-                    user.id,
-                    help_ids,
-                )?;
                 let start = Instant::now();
-                let stream = client.chat().create_stream(ai_help_req.req).await.unwrap();
                 let sources_value = serde_json::to_value(&sources).unwrap_or(Value::Null);
                 let ai_help_meta = AIHelpMeta {
                     typ: MetaType::Metadata,
@@ -403,11 +417,27 @@ pub async fn ai_help(
                     quota: current.map(AIHelpLimit::from_count),
                     created_at,
                 };
-                let refs = stream::once(async move {
-                    Ok::<_, OpenAIError>(sse::Event::Data(
-                        sse::Data::new_json(ai_help_meta).map_err(OpenAIError::JSONDeserialize)?,
-                    ))
+                let tx = log_errors_and_record_response(
+                    &diesel_pool,
+                    history_enabled(&settings),
+                    user.id,
+                    help_ids,
+                )?;
+                let qa_error_triggered =
+                    qa_check_for_error_trigger(&ai_help_req.req.messages).is_err();
+                let stream = client.chat().create_stream(ai_help_req.req).await.unwrap();
+                let refs_sse_data = if qa_error_triggered {
+                    Err(OpenAIError::InvalidArgument("Artificial Error".to_owned()))
+                } else {
+                    sse::Data::new_json(ai_help_meta).map_err(OpenAIError::JSONDeserialize)
+                }
+                .map(sse::Event::Data)
+                .map_err(|e| {
+                    let _ = decrement_limit(&mut conn, &user);
+                    e
                 });
+
+                let refs = stream::once(async move { refs_sse_data });
 
                 Ok(sse::Sse::from_stream(
                     refs.chain(
@@ -436,7 +466,7 @@ pub async fn ai_help(
                                         // This is the added artificial chunk.
                                         let response_duration = start.elapsed();
                                         let ai_help_message_meta = AiHelpMessageMetaInsert {
-                                            user_id: user.id,
+                                            user_id,
                                             chat_id,
                                             message_id,
                                             parent_id,
@@ -592,4 +622,31 @@ pub async fn ai_help_delete_full_history(
     let user = get_user(&mut conn, user_id.id().unwrap())?;
     delete_full_help_history(&mut conn, &user)?;
     Ok(HttpResponse::Created().finish())
+}
+
+// This function is for QA purposes only, it triggering
+// an error based on the input message. The message can be optionally
+// set in the settings `ai.trigger_error_for_chat_term`. Nothing
+// will be triggered if the setting is missing, which should be the
+// situation in production-like environments.
+fn qa_check_for_error_trigger(
+    messages: &[ChatCompletionRequestMessage],
+) -> Result<(), crate::api::error::ApiError> {
+    if let Some(magic_words) = SETTINGS
+        .ai
+        .as_ref()
+        .and_then(|ai| ai.trigger_error_for_chat_term.as_ref())
+    {
+        if let Some(msg_text) = messages
+            .iter()
+            .filter(|m| m.role == Role::User)
+            .last()
+            .and_then(|m| m.content.as_ref())
+        {
+            if msg_text == magic_words {
+                return Err(crate::api::error::ApiError::Artificial);
+            }
+        }
+    }
+    Ok(())
 }

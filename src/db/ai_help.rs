@@ -114,6 +114,17 @@ pub fn create_or_increment_limit(
     }
 }
 
+pub fn decrement_limit(conn: &mut PgConnection, user: &UserQuery) -> Result<(), DbError> {
+    update(limits::table)
+        .filter(limits::user_id.eq(&user.id))
+        .set((
+            (limits::total_questions.eq(limits::total_questions - 1)),
+            (limits::session_questions.eq(limits::session_questions - 1)),
+        ))
+        .execute(conn)?;
+    Ok(())
+}
+
 pub fn add_help_history(
     conn: &mut PgConnection,
     user_id: i64,
