@@ -527,6 +527,11 @@ pub async fn ai_help(
                     chat_id,
                     message_id,
                     parent_id,
+                    search_duration: default_meta_big_int(
+                        ai_help_req_meta.search_duration.map(|d| d.as_millis()),
+                    ),
+                    query_len: default_meta_big_int(ai_help_req_meta.query_len),
+                    context_len: default_meta_big_int(ai_help_req_meta.context_len),
                     status: (&e).into(),
                     ..Default::default()
                 };
