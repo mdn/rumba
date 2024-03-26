@@ -1,4 +1,4 @@
-use crate::db::types::{FxaEventStatus, Subscription};
+use crate::db::types::{AiHelpMessageStatus, FxaEventStatus, Subscription};
 use crate::db::{schema::*, types::FxaEvent};
 use crate::helpers::to_utc;
 use chrono::NaiveDateTime;
@@ -312,4 +312,35 @@ pub struct SubscriptionChangeQuery {
     pub old_subscription_type: Subscription,
     pub new_subscription_type: Subscription,
     pub created_at: NaiveDateTime,
+}
+
+#[derive(Insertable, Default, Debug)]
+#[diesel(table_name = ai_help_message_meta)]
+pub struct AiHelpMessageMetaInsert<'a> {
+    // ID of the user.
+    pub user_id: i64,
+    /// UUID of the conversation.
+    pub chat_id: Uuid,
+    /// UUID of the message.
+    pub message_id: Uuid,
+    /// UUID of parent message, if this was a follow-up question.
+    pub parent_id: Option<Uuid>,
+    /// Timestamp at which the message failed or finished.
+    pub created_at: Option<NaiveDateTime>,
+    /// Time it took to search related content in milliseconds.
+    pub search_duration: Option<i64>,
+    /// Time it took to generate the answer in milliseconds.
+    pub response_duration: Option<i64>,
+    /// Length of user's question in bytes.
+    pub query_len: Option<i64>,
+    /// Length of MDN content passed as context in bytes.
+    pub context_len: Option<i64>,
+    /// Length of LLM's reply in bytes.
+    pub response_len: Option<i64>,
+    /// Model used to generate the answer.
+    pub model: &'a str,
+    /// Status of the message.
+    pub status: AiHelpMessageStatus,
+    /// Consulted MDN content to answer the question.
+    pub sources: Option<Value>,
 }

@@ -1,5 +1,8 @@
 #![allow(non_camel_case_types)]
+use async_openai::error::OpenAIError;
 use serde::{Deserialize, Serialize};
+
+use crate::{ai::error::AIError, db};
 
 #[derive(Copy, Clone, diesel_derive_enum::DbEnum, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[ExistingTypePath = "crate::db::schema::sql_types::Locale"]
@@ -190,4 +193,51 @@ pub enum EngineType {
     Trident,
     #[serde(other)]
     Unknown,
+}
+
+#[derive(
+    Copy, Clone, diesel_derive_enum::DbEnum, Debug, Deserialize, Eq, Default, PartialEq, Serialize,
+)]
+#[ExistingTypePath = "crate::db::schema::sql_types::AiHelpMessageStatus"]
+#[serde(rename_all = "snake_case")]
+pub enum AiHelpMessageStatus {
+    Success,
+    SearchError,
+    AiApiError,
+    CompletionError,
+    ModerationError,
+    NoUserPromptError,
+    TokenLimitError,
+    Timeout, // not yet used
+    FinishedTooLong,
+    FinishedContentFilter,
+    FinishedNoReason,
+    UserStopped, // not yet used
+    UserTimeout, // not yet used
+    #[default]
+    Unknown,
+}
+
+impl From<&AIError> for AiHelpMessageStatus {
+    fn from(e: &AIError) -> Self {
+        match e {
+            crate::ai::error::AIError::OpenAIError(_) => db::types::AiHelpMessageStatus::AiApiError,
+            crate::ai::error::AIError::SqlXError(_) => db::types::AiHelpMessageStatus::SearchError,
+            crate::ai::error::AIError::FlaggedError => {
+                db::types::AiHelpMessageStatus::ModerationError
+            }
+            crate::ai::error::AIError::NoUserPrompt => {
+                db::types::AiHelpMessageStatus::NoUserPromptError
+            }
+            crate::ai::error::AIError::TokenLimit | crate::ai::error::AIError::TiktokenError(_) => {
+                db::types::AiHelpMessageStatus::TokenLimitError
+            }
+        }
+    }
+}
+
+impl From<&OpenAIError> for AiHelpMessageStatus {
+    fn from(_: &OpenAIError) -> Self {
+        db::types::AiHelpMessageStatus::AiApiError
+    }
 }

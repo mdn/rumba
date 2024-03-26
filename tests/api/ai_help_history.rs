@@ -195,7 +195,7 @@ async fn test_history_deletion() -> Result<(), Error> {
     // we only compare up to millisecond precision
     assert_eq!(
         ts.timestamp_micros(),
-        records.get(0).unwrap().timestamp_micros()
+        records.first().unwrap().timestamp_micros()
     );
 
     drop_stubr(stubr).await;
