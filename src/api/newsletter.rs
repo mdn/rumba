@@ -32,7 +32,7 @@ struct Subscribed {
     pub subscribed: bool,
 }
 
-#[derive(Deserialize, Serialize, Validate, Debug)]
+#[derive(Deserialize, Serialize, Validate)]
 pub struct SubscriptionRequest {
     #[validate(email(message = "must be an email address"))]
     pub email: String,
