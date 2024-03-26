@@ -40,6 +40,8 @@ pub struct AIHelpRequestMeta {
     pub query_len: Option<usize>,
     pub context_len: Option<usize>,
     pub search_duration: Option<Duration>,
+    pub model: Option<&'static str>,
+    pub sources: Option<Vec<RefDoc>>,
 }
 
 pub async fn prepare_ai_help_req(
@@ -124,7 +126,9 @@ pub async fn prepare_ai_help_req(
         }
         context.push(doc);
     }
+    request_meta.sources = Some(refs.clone());
     request_meta.context_len = Some(context_len);
+
     let system_message = ChatCompletionRequestMessageArgs::default()
         .role(Role::System)
         .content(config.system_prompt)
@@ -159,6 +163,7 @@ pub async fn prepare_ai_help_req(
         .messages(messages)
         .temperature(0.0)
         .build()?;
+    request_meta.model = Some(config.model);
 
     Ok(AIHelpRequest { req, refs })
 }

@@ -342,5 +342,5 @@ pub struct AiHelpMessageMetaInsert<'a> {
     /// Status of the message.
     pub status: AiHelpMessageStatus,
     /// Consulted MDN content to answer the question.
-    pub sources: Option<&'a Value>,
+    pub sources: Option<Value>,
 }

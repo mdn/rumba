@@ -406,7 +406,6 @@ pub async fn ai_help(
         match prepare_res {
             Ok(ai_help_req) => {
                 let sources = ai_help_req.refs;
-                let model = ai_help_req.req.model.clone();
                 let created_at = match record_sources(
                     &diesel_pool,
                     &sources,
@@ -418,7 +417,6 @@ pub async fn ai_help(
                     None => Utc::now(),
                 };
 
-                let sources_value = serde_json::to_value(&sources).unwrap_or(Value::Null);
                 let ai_help_meta = AIHelpMeta {
                     typ: MetaType::Metadata,
                     chat_id,
@@ -504,9 +502,11 @@ pub async fn ai_help(
                                     query_len: default_meta_big_int(ai_help_req_meta.query_len),
                                     context_len: default_meta_big_int(ai_help_req_meta.context_len),
                                     response_len: default_meta_big_int(Some(context.len)),
-                                    model: &model,
+                                    model: ai_help_req_meta.model.unwrap_or(""),
                                     status,
-                                    sources: Some(&sources_value),
+                                    sources: ai_help_req_meta.sources.as_ref().map(|sources| {
+                                        serde_json::to_value(sources).unwrap_or(Value::Null)
+                                    }),
                                 };
                                 add_help_message_meta(&mut conn, ai_help_message_meta);
 
@@ -534,7 +534,12 @@ pub async fn ai_help(
                     response_duration: default_meta_big_int(Some(response_duration.as_millis())),
                     query_len: default_meta_big_int(ai_help_req_meta.query_len),
                     context_len: default_meta_big_int(ai_help_req_meta.context_len),
+                    model: ai_help_req_meta.model.unwrap_or(""),
                     status: (&e).into(),
+                    sources: ai_help_req_meta
+                        .sources
+                        .as_ref()
+                        .map(|sources| serde_json::to_value(sources).unwrap_or(Value::Null)),
                     ..Default::default()
                 };
                 add_help_message_meta(&mut conn, ai_help_message_meta);
