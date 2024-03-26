@@ -22,7 +22,7 @@ use serde_json::Value::{self, Null};
 use uuid::Uuid;
 
 use crate::{
-    ai::help::{prepare_ai_help_req, prepare_ai_help_summary_req, RefDoc},
+    ai::help::{prepare_ai_help_req, prepare_ai_help_summary_req, AIHelpRequestMeta, RefDoc},
     db::{
         self,
         ai_help::{
@@ -378,7 +378,15 @@ pub async fn ai_help(
             )?;
         }
 
-        let prepare_res = prepare_ai_help_req(client, pool, user.is_subscriber(), messages).await;
+        let mut ai_help_req_meta = AIHelpRequestMeta::default();
+        let prepare_res = prepare_ai_help_req(
+            client,
+            pool,
+            user.is_subscriber(),
+            messages,
+            &mut ai_help_req_meta,
+        )
+        .await;
         // Reinstate the user quota if we fail to do the preparation step.
         // Flagged/moderation errors DO count towards the limit, otherwise
         // it is on us.
@@ -395,7 +403,7 @@ pub async fn ai_help(
         let user_id = user.id;
 
         match prepare_res {
-            Ok((ai_help_req, ai_help_req_meta)) => {
+            Ok(ai_help_req) => {
                 let sources = ai_help_req.refs;
                 let model = ai_help_req.req.model.clone();
                 let created_at = match record_sources(
@@ -488,14 +496,14 @@ pub async fn ai_help(
                                     parent_id,
                                     created_at: Some(created_at.naive_utc()),
                                     search_duration: default_meta_big_int(
-                                        ai_help_req_meta.search_duration.as_millis(),
+                                        ai_help_req_meta.search_duration.map(|d| d.as_millis()),
                                     ),
-                                    response_duration: default_meta_big_int(
+                                    response_duration: default_meta_big_int(Some(
                                         response_duration.as_millis(),
-                                    ),
+                                    )),
                                     query_len: default_meta_big_int(ai_help_req_meta.query_len),
                                     context_len: default_meta_big_int(ai_help_req_meta.context_len),
-                                    response_len: default_meta_big_int(context.len),
+                                    response_len: default_meta_big_int(Some(context.len)),
                                     model: &model,
                                     status,
                                     sources: Some(&sources_value),
@@ -685,6 +693,6 @@ fn qa_check_for_error_trigger(
     Ok(())
 }
 
-fn default_meta_big_int(value: impl TryInto<i64>) -> i64 {
-    value.try_into().unwrap_or(-1)
+fn default_meta_big_int(value: Option<impl TryInto<i64>>) -> Option<i64> {
+    value.and_then(|v| v.try_into().ok())
 }

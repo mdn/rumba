@@ -35,10 +35,11 @@ pub struct AIHelpRequest {
     pub refs: Vec<RefDoc>,
 }
 
+#[derive(Default)]
 pub struct AIHelpRequestMeta {
-    pub query_len: usize,
-    pub context_len: usize,
-    pub search_duration: Duration,
+    pub query_len: Option<usize>,
+    pub context_len: Option<usize>,
+    pub search_duration: Option<Duration>,
 }
 
 pub async fn prepare_ai_help_req(
@@ -46,7 +47,8 @@ pub async fn prepare_ai_help_req(
     pool: &SupaPool,
     is_subscriber: bool,
     messages: Vec<ChatCompletionRequestMessage>,
-) -> Result<(AIHelpRequest, AIHelpRequestMeta), AIError> {
+    request_meta: &mut AIHelpRequestMeta,
+) -> Result<AIHelpRequest, AIError> {
     let config = if is_subscriber {
         AI_HELP_GPT4_FULL_DOC_NEW_PROMPT
     } else {
@@ -89,7 +91,7 @@ pub async fn prepare_ai_help_req(
         .last()
         .and_then(|msg| msg.content.as_ref())
         .ok_or(AIError::NoUserPrompt)?;
-    let query_len = last_user_message.len();
+    request_meta.query_len = Some(last_user_message.len());
 
     let start = Instant::now();
     let related_docs = if config.full_doc {
@@ -97,7 +99,7 @@ pub async fn prepare_ai_help_req(
     } else {
         get_related_docs(client, pool, last_user_message.replace('\n', " ")).await?
     };
-    let search_duration = start.elapsed();
+    request_meta.search_duration = Some(start.elapsed());
 
     let mut context = vec![];
     let mut refs = vec![];
@@ -122,6 +124,7 @@ pub async fn prepare_ai_help_req(
         }
         context.push(doc);
     }
+    request_meta.context_len = Some(context_len);
     let system_message = ChatCompletionRequestMessageArgs::default()
         .role(Role::System)
         .content(config.system_prompt)
@@ -157,14 +160,7 @@ pub async fn prepare_ai_help_req(
         .temperature(0.0)
         .build()?;
 
-    Ok((
-        AIHelpRequest { req, refs },
-        AIHelpRequestMeta {
-            query_len,
-            context_len,
-            search_duration,
-        },
-    ))
+    Ok(AIHelpRequest { req, refs })
 }
 
 pub fn prepare_ai_help_summary_req(

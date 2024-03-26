@@ -328,15 +328,15 @@ pub struct AiHelpMessageMetaInsert<'a> {
     /// Timestamp at which the message failed or finished.
     pub created_at: Option<NaiveDateTime>,
     /// Time it took to search related content in milliseconds.
-    pub search_duration: i64,
+    pub search_duration: Option<i64>,
     /// Time it took to generate the answer in milliseconds.
-    pub response_duration: i64,
+    pub response_duration: Option<i64>,
     /// Length of user's question in bytes.
-    pub query_len: i64,
+    pub query_len: Option<i64>,
     /// Length of MDN content passed as context in bytes.
-    pub context_len: i64,
+    pub context_len: Option<i64>,
     /// Length of LLM's reply in bytes.
-    pub response_len: i64,
+    pub response_len: Option<i64>,
     /// Model used to generate the answer.
     pub model: &'a str,
     /// Status of the message.
