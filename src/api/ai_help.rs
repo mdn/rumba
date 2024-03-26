@@ -402,6 +402,7 @@ pub async fn ai_help(
         }
         let user_id = user.id;
 
+        let start = Instant::now();
         match prepare_res {
             Ok(ai_help_req) => {
                 let sources = ai_help_req.refs;
@@ -417,7 +418,6 @@ pub async fn ai_help(
                     None => Utc::now(),
                 };
 
-                let start = Instant::now();
                 let sources_value = serde_json::to_value(&sources).unwrap_or(Value::Null);
                 let ai_help_meta = AIHelpMeta {
                     typ: MetaType::Metadata,
@@ -522,6 +522,7 @@ pub async fn ai_help(
                 Ok(sse::Sse::from_stream(refs.chain(res_stream)))
             }
             Err(e) => {
+                let response_duration = start.elapsed();
                 let ai_help_message_meta = AiHelpMessageMetaInsert {
                     user_id: user.id,
                     chat_id,
@@ -530,6 +531,7 @@ pub async fn ai_help(
                     search_duration: default_meta_big_int(
                         ai_help_req_meta.search_duration.map(|d| d.as_millis()),
                     ),
+                    response_duration: default_meta_big_int(Some(response_duration.as_millis())),
                     query_len: default_meta_big_int(ai_help_req_meta.query_len),
                     context_len: default_meta_big_int(ai_help_req_meta.context_len),
                     status: (&e).into(),
