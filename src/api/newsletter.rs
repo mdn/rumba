@@ -6,6 +6,7 @@ use actix_web::{
 use basket::{Basket, SubscribeOpts, YesNo};
 use diesel::PgConnection;
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 
 use crate::{
     api::error::ApiError,
@@ -31,8 +32,9 @@ struct Subscribed {
     pub subscribed: bool,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Validate)]
 pub struct SubscriptionRequest {
+    #[validate(email(message = "must be an email address"))]
     pub email: String,
 }
 
@@ -53,6 +55,7 @@ pub async fn subscribe_anonymous_handler(
     basket: Data<Option<Basket>>,
     subscription_req: web::Json<SubscriptionRequest>,
 ) -> Result<HttpResponse, ApiError> {
+    subscription_req.validate()?;
     if let Some(basket) = &**basket {
         basket
             .subscribe(
