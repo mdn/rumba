@@ -96,9 +96,15 @@ pub async fn ai_help_all(
                     function_call: None,
                 })
                 .collect();
-            let (req, _) =
-                prepare_ai_help_req(openai_client, supabase_pool, !no_subscription, messages)
-                    .await?;
+            let mut meta = Default::default();
+            let req = prepare_ai_help_req(
+                openai_client,
+                supabase_pool,
+                !no_subscription,
+                messages,
+                &mut meta,
+            )
+            .await?;
             let mut res = openai_client.chat().create(req.req.clone()).await?;
             let res = res.choices.pop().map(|res| res.message);
             let storage = Storage { req, res };
