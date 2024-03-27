@@ -306,7 +306,7 @@ fn log_errors_and_record_response(
         }
 
         if !has_finish_reason {
-            error!("AI Help log: OpenAI stream ended without a finish_reason");
+            error!("AI Help log: OpenAI stream ended without a finish_reason (recorded)");
         }
 
         let HelpIds {
@@ -489,6 +489,14 @@ pub async fn ai_help(
                                 } else {
                                     context.status
                                 };
+                                if status
+                                    == db::types::AiHelpMessageStatus::FinishedNoReason
+                                {
+                                    error!(
+                                        "AI Help log: OpenAI stream ended without a finish_reason (streamed)"
+                                    );
+                                }
+
                                 let ai_help_message_meta = AiHelpMessageMetaInsert {
                                     user_id,
                                     chat_id,
