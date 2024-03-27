@@ -283,6 +283,10 @@ fn log_errors_and_record_response(
     user_id: i64,
     help_ids: HelpIds,
 ) -> Result<Option<mpsc::UnboundedSender<CreateChatCompletionStreamResponse>>, ApiError> {
+    if !history_enabled {
+        return Ok(None);
+    }
+
     let mut conn = pool.get()?;
     let (tx, mut rx) = mpsc::unbounded_channel::<CreateChatCompletionStreamResponse>();
     actix_web::rt::spawn(async move {
@@ -302,33 +306,31 @@ fn log_errors_and_record_response(
         }
 
         if !has_finish_reason {
-            error!("AI Help log: OpenAI stream ended without a finish_reason");
+            error!("AI Help log: OpenAI stream ended without a finish_reason (recorded)");
         }
 
-        if history_enabled {
-            let HelpIds {
-                chat_id,
-                message_id,
-                parent_id,
-            } = help_ids;
-            let response = ChatCompletionRequestMessage {
-                role: Assistant,
-                content: Some(answer.join("")),
-                ..Default::default()
-            };
-            let insert = AIHelpHistoryMessageInsert {
-                user_id,
-                chat_id,
-                message_id,
-                parent_id,
-                created_at: None,
-                sources: None,
-                request: None,
-                response: Some(serde_json::to_value(response).unwrap_or(Null)),
-            };
-            if let Err(err) = add_help_history_message(&mut conn, insert) {
-                error!("AI Help log: {err}");
-            }
+        let HelpIds {
+            chat_id,
+            message_id,
+            parent_id,
+        } = help_ids;
+        let response = ChatCompletionRequestMessage {
+            role: Assistant,
+            content: Some(answer.join("")),
+            ..Default::default()
+        };
+        let insert = AIHelpHistoryMessageInsert {
+            user_id,
+            chat_id,
+            message_id,
+            parent_id,
+            created_at: None,
+            sources: None,
+            request: None,
+            response: Some(serde_json::to_value(response).unwrap_or(Null)),
+        };
+        if let Err(err) = add_help_history_message(&mut conn, insert) {
+            error!("AI Help log: {err}");
         }
     });
     Ok(Some(tx))
@@ -487,6 +489,14 @@ pub async fn ai_help(
                                 } else {
                                     context.status
                                 };
+                                if status
+                                    == db::types::AiHelpMessageStatus::FinishedNoReason
+                                {
+                                    error!(
+                                        "AI Help log: OpenAI stream ended without a finish_reason (streamed)"
+                                    );
+                                }
+
                                 let ai_help_message_meta = AiHelpMessageMetaInsert {
                                     user_id,
                                     chat_id,
