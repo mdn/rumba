@@ -352,7 +352,7 @@ dependencies = [
 
 [[package]]
 name = "ai-test"
-version = "1.8.0"
+version = "1.9.0"
 dependencies = [
  "anyhow",
  "async-openai",
@@ -4030,7 +4030,7 @@ dependencies = [
 
 [[package]]
 name = "rumba"
-version = "1.8.0"
+version = "1.9.0"
 dependencies = [
  "actix-http",
  "actix-identity",
