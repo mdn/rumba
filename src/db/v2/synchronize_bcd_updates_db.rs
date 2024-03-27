@@ -103,7 +103,7 @@ async fn synchronize_browers_and_releases(
                 .as_str()
                 .map_or_else(|| None, |v| Some(NaiveDate::from_str(v).unwrap()));
             if _release_date.is_none() {
-                return;
+                continue;
             }
             releases.push((
                 browser_releases::browser.eq(k.as_str()),
