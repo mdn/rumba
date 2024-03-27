@@ -162,7 +162,7 @@ pub async fn prepare_ai_help_req(
         .model(config.model)
         .messages(messages)
         .temperature(0.0)
-        .stop(config.stop_phrase.unwrap_or(""))
+        .stop(config.stop_phrase.unwrap_or_default())
         .build()?;
     request_meta.model = Some(config.model);
 
