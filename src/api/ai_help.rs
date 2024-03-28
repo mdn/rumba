@@ -1,40 +1,54 @@
+use std::{future, time::Instant};
+
 use actix_identity::Identity;
 use actix_web::{
     web::{Data, Json, Path},
-    Either, HttpResponse, Responder,
+    HttpResponse, Responder,
 };
 use actix_web_lab::{__reexports::tokio::sync::mpsc, sse};
 use async_openai::{
     config::OpenAIConfig,
     error::OpenAIError,
-    types::{ChatCompletionRequestMessage, CreateChatCompletionStreamResponse, Role::Assistant},
+    types::{
+        ChatCompletionRequestMessage, CreateChatCompletionStreamResponse,
+        Role::{self, Assistant},
+    },
     Client,
 };
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
-use futures_util::{stream, StreamExt, TryStreamExt};
+use futures_util::{stream, StreamExt};
 use serde::{Deserialize, Serialize};
-use serde_json::Value::Null;
+use serde_json::Value::{self, Null};
 use uuid::Uuid;
 
 use crate::{
-    ai::help::{prepare_ai_help_req, prepare_ai_help_summary_req, RefDoc},
-    api::common::{GeneratedChunk, GeneratedChunkChoice},
+    ai::help::{prepare_ai_help_req, prepare_ai_help_summary_req, AIHelpRequestMeta, RefDoc},
     db::{
         self,
         ai_help::{
-            add_help_history_message, create_or_increment_total, delete_full_help_history,
-            delete_help_history, get_count, help_history, help_history_get_message,
-            list_help_history, update_help_history_label, AI_HELP_LIMIT,
+            add_help_history_message, add_help_message_meta, create_or_increment_total,
+            decrement_limit, delete_full_help_history, delete_help_history, get_count,
+            help_history, help_history_get_message, list_help_history, update_help_history_label,
+            AI_HELP_LIMIT,
         },
-        model::{AIHelpHistoryMessage, AIHelpHistoryMessageInsert, Settings},
+        model::{
+            AIHelpHistoryMessage, AIHelpHistoryMessageInsert, AiHelpMessageMetaInsert, Settings,
+        },
         settings::get_settings,
         SupaPool,
     },
+    settings::SETTINGS,
 };
 use crate::{
     api::error::ApiError,
     db::{ai_help::create_or_increment_limit, users::get_user, Pool},
 };
+
+#[derive(Debug, Clone, Copy, Default)]
+struct ResponseContext {
+    len: usize,
+    status: db::types::AiHelpMessageStatus,
+}
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct ChatRequestMessages {
@@ -269,6 +283,10 @@ fn log_errors_and_record_response(
     user_id: i64,
     help_ids: HelpIds,
 ) -> Result<Option<mpsc::UnboundedSender<CreateChatCompletionStreamResponse>>, ApiError> {
+    if !history_enabled {
+        return Ok(None);
+    }
+
     let mut conn = pool.get()?;
     let (tx, mut rx) = mpsc::unbounded_channel::<CreateChatCompletionStreamResponse>();
     actix_web::rt::spawn(async move {
@@ -288,69 +306,34 @@ fn log_errors_and_record_response(
         }
 
         if !has_finish_reason {
-            error!("AI Help log: OpenAI stream ended without a finish_reason");
+            error!("AI Help log: OpenAI stream ended without a finish_reason (recorded)");
         }
 
-        if history_enabled {
-            let HelpIds {
-                chat_id,
-                message_id,
-                parent_id,
-            } = help_ids;
-            let response = ChatCompletionRequestMessage {
-                role: Assistant,
-                content: Some(answer.join("")),
-                ..Default::default()
-            };
-            let insert = AIHelpHistoryMessageInsert {
-                user_id,
-                chat_id,
-                message_id,
-                parent_id,
-                created_at: None,
-                sources: None,
-                request: None,
-                response: Some(serde_json::to_value(response).unwrap_or(Null)),
-            };
-            if let Err(err) = add_help_history_message(&mut conn, insert) {
-                error!("AI Help log: {err}");
-            }
+        let HelpIds {
+            chat_id,
+            message_id,
+            parent_id,
+        } = help_ids;
+        let response = ChatCompletionRequestMessage {
+            role: Assistant,
+            content: Some(answer.join("")),
+            ..Default::default()
+        };
+        let insert = AIHelpHistoryMessageInsert {
+            user_id,
+            chat_id,
+            message_id,
+            parent_id,
+            created_at: None,
+            sources: None,
+            request: None,
+            response: Some(serde_json::to_value(response).unwrap_or(Null)),
+        };
+        if let Err(err) = add_help_history_message(&mut conn, insert) {
+            error!("AI Help log: {err}");
         }
     });
     Ok(Some(tx))
-}
-
-pub fn sorry_response(
-    chat_id: Option<Uuid>,
-    message_id: Uuid,
-    parent_id: Option<Uuid>,
-    quota: Option<AIHelpLimit>,
-) -> Result<Vec<sse::Data>, ApiError> {
-    let parts = vec![
-        sse::Data::new_json(AIHelpMeta {
-            typ: MetaType::Metadata,
-            chat_id: chat_id.unwrap_or_else(Uuid::new_v4),
-            message_id,
-            parent_id,
-            sources: vec![],
-            quota,
-            created_at: Utc::now(),
-        })
-        .map_err(OpenAIError::JSONDeserialize)?,
-        sse::Data::new_json(GeneratedChunk::from(
-            "Sorry, I don't know how to help with that.",
-        ))
-        .map_err(OpenAIError::JSONDeserialize)?,
-        sse::Data::new_json(GeneratedChunk {
-            choices: vec![GeneratedChunkChoice {
-                finish_reason: Some("stop".to_owned()),
-                ..Default::default()
-            }],
-            ..Default::default()
-        })
-        .map_err(OpenAIError::JSONDeserialize)?,
-    ];
-    Ok(parts)
 }
 
 pub async fn ai_help(
@@ -359,7 +342,7 @@ pub async fn ai_help(
     supabase_pool: Data<Option<SupaPool>>,
     diesel_pool: Data<Pool>,
     messages: Json<ChatRequestMessages>,
-) -> Result<Either<impl Responder, impl Responder>, ApiError> {
+) -> Result<impl Responder, ApiError> {
     let mut conn = diesel_pool.get()?;
     let user = get_user(&mut conn, user_id.id().unwrap())?;
     let settings = get_settings(&mut conn, &user)?;
@@ -397,8 +380,32 @@ pub async fn ai_help(
             )?;
         }
 
-        match prepare_ai_help_req(client, pool, user.is_subscriber(), messages).await? {
-            Some(ai_help_req) => {
+        let mut ai_help_req_meta = AIHelpRequestMeta::default();
+        let prepare_res = prepare_ai_help_req(
+            client,
+            pool,
+            user.is_subscriber(),
+            messages,
+            &mut ai_help_req_meta,
+        )
+        .await;
+        // Reinstate the user quota if we fail to do the preparation step.
+        // Flagged/moderation errors DO count towards the limit, otherwise
+        // it is on us.
+        match prepare_res {
+            Err(crate::ai::error::AIError::OpenAIError(_))
+            | Err(crate::ai::error::AIError::TiktokenError(_))
+            | Err(crate::ai::error::AIError::TokenLimit)
+            | Err(crate::ai::error::AIError::SqlXError(_))
+            | Err(crate::ai::error::AIError::NoUserPrompt) => {
+                let _ = decrement_limit(&mut conn, &user);
+            }
+            _ => (),
+        }
+        let user_id = user.id;
+
+        match prepare_res {
+            Ok(ai_help_req) => {
                 let sources = ai_help_req.refs;
                 let created_at = match record_sources(
                     &diesel_pool,
@@ -411,6 +418,7 @@ pub async fn ai_help(
                     None => Utc::now(),
                 };
 
+                let start = Instant::now();
                 let ai_help_meta = AIHelpMeta {
                     typ: MetaType::Metadata,
                     chat_id,
@@ -426,36 +434,139 @@ pub async fn ai_help(
                     user.id,
                     help_ids,
                 )?;
-                let stream = client.chat().create_stream(ai_help_req.req).await.unwrap();
-                let refs = stream::once(async move {
-                    Ok(sse::Event::Data(
-                        sse::Data::new_json(ai_help_meta).map_err(OpenAIError::JSONDeserialize)?,
-                    ))
+                let qa_error_triggered =
+                    qa_check_for_error_trigger(&ai_help_req.req.messages).is_err();
+                let ai_help_res_stream =
+                    client.chat().create_stream(ai_help_req.req).await.unwrap();
+                let refs_sse_data = if qa_error_triggered {
+                    Err(OpenAIError::InvalidArgument("Artificial Error".to_owned()))
+                } else {
+                    sse::Data::new_json(ai_help_meta).map_err(OpenAIError::JSONDeserialize)
+                }
+                .map(sse::Event::Data)
+                .map_err(|e| {
+                    let _ = decrement_limit(&mut conn, &user);
+                    e
                 });
 
-                Ok(Either::Left(sse::Sse::from_stream(refs.chain(
-                    stream.map_ok(move |res| {
-                        if let Some(ref tx) = tx {
-                            if let Err(e) = tx.send(res.clone()) {
-                                error!("{e}");
+                let refs = stream::once(async move { refs_sse_data });
+
+                let res_stream = ai_help_res_stream
+                    .map(Some) // Wrapping response chunks in some.
+                    .chain(stream::once(async move { None })) // Adding a None at the end.
+                    .scan(ResponseContext::default(), move |context, res| {
+                        future::ready(match res {
+                            Some(Ok(res)) => {
+                                if let Some(ref tx) = tx {
+                                    if let Err(e) = tx.send(res.clone()) {
+                                        error!("{e}");
+                                    }
+                                }
+                                if let Some(c) = res.choices.first() {
+                                    if let Some(part) = &c.delta.content {
+                                        context.len += part.len();
+                                    }
+                                    context.status = match c.finish_reason.as_deref() {
+                                        Some("length") => {
+                                            db::types::AiHelpMessageStatus::FinishedTooLong
+                                        }
+                                        Some("stop") => db::types::AiHelpMessageStatus::Success,
+                                        Some("content_filter") => {
+                                            db::types::AiHelpMessageStatus::FinishedContentFilter
+                                        }
+                                        Some(_) => db::types::AiHelpMessageStatus::Unknown,
+                                        None => db::types::AiHelpMessageStatus::FinishedNoReason,
+                                    }
+                                }
+                                Some(Ok(sse::Event::Data(sse::Data::new_json(res).unwrap())))
                             }
-                        }
-                        sse::Event::Data(sse::Data::new_json(res).unwrap())
-                    }),
-                ))))
+                            res => {
+                                let response_duration = start.elapsed();
+                                let status = if let Some(Err(e)) = &res {
+                                    // reinstate the user quota and pass on the error
+                                    let _ = decrement_limit(&mut conn, &user);
+                                    e.into()
+                                } else {
+                                    context.status
+                                };
+                                if status
+                                    == db::types::AiHelpMessageStatus::FinishedNoReason
+                                {
+                                    error!(
+                                        "AI Help log: OpenAI stream ended without a finish_reason (streamed)"
+                                    );
+                                }
+
+                                let ai_help_message_meta = AiHelpMessageMetaInsert {
+                                    user_id,
+                                    chat_id,
+                                    message_id,
+                                    parent_id,
+                                    created_at: Some(created_at.naive_utc()),
+                                    search_duration: default_meta_big_int(
+                                        ai_help_req_meta.search_duration.map(|d| d.as_millis()),
+                                    ),
+                                    response_duration: default_meta_big_int(Some(
+                                        response_duration.as_millis(),
+                                    )),
+                                    query_len: default_meta_big_int(ai_help_req_meta.query_len),
+                                    context_len: default_meta_big_int(ai_help_req_meta.context_len),
+                                    response_len: default_meta_big_int(Some(context.len)),
+                                    model: ai_help_req_meta.model.unwrap_or(""),
+                                    status,
+                                    sources: ai_help_req_meta.sources.as_ref().map(|sources| {
+                                        serde_json::to_value(sources).unwrap_or(Value::Null)
+                                    }),
+                                };
+                                add_help_message_meta(&mut conn, ai_help_message_meta);
+
+                                if let Some(Err(e)) = res {
+                                    Some(Err(e))
+                                } else {
+                                    None
+                                }
+                            }
+                        })
+                    });
+
+                Ok(sse::Sse::from_stream(refs.chain(res_stream)))
             }
-            None => {
-                let parts = sorry_response(
-                    Some(chat_id),
+            Err(e) => {
+                let ai_help_message_meta = AiHelpMessageMetaInsert {
+                    user_id: user.id,
+                    chat_id,
                     message_id,
                     parent_id,
-                    current.map(AIHelpLimit::from_count),
-                )?;
-                let stream = futures::stream::iter(parts.into_iter());
-                let res =
-                    sse::Sse::from_stream(stream.map(|r| Ok::<_, ApiError>(sse::Event::Data(r))));
+                    search_duration: default_meta_big_int(
+                        ai_help_req_meta.search_duration.map(|d| d.as_millis()),
+                    ),
+                    query_len: default_meta_big_int(ai_help_req_meta.query_len),
+                    context_len: default_meta_big_int(ai_help_req_meta.context_len),
+                    model: ai_help_req_meta.model.unwrap_or(""),
+                    status: (&e).into(),
+                    sources: ai_help_req_meta
+                        .sources
+                        .as_ref()
+                        .map(|sources| serde_json::to_value(sources).unwrap_or(Value::Null)),
+                    ..Default::default()
+                };
+                add_help_message_meta(&mut conn, ai_help_message_meta);
 
-                Ok(Either::Right(res))
+                // Reinstate the user quota if we fail to do the preparation step.
+                // Flagged/moderation errors DO count towards the limit, otherwise
+                // it is on us.
+                match e {
+                    crate::ai::error::AIError::OpenAIError(_)
+                    | crate::ai::error::AIError::TiktokenError(_)
+                    | crate::ai::error::AIError::TokenLimit
+                    | crate::ai::error::AIError::SqlXError(_)
+                    | crate::ai::error::AIError::NoUserPrompt => {
+                        let _ = decrement_limit(&mut conn, &user);
+                    }
+                    _ => (),
+                }
+
+                Err(e.into())
             }
         }
     } else {
@@ -573,4 +684,35 @@ pub async fn ai_help_delete_full_history(
     let user = get_user(&mut conn, user_id.id().unwrap())?;
     delete_full_help_history(&mut conn, &user)?;
     Ok(HttpResponse::Created().finish())
+}
+
+// This function is for QA purposes only, it triggering
+// an error based on the input message. The message can be optionally
+// set in the settings `ai.trigger_error_for_chat_term`. Nothing
+// will be triggered if the setting is missing, which should be the
+// situation in production-like environments.
+fn qa_check_for_error_trigger(
+    messages: &[ChatCompletionRequestMessage],
+) -> Result<(), crate::api::error::ApiError> {
+    if let Some(magic_words) = SETTINGS
+        .ai
+        .as_ref()
+        .and_then(|ai| ai.trigger_error_for_chat_term.as_ref())
+    {
+        if let Some(msg_text) = messages
+            .iter()
+            .filter(|m| m.role == Role::User)
+            .last()
+            .and_then(|m| m.content.as_ref())
+        {
+            if msg_text == magic_words {
+                return Err(crate::api::error::ApiError::Artificial);
+            }
+        }
+    }
+    Ok(())
+}
+
+fn default_meta_big_int(value: Option<impl TryInto<i64>>) -> Option<i64> {
+    value.and_then(|v| v.try_into().ok())
 }

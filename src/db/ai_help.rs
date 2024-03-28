@@ -8,10 +8,10 @@ use uuid::Uuid;
 use crate::db::error::DbError;
 use crate::db::model::{
     AIHelpHistoryInsert, AIHelpHistoryMessage, AIHelpHistoryMessageInsert, AIHelpLimitInsert,
-    UserQuery,
+    AiHelpMessageMetaInsert, UserQuery,
 };
-use crate::db::schema::ai_help_limits as limits;
 use crate::db::schema::{ai_help_history, ai_help_history_messages};
+use crate::db::schema::{ai_help_limits as limits, ai_help_message_meta};
 use crate::settings::SETTINGS;
 
 pub const AI_HELP_LIMIT: i64 = 5;
@@ -112,6 +112,17 @@ pub fn create_or_increment_limit(
         .optional()?;
         Ok(current)
     }
+}
+
+pub fn decrement_limit(conn: &mut PgConnection, user: &UserQuery) -> Result<(), DbError> {
+    update(limits::table)
+        .filter(limits::user_id.eq(&user.id))
+        .set((
+            (limits::total_questions.eq(limits::total_questions - 1)),
+            (limits::session_questions.eq(limits::session_questions - 1)),
+        ))
+        .execute(conn)?;
+    Ok(())
 }
 
 pub fn add_help_history(
@@ -290,4 +301,15 @@ pub fn update_help_history_label(
         .set(ai_help_history::label.eq(label))
         .execute(conn)?;
     Ok(())
+}
+
+pub fn add_help_message_meta(conn: &mut PgConnection, meta: AiHelpMessageMetaInsert) {
+    if let Err(e) = insert_into(ai_help_message_meta::table)
+        .values(&meta)
+        .on_conflict(ai_help_message_meta::message_id)
+        .do_nothing()
+        .execute(conn)
+    {
+        error!("{}", e)
+    }
 }
