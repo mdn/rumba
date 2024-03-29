@@ -79,14 +79,14 @@ pub async fn get_related_macro_docs(
         .model(EMBEDDING_MODEL)
         .input(prompt)
         .build()?;
-    let mut start = Instant::now();
+    let start = Instant::now();
     let embedding_res = client.embeddings().create(embedding_req).await?;
     request_meta.embedding_duration = Some(start.elapsed());
 
     let embedding =
         pgvector::Vector::from(embedding_res.data.into_iter().next().unwrap().embedding);
 
-    start = Instant::now();
+    let start = Instant::now();
     let mut docs: Vec<RelatedDoc> = sqlx::query_as(MACRO_DOCS_QUERY)
         .bind(embedding)
         .bind(MACRO_EMB_DISTANCE)
@@ -125,13 +125,13 @@ pub async fn get_related_full_docs(
         .model(EMBEDDING_MODEL)
         .input(prompt)
         .build()?;
-    let mut start = Instant::now();
+    let start = Instant::now();
     let embedding_res = client.embeddings().create(embedding_req).await?;
     request_meta.embedding_duration = Some(start.elapsed());
 
     let embedding =
         pgvector::Vector::from(embedding_res.data.into_iter().next().unwrap().embedding);
-    start = Instant::now();
+    let start = Instant::now();
     let docs: Vec<RelatedDoc> = sqlx::query_as(FULL_DOCS_QUERY)
         .bind(embedding)
         .bind(FULL_EMB_DISTANCE)
@@ -156,13 +156,13 @@ pub async fn get_related_docs(
         .model(EMBEDDING_MODEL)
         .input(prompt)
         .build()?;
-    let mut start = Instant::now();
+    let start = Instant::now();
     let embedding_res = client.embeddings().create(embedding_req).await?;
     request_meta.embedding_duration = Some(start.elapsed());
 
     let embedding =
         pgvector::Vector::from(embedding_res.data.into_iter().next().unwrap().embedding);
-    start = Instant::now();
+    let start = Instant::now();
     let docs: Vec<RelatedDoc> = sqlx::query_as(DEFAULT_QUERY)
         .bind(embedding)
         .bind(DEFAULT_EMB_DISTANCE)
