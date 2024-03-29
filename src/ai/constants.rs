@@ -51,7 +51,7 @@ pub const AI_HELP_GPT4_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
 };
 
 pub const MODEL: &str = "gpt-3.5-turbo";
-pub const EMBEDDING_MODEL: &str = "text-embedding-ada-002";
+pub const EMBEDDING_MODEL: &str = "text-embedding-3-small";
 
 pub const AI_HELP_SYSTEM_MESSAGE: &str = "You are a very enthusiastic MDN AI who loves \
 to help people! Given the following information from MDN, answer the user's question \
