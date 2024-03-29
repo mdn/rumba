@@ -503,6 +503,9 @@ pub async fn ai_help(
                                     message_id,
                                     parent_id,
                                     created_at: Some(created_at.naive_utc()),
+                                    embedding_duration: default_meta_big_int(
+                                        ai_help_req_meta.embedding_duration.map(|d| d.as_millis()),
+                                    ),
                                     search_duration: default_meta_big_int(
                                         ai_help_req_meta.search_duration.map(|d| d.as_millis()),
                                     ),
@@ -512,6 +515,7 @@ pub async fn ai_help(
                                     query_len: default_meta_big_int(ai_help_req_meta.query_len),
                                     context_len: default_meta_big_int(ai_help_req_meta.context_len),
                                     response_len: default_meta_big_int(Some(context.len)),
+                                    embedding_model: ai_help_req_meta.embedding_model.unwrap_or(""),
                                     model: ai_help_req_meta.model.unwrap_or(""),
                                     status,
                                     sources: ai_help_req_meta.sources.as_ref().map(|sources| {
@@ -537,11 +541,15 @@ pub async fn ai_help(
                     chat_id,
                     message_id,
                     parent_id,
+                    embedding_duration: default_meta_big_int(
+                        ai_help_req_meta.embedding_duration.map(|d| d.as_millis()),
+                    ),
                     search_duration: default_meta_big_int(
                         ai_help_req_meta.search_duration.map(|d| d.as_millis()),
                     ),
                     query_len: default_meta_big_int(ai_help_req_meta.query_len),
                     context_len: default_meta_big_int(ai_help_req_meta.context_len),
+                    embedding_model: ai_help_req_meta.embedding_model.unwrap_or(""),
                     model: ai_help_req_meta.model.unwrap_or(""),
                     status: (&e).into(),
                     sources: ai_help_req_meta

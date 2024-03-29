@@ -1,8 +1,10 @@
+use std::time::Instant;
+
 use async_openai::{config::OpenAIConfig, types::CreateEmbeddingRequestArgs, Client};
 use itertools::Itertools;
 
 use crate::{
-    ai::{constants::EMBEDDING_MODEL, error::AIError},
+    ai::{constants::EMBEDDING_MODEL, error::AIError, help::AIHelpRequestMeta},
     db::SupaPool,
 };
 
@@ -69,16 +71,22 @@ pub async fn get_related_macro_docs(
     client: &Client<OpenAIConfig>,
     pool: &SupaPool,
     prompt: String,
+    request_meta: &mut AIHelpRequestMeta,
 ) -> Result<Vec<RelatedDoc>, AIError> {
+    request_meta.embedding_model = Some(EMBEDDING_MODEL);
+
     let embedding_req = CreateEmbeddingRequestArgs::default()
         .model(EMBEDDING_MODEL)
         .input(prompt)
         .build()?;
+    let mut start = Instant::now();
     let embedding_res = client.embeddings().create(embedding_req).await?;
+    request_meta.embedding_duration = Some(start.elapsed());
 
     let embedding =
         pgvector::Vector::from(embedding_res.data.into_iter().next().unwrap().embedding);
 
+    start = Instant::now();
     let mut docs: Vec<RelatedDoc> = sqlx::query_as(MACRO_DOCS_QUERY)
         .bind(embedding)
         .bind(MACRO_EMB_DISTANCE)
@@ -86,6 +94,7 @@ pub async fn get_related_macro_docs(
         .bind(MACRO_EMB_SEC_MIN_LENGTH)
         .fetch_all(pool)
         .await?;
+    request_meta.search_duration = Some(start.elapsed());
 
     let duplicate_titles: Vec<String> = docs
         .iter()
@@ -108,15 +117,21 @@ pub async fn get_related_full_docs(
     client: &Client<OpenAIConfig>,
     pool: &SupaPool,
     prompt: String,
+    request_meta: &mut AIHelpRequestMeta,
 ) -> Result<Vec<RelatedDoc>, AIError> {
+    request_meta.embedding_model = Some(EMBEDDING_MODEL);
+
     let embedding_req = CreateEmbeddingRequestArgs::default()
         .model(EMBEDDING_MODEL)
         .input(prompt)
         .build()?;
+    let mut start = Instant::now();
     let embedding_res = client.embeddings().create(embedding_req).await?;
+    request_meta.embedding_duration = Some(start.elapsed());
 
     let embedding =
         pgvector::Vector::from(embedding_res.data.into_iter().next().unwrap().embedding);
+    start = Instant::now();
     let docs: Vec<RelatedDoc> = sqlx::query_as(FULL_DOCS_QUERY)
         .bind(embedding)
         .bind(FULL_EMB_DISTANCE)
@@ -124,6 +139,8 @@ pub async fn get_related_full_docs(
         .bind(FULL_EMB_SEC_MIN_LENGTH)
         .fetch_all(pool)
         .await?;
+    request_meta.search_duration = Some(start.elapsed());
+
     Ok(docs)
 }
 
@@ -131,15 +148,21 @@ pub async fn get_related_docs(
     client: &Client<OpenAIConfig>,
     pool: &SupaPool,
     prompt: String,
+    request_meta: &mut AIHelpRequestMeta,
 ) -> Result<Vec<RelatedDoc>, AIError> {
+    request_meta.embedding_model = Some(EMBEDDING_MODEL);
+
     let embedding_req = CreateEmbeddingRequestArgs::default()
         .model(EMBEDDING_MODEL)
         .input(prompt)
         .build()?;
+    let mut start = Instant::now();
     let embedding_res = client.embeddings().create(embedding_req).await?;
+    request_meta.embedding_duration = Some(start.elapsed());
 
     let embedding =
         pgvector::Vector::from(embedding_res.data.into_iter().next().unwrap().embedding);
+    start = Instant::now();
     let docs: Vec<RelatedDoc> = sqlx::query_as(DEFAULT_QUERY)
         .bind(embedding)
         .bind(DEFAULT_EMB_DISTANCE)
@@ -147,5 +170,7 @@ pub async fn get_related_docs(
         .bind(DEFAULT_EMB_SEC_MIN_LENGTH)
         .fetch_all(pool)
         .await?;
+    request_meta.search_duration = Some(start.elapsed());
+
     Ok(docs)
 }

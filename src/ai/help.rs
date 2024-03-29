@@ -1,4 +1,4 @@
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use async_openai::{
     config::OpenAIConfig,
@@ -39,7 +39,9 @@ pub struct AIHelpRequest {
 pub struct AIHelpRequestMeta {
     pub query_len: Option<usize>,
     pub context_len: Option<usize>,
+    pub embedding_duration: Option<Duration>,
     pub search_duration: Option<Duration>,
+    pub embedding_model: Option<&'static str>,
     pub model: Option<&'static str>,
     pub sources: Option<Vec<RefDoc>>,
 }
@@ -95,13 +97,23 @@ pub async fn prepare_ai_help_req(
         .ok_or(AIError::NoUserPrompt)?;
     request_meta.query_len = Some(last_user_message.len());
 
-    let start = Instant::now();
     let related_docs = if config.full_doc {
-        get_related_macro_docs(client, pool, last_user_message.replace('\n', " ")).await?
+        get_related_macro_docs(
+            client,
+            pool,
+            last_user_message.replace('\n', " "),
+            request_meta,
+        )
+        .await?
     } else {
-        get_related_docs(client, pool, last_user_message.replace('\n', " ")).await?
+        get_related_docs(
+            client,
+            pool,
+            last_user_message.replace('\n', " "),
+            request_meta,
+        )
+        .await?
     };
-    request_meta.search_duration = Some(start.elapsed());
 
     let mut context = vec![];
     let mut refs = vec![];
