@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.9.0](https://github.com/mdn/rumba/compare/v1.8.0...v1.9.0) (2024-04-04)
+
+
+### Features
+
+* **ai-help:** delete ai history after six months ([#437](https://github.com/mdn/rumba/issues/437)) ([92541a5](https://github.com/mdn/rumba/commit/92541a5af026d31868a3009ab2b35b618b2592cd))
+* **ai-help:** log message metadata ([#424](https://github.com/mdn/rumba/issues/424)) ([d035afa](https://github.com/mdn/rumba/commit/d035afa782eb5934be5702c3c8ca173c503cf62e))
+
+
+### Bug Fixes
+
+* **ai-help:** add qa questions to trigger error ([#450](https://github.com/mdn/rumba/issues/450)) ([7572e5b](https://github.com/mdn/rumba/commit/7572e5b79b88a5f3a454bd9f542266b3957a71fd))
+* **ai-help:** artificial error triggers properly in the chat phase ([#452](https://github.com/mdn/rumba/issues/452)) ([deb9d54](https://github.com/mdn/rumba/commit/deb9d5443d4c9e338a6e16fdd94bb6f8bfecebda))
+* **ai-help:** avoid spawning thread for history if history is disabled ([#438](https://github.com/mdn/rumba/issues/438)) ([706ce23](https://github.com/mdn/rumba/commit/706ce239d0deb4bbb8acb400806b2e7052c5da74))
+* **ai-help:** configurable artificial error triggers ([#445](https://github.com/mdn/rumba/issues/445)) ([9c53f66](https://github.com/mdn/rumba/commit/9c53f66823d75b224d73212b8aa4b61dfa1d7945))
+* **newsletter:** validate email ([#454](https://github.com/mdn/rumba/issues/454)) ([cd7c0f9](https://github.com/mdn/rumba/commit/cd7c0f95460a061baa7688559aa89f73baf42ee4))
+* **updates:** continue on release without date, not break ([#447](https://github.com/mdn/rumba/issues/447)) ([c0949ca](https://github.com/mdn/rumba/commit/c0949ca083be84d5f27bcee8feb8966162250e59))
+
+
+### Enhancements
+
+* **ai-help:** record embedding duration and model separately ([#458](https://github.com/mdn/rumba/issues/458)) ([20760b2](https://github.com/mdn/rumba/commit/20760b2676f85deb04797f29a1e075d9b42f4ccf))
+
+
+### Miscellaneous
+
+* **ai-help:** stop generating off-topic answer ([#455](https://github.com/mdn/rumba/issues/455)) ([7dc8a6e](https://github.com/mdn/rumba/commit/7dc8a6e906517732b5b1d07332d21bb2dd67df0b))
+
 ## [1.8.0](https://github.com/mdn/rumba/compare/v1.7.0...v1.8.0) (2024-03-04)
 
 
