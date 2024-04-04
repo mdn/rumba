@@ -512,7 +512,7 @@ pub async fn ai_help(
                                     query_len: default_meta_big_int(ai_help_req_meta.query_len),
                                     context_len: default_meta_big_int(ai_help_req_meta.context_len),
                                     response_len: default_meta_big_int(Some(context.len)),
-                                    embedding_model: ai_help_req_meta.embedding_model.unwrap_or(""),
+                                    embedding_model: ai_help_req_meta.embedding_model.unwrap_or_default(),
                                     model: ai_help_req_meta.model.unwrap_or(""),
                                     status,
                                     sources: ai_help_req_meta.sources.as_ref().map(|sources| {
@@ -542,7 +542,7 @@ pub async fn ai_help(
                     search_duration: default_meta_duration(ai_help_req_meta.search_duration),
                     query_len: default_meta_big_int(ai_help_req_meta.query_len),
                     context_len: default_meta_big_int(ai_help_req_meta.context_len),
-                    embedding_model: ai_help_req_meta.embedding_model.unwrap_or(""),
+                    embedding_model: ai_help_req_meta.embedding_model.unwrap_or_default(),
                     model: ai_help_req_meta.model.unwrap_or(""),
                     status: (&e).into(),
                     sources: ai_help_req_meta
