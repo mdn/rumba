@@ -327,7 +327,9 @@ pub struct AiHelpMessageMetaInsert<'a> {
     pub parent_id: Option<Uuid>,
     /// Timestamp at which the message failed or finished.
     pub created_at: Option<NaiveDateTime>,
-    /// Time it took to search related content in milliseconds.
+    /// Time it took to generate the embedding in milliseconds.
+    pub embedding_duration: Option<i64>,
+    /// Time it took to search using the embedding in milliseconds.
     pub search_duration: Option<i64>,
     /// Time it took to generate the answer in milliseconds.
     pub response_duration: Option<i64>,
@@ -337,6 +339,8 @@ pub struct AiHelpMessageMetaInsert<'a> {
     pub context_len: Option<i64>,
     /// Length of LLM's reply in bytes.
     pub response_len: Option<i64>,
+    /// Model used to generate the embedding.
+    pub embedding_model: &'a str,
     /// Model used to generate the answer.
     pub model: &'a str,
     /// Status of the message.
