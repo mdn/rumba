@@ -126,6 +126,8 @@ diesel::table! {
         model -> Text,
         status -> AiHelpMessageStatus,
         sources -> Jsonb,
+        embedding_duration -> Nullable<Int8>,
+        embedding_model -> Text,
     }
 }
 
