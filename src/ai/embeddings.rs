@@ -49,13 +49,13 @@ const MACRO_DOCS_QUERY: &str = "SELECT
   doc.title,
   parent.title_short AS title_parent,
   doc.markdown AS content,
-  doc.embedding <=> $1 AS similarity
+  doc.embedding_next <=> $1 AS similarity
 FROM mdn_doc_macro doc
 LEFT JOIN mdn_doc_macro parent ON parent.mdn_url = SUBSTRING(doc.mdn_url, 1, LENGTH(doc.mdn_url) - STRPOS(REVERSE(doc.mdn_url), '/'))
 WHERE LENGTH(doc.markdown) >= $4
-  AND (doc.embedding <=> $1) < $2
+  AND (doc.embedding_next <=> $1) < $2
   AND doc.mdn_url NOT LIKE '/en-US/docs/MDN%'
-ORDER BY doc.embedding <=> $1
+ORDER BY doc.embedding_next <=> $1
 LIMIT $3;";
 
 #[derive(sqlx::FromRow, Debug)]
