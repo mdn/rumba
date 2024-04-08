@@ -2663,9 +2663,9 @@ dependencies = [
 
 [[package]]
 name = "jsonwebtoken"
-version = "9.2.0"
+version = "9.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c7ea04a7c5c055c175f189b6dc6ba036fd62306b58c66c9f6389036c503a3f4"
+checksum = "b9ae10193d25051e74945f1ea2d0b42e03cc3b890f7e4cc5faa44997d808193f"
 dependencies = [
  "base64 0.21.7",
  "js-sys",
@@ -3039,7 +3039,7 @@ dependencies = [
  "hyper-rustls 0.26.0",
  "hyper-timeout",
  "hyper-util",
- "jsonwebtoken 9.2.0",
+ "jsonwebtoken 9.3.0",
  "once_cell",
  "percent-encoding",
  "pin-project",
@@ -4015,7 +4015,7 @@ dependencies = [
  "hmac",
  "hostname",
  "itertools 0.12.1",
- "jsonwebtoken 9.2.0",
+ "jsonwebtoken 9.3.0",
  "octocrab",
  "once_cell",
  "openidconnect",
