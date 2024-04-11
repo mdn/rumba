@@ -18,8 +18,10 @@ jobs:
           PATTERN="bump (?:.*) from (?:[1-9]|(0[.][0-9]+)[.](?:[^ ]+) to \1[.])"
 
           if [[ "$PR_TITLE" =~ $PATTERN ]]; then
+            echo "PR is eligible for auto-merge."
             echo "eligible=true" >> $GITHUB_OUTPUT
           else
+            echo "PR is NOT eligible for auto-merge."
             echo "eligible=false" >> $GITHUB_OUTPUT
           fi
       - uses: actions/github-script@v7
