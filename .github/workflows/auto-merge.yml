@@ -10,9 +10,25 @@ jobs:
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]'
     steps:
-      - uses: ahmadnassri/action-dependabot-auto-merge@v2.6
+      - name: Check eligibility
+        id: check
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PATTERN="bump (?:.*) from (?:[1-9]|(0[.][0-9]+)[.](?:[^ ]+) to \1[.])"
+
+          if [[ "$PR_TITLE" =~ $PATTERN ]]; then
+            echo "::set-output name=eligible::true"
+          else
+            echo "::set-output name=eligible::false"
+          fi
+      - uses: actions/github-script@v7
+        if: steps.check.outputs.eligible == 'true'
         with:
           github-token: ${{ secrets.AUTOMERGE_TOKEN }}
-          command: "squash and merge"
-          approve: true
-          target: minor
+          script: |
+            github.rest.pulls.createComment({
+              issue_number: context.payload.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '@dependabot squash and merge'
+            })
