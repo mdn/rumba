@@ -4,6 +4,7 @@ use async_openai::types::{
     ChatChoice, ChatCompletionRequestMessage, ChatCompletionResponseMessage,
     ChatCompletionResponseStreamMessage, ChatCompletionStreamResponseDelta,
     CreateChatCompletionRequest, CreateChatCompletionResponse, CreateChatCompletionStreamResponse,
+    Role,
 };
 
 use futures::Stream;
@@ -133,6 +134,8 @@ pub struct GenerateContentRequest {
     pub contents: Vec<RequestContent>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub generation_config: Option<GenerationConfig>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub system_instruction: Option<RequestContent>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -179,13 +182,15 @@ pub struct GenerationConfig {
 
 impl From<CreateChatCompletionRequest> for GenerateContentRequest {
     fn from(value: CreateChatCompletionRequest) -> Self {
-        GenerateContentRequest {
-            contents: value
-                .messages
-                .clone()
-                .into_iter()
-                .map(RequestContent::from)
-                .fold(Vec::new(), |mut acc, item| {
+        let contents = value
+            .messages
+            .clone()
+            .into_iter()
+            .filter(|m| m.role != Role::System)
+            .map(RequestContent::from)
+            .fold(
+                Vec::new(),
+                |mut acc: Vec<RequestContent>, item: RequestContent| {
                     if let Some(prev_item) = acc.last_mut() {
                         if item.role == prev_item.role {
                             prev_item.parts.extend(item.parts);
@@ -194,7 +199,24 @@ impl From<CreateChatCompletionRequest> for GenerateContentRequest {
                     }
                     acc.push(item);
                     acc
-                }),
+                },
+            );
+
+        let system_instruction = value
+            .messages
+            .clone()
+            .into_iter()
+            .find(|m| m.role == Role::System)
+            .map(|m| RequestContent {
+                role: None,
+                parts: vec![
+                    // TODO Make this more elegant.
+                    Part::Text(m.content.unwrap()),
+                ],
+            });
+
+        GenerateContentRequest {
+            contents,
             generation_config: Some(&value).map(|v| GenerationConfig {
                 temperature: v.temperature,
                 max_output_tokens: v.max_tokens,
@@ -202,6 +224,7 @@ impl From<CreateChatCompletionRequest> for GenerateContentRequest {
                 candidate_count: v.n,
                 ..Default::default()
             }),
+            system_instruction,
         }
     }
 }
