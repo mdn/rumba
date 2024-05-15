@@ -7,6 +7,7 @@ use crate::ai::embeddings::RelatedDoc;
 pub struct AIHelpConfig {
     pub name: &'static str,
     pub model: &'static str,
+    pub token_model: &'static str,
     pub full_doc: bool,
     pub system_prompt: &'static str,
     pub user_prompt: Option<&'static str>,
@@ -27,6 +28,7 @@ fn join_with_tags(related_docs: Vec<RelatedDoc>) -> String {
 pub const AI_HELP_GPT3_5_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
     name: "20230901-full_doc-new_prompt",
     model: "gpt-3.5-turbo-0125",
+    token_model: "gpt-3.5-turbo-0125",
     full_doc: true,
     system_prompt: include_str!("prompts/new_prompt/system.md"),
     user_prompt: None,
@@ -39,7 +41,8 @@ pub const AI_HELP_GPT3_5_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
 
 pub const AI_HELP_GPT4_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
     name: "20240125-gpt4-full_doc-new_prompt",
-    model: "gpt-4-0125-preview",
+    model: "gpt-4o-2024-05-13",
+    token_model: "gpt-4-0125-preview",
     full_doc: true,
     system_prompt: include_str!("prompts/new_prompt/system.md"),
     user_prompt: None,

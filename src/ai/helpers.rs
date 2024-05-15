@@ -26,11 +26,11 @@ pub fn cap_messages(
     mut init_messages: Vec<ChatCompletionRequestMessage>,
     context_messages: Vec<ChatCompletionRequestMessage>,
 ) -> Result<Vec<ChatCompletionRequestMessage>, AIError> {
-    let init_tokens = num_tokens_from_messages(config.model, &init_messages)?;
+    let init_tokens = num_tokens_from_messages(config.token_model, &init_messages)?;
     if init_tokens + config.max_completion_tokens > config.token_limit {
         return Err(AIError::TokenLimit);
     }
-    let mut context_tokens = num_tokens_from_messages(config.model, &context_messages)?;
+    let mut context_tokens = num_tokens_from_messages(config.token_model, &context_messages)?;
 
     let mut skip = 0;
     while context_tokens + init_tokens + config.max_completion_tokens > config.token_limit {
@@ -38,7 +38,7 @@ pub fn cap_messages(
         if skip >= context_messages.len() {
             return Err(AIError::TokenLimit);
         }
-        context_tokens = num_tokens_from_messages(config.model, &context_messages[skip..])?;
+        context_tokens = num_tokens_from_messages(config.token_model, &context_messages[skip..])?;
     }
     init_messages.extend(context_messages.into_iter().skip(skip));
     Ok(init_messages)
