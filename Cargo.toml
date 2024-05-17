@@ -41,7 +41,7 @@ sqlx = { version = "0.7", features = ["macros", "runtime-tokio-rustls", "postgre
 
 elasticsearch = "7.17.7-alpha.1"
 harsh = "0.2"
-itertools = "0.12"
+itertools = "0.13"
 r2d2 = "0.8"
 
 openidconnect = "3"
