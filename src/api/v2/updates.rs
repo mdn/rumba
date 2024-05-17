@@ -123,7 +123,7 @@ pub async fn get_updates(
     let mapped_updates = updates
         .0
         .into_iter()
-        .group_by(|key| {
+        .chunk_by(|key| {
             (
                 key.browser.clone(),
                 key.engine_version.clone(),
