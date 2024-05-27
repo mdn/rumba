@@ -81,40 +81,45 @@ pub async fn ai_help_all(
     let prompts = prompts::read(path)?;
     let total_samples = prompts.len();
     let before = Instant::now();
-    stream::iter(prompts.into_iter().enumerate())
-        .map(Ok::<(usize, Vec<String>), Error>)
-        .try_for_each_concurrent(10, |(i, prompts)| async move {
-            println!("processing: {:0>2}", i);
-            let json_out = PathBuf::from(out.as_ref()).join(format!("{:0>2}.json", i));
-            let md_out = PathBuf::from(out.as_ref()).join(format!("{:0>2}.md", i));
-            let messages = prompts
-                .into_iter()
-                .map(|prompt| ChatCompletionRequestMessage {
-                    role: User,
-                    content: Some(prompt),
-                    name: None,
-                    function_call: None,
-                })
-                .collect();
-            let mut meta = Default::default();
-            let req = prepare_ai_help_req(
-                openai_client,
-                supabase_pool,
-                !no_subscription,
-                messages,
-                &mut meta,
-            )
-            .await?;
-            let mut res = openai_client.chat().create(req.req.clone()).await?;
-            let res = res.choices.pop().map(|res| res.message);
-            let storage = Storage { req, res };
-            println!("writing: {}", json_out.display());
-            fs::write(json_out, serde_json::to_vec_pretty(&storage)?).await?;
-            println!("writing: {}", md_out.display());
-            fs::write(md_out, storage.to_md().as_bytes()).await?;
-            Ok(())
-        })
+    stream::iter(
+        prompts
+            .into_iter()
+            .enumerate()
+            .filter(|(i, _val)| std::fs::metadata(json_path(out, *i)).is_err()),
+    )
+    .map(Ok::<(usize, Vec<String>), Error>)
+    .try_for_each_concurrent(10, |(i, prompts)| async move {
+        println!("processing: {:0>2}", i);
+        let json_out = json_path(out, i);
+        let md_out = md_path(out, i);
+        let messages = prompts
+            .into_iter()
+            .map(|prompt| ChatCompletionRequestMessage {
+                role: User,
+                content: Some(prompt),
+                name: None,
+                function_call: None,
+            })
+            .collect();
+        let mut meta = Default::default();
+        let req = prepare_ai_help_req(
+            openai_client,
+            supabase_pool,
+            !no_subscription,
+            messages,
+            &mut meta,
+        )
         .await?;
+        let mut res = openai_client.chat().create(req.req.clone()).await?;
+        let res = res.choices.pop().map(|res| res.message);
+        let storage = Storage { req, res };
+        println!("writing: {}", json_out.display());
+        fs::write(json_out, serde_json::to_vec_pretty(&storage)?).await?;
+        println!("writing: {}", md_out.display());
+        fs::write(md_out, storage.to_md().as_bytes()).await?;
+        Ok(())
+    })
+    .await?;
     let after = Instant::now();
     println!(
         "Tested {} prompts in {} seconds",
@@ -122,4 +127,12 @@ pub async fn ai_help_all(
         after.duration_since(before).as_secs()
     );
     Ok(())
+}
+
+fn json_path(out: &impl AsRef<Path>, i: usize) -> PathBuf {
+    PathBuf::from(out.as_ref()).join(format!("{:0>2}.json", i))
+}
+
+fn md_path(out: &impl AsRef<Path>, i: usize) -> PathBuf {
+    PathBuf::from(out.as_ref()).join(format!("{:0>2}.md", i))
 }
