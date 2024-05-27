@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.11.0](https://github.com/mdn/rumba/compare/v1.10.0...v1.11.0) (2024-05-27)
+
+
+### Features
+
+* **ai-help:** upgrade to GPT-4o model ([#500](https://github.com/mdn/rumba/issues/500)) ([4c9c1e4](https://github.com/mdn/rumba/commit/4c9c1e4c593b2eb414f744792981e76663369f8b))
+
+
+### Enhancements
+
+* **ai-test:** skip prompts for which result exists ([#490](https://github.com/mdn/rumba/issues/490)) ([38a4c2d](https://github.com/mdn/rumba/commit/38a4c2d1eedfaf75d8e0f4e6b6527b1f0a7e2838))
+
+
+### Build
+
+* **deps:** bump actix-web from 4.5.1 to 4.6.0 ([#506](https://github.com/mdn/rumba/issues/506)) ([6fdf3dc](https://github.com/mdn/rumba/commit/6fdf3dc3d05213e068ecd6f578f629b0dfde1751))
+* **deps:** bump anyhow from 1.0.83 to 1.0.86 ([#505](https://github.com/mdn/rumba/issues/505)) ([7a0bdb8](https://github.com/mdn/rumba/commit/7a0bdb8098babb1d52f8710c0f254f97f6006831))
+* **deps:** bump itertools from 0.12.1 to 0.13.0 ([#504](https://github.com/mdn/rumba/issues/504)) ([4da2943](https://github.com/mdn/rumba/commit/4da2943e0487080e6997b61d6bf2da4e33c5bbd1))
+* **deps:** bump serde from 1.0.201 to 1.0.202 ([#501](https://github.com/mdn/rumba/issues/501)) ([861f9fa](https://github.com/mdn/rumba/commit/861f9fa778e1c4f708bdcd0b6beb2ea0a9f5169d))
+* **deps:** bump serde from 1.0.202 to 1.0.203 ([#508](https://github.com/mdn/rumba/issues/508)) ([f72a9ca](https://github.com/mdn/rumba/commit/f72a9cab678b77c6f65b07e05b39d4762eebc08a))
+* **deps:** bump tiktoken-rs from 0.5.8 to 0.5.9 ([#503](https://github.com/mdn/rumba/issues/503)) ([953edfc](https://github.com/mdn/rumba/commit/953edfc6795d9ff4e7f4f5c35a89b5ac338aeec2))
+
 ## [1.10.0](https://github.com/mdn/rumba/compare/v1.9.0...v1.10.0) (2024-05-15)
 
 
