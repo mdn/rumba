@@ -1,6 +1,6 @@
 [package]
 name = "ai-test"
-version = "1.9.0"
+version = "1.10.0"
 edition = "2021"
 
 [[bin]]
@@ -16,5 +16,5 @@ tokio = { version = "1", features = ["full"] }
 anyhow = "1"
 futures = "0.3"
 async-openai = "0.14"
-itertools = "0.12"
+itertools = "0.13"
 rumba = { path = "../"}
