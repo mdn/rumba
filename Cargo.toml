@@ -85,7 +85,7 @@ once_cell = "1"
 cadence = "1"
 woothee = "0.13"
 sentry = "0.33"
-sentry-actix = "0.32"
+sentry-actix = "0.33"
 
 basket = "0.0.5"
 async-openai = "0.14"
