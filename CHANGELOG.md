@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.11.1](https://github.com/mdn/rumba/compare/v1.11.0...v1.11.1) (2024-07-01)
+
+
+### Build
+
+* **deps:** bump actix-http from 3.7.0 to 3.8.0 ([#525](https://github.com/mdn/rumba/issues/525)) ([3349f2a](https://github.com/mdn/rumba/commit/3349f2a8e02d568cb56da071b8c62f9cbce753b5))
+* **deps:** bump actix-rt from 2.9.0 to 2.10.0 ([#518](https://github.com/mdn/rumba/issues/518)) ([bcfb35d](https://github.com/mdn/rumba/commit/bcfb35d657bc3e4d8e85d4ae53290033645a1767))
+* **deps:** bump actix-web from 4.6.0 to 4.7.0 ([#519](https://github.com/mdn/rumba/issues/519)) ([3935983](https://github.com/mdn/rumba/commit/3935983124a11d882c6c165aade2a3b4bd65d8c8))
+* **deps:** bump actix-web from 4.7.0 to 4.8.0 ([#526](https://github.com/mdn/rumba/issues/526)) ([f9e78a2](https://github.com/mdn/rumba/commit/f9e78a2f1ef1c593b71ed67ebcb311a9b9ea5958))
+* **deps:** bump actix-web-httpauth from 0.8.1 to 0.8.2 ([#522](https://github.com/mdn/rumba/issues/522)) ([44093e9](https://github.com/mdn/rumba/commit/44093e9caadb2df8dacb2c9f62966a5194b430e2))
+* **deps:** bump clap from 4.5.1 to 4.5.7 ([#520](https://github.com/mdn/rumba/issues/520)) ([7292407](https://github.com/mdn/rumba/commit/729240790edfafe34b3a6bea95be0e7b50a8e6f4))
+* **deps:** bump clap from 4.5.7 to 4.5.8 ([#532](https://github.com/mdn/rumba/issues/532)) ([af00939](https://github.com/mdn/rumba/commit/af009392dbdf0f35d31905378e8136652793f3af))
+* **deps:** bump curve25519-dalek from 4.1.2 to 4.1.3 ([#523](https://github.com/mdn/rumba/issues/523)) ([b8b988f](https://github.com/mdn/rumba/commit/b8b988f07eadd53a677ca4ee77bb4ae062c83fed))
+* **deps:** bump pgvector from 0.3.2 to 0.3.3 ([#529](https://github.com/mdn/rumba/issues/529)) ([948b9fd](https://github.com/mdn/rumba/commit/948b9fdaf1d0b0068ba6e71595ce89ccffc48c80))
+* **deps:** bump regex from 1.10.4 to 1.10.5 ([#517](https://github.com/mdn/rumba/issues/517)) ([d97221a](https://github.com/mdn/rumba/commit/d97221a9768f5dfdd8621466650b8648a4be1ebe))
+* **deps:** bump sentry from 0.32.3 to 0.33.0 ([#509](https://github.com/mdn/rumba/issues/509)) ([259eba8](https://github.com/mdn/rumba/commit/259eba8b8cc2058b3fc38c580e276f00d2e1a176))
+* **deps:** bump sentry from 0.33.0 to 0.34.0 ([#514](https://github.com/mdn/rumba/issues/514)) ([3415659](https://github.com/mdn/rumba/commit/3415659be02bd35e19be9488b9c576f45b555765))
+* **deps:** bump sentry-actix from 0.32.3 to 0.33.0 ([#510](https://github.com/mdn/rumba/issues/510)) ([1e48192](https://github.com/mdn/rumba/commit/1e481924545db592c43ccaccdd572e791377ce72))
+* **deps:** bump sentry-actix from 0.33.0 to 0.34.0 ([#515](https://github.com/mdn/rumba/issues/515)) ([018a45b](https://github.com/mdn/rumba/commit/018a45bbccbe7605ea284a25f95a9664975db0fe))
+* **deps:** bump serde_json from 1.0.117 to 1.0.118 ([#528](https://github.com/mdn/rumba/issues/528)) ([be0a209](https://github.com/mdn/rumba/commit/be0a20962c3a616023a3be5c6e298e4a7eee21e7))
+* **deps:** bump serde_json from 1.0.118 to 1.0.119 ([#530](https://github.com/mdn/rumba/issues/530)) ([35508ad](https://github.com/mdn/rumba/commit/35508ad51ff286529db283f1729d97b4ee68626f))
+* **deps:** bump serde_with from 3.8.1 to 3.8.2 ([#531](https://github.com/mdn/rumba/issues/531)) ([2595eb3](https://github.com/mdn/rumba/commit/2595eb304c4f5a238c31846f5d49f2b1427f3345))
+* **deps:** bump tokio from 1.37.0 to 1.38.0 ([#512](https://github.com/mdn/rumba/issues/512)) ([679cf1d](https://github.com/mdn/rumba/commit/679cf1d3d685ba93cd8ea14bdc22e6e8e8d81d21))
+* **deps:** bump url from 2.5.0 to 2.5.1 ([#521](https://github.com/mdn/rumba/issues/521)) ([2b1523f](https://github.com/mdn/rumba/commit/2b1523f1f9e8ed1b3f8ff3232f98afbb07dc5a66))
+* **deps:** bump url from 2.5.1 to 2.5.2 ([#524](https://github.com/mdn/rumba/issues/524)) ([9cdccbf](https://github.com/mdn/rumba/commit/9cdccbf71e3122702a2061ef15d36074eea44185))
+* **deps:** bump uuid from 1.8.0 to 1.9.1 ([#527](https://github.com/mdn/rumba/issues/527)) ([a2f6c24](https://github.com/mdn/rumba/commit/a2f6c24ffd34c89a37ad384c4d9c7425a8b54e68))
+
 ## [1.11.0](https://github.com/mdn/rumba/compare/v1.10.0...v1.11.0) (2024-05-27)
 
 
