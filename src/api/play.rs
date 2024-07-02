@@ -9,14 +9,16 @@ use octocrab::Octocrab;
 use once_cell::sync::Lazy;
 use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use url::Url;
 
 use crate::{
     api::error::{ApiError, PlaygroundError},
     db::{
         self,
-        model::PlaygroundInsert,
+        model::{PlaygroundInsert, UserQuery},
         play::{create_playground, flag_playground},
+        users::get_user,
         Pool,
     },
     settings::SETTINGS,
@@ -194,12 +196,26 @@ pub async fn save(
 
 pub async fn load(
     gist_id: web::Path<String>,
+    user_id: Option<Identity>,
+    pool: web::Data<Pool>,
     github_client: web::Data<Option<Octocrab>>,
 ) -> Result<HttpResponse, ApiError> {
     if let Some(client) = &**github_client {
         let id = decrypt(&gist_id.into_inner())?;
         let gist = load_gist(client, &id).await?;
-        Ok(HttpResponse::Ok().json(gist.code))
+        let is_owner = match user_id {
+            Some(user_id) => {
+                let mut conn = pool.get()?;
+                let user: UserQuery = get_user(&mut conn, user_id.id().unwrap())?;
+                db::play::is_playground_created_by_user(&mut conn, &id, user)?
+            }
+            _ => false,
+        };
+        let mut json = serde_json::to_value(gist.code).unwrap();
+        if let Value::Object(ref mut map) = json {
+            map.insert("is_owner".to_string(), Value::Bool(is_owner));
+        }
+        Ok(HttpResponse::Ok().json(json))
     } else {
         Ok(HttpResponse::NotImplemented().finish())
     }
