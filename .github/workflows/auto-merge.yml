@@ -1,18 +1,37 @@
 name: auto-merge
 
 on:
-  pull_request_target:
+  pull_request:
+  #pull_request_target:
     branches:
       - main
 
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
-    if: github.actor == 'dependabot[bot]'
+    #if: github.actor == 'dependabot[bot]'
     steps:
-      - uses: ahmadnassri/action-dependabot-auto-merge@v2.6
+      - name: Check eligibility
+        id: check
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PATTERN="bump .* from ([1-9][0-9]*[.]|0[.][0-9]+[.])[^ ]+ to \1"
+
+          if [[ "$PR_TITLE" =~ "$PATTERN" ]]; then
+            echo "PR is eligible for auto-merge."
+            echo "eligible=true" >> $GITHUB_OUTPUT
+          else
+            echo "PR is NOT eligible for auto-merge."
+            echo "eligible=false" >> $GITHUB_OUTPUT
+          fi
+      - uses: actions/github-script@v7
+        if: steps.check.outputs.eligible == 'true'
         with:
           github-token: ${{ secrets.AUTOMERGE_TOKEN }}
-          command: "squash and merge"
-          approve: true
-          target: minor
+          script: |
+            github.rest.pulls.createComment({
+              issue_number: context.payload.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '@dependabot squash and merge'
+            })
