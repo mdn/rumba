@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.2](https://github.com/mdn/rumba/compare/v1.11.1...v1.11.2) (2024-07-02)
+
+
+### Build
+
+* **deps:** bump serde_json from 1.0.119 to 1.0.120 ([#533](https://github.com/mdn/rumba/issues/533)) ([8394c78](https://github.com/mdn/rumba/commit/8394c7847562c5b4dde6aada20d3448237fca201))
+
 ## [1.11.1](https://github.com/mdn/rumba/compare/v1.11.0...v1.11.1) (2024-07-01)
 
 
