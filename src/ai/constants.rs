@@ -5,7 +5,6 @@ use crate::ai::embeddings::RelatedDoc;
 // Whenever changing the model: bump the AI_EXPLAIN_VERSION!
 #[derive(Debug, Copy, Clone)]
 pub struct AIHelpConfig {
-    pub name: &'static str,
     pub model: &'static str,
     pub full_doc: bool,
     pub system_prompt: &'static str,
@@ -24,9 +23,12 @@ fn join_with_tags(related_docs: Vec<RelatedDoc>) -> String {
         .join("\n")
 }
 
-pub const AI_HELP_GPT3_5_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
-    name: "20230901-full_doc-new_prompt",
-    model: "gpt-3.5-turbo-0125",
+pub const BASIC_MODEL: &str = "gpt-4o-mini-2024-07-18";
+pub const ADVANCED_MODEL: &str = "gpt-4o-2024-05-13";
+pub const EMBEDDING_MODEL: &str = "text-embedding-3-small";
+
+pub const AI_HELP_BASIC: AIHelpConfig = AIHelpConfig {
+    model: BASIC_MODEL,
     full_doc: true,
     system_prompt: include_str!("prompts/new_prompt/system.md"),
     user_prompt: None,
@@ -37,9 +39,8 @@ pub const AI_HELP_GPT3_5_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
     make_context: join_with_tags,
 };
 
-pub const AI_HELP_GPT4_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
-    name: "20240125-gpt4-full_doc-new_prompt",
-    model: "gpt-4o-2024-05-13",
+pub const AI_HELP_ADVANCED: AIHelpConfig = AIHelpConfig {
+    model: ADVANCED_MODEL,
     full_doc: true,
     system_prompt: include_str!("prompts/new_prompt/system.md"),
     user_prompt: None,
@@ -49,9 +50,6 @@ pub const AI_HELP_GPT4_FULL_DOC_NEW_PROMPT: AIHelpConfig = AIHelpConfig {
     max_completion_tokens: 4_096,
     make_context: join_with_tags,
 };
-
-pub const MODEL: &str = "gpt-3.5-turbo";
-pub const EMBEDDING_MODEL: &str = "text-embedding-3-small";
 
 pub const AI_HELP_SYSTEM_MESSAGE: &str = "You are a very enthusiastic MDN AI who loves \
 to help people! Given the following information from MDN, answer the user's question \
