@@ -13,7 +13,7 @@ use sha2::{Digest, Sha256};
 
 use crate::{
     ai::{
-        constants::{EXPLAIN_SYSTEM_MESSAGE, MODEL},
+        constants::{BASIC_MODEL, EXPLAIN_SYSTEM_MESSAGE},
         error::AIError,
     },
     api::error::ApiError,
@@ -103,7 +103,7 @@ pub async fn prepare_explain_req(
         .build()
         .unwrap();
     let req = CreateChatCompletionRequestArgs::default()
-        .model(MODEL)
+        .model(BASIC_MODEL)
         .messages(vec![system_message, context_message, user_message])
         .temperature(0.0)
         .build()?;

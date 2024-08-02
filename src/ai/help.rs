@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     ai::{
-        constants::{AI_HELP_GPT3_5_FULL_DOC_NEW_PROMPT, AI_HELP_GPT4_FULL_DOC_NEW_PROMPT},
+        constants::{AI_HELP_ADVANCED, AI_HELP_BASIC},
         embeddings::{get_related_docs, get_related_macro_docs},
         error::AIError,
         helpers::{cap_messages, into_user_messages, sanitize_messages},
@@ -22,6 +22,8 @@ use crate::{
     db::SupaPool,
     settings::SETTINGS,
 };
+
+use super::constants::BASIC_MODEL;
 
 #[derive(Eq, Hash, PartialEq, Serialize, Deserialize, Debug, Clone)]
 pub struct RefDoc {
@@ -54,9 +56,9 @@ pub async fn prepare_ai_help_req(
     request_meta: &mut AIHelpRequestMeta,
 ) -> Result<AIHelpRequest, AIError> {
     let config = if is_subscriber {
-        AI_HELP_GPT4_FULL_DOC_NEW_PROMPT
+        AI_HELP_ADVANCED
     } else {
-        AI_HELP_GPT3_5_FULL_DOC_NEW_PROMPT
+        AI_HELP_BASIC
     };
 
     // // check for secret error trigger in the last message
@@ -197,7 +199,7 @@ pub fn prepare_ai_help_summary_req(
     let messages = [&[system_message], &messages[..], &[user_message]].concat();
 
     let req = CreateChatCompletionRequestArgs::default()
-        .model("gpt-3.5-turbo")
+        .model(BASIC_MODEL)
         .messages(messages)
         .temperature(0.0)
         .build()?;
