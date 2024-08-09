@@ -24,7 +24,7 @@ fn join_with_tags(related_docs: Vec<RelatedDoc>) -> String {
 }
 
 pub const BASIC_MODEL: &str = "gpt-4o-mini-2024-07-18";
-pub const ADVANCED_MODEL: &str = "gpt-4o-2024-05-13";
+pub const ADVANCED_MODEL: &str = "gpt-4o-2024-08-06";
 pub const EMBEDDING_MODEL: &str = "text-embedding-3-small";
 
 pub const AI_HELP_BASIC: AIHelpConfig = AIHelpConfig {
