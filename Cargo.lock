@@ -3336,9 +3336,9 @@ dependencies = [
 
 [[package]]
 name = "pgvector"
-version = "0.3.3"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b635319f45b3c75207dbb51839b56056816c98a13fd1258e4a859ad540307625"
+checksum = "6ed92bf218dbe236609222dca0345767408ee7d5c93876c7fe09fa9b03f7249f"
 dependencies = [
  "bytes",
  "postgres-types",
