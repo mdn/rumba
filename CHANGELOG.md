@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.12.0](https://github.com/mdn/rumba/compare/v1.11.1...v1.12.0) (2024-08-02)
+
+
+### Features
+
+* **ai-help:** upgrade from GPT-3.5 Turbo to GPT-4o mini ([#546](https://github.com/mdn/rumba/issues/546)) ([0e57060](https://github.com/mdn/rumba/commit/0e57060d7ecf9d5d27d0c8bc5d7eb279adedfeaa))
+
+
+### Bug Fixes
+
+* **auto-merge:** exclude pre-1.0.0 major changes ([#536](https://github.com/mdn/rumba/issues/536)) ([dab5a4c](https://github.com/mdn/rumba/commit/dab5a4c8f38c62d359e3b831451b5595230e3752))
+
+
+### Build
+
+* **deps:** bump clap from 4.5.8 to 4.5.9 ([#538](https://github.com/mdn/rumba/issues/538)) ([9a708f8](https://github.com/mdn/rumba/commit/9a708f8d557a8f70f07a7547356f5e4c472de422))
+* **deps:** bump serde from 1.0.203 to 1.0.204 ([#537](https://github.com/mdn/rumba/issues/537)) ([35d5698](https://github.com/mdn/rumba/commit/35d56989f21fa8206407a5fe27df7b154e91b6b8))
+* **deps:** bump serde_json from 1.0.119 to 1.0.120 ([#533](https://github.com/mdn/rumba/issues/533)) ([8394c78](https://github.com/mdn/rumba/commit/8394c7847562c5b4dde6aada20d3448237fca201))
+* **deps:** bump serde_with from 3.8.2 to 3.8.3 ([#535](https://github.com/mdn/rumba/issues/535)) ([2be8735](https://github.com/mdn/rumba/commit/2be8735008e0838d6edb03399f1c87973c56f2f3))
+* **deps:** bump uuid from 1.9.1 to 1.10.0 ([#539](https://github.com/mdn/rumba/issues/539)) ([cb4b987](https://github.com/mdn/rumba/commit/cb4b987885990a98fee454c3e2b1671b4bb8ddde))
+
 ## [1.11.1](https://github.com/mdn/rumba/compare/v1.11.0...v1.11.1) (2024-07-01)
 
 
