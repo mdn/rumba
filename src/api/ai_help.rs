@@ -392,19 +392,7 @@ pub async fn ai_help(
             &mut ai_help_req_meta,
         )
         .await;
-        // Reinstate the user quota if we fail to do the preparation step.
-        // Flagged/moderation errors DO count towards the limit, otherwise
-        // it is on us.
-        match prepare_res {
-            Err(crate::ai::error::AIError::OpenAIError(_))
-            | Err(crate::ai::error::AIError::TiktokenError(_))
-            | Err(crate::ai::error::AIError::TokenLimit)
-            | Err(crate::ai::error::AIError::SqlXError(_))
-            | Err(crate::ai::error::AIError::NoUserPrompt) => {
-                let _ = decrement_limit(&mut conn, &user);
-            }
-            _ => (),
-        }
+
         let user_id = user.id;
 
         match prepare_res {
