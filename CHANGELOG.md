@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.12.1](https://github.com/mdn/rumba/compare/v1.12.0...v1.12.1) (2024-09-04)
+
+
+### Bug Fixes
+
+* **ai-help:** fix double decrement ([#550](https://github.com/mdn/rumba/issues/550)) ([78fea88](https://github.com/mdn/rumba/commit/78fea8894059648c6214647c1c3273f959057839))
+* **ci:** check dependabot PR user instead of actor ([#552](https://github.com/mdn/rumba/issues/552)) ([5b7fa3b](https://github.com/mdn/rumba/commit/5b7fa3b513d9c2f56bc1f43d4b7649ebadc287ec))
+
+
+### Build
+
+* **deps:** bump openssl from 0.10.64 to 0.10.66 ([#543](https://github.com/mdn/rumba/issues/543)) ([916ecad](https://github.com/mdn/rumba/commit/916ecad2b5c11a50690c3b8904ec06f7cc3451fa))
+
+
+### Miscellaneous
+
+* **ai-help:** upgrade to gpt-4o-2024-08-06 ([#547](https://github.com/mdn/rumba/issues/547)) ([d533eda](https://github.com/mdn/rumba/commit/d533eda0191842e67a63d1e5d7c2831afc7261de))
+
 ## [1.12.0](https://github.com/mdn/rumba/compare/v1.11.1...v1.12.0) (2024-08-02)
 
 
