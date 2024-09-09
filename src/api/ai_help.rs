@@ -435,9 +435,8 @@ pub async fn ai_help(
                     sse::Data::new_json(ai_help_meta).map_err(OpenAIError::JSONDeserialize)
                 }
                 .map(sse::Event::Data)
-                .map_err(|e| {
+                .inspect_err(|_e| {
                     let _ = decrement_limit(&mut conn, &user);
-                    e
                 });
 
                 let refs = stream::once(async move { refs_sse_data });
