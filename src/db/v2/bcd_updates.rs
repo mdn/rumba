@@ -25,7 +25,7 @@ use diesel::sql_types::{Nullable, Text};
 use diesel::PgConnection;
 use diesel::PgTextExpressionMethods;
 use r2d2::PooledConnection;
-sql_function!(fn lower(a: Nullable<Text>) -> Nullable<Text>);
+define_sql_function!(fn lower(a: Nullable<Text>) -> Nullable<Text>);
 
 const PAGE_LENGTH: i64 = 5;
 
