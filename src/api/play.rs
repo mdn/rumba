@@ -140,7 +140,9 @@ pub async fn create_flag_issue(
         .map(|p| p.flag_repo.as_str())
         .ok_or(PlaygroundError::SettingsError)?;
     let issues = client.issues("mdn", repo);
-    let mut issue = issues.create(format!("flag-{gist_id}"));
+    let mut issue = issues
+        .create(format!("flag-{gist_id}"))
+        .labels(Some(vec![String::from("needs triage")]));
     if let Some(reason) = reason {
         issue = issue.body(&format!(
             "url: {}/en-US/play?id={}\n{reason}",
