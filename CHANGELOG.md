@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.12.2](https://github.com/mdn/rumba/compare/v1.12.1...v1.12.2) (2024-10-16)
+
+
+### Enhancements
+
+* **play:** create flag with "needs triage" label ([#568](https://github.com/mdn/rumba/issues/568)) ([e3cf55f](https://github.com/mdn/rumba/commit/e3cf55f6826ea7e703eea307e571b8c9b12c0a2e))
+
+
+### Build
+
+* **deps:** bump actix-web-lab from 0.20.2 to 0.22.0 ([#553](https://github.com/mdn/rumba/issues/553)) ([a5f54f2](https://github.com/mdn/rumba/commit/a5f54f287f1afc1975ed46aa0c95b9d4080c5e43))
+* **deps:** bump diesel_migrations from 2.1.0 to 2.2.0 ([#513](https://github.com/mdn/rumba/issues/513)) ([9a5df54](https://github.com/mdn/rumba/commit/9a5df5421192bd6ea2516cb4f27e474b2b293900))
+* **deps:** bump pgvector from 0.3.3 to 0.3.4 ([#542](https://github.com/mdn/rumba/issues/542)) ([08eeb89](https://github.com/mdn/rumba/commit/08eeb89936737f5fd32a9470f15099de5ca9ea79))
+* **deps:** bump serde_with from 3.8.3 to 3.9.0 ([#540](https://github.com/mdn/rumba/issues/540)) ([2b3d852](https://github.com/mdn/rumba/commit/2b3d852e7883550ba3a0b05bd7ad6c1759176df9))
+* **deps:** bump tokio from 1.38.0 to 1.40.0 ([#551](https://github.com/mdn/rumba/issues/551)) ([eddb78b](https://github.com/mdn/rumba/commit/eddb78b21da0a0366028fd8f31135fe1065ad3af))
+
+
+### Miscellaneous
+
+* **deps:** bump rust from 1.76 to 1.81 ([#555](https://github.com/mdn/rumba/issues/555)) ([9ef1fa5](https://github.com/mdn/rumba/commit/9ef1fa53c00150b3d835a053f54321824c099719))
+
 ## [1.12.1](https://github.com/mdn/rumba/compare/v1.12.0...v1.12.1) (2024-09-04)
 
 
