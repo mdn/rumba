@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.12.2](https://github.com/mdn/rumba/compare/v1.12.1...v1.12.2) (2025-01-03)
+
+
+### Enhancements
+
+* **play:** create flag with "needs triage" label ([#568](https://github.com/mdn/rumba/issues/568)) ([e3cf55f](https://github.com/mdn/rumba/commit/e3cf55f6826ea7e703eea307e571b8c9b12c0a2e))
+
+
+### Build
+
+* **deps:** bump actions/checkout from 2 to 4 ([#571](https://github.com/mdn/rumba/issues/571)) ([000ffac](https://github.com/mdn/rumba/commit/000ffac1e0f771fdc9d750af2904de5323e0f01f))
+* **deps:** bump actix-http from 3.8.0 to 3.9.0 ([#558](https://github.com/mdn/rumba/issues/558)) ([faecf39](https://github.com/mdn/rumba/commit/faecf39d33f43a062dc2c1f72f09238fb2568d1c))
+* **deps:** bump actix-web-lab from 0.20.2 to 0.22.0 ([#553](https://github.com/mdn/rumba/issues/553)) ([a5f54f2](https://github.com/mdn/rumba/commit/a5f54f287f1afc1975ed46aa0c95b9d4080c5e43))
+* **deps:** bump anyhow from 1.0.86 to 1.0.95 ([#588](https://github.com/mdn/rumba/issues/588)) ([f09a492](https://github.com/mdn/rumba/commit/f09a492671b82b1fc9f23003364bbb9134ebc0bd))
+* **deps:** bump diesel_migrations from 2.1.0 to 2.2.0 ([#513](https://github.com/mdn/rumba/issues/513)) ([9a5df54](https://github.com/mdn/rumba/commit/9a5df5421192bd6ea2516cb4f27e474b2b293900))
+* **deps:** bump docker/login-action from 2 to 3 ([#575](https://github.com/mdn/rumba/issues/575)) ([36a56b3](https://github.com/mdn/rumba/commit/36a56b37f6f5d7987e73317e7135d5ab9d7da728))
+* **deps:** bump docker/metadata-action from 4 to 5 ([#574](https://github.com/mdn/rumba/issues/574)) ([8a459f3](https://github.com/mdn/rumba/commit/8a459f3fcb6b70e518b1a1ec6c508351c30c75ac))
+* **deps:** bump mio from 0.8.10 to 0.8.11 ([#446](https://github.com/mdn/rumba/issues/446)) ([738964f](https://github.com/mdn/rumba/commit/738964f75665e6ea49e003e07c6bba8c302e7794))
+* **deps:** bump mozilla-actions/sccache-action from 0.0.4 to 0.0.6 ([#579](https://github.com/mdn/rumba/issues/579)) ([eb9b96d](https://github.com/mdn/rumba/commit/eb9b96d1663eb30414125fd557202b7b349b986a))
+* **deps:** bump mozilla-actions/sccache-action from 0.0.6 to 0.0.7 ([#587](https://github.com/mdn/rumba/issues/587)) ([45f5a2b](https://github.com/mdn/rumba/commit/45f5a2b59f12e27b12f3d034188cc65bf3f629ff))
+* **deps:** bump octocrab from 0.38.0 to 0.41.1 ([#569](https://github.com/mdn/rumba/issues/569)) ([3d5df2e](https://github.com/mdn/rumba/commit/3d5df2ec30578bc9dcfef8213c03d6e078e069d4))
+* **deps:** bump pgvector from 0.3.3 to 0.3.4 ([#542](https://github.com/mdn/rumba/issues/542)) ([08eeb89](https://github.com/mdn/rumba/commit/08eeb89936737f5fd32a9470f15099de5ca9ea79))
+* **deps:** bump regex from 1.10.5 to 1.11.1 ([#580](https://github.com/mdn/rumba/issues/580)) ([961fd5d](https://github.com/mdn/rumba/commit/961fd5d45547026538261a121a91e2c9a987957b))
+* **deps:** bump serde from 1.0.204 to 1.0.217 ([#589](https://github.com/mdn/rumba/issues/589)) ([38b076f](https://github.com/mdn/rumba/commit/38b076f2027e86e79d732706139d2ff4fa59f4a1))
+* **deps:** bump serde_with from 3.8.3 to 3.9.0 ([#540](https://github.com/mdn/rumba/issues/540)) ([2b3d852](https://github.com/mdn/rumba/commit/2b3d852e7883550ba3a0b05bd7ad6c1759176df9))
+* **deps:** bump tokio from 1.38.0 to 1.40.0 ([#551](https://github.com/mdn/rumba/issues/551)) ([eddb78b](https://github.com/mdn/rumba/commit/eddb78b21da0a0366028fd8f31135fe1065ad3af))
+
+
+### Miscellaneous
+
+* **deps:** bump rust from 1.76 to 1.81 ([#555](https://github.com/mdn/rumba/issues/555)) ([9ef1fa5](https://github.com/mdn/rumba/commit/9ef1fa53c00150b3d835a053f54321824c099719))
+
 ## [1.12.1](https://github.com/mdn/rumba/compare/v1.12.0...v1.12.1) (2024-09-04)
 
 
