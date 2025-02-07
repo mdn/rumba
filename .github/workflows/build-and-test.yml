@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main ]
 
+# No GITHUB_TOKEN permissions, because we don't use it.
+permissions: {}
+
 env:
   MDN_SETTINGS: .settings.test.toml
 

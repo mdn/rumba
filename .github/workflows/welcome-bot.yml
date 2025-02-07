@@ -11,6 +11,12 @@ on:
       - opened
       - closed
 
+permissions:
+  # Post in issue.
+  issues: write
+  # Post in pull-request.
+  pull-requests: write
+
 jobs:
   allo-allo:
     uses: mdn/workflows/.github/workflows/allo-allo.yml@main
