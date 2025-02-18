@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.12.3](https://github.com/mdn/rumba/compare/v1.12.2...v1.12.3) (2025-02-18)
+
+
+### Bug Fixes
+
+* **workflows:** pin 3rd party actions ([#602](https://github.com/mdn/rumba/issues/602)) ([e121662](https://github.com/mdn/rumba/commit/e121662a20ddc3f2f98809ece1f6251ed3bdc86a))
+
+
+### Build
+
+* **deps:** bump docker/build-push-action from 3 to 6 ([#573](https://github.com/mdn/rumba/issues/573)) ([940e013](https://github.com/mdn/rumba/commit/940e0133660be44bfe85299f168582a27141ac0a))
+
 ## [1.12.2](https://github.com/mdn/rumba/compare/v1.12.1...v1.12.2) (2025-01-03)
 
 
