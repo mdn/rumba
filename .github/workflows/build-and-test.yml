@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main ]
 
+# No GITHUB_TOKEN permissions, because we don't use it.
+permissions: {}
+
 env:
   MDN_SETTINGS: .settings.test.toml
 
@@ -30,7 +33,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@38b70195107dddab2c7bbd522bcf763bac00963b # stable
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@38b70195107dddab2c7bbd522bcf763bac00963b # stable
         with:
           toolchain: 1.81.0
           components: rustfmt, clippy
@@ -43,7 +47,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.7
+        uses: Mozilla-Actions/sccache-action@054db53350805f83040bf3e6e9b8cf5a139aa7c9 # v0.0.7
       - name: FMT
         run: cargo fmt --all -- --check
       - name: Clippy

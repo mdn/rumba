@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: "0 8 * * *"
 
+permissions:
+  # Label issues.
+  issues: write
+  # Label pull requests.
+  pull-requests: write
+
 jobs:
   mark-as-idle:
     uses: mdn/workflows/.github/workflows/idle.yml@main
