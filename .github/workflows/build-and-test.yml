@@ -34,10 +34,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Rust
-        uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f # v1.0.6
+        uses: dtolnay/rust-toolchain@38b70195107dddab2c7bbd522bcf763bac00963b # stable
         with:
           toolchain: 1.81.0
-          override: true
           components: rustfmt, clippy
       - name: Cache Cargo registry
         uses: actions/cache@v4
