@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.12.3](https://github.com/mdn/rumba/compare/v1.12.2...v1.12.3) (2025-03-10)
+
+
+### Bug Fixes
+
+* **workflows:** pin 3rd party actions ([#602](https://github.com/mdn/rumba/issues/602)) ([e121662](https://github.com/mdn/rumba/commit/e121662a20ddc3f2f98809ece1f6251ed3bdc86a))
+
+
+### Build
+
+* **deps:** bump actions-rs/toolchain from 1.0.6 to 1.0.7 ([#605](https://github.com/mdn/rumba/issues/605)) ([63ba9d6](https://github.com/mdn/rumba/commit/63ba9d6e2bb0eddce1d57dc30260b09c1eff8f66))
+* **deps:** bump docker/build-push-action from 3 to 6 ([#573](https://github.com/mdn/rumba/issues/573)) ([940e013](https://github.com/mdn/rumba/commit/940e0133660be44bfe85299f168582a27141ac0a))
+* **deps:** bump docker/build-push-action from 6.13.0 to 6.15.0 ([#607](https://github.com/mdn/rumba/issues/607)) ([f578d42](https://github.com/mdn/rumba/commit/f578d42d25e66b9c701d43391d6a9b17cad3cf55))
+* **deps:** bump docker/metadata-action from 5.6.1 to 5.7.0 ([#608](https://github.com/mdn/rumba/issues/608)) ([a522563](https://github.com/mdn/rumba/commit/a5225634afbfb74a546f22e08195ab9cf16bd9ff))
+* **deps:** bump itertools from 0.13.0 to 0.14.0 ([#593](https://github.com/mdn/rumba/issues/593)) ([8879852](https://github.com/mdn/rumba/commit/887985245bdecae5f0618557e035eff6957fa893))
+* **deps:** bump Mozilla-Actions/sccache-action from 0.0.7 to 0.0.8 ([#610](https://github.com/mdn/rumba/issues/610)) ([d1e6f1e](https://github.com/mdn/rumba/commit/d1e6f1eb58ad0e70cb62f0aee0a4d9a2e8e55f33))
+* **workflows:** migrate to dtolnay/rust-toolchain ([#590](https://github.com/mdn/rumba/issues/590)) ([e0135c2](https://github.com/mdn/rumba/commit/e0135c2171e52382909f921b1b21825e2fe151e3))
+
 ## [1.12.2](https://github.com/mdn/rumba/compare/v1.12.1...v1.12.2) (2025-01-03)
 
 
