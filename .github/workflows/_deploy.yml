@@ -13,6 +13,11 @@ on:
         type: string
         default: main
 
+      tag:
+        description: "Tag to publish"
+        type: string
+        required: false
+
 env:
   REGISTRY: us-docker.pkg.dev
 
@@ -58,8 +63,8 @@ jobs:
           GIT_SHA="$(git rev-parse HEAD)"
           IMAGE_TAGS="$IMAGE_PREFIX:$GIT_SHA"
 
-          if [ "${{ inputs.environment }}" = "production" ]; then
-            IMAGE_TAGS="$IMAGE_TAGS,$IMAGE_PREFIX:${{ github.ref_name }}"
+          if [ "${{ inputs.tag }}" != "" ]; then
+            IMAGE_TAGS="$IMAGE_TAGS,$IMAGE_PREFIX:${{ inputs.tag }}"
           fi
 
           echo "GIT_SHA=$GIT_SHA" >> "$GITHUB_OUTPUT"

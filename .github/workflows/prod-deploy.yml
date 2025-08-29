@@ -16,4 +16,5 @@ jobs:
     secrets: inherit
     with:
       environment: production
-      ref: ${{ github.ref_name }}
+      ref: ${{ github.ref }}
+      tag: ${{ github.ref_name }}
