@@ -7,6 +7,8 @@ on:
 
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   deploy:
     if: github.repository_owner == 'mdn' && github.actor != 'dependabot[bot]' && github.ref_protected

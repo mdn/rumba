@@ -11,6 +11,8 @@ on:
         description: "Branch to deploy (default: main)"
         required: false
 
+permissions: {}
+
 jobs:
   deploy:
     if: github.repository_owner == 'mdn' && github.actor != 'dependabot[bot]'
