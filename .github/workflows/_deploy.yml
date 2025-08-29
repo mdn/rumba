@@ -71,14 +71,14 @@ jobs:
           echo "IMAGE_TAGS=$IMAGE_TAGS" >> "$GITHUB_OUTPUT"
 
       - name: Docker login
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
         with:
           registry: ${{ env.REGISTRY }}
           username: oauth2accesstoken
           password: ${{ steps.gcp-auth.outputs.access_token }}
 
       - name: Build and push
-        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: .
           build-args: |
