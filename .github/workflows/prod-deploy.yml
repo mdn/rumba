@@ -1,0 +1,17 @@
+name: Prod deploy
+
+on:
+  push:
+    tags:
+      - "v*"
+
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    if: github.repository_owner == 'mdn' && github.actor != 'dependabot[bot]' && github.ref_protected
+    uses: ./.github/workflows/_deploy.yml
+    secrets: inherit
+    with:
+      environment: production
+      ref: ${{ github.ref_name }}
