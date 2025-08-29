@@ -16,14 +16,14 @@ on:
 env:
   REGISTRY: us-docker.pkg.dev
 
+permissions:
+  # Authenticate with GCP.
+  id-token: write
+
 jobs:
-  docker-build:
+  docker-build-push:
     environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-      packages: write
 
     steps:
       - name: Checkout (rumba)
