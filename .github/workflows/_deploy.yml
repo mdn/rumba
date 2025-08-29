@@ -63,7 +63,7 @@ jobs:
           GIT_SHA="$(git rev-parse HEAD)"
           IMAGE_TAGS="$IMAGE_PREFIX:$GIT_SHA"
 
-          if [ "${{ inputs.tag }}" != "" ]; then
+          if [ -n "${{ inputs.tag }}" ]; then
             IMAGE_TAGS="$IMAGE_TAGS,$IMAGE_PREFIX:${{ inputs.tag }}"
           fi
 
