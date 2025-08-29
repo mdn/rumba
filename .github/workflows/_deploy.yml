@@ -59,8 +59,7 @@ jobs:
           IMAGE_TAGS="$IMAGE_PREFIX:$GIT_SHA"
 
           if [ "${{ inputs.environment }}" = "production" ]; then
-            GIT_TAG="$(echo "${{ github.ref_name }}" | awk -F'/' '{print$3}')"
-            IMAGE_TAGS="$IMAGE_TAGS,$IMAGE_PREFIX:$GIT_TAG"
+            IMAGE_TAGS="$IMAGE_TAGS,$IMAGE_PREFIX:${{ github.ref_name }}"
           fi
 
           echo "GIT_SHA=$GIT_SHA" >> "$GITHUB_OUTPUT"
