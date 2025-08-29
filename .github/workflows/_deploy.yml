@@ -19,6 +19,7 @@ on:
         required: false
 
 env:
+  IMAGE: rumba
   REGISTRY: us-docker.pkg.dev
 
 concurrency:
@@ -39,7 +40,7 @@ jobs:
       id-token: write
 
     steps:
-      - name: Checkout (rumba)
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
@@ -58,7 +59,7 @@ jobs:
       - name: Gather GIT_SHA and DOCKER_TAGS
         id: gather-build-metadata
         run: |
-          IMAGE_PREFIX="${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_NAME }}/${{ secrets.GAR_REPOSITORY }}/rumba"
+          IMAGE_PREFIX="${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_NAME }}/${{ secrets.GAR_REPOSITORY }}/${{ env.IMAGE}}"
 
           GIT_SHA="$(git rev-parse HEAD)"
           DOCKER_TAGS="$IMAGE_PREFIX:$GIT_SHA"
