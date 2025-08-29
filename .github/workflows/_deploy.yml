@@ -1,5 +1,5 @@
 name: Deploy (reusable)
-description: Builds a Docker image, and pushes it to the registry
+description: Builds, pushes, and tags a Docker image.
 
 on:
   workflow_call:
@@ -14,7 +14,7 @@ on:
         default: main
 
       tag:
-        description: "Tag to publish"
+        description: "Additional tag for the Docker image"
         type: string
         required: false
 
