@@ -17,6 +17,10 @@ env:
   REGISTRY: us-docker.pkg.dev
 
 permissions:
+  # Read/write GHA cache.
+  actions: write
+  # Checkout.
+  contents: read
   # Authenticate with GCP.
   id-token: write
 
