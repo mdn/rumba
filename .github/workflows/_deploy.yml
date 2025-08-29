@@ -55,20 +55,20 @@ jobs:
           service_account: artifact-writer@${{ secrets.GCP_PROJECT_NAME }}.iam.gserviceaccount.com
           workload_identity_provider: projects/${{ secrets.WIP_PROJECT_ID }}/locations/global/workloadIdentityPools/github-actions/providers/github-actions
 
-      - name: Gather GIT_SHA and IMAGE_TAGS
+      - name: Gather GIT_SHA and DOCKER_TAGS
         id: gather-build-metadata
         run: |
           IMAGE_PREFIX="${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_NAME }}/${{ secrets.GAR_REPOSITORY }}/rumba"
 
           GIT_SHA="$(git rev-parse HEAD)"
-          IMAGE_TAGS="$IMAGE_PREFIX:$GIT_SHA"
+          DOCKER_TAGS="$IMAGE_PREFIX:$GIT_SHA"
 
           if [ -n "${{ inputs.tag }}" ]; then
-            IMAGE_TAGS="$IMAGE_TAGS,$IMAGE_PREFIX:${{ inputs.tag }}"
+            DOCKER_TAGS="$DOCKER_TAGS,$IMAGE_PREFIX:${{ inputs.tag }}"
           fi
 
           echo "GIT_SHA=$GIT_SHA" >> "$GITHUB_OUTPUT"
-          echo "IMAGE_TAGS=$IMAGE_TAGS" >> "$GITHUB_OUTPUT"
+          echo "DOCKER_TAGS=$DOCKER_TAGS" >> "$GITHUB_OUTPUT"
 
       - name: Docker login
         uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
@@ -83,7 +83,7 @@ jobs:
           context: .
           build-args: |
             GIT_SHA=${{ steps.gather-build-metadata.outputs.GIT_SHA }}
-          tags: ${{ steps.gather-build-metadata.outputs.IMAGE_TAGS }}
+          tags: ${{ steps.gather-build-metadata.outputs.DOCKER_TAGS }}
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
