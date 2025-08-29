@@ -16,14 +16,6 @@ on:
 env:
   REGISTRY: us-docker.pkg.dev
 
-permissions:
-  # Read/write GHA cache.
-  actions: write
-  # Checkout.
-  contents: read
-  # Authenticate with GCP.
-  id-token: write
-
 concurrency:
   group: deploy-${{ inputs.environment }}
   cancel-in-progress: false
@@ -32,6 +24,14 @@ jobs:
   docker-build-push:
     environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
+
+    permissions:
+      # Read/write GHA cache.
+      actions: write
+      # Checkout.
+      contents: read
+      # Authenticate with GCP.
+      id-token: write
 
     steps:
       - name: Checkout (rumba)
