@@ -60,7 +60,7 @@ jobs:
         with:
           token_format: access_token
           service_account: artifact-writer@${{ secrets.GCP_PROJECT_NAME }}.iam.gserviceaccount.com
-          workload_identity_provider: projects/${{ secrets.WIP_PROJECT_ID_foo }}/locations/global/workloadIdentityPools/github-actions/providers/github-actions
+          workload_identity_provider: projects/${{ secrets.WIP_PROJECT_ID }}/locations/global/workloadIdentityPools/github-actions/providers/github-actions
 
       - name: Gather GIT_SHA and DOCKER_TAGS
         id: gather-build-metadata
