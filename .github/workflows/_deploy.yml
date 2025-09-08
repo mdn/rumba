@@ -18,12 +18,6 @@ on:
         type: string
         required: false
 
-    secrets:
-      GCP_PROJECT_NAME:
-        required: true
-      WIP_PROJECT_ID:
-        required: true
-
 env:
   IMAGE: rumba
   REGISTRY: us-docker.pkg.dev
@@ -34,7 +28,7 @@ concurrency:
 
 jobs:
   docker-build-push:
-    #environment: ${{ inputs.environment }}
+    environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
 
     permissions:
