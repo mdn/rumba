@@ -28,7 +28,7 @@ concurrency:
 
 jobs:
   docker-build-push:
-    environment: ${{ inputs.environment }}
+    environment: build
     runs-on: ubuntu-latest
 
     permissions:
