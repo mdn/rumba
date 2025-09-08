@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   build:
-    if: github.repository_owner == 'mdn' && github.ref_protected
+    if: github.repository_owner == 'mdn' && github.ref_type == 'tag' && github.ref_protected
     uses: ./.github/workflows/_build.yml
     secrets: inherit
     with:
