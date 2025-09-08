@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 634-deploy-workflows
 
   workflow_dispatch:
     inputs:
