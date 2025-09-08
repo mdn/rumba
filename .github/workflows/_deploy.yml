@@ -18,6 +18,12 @@ on:
         type: string
         required: false
 
+    secrets:
+      GCP_PROJECT_NAME:
+        required: true
+      WIP_PROJECT_ID:
+        required: true
+
 env:
   IMAGE: rumba
   REGISTRY: us-docker.pkg.dev
