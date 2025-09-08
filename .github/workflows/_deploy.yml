@@ -24,7 +24,6 @@ env:
 
 concurrency:
   group: deploy-${{ inputs.environment }}
-  cancel-in-progress: false
 
 jobs:
   docker-build-push:
