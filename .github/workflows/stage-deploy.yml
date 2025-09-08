@@ -13,7 +13,13 @@ on:
         required: false
         default: refs/heads/main
 
-permissions: {}
+permissions:
+  # Read/write GHA cache.
+  actions: write
+  # Checkout.
+  contents: read
+  # Authenticate with GCP.
+  id-token: write
 
 jobs:
   deploy:
