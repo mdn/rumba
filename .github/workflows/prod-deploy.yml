@@ -5,6 +5,13 @@ on:
     tags:
       - "v*"
 
+  workflow_call:
+    secrets:
+      GCP_PROJECT_NAME:
+        required: true
+      WIP_PROJECT_ID:
+        required: true
+
   workflow_dispatch:
 
 permissions: {}
