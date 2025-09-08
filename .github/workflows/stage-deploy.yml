@@ -10,7 +10,7 @@ on:
       ref:
         description: "Branch to deploy (default: main)"
         required: false
-        default: refs/heads/main
+        default: main
 
 permissions:
   # Read/write GHA cache.
