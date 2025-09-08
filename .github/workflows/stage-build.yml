@@ -10,7 +10,6 @@ on:
       ref:
         description: "Branch to build (default: main)"
         required: false
-        default: main
 
 permissions:
   # Read/write GHA cache.
@@ -27,4 +26,4 @@ jobs:
     secrets: inherit
     with:
       environment: stage
-      ref: ${{ inputs.ref }}
+      ref: ${{ inputs.ref || github.event.repository.default_branch }}
