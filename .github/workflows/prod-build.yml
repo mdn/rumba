@@ -1,0 +1,26 @@
+name: Prod build
+
+on:
+  push:
+    tags:
+      - "v*"
+
+  workflow_dispatch:
+
+permissions:
+  # Read/write GHA cache.
+  actions: write
+  # Checkout.
+  contents: read
+  # Authenticate with GCP.
+  id-token: write
+
+jobs:
+  build:
+    if: github.repository_owner == 'mdn' && github.ref_type == 'tag' && github.ref_protected
+    uses: ./.github/workflows/_build.yml
+    secrets: inherit
+    with:
+      environment: prod
+      ref: ${{ github.ref }}
+      tag: ${{ github.ref_name }}
