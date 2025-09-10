@@ -6,6 +6,10 @@ on:
       - "v*"
 
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build (e.g. v1.13.0)"
+        required: true
 
 permissions:
   # Read/write GHA cache.
@@ -22,5 +26,5 @@ jobs:
     secrets: inherit
     with:
       environment: prod
-      ref: ${{ github.ref }}
-      tag: ${{ github.ref_name }}
+      ref: ${{ inputs.tag || github.ref }}
+      tag: ${{ inputs.tag || github.ref_name }}
