@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.13.1](https://github.com/mdn/rumba/compare/v1.13.0...v1.13.1) (2025-09-11)
+
+
+### Bug Fixes
+
+* **prod-build:** remove ref_protected requirement, add tag input ([#639](https://github.com/mdn/rumba/issues/639)) ([6bcdb46](https://github.com/mdn/rumba/commit/6bcdb461de8acae7a98856d619a512ab60e7fb2c))
+
+
+### Miscellaneous
+
+* **github:** add PR template ([#640](https://github.com/mdn/rumba/issues/640)) ([40a4306](https://github.com/mdn/rumba/commit/40a43063d9596ebe1462a9566a82a6af5b1b9261))
+
 ## [1.13.0](https://github.com/mdn/rumba/compare/v1.12.2...v1.13.0) (2025-09-09)
 
 
