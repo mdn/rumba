@@ -2,6 +2,7 @@
 .settings.test.toml
 .settings*.json
 secret-*.yaml
+.env
 .git/
 .vscode/
 .idea/
