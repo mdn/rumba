@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.13.1](https://github.com/mdn/rumba/compare/v1.13.0...v1.13.1) (2025-10-15)
+
+
+### Bug Fixes
+
+* **prod-build:** remove ref_protected requirement, add tag input ([#639](https://github.com/mdn/rumba/issues/639)) ([6bcdb46](https://github.com/mdn/rumba/commit/6bcdb461de8acae7a98856d619a512ab60e7fb2c))
+
+
+### Miscellaneous
+
+* **docker:** ignore `.env` file ([#644](https://github.com/mdn/rumba/issues/644)) ([adaa919](https://github.com/mdn/rumba/commit/adaa919966aab3154f438ce90b79d4815033fdcc))
+* **docker:** ignore tmp + log files ([#643](https://github.com/mdn/rumba/issues/643)) ([ade36ae](https://github.com/mdn/rumba/commit/ade36ae06a8cd7f1e9a1f87dd4b5672dc15375fa))
+* **github:** add PR template ([#640](https://github.com/mdn/rumba/issues/640)) ([40a4306](https://github.com/mdn/rumba/commit/40a43063d9596ebe1462a9566a82a6af5b1b9261))
+
 ## [1.13.0](https://github.com/mdn/rumba/compare/v1.12.2...v1.13.0) (2025-09-09)
 
 
