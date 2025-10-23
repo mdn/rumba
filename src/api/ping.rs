@@ -3,7 +3,10 @@ use actix_web::{web, HttpResponse};
 use serde::Deserialize;
 use serde_json::{json, Value};
 
-use crate::db::{ping::upsert_activity_ping, settings::get_settings, users::get_user, Pool};
+use crate::{
+    api::common::extract_user_id,
+    db::{ping::upsert_activity_ping, settings::get_settings, users::get_user, Pool},
+};
 
 use super::error::ApiError;
 
@@ -20,7 +23,7 @@ pub async fn ping(
     match id {
         Some(id) => {
             let mut conn_pool = pool.get()?;
-            let user = get_user(&mut conn_pool, id.id().unwrap());
+            let user = get_user(&mut conn_pool, extract_user_id(&id)?);
             match user {
                 Ok(found) => {
                     let mut activity_data = json!({

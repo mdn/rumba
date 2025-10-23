@@ -2,12 +2,15 @@ use actix_identity::Identity;
 use actix_web::{web, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 
-use crate::db::{
-    self,
-    error::DbError,
-    model::{Settings, SettingsInsert},
-    types::Locale,
-    Pool,
+use crate::{
+    api::common::extract_user_id,
+    db::{
+        self,
+        error::DbError,
+        model::{Settings, SettingsInsert},
+        types::Locale,
+        Pool,
+    },
 };
 
 use super::error::ApiError;
@@ -46,7 +49,7 @@ pub async fn update_settings(
     payload: web::Json<SettingUpdateRequest>,
 ) -> Result<HttpResponse, ApiError> {
     let mut conn_pool = pool.get()?;
-    let user = db::users::get_user(&mut conn_pool, user_id.id().unwrap());
+    let user = db::users::get_user(&mut conn_pool, extract_user_id(&user_id)?);
 
     let settings_update = payload.into_inner();
     if let Ok(user) = user {

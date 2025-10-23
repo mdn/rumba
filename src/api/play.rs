@@ -12,7 +12,10 @@ use serde::{Deserialize, Serialize};
 use url::Url;
 
 use crate::{
-    api::error::{ApiError, PlaygroundError},
+    api::{
+        common::extract_user_id,
+        error::{ApiError, PlaygroundError},
+    },
     db::{
         self,
         model::PlaygroundInsert,
@@ -173,7 +176,7 @@ pub async fn save(
             let gist =
                 create_gist(client, serde_json::to_string_pretty(&save.into_inner())?).await?;
             let mut conn = pool.get()?;
-            let user = db::users::get_user(&mut conn, user_id.id().unwrap())?;
+            let user = db::users::get_user(&mut conn, extract_user_id(&user_id)?)?;
             create_playground(
                 &mut conn,
                 PlaygroundInsert {

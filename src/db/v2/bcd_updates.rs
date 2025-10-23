@@ -1,5 +1,6 @@
 use super::model::BcdUpdate;
 use super::model::BcdUpdateQuery;
+use crate::api::common::extract_user_id;
 use crate::api::v2::updates::BcdUpdatesQueryParams;
 use crate::apply_filters;
 use crate::bcd_updates_apply_sort;
@@ -68,12 +69,12 @@ pub fn get_bcd_updates_for_collection(
             pool,
             query_params,
             collections,
-            &user_id.id().unwrap(),
+            &extract_user_id(user_id).unwrap(),
         )?;
 
         let mut query = bcd_updates_read_table_get_updates_for_collections!(
             collections,
-            &user_id.id().unwrap(),
+            &extract_user_id(user_id).unwrap(),
             pool
         );
 

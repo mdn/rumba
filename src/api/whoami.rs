@@ -2,6 +2,7 @@ use actix_identity::Identity;
 
 use serde::Serialize;
 
+use crate::api::common::extract_user_id;
 use crate::db;
 use crate::db::Pool;
 use crate::metrics::Metrics;
@@ -67,7 +68,7 @@ pub async fn whoami(
     match id {
         Some(id) => {
             let mut conn_pool = pool.get()?;
-            let user = db::users::get_user(&mut conn_pool, id.id().unwrap());
+            let user = db::users::get_user(&mut conn_pool, extract_user_id(&id)?);
             match user {
                 Ok(user) => {
                     let settings = db::settings::get_settings(&mut conn_pool, &user)?;

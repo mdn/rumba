@@ -1,4 +1,5 @@
 use actix_http::StatusCode;
+use actix_identity::Identity;
 use actix_web::web::Data;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -122,4 +123,8 @@ impl From<&str> for GeneratedChunk {
             ..Default::default()
         }
     }
+}
+
+pub fn extract_user_id(identity: &Identity) -> Result<String, ApiError> {
+    identity.id().map_err(|_| ApiError::Unauthorized)
 }
