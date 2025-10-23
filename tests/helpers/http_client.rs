@@ -29,6 +29,8 @@ impl<T: Service<Request, Response = RumbaTestResponse, Error = Error>> TestHttpC
 
         let login_res = test::call_service(&service, login_req).await;
 
+        println!("Login response: {:?}", login_res);
+
         let location_header = login_res
             .response()
             .headers()
