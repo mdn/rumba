@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.13.1](https://github.com/mdn/rumba/compare/v1.13.0...v1.13.1) (2025-10-24)
+
+
+### Bug Fixes
+
+* **prod-build:** remove ref_protected requirement, add tag input ([#639](https://github.com/mdn/rumba/issues/639)) ([6bcdb46](https://github.com/mdn/rumba/commit/6bcdb461de8acae7a98856d619a512ab60e7fb2c))
+
+
+### Build
+
+* **deps:** bump actix-identity from 0.7.1 to 0.9.0 ([#636](https://github.com/mdn/rumba/issues/636)) ([e735685](https://github.com/mdn/rumba/commit/e73568556c82ed266e27ae8e36bb2d5f3e8c4165))
+* **deps:** bump cadence from 1.4.0 to 1.6.0 ([#628](https://github.com/mdn/rumba/issues/628)) ([4b5519b](https://github.com/mdn/rumba/commit/4b5519b9588eb34f24d5f328e707410491c5cc06))
+* **deps:** bump diesel from 2.2.4 to 2.2.12 ([#631](https://github.com/mdn/rumba/issues/631)) ([db43f11](https://github.com/mdn/rumba/commit/db43f11ddedbadc7f4f84f1b50c8a3b4aaffd47c))
+* **deps:** bump hostname from 0.4.0 to 0.4.1 ([#660](https://github.com/mdn/rumba/issues/660)) ([35af6bb](https://github.com/mdn/rumba/commit/35af6bb33f795c5da892711ebb6cb2d94f1bd289))
+* **deps:** bump sentry-actix from 0.34.0 to 0.45.0 ([#659](https://github.com/mdn/rumba/issues/659)) ([502a07c](https://github.com/mdn/rumba/commit/502a07c77b115d8bea1591c9e72a9d4d540a94fb))
+* **deps:** bump thiserror from 1.0.57 to 2.0.17 ([#642](https://github.com/mdn/rumba/issues/642)) ([8fbe6e4](https://github.com/mdn/rumba/commit/8fbe6e42b07fe08c5b5de6187c6a87a1427f5379))
+* **deps:** bump tokio from 1.43.1 to 1.48.0 ([#649](https://github.com/mdn/rumba/issues/649)) ([d2d6f96](https://github.com/mdn/rumba/commit/d2d6f96598036185b70bfd170f3fa64784b900ba))
+
+
+### Miscellaneous
+
+* **CODEOWNERS:** add Engineering for workflows and CODEOWNERS ([dfafd28](https://github.com/mdn/rumba/commit/dfafd2868ad042ea03f7c9f5a8d607559ecd30b2))
+* **docker:** ignore `.env` file ([#644](https://github.com/mdn/rumba/issues/644)) ([adaa919](https://github.com/mdn/rumba/commit/adaa919966aab3154f438ce90b79d4815033fdcc))
+* **docker:** ignore tmp + log files ([#643](https://github.com/mdn/rumba/issues/643)) ([ade36ae](https://github.com/mdn/rumba/commit/ade36ae06a8cd7f1e9a1f87dd4b5672dc15375fa))
+* **github:** add PR template ([#640](https://github.com/mdn/rumba/issues/640)) ([40a4306](https://github.com/mdn/rumba/commit/40a43063d9596ebe1462a9566a82a6af5b1b9261))
+
 ## [1.13.0](https://github.com/mdn/rumba/compare/v1.12.2...v1.13.0) (2025-09-09)
 
 
