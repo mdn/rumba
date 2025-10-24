@@ -21,23 +21,23 @@ dependencies = [
 
 [[package]]
 name = "actix-http"
-version = "3.9.0"
+version = "3.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d48f96fc3003717aeb9856ca3d02a8c7de502667ad76eeacd830b48d2e91fac4"
+checksum = "7926860314cbe2fb5d1f13731e387ab43bd32bca224e82e6e2db85de0a3dba49"
 dependencies = [
  "actix-codec",
  "actix-rt",
  "actix-service",
  "actix-utils",
- "ahash",
  "base64 0.22.1",
  "bitflags 2.6.0",
  "brotli",
  "bytes",
  "bytestring",
- "derive_more 0.99.17",
+ "derive_more 2.0.1",
  "encoding_rs",
  "flate2",
+ "foldhash",
  "futures-core",
  "h2",
  "http 0.2.11",
@@ -49,7 +49,7 @@ dependencies = [
  "mime",
  "percent-encoding",
  "pin-project-lite",
- "rand 0.8.5",
+ "rand 0.9.2",
  "sha1",
  "smallvec",
  "tokio",
@@ -888,9 +888,9 @@ dependencies = [
 
 [[package]]
 name = "brotli"
-version = "6.0.0"
+version = "8.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74f7971dbd9326d58187408ab83117d8ac1bb9c17b085fdacd1cf2f598719b6b"
+checksum = "4bd8b9603c7aa97359dbd97ecf258968c95f3adddd6db2f7e7a5bef101c84560"
 dependencies = [
  "alloc-no-stdlib",
  "alloc-stdlib",
@@ -899,9 +899,9 @@ dependencies = [
 
 [[package]]
 name = "brotli-decompressor"
-version = "4.0.0"
+version = "5.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e6221fe77a248b9117d431ad93761222e1cf8ff282d9d1d5d9f53d6299a1cf76"
+checksum = "874bb8112abecc98cbd6d81ea4fa7e94fb9449648c93cc89aa40c81c24d7de03"
 dependencies = [
  "alloc-no-stdlib",
  "alloc-stdlib",
@@ -2014,6 +2014,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
+name = "foldhash"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9c4f5dac5e15c24eb999c26181a6ca40b39fe946cbe4c263c7209467bc83af2"
+
+[[package]]
 name = "foreign-types"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2271,9 +2277,9 @@ dependencies = [
 
 [[package]]
 name = "h2"
-version = "0.3.26"
+version = "0.3.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81fe527a889e1532da5c525686d96d4c2e74cdd345badf8dfef9f6b39dd5f5e8"
+checksum = "0beca50380b1fc32983fc1cb4587bfa4bb9e78fc259aad4a0032d2080309222d"
 dependencies = [
  "bytes",
  "fnv",
@@ -4633,7 +4639,7 @@ dependencies = [
  "reqwest 0.12.4",
  "sentry-backtrace",
  "sentry-contexts",
- "sentry-core",
+ "sentry-core 0.34.0",
  "sentry-debug-images",
  "sentry-panic",
  "sentry-tracing",
@@ -4643,13 +4649,15 @@ dependencies = [
 
 [[package]]
 name = "sentry-actix"
-version = "0.34.0"
+version = "0.45.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e461c7d3a46d298b5ffc66127c1f16454dd11d3d89fcfb21023cd499d82b9a78"
+checksum = "cc694e6ffc8d5d7fdb2a33923b0358f6ad41c0b428ced034b349b9e2b08260bc"
 dependencies = [
+ "actix-http",
  "actix-web",
+ "bytes",
  "futures-util",
- "sentry-core",
+ "sentry-core 0.45.0",
 ]
 
 [[package]]
@@ -4661,7 +4669,7 @@ dependencies = [
  "backtrace",
  "once_cell",
  "regex",
- "sentry-core",
+ "sentry-core 0.34.0",
 ]
 
 [[package]]
@@ -4674,7 +4682,7 @@ dependencies = [
  "libc",
  "os_info",
  "rustc_version 0.4.0",
- "sentry-core",
+ "sentry-core 0.34.0",
  "uname",
 ]
 
@@ -4686,9 +4694,22 @@ checksum = "161283cfe8e99c8f6f236a402b9ccf726b201f365988b5bb637ebca0abbd4a30"
 dependencies = [
  "once_cell",
  "rand 0.8.5",
- "sentry-types",
+ "sentry-types 0.34.0",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "sentry-core"
+version = "0.45.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d3b6729c8e71ac968edbe9bf2dd4109c162e552b52bacd2b07e24ede1aba84a5"
+dependencies = [
+ "rand 0.9.2",
+ "sentry-types 0.45.0",
+ "serde",
+ "serde_json",
+ "url",
 ]
 
 [[package]]
@@ -4699,7 +4720,7 @@ checksum = "8fc6b25e945fcaa5e97c43faee0267eebda9f18d4b09a251775d8fef1086238a"
 dependencies = [
  "findshlibs",
  "once_cell",
- "sentry-core",
+ "sentry-core 0.34.0",
 ]
 
 [[package]]
@@ -4709,7 +4730,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bc74f229c7186dd971a9491ffcbe7883544aa064d1589bd30b83fb856cd22d63"
 dependencies = [
  "sentry-backtrace",
- "sentry-core",
+ "sentry-core 0.34.0",
 ]
 
 [[package]]
@@ -4719,7 +4740,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cd3c5faf2103cd01eeda779ea439b68c4ee15adcdb16600836e97feafab362ec"
 dependencies = [
  "sentry-backtrace",
- "sentry-core",
+ "sentry-core 0.34.0",
  "tracing-core",
  "tracing-subscriber",
 ]
@@ -4736,6 +4757,23 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 1.0.69",
+ "time",
+ "url",
+ "uuid",
+]
+
+[[package]]
+name = "sentry-types"
+version = "0.45.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c19d1d1967b55659c358886d0f1aa3076488d445f84c7d727d384c675adaec1"
+dependencies = [
+ "debugid",
+ "hex",
+ "rand 0.9.2",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.17",
  "time",
  "url",
  "uuid",
