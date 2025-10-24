@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.13.0](https://github.com/mdn/rumba/compare/v1.12.2...v1.13.0) (2025-09-09)
+
+
+### Features
+
+* **workflows:** add stage/prod build workflows ([#637](https://github.com/mdn/rumba/issues/637)) ([e7355e3](https://github.com/mdn/rumba/commit/e7355e39ac5098e3590788965934662d2102f3be))
+
+
+### Bug Fixes
+
+* **workflows:** pin 3rd party actions ([#602](https://github.com/mdn/rumba/issues/602)) ([e121662](https://github.com/mdn/rumba/commit/e121662a20ddc3f2f98809ece1f6251ed3bdc86a))
+
+
+### Build
+
+* **deps:** bump actions-rs/toolchain from 1.0.6 to 1.0.7 ([#605](https://github.com/mdn/rumba/issues/605)) ([63ba9d6](https://github.com/mdn/rumba/commit/63ba9d6e2bb0eddce1d57dc30260b09c1eff8f66))
+* **deps:** bump crossbeam-channel from 0.5.11 to 0.5.15 ([#622](https://github.com/mdn/rumba/issues/622)) ([5894b86](https://github.com/mdn/rumba/commit/5894b867f10c7d44b9b649888e4eec8b497d471d))
+* **deps:** bump docker/build-push-action from 3 to 6 ([#573](https://github.com/mdn/rumba/issues/573)) ([940e013](https://github.com/mdn/rumba/commit/940e0133660be44bfe85299f168582a27141ac0a))
+* **deps:** bump docker/build-push-action from 6.13.0 to 6.15.0 ([#607](https://github.com/mdn/rumba/issues/607)) ([f578d42](https://github.com/mdn/rumba/commit/f578d42d25e66b9c701d43391d6a9b17cad3cf55))
+* **deps:** bump docker/login-action from 3.3.0 to 3.4.0 ([#613](https://github.com/mdn/rumba/issues/613)) ([20eb302](https://github.com/mdn/rumba/commit/20eb302d8e35e100963385f8cf1900f9968e0c1a))
+* **deps:** bump docker/metadata-action from 5.6.1 to 5.7.0 ([#608](https://github.com/mdn/rumba/issues/608)) ([a522563](https://github.com/mdn/rumba/commit/a5225634afbfb74a546f22e08195ab9cf16bd9ff))
+* **deps:** bump itertools from 0.13.0 to 0.14.0 ([#593](https://github.com/mdn/rumba/issues/593)) ([8879852](https://github.com/mdn/rumba/commit/887985245bdecae5f0618557e035eff6957fa893))
+* **deps:** bump Mozilla-Actions/sccache-action from 0.0.7 to 0.0.8 ([#610](https://github.com/mdn/rumba/issues/610)) ([d1e6f1e](https://github.com/mdn/rumba/commit/d1e6f1eb58ad0e70cb62f0aee0a4d9a2e8e55f33))
+* **deps:** bump Mozilla-Actions/sccache-action from 0.0.8 to 0.0.9 ([#616](https://github.com/mdn/rumba/issues/616)) ([2d76e10](https://github.com/mdn/rumba/commit/2d76e10e27dc3550eac258051e5f3cd1ca659b91))
+* **deps:** bump once_cell from 1.19.0 to 1.21.3 ([#617](https://github.com/mdn/rumba/issues/617)) ([6fb8ec1](https://github.com/mdn/rumba/commit/6fb8ec1cb758498ac5ee1bdf4cedd3fc1a2e19e6))
+* **deps:** bump openssl from 0.10.66 to 0.10.70 ([#599](https://github.com/mdn/rumba/issues/599)) ([0378a21](https://github.com/mdn/rumba/commit/0378a21b026bf4f56e5db23b15e72d9c2af0af91))
+* **deps:** bump openssl from 0.10.71 to 0.10.72 ([#618](https://github.com/mdn/rumba/issues/618)) ([a0d0341](https://github.com/mdn/rumba/commit/a0d0341b22ac5a458dfdc062535e06b11cb96aa1))
+* **deps:** bump tokio from 1.40.0 to 1.43.1 ([#620](https://github.com/mdn/rumba/issues/620)) ([c2f009c](https://github.com/mdn/rumba/commit/c2f009c9e7ca9dd11a7835332903e559e0a8e2ac))
+* **workflows:** migrate to dtolnay/rust-toolchain ([#590](https://github.com/mdn/rumba/issues/590)) ([e0135c2](https://github.com/mdn/rumba/commit/e0135c2171e52382909f921b1b21825e2fe151e3))
+
 ## [1.12.2](https://github.com/mdn/rumba/compare/v1.12.1...v1.12.2) (2025-01-03)
 
 
