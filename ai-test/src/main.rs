@@ -11,7 +11,7 @@ mod prompts;
 
 #[derive(Parser)]
 #[command(name = "yari-rs")]
-#[command(author = "fiji <me@fiji-flo.de>")]
+#[command(author = "MDN Engineering Team <mdn-dev@mozilla.com>")]
 #[command(version = "1.0")]
 #[command(about = "Rusty Yari", long_about = None)]
 struct Cli {
