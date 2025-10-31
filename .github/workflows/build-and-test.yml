@@ -53,6 +53,6 @@ jobs:
       - name: Clippy
         run: cargo clippy --all --all-features -- -D warnings
       - name: Build
-        run: cargo build --all --all-features --verbose
+        run: cargo build --release --all --all-features
       - name: Run tests
         run: RUST_BACKTRACE=1 RUST_LOG=rumba:info MDN_SETTINGS=.settings.test.toml cargo test --all -- --test-threads=1 --nocapture
