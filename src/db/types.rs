@@ -88,8 +88,10 @@ pub enum FxaEvent {
     Serialize,
 )]
 #[ExistingTypePath = "crate::db::schema::sql_types::SubscriptionType"]
+#[derive(Default)]
 pub enum Subscription {
     #[serde(rename(serialize = "core"))]
+    #[default]
     Core,
     #[serde(rename = "mdn_plus_5m")]
     MdnPlus_5m,
@@ -120,12 +122,6 @@ impl Subscription {
             Subscription::MdnPlus_10m => "mdn_plus_10m",
             Subscription::Core => "core",
         }
-    }
-}
-
-impl Default for Subscription {
-    fn default() -> Self {
-        Self::Core
     }
 }
 

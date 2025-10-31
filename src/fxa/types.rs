@@ -1,9 +1,10 @@
 use crate::db;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, PartialOrd, Ord, Eq, Copy)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, PartialOrd, Ord, Eq, Copy, Default)]
 pub enum Subscription {
     #[serde(rename(serialize = "core"))]
+    #[default]
     Core,
     #[serde(rename = "mdn_plus_5m")]
     MdnPlus5m,
@@ -15,12 +16,6 @@ pub enum Subscription {
     MdnPlus10y,
     #[serde(other)]
     Unknown,
-}
-
-impl Default for Subscription {
-    fn default() -> Self {
-        Self::Core
-    }
 }
 
 impl From<Subscription> for db::types::Subscription {

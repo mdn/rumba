@@ -12,7 +12,7 @@ use actix_rt::time::sleep;
 use actix_web::test;
 use anyhow::anyhow;
 use anyhow::Error;
-use chrono::NaiveDateTime;
+use chrono::DateTime;
 use diesel::prelude::*;
 use rumba::db::model::SubscriptionChangeQuery;
 use rumba::db::model::WebHookEventQuery;
@@ -410,7 +410,7 @@ async fn record_subscription_state_transitions_test() -> Result<(), Error> {
         assert_eq!(transitions[0].user_id, 1);
         assert_eq!(
             transitions[0].created_at,
-            NaiveDateTime::from_timestamp_opt(1654425317, 0).unwrap()
+            DateTime::from_timestamp(1654425317, 0).unwrap().naive_utc()
         );
     }
 
@@ -455,11 +455,11 @@ async fn record_subscription_state_transitions_test() -> Result<(), Error> {
         assert_eq!(transitions[1].user_id, 1);
         assert_eq!(
             transitions[0].created_at,
-            NaiveDateTime::from_timestamp_opt(1654425317, 0).unwrap()
+            DateTime::from_timestamp(1654425317, 0).unwrap().naive_utc()
         );
         assert_eq!(
             transitions[1].created_at,
-            NaiveDateTime::from_timestamp_opt(1654425617, 0).unwrap()
+            DateTime::from_timestamp(1654425617, 0).unwrap().naive_utc()
         );
     }
 
@@ -490,11 +490,11 @@ async fn record_subscription_state_transitions_test() -> Result<(), Error> {
         assert_eq!(transitions.len(), 2);
         assert_eq!(
             transitions[0].created_at,
-            NaiveDateTime::from_timestamp_opt(1654425317, 0).unwrap()
+            DateTime::from_timestamp(1654425317, 0).unwrap().naive_utc()
         );
         assert_eq!(
             transitions[1].created_at,
-            NaiveDateTime::from_timestamp_opt(1654425617, 0).unwrap()
+            DateTime::from_timestamp(1654425617, 0).unwrap().naive_utc()
         );
     }
 

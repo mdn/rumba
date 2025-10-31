@@ -223,7 +223,7 @@ fn qa_check_for_error_trigger(
         if let Some(msg_text) = messages
             .iter()
             .filter(|m| m.role == Role::User)
-            .last()
+            .next_back()
             .and_then(|m| m.content.as_ref())
         {
             if msg_text == magic_words {
