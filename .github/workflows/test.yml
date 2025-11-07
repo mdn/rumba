@@ -2,9 +2,9 @@ name: Test
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
 
 # No GITHUB_TOKEN permissions, because we don't use it.
 permissions: {}
