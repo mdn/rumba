@@ -14,15 +14,7 @@ jobs:
     if: github.repository == 'mdn/rumba'
     runs-on: ubuntu-latest
     steps:
-      - uses: google-github-actions/release-please-action@db8f2c60ee802b3748b512940dde88eabd7b7e01 # v3.7.13
+      - uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4.4.0
         with:
-          release-type: rust
-          package-name: release-please-action
-          changelog-types: |
-            [
-              {"type": "feat", "section": "Features", "hidden": false},
-              {"type": "fix", "section": "Bug Fixes", "hidden": false},
-              {"type": "enhance", "section": "Enhancements", "hidden": false},
-              {"type": "build", "section": "Build", "hidden": false},
-              {"type": "chore", "section": "Miscellaneous", "hidden": false}
-            ]
+          config-file: .github/release-please-config.json
+          manifest-file: .github/release-please-manifest.json

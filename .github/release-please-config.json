@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "last-release-sha": "094c1c57354d2fb256338b9b42c3dd11295ae439",
+  "bump-minor-pre-major": true,
+  "bump-patch-for-minor-pre-major": true,
+  "changelog-sections": [
+    {"type": "feat", "section": "Features", "hidden": false},
+    {"type": "fix", "section": "Bug Fixes", "hidden": false},
+    {"type": "enhance", "section": "Enhancements", "hidden": false},
+    {"type": "build", "section": "Build", "hidden": false},
+    {"type": "chore", "section": "Miscellaneous", "hidden": false}
+  ],
+  "include-component-in-tag": false,
+  "include-v-in-tag": true,
+  "packages": {
+    ".": {
+      "component": "rumba",
+      "release-type": "rust" 
+    }
+  }
+}
