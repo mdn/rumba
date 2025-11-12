@@ -5,15 +5,15 @@ use openidconnect::core::CoreTokenResponse;
 use openidconnect::core::{
     CoreAuthenticationFlow, CoreClient, CoreGenderClaim, CoreProviderMetadata,
 };
-use openidconnect::http::header::{HeaderValue, ACCEPT, AUTHORIZATION};
+use openidconnect::http::header::{ACCEPT, AUTHORIZATION};
 use openidconnect::http::Method;
 use openidconnect::http::StatusCode;
-use openidconnect::reqwest::async_http_client;
 use openidconnect::{
-    AdditionalClaims, AuthorizationCode, ClientId, ClientSecret, CsrfToken, HttpRequest, IssuerUrl,
-    Nonce, RedirectUrl, Scope,
+    AdditionalClaims, AuthorizationCode, ClientId, ClientSecret, CsrfToken, IssuerUrl, Nonce,
+    RedirectUrl, Scope,
 };
-use openidconnect::{OAuth2TokenResponse, RefreshToken, UserInfoClaims};
+use openidconnect::{AsyncHttpClient, OAuth2TokenResponse, RefreshToken, UserInfoClaims};
+use openidconnect::{EndpointMaybeSet, EndpointSet};
 use serde::{Deserialize, Serialize};
 
 use url::Url;
@@ -75,15 +75,29 @@ pub struct AuthResponse {
 impl AdditionalClaims for FxAClaims {}
 
 pub struct LoginManager {
-    pub login_client: CoreClient,
+    pub login_client: CoreClient<
+        EndpointSet,
+        openidconnect::EndpointNotSet,
+        openidconnect::EndpointNotSet,
+        openidconnect::EndpointNotSet,
+        EndpointMaybeSet,
+        EndpointMaybeSet,
+    >,
     pub metadata: CoreProviderMetadata,
+    pub http_client: reqwest::Client,
 }
 
 impl LoginManager {
     pub async fn init() -> Result<Self, FxaError> {
+        // Create HTTP client with redirects disabled for security (prevents SSRF)
+        let http_client = reqwest::Client::builder()
+            .redirect(reqwest::redirect::Policy::none())
+            .build()
+            .map_err(|e| FxaError::Oidc(e.into()))?;
+
         let provider_metadata = CoreProviderMetadata::discover_async(
             IssuerUrl::new(SETTINGS.auth.issuer_url.clone())?,
-            async_http_client,
+            &http_client,
         )
         .await
         .map_err(|e| FxaError::Oidc(e.into()))?;
@@ -97,6 +111,7 @@ impl LoginManager {
         Ok(LoginManager {
             login_client,
             metadata: provider_metadata,
+            http_client,
         })
     }
 
@@ -128,7 +143,8 @@ impl LoginManager {
         let token_response = self
             .login_client
             .exchange_code(AuthorizationCode::new(code))
-            .request_async(async_http_client)
+            .map_err(|e| FxaError::Oidc(anyhow::anyhow!("Token endpoint not available: {}", e)))?
+            .request_async(&self.http_client)
             .await
             .map_err(|e| FxaError::Oidc(e.into()))?;
 
@@ -156,30 +172,33 @@ impl LoginManager {
         &self,
         token_response: CoreTokenResponse,
     ) -> Result<FxAUser, FxaError> {
-        let (auth_header, auth_value) = (
-            AUTHORIZATION,
-            HeaderValue::from_str(&format!(
-                "Bearer {}",
-                token_response.access_token().secret()
-            ))
-            .expect("invalid access token"),
-        );
-        let req = HttpRequest {
-            url: self.metadata.userinfo_endpoint().unwrap().url().clone(),
-            method: Method::GET,
-            headers: vec![
-                (ACCEPT, HeaderValue::from_static("application/json")),
-                (auth_header, auth_value),
-            ]
-            .into_iter()
-            .collect(),
-            body: Vec::new(),
-        };
-        let http_response = async_http_client(req).await?;
-        if http_response.status_code != StatusCode::OK {
-            return Err(FxaError::UserInfoBadStatus(http_response.status_code));
+        let auth_value = format!("Bearer {}", token_response.access_token().secret());
+
+        let userinfo_url = self
+            .metadata
+            .userinfo_endpoint()
+            .ok_or_else(|| FxaError::Oidc(anyhow::anyhow!("UserInfo endpoint not available")))?;
+
+        let req = openidconnect::http::Request::builder()
+            .method(Method::GET)
+            .uri(userinfo_url.url().as_str())
+            .header(ACCEPT, "application/json")
+            .header(AUTHORIZATION, auth_value)
+            .body(Vec::new())
+            .expect("Failed to build request");
+
+        let http_response = self
+            .http_client
+            .call(req)
+            .await
+            .map_err(|e| FxaError::UserInfoError(openidconnect::UserInfoError::Request(e)))?;
+        if http_response.status() != StatusCode::OK {
+            // Convert http 1.0 StatusCode to actix_http StatusCode (http 0.2)
+            let status = actix_http::StatusCode::from_u16(http_response.status().as_u16())
+                .unwrap_or(actix_http::StatusCode::INTERNAL_SERVER_ERROR);
+            return Err(FxaError::UserInfoBadStatus(status));
         }
-        Ok(serde_json::from_slice(&http_response.body)?)
+        Ok(serde_json::from_slice(http_response.body())?)
 
         // All code above should just be the following but FxA doesn't add
         // the openid scope for the refreshed access token :/
@@ -201,9 +220,10 @@ impl LoginManager {
         let res = self
             .login_client
             .exchange_refresh_token(&RefreshToken::new(refresh_token.to_string()))
+            .map_err(|e| FxaError::Oidc(anyhow::anyhow!("Token endpoint not available: {}", e)))?
             .add_extra_param("ttl", "300")
             .add_scope(Scope::new(SETTINGS.auth.scopes.clone()))
-            .request_async(async_http_client)
+            .request_async(&self.http_client)
             .await
             .map_err(|e| FxaError::Oidc(e.into()))?;
         let user = self.get_fxa_user(res).await?;
