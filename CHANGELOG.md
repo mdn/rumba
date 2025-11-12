@@ -1,5 +1,55 @@
 # Changelog
 
+## [1.13.1](https://github.com/mdn/rumba/compare/v1.13.0...v1.13.1) (2025-11-07)
+
+
+### Bug Fixes
+
+* **prod-build:** remove ref_protected requirement, add tag input ([#639](https://github.com/mdn/rumba/issues/639)) ([6bcdb46](https://github.com/mdn/rumba/commit/6bcdb461de8acae7a98856d619a512ab60e7fb2c))
+
+
+### Build
+
+* **deps:** bump actix-identity from 0.7.1 to 0.9.0 ([#636](https://github.com/mdn/rumba/issues/636)) ([e735685](https://github.com/mdn/rumba/commit/e73568556c82ed266e27ae8e36bb2d5f3e8c4165))
+* **deps:** bump actix-rt from 2.10.0 to 2.11.0 ([#692](https://github.com/mdn/rumba/issues/692)) ([3a45b78](https://github.com/mdn/rumba/commit/3a45b78594a23148a3f9929011fb40c212fb2174))
+* **deps:** bump actix-web from 4.8.0 to 4.11.0 ([#684](https://github.com/mdn/rumba/issues/684)) ([160c300](https://github.com/mdn/rumba/commit/160c3000c00fb33689da5516fc496cb8f3427950))
+* **deps:** bump actix-web-lab from 0.22.0 to 0.23.0 ([#690](https://github.com/mdn/rumba/issues/690)) ([dd529b5](https://github.com/mdn/rumba/commit/dd529b5cd12bf78af88e4fb072ee7d44145e8ee3))
+* **deps:** bump cadence from 1.4.0 to 1.6.0 ([#628](https://github.com/mdn/rumba/issues/628)) ([4b5519b](https://github.com/mdn/rumba/commit/4b5519b9588eb34f24d5f328e707410491c5cc06))
+* **deps:** bump chrono from 0.4.38 to 0.4.42 ([#664](https://github.com/mdn/rumba/issues/664)) ([e985aa9](https://github.com/mdn/rumba/commit/e985aa9bdb29e4e6dda2b27845ef222a1953eef6))
+* **deps:** bump clap from 4.5.9 to 4.5.51 ([#681](https://github.com/mdn/rumba/issues/681)) ([49a6b96](https://github.com/mdn/rumba/commit/49a6b96c5e756ea0147a3fa161c869ad81e860c3))
+* **deps:** bump const_format from 0.2.32 to 0.2.35 ([#675](https://github.com/mdn/rumba/issues/675)) ([4d7e081](https://github.com/mdn/rumba/commit/4d7e08177227c2b79529b793abb6c8bc89a82969))
+* **deps:** bump diesel from 2.2.4 to 2.2.12 ([#631](https://github.com/mdn/rumba/issues/631)) ([db43f11](https://github.com/mdn/rumba/commit/db43f11ddedbadc7f4f84f1b50c8a3b4aaffd47c))
+* **deps:** bump form_urlencoded from 1.2.1 to 1.2.2 ([#680](https://github.com/mdn/rumba/issues/680)) ([352b21c](https://github.com/mdn/rumba/commit/352b21cf2287aa00ba85d15e0d5a2485eddd0647))
+* **deps:** bump futures from 0.3.30 to 0.3.31 ([#685](https://github.com/mdn/rumba/issues/685)) ([4f507da](https://github.com/mdn/rumba/commit/4f507da943a3da87a8e9883150890c3f22d05a37))
+* **deps:** bump futures-util from 0.3.30 to 0.3.31 ([#667](https://github.com/mdn/rumba/issues/667)) ([c887617](https://github.com/mdn/rumba/commit/c8876173cea1005ea2ae49f62fa53b2d3061bcac))
+* **deps:** bump hostname from 0.4.0 to 0.4.1 ([#660](https://github.com/mdn/rumba/issues/660)) ([35af6bb](https://github.com/mdn/rumba/commit/35af6bb33f795c5da892711ebb6cb2d94f1bd289))
+* **deps:** bump jsonwebtoken from 9.3.0 to 10.1.0 ([#682](https://github.com/mdn/rumba/issues/682)) ([efe0d53](https://github.com/mdn/rumba/commit/efe0d53e76462ad411a05d1448814b92c5228408))
+* **deps:** bump percent-encoding from 2.3.1 to 2.3.2 ([#662](https://github.com/mdn/rumba/issues/662)) ([aeb616f](https://github.com/mdn/rumba/commit/aeb616f51abe4540a0d2ec051424c0233d37cfd3))
+* **deps:** bump regex from 1.11.1 to 1.12.2 ([#674](https://github.com/mdn/rumba/issues/674)) ([2f3c8fc](https://github.com/mdn/rumba/commit/2f3c8fcc40ffb9bfa38c4f80158f72070d72c055))
+* **deps:** bump sentry from 0.34.0 to 0.39.0 ([#671](https://github.com/mdn/rumba/issues/671)) ([ca62cf8](https://github.com/mdn/rumba/commit/ca62cf8ead3227a30cf2d14299166fad4980efb4))
+* **deps:** bump sentry-actix from 0.34.0 to 0.45.0 ([#659](https://github.com/mdn/rumba/issues/659)) ([502a07c](https://github.com/mdn/rumba/commit/502a07c77b115d8bea1591c9e72a9d4d540a94fb))
+* **deps:** bump serde_path_to_error from 0.1.16 to 0.1.20 ([#678](https://github.com/mdn/rumba/issues/678)) ([9096e77](https://github.com/mdn/rumba/commit/9096e773ec0b29677c33611723d03d858a58212b))
+* **deps:** bump serde_with from 3.9.0 to 3.14.0 ([#686](https://github.com/mdn/rumba/issues/686)) ([c9dae1d](https://github.com/mdn/rumba/commit/c9dae1de4123f2b1dfbcda3c449f5f5e5167477d))
+* **deps:** bump sha2 from 0.10.8 to 0.10.9 ([#665](https://github.com/mdn/rumba/issues/665)) ([ee127ed](https://github.com/mdn/rumba/commit/ee127ed76e7ad3d34e91e0b6765a76faf293201e))
+* **deps:** bump slog-term from 2.9.1 to 2.9.2 ([#683](https://github.com/mdn/rumba/issues/683)) ([2be1b2f](https://github.com/mdn/rumba/commit/2be1b2fdcecc1480151bcd5d76de25015e2565ab))
+* **deps:** bump thiserror from 1.0.57 to 2.0.17 ([#642](https://github.com/mdn/rumba/issues/642)) ([8fbe6e4](https://github.com/mdn/rumba/commit/8fbe6e42b07fe08c5b5de6187c6a87a1427f5379))
+* **deps:** bump tiktoken-rs from 0.5.9 to 0.7.0 ([#687](https://github.com/mdn/rumba/issues/687)) ([43b1147](https://github.com/mdn/rumba/commit/43b1147e58203c9d85cde0a40822ace7d8cdaf50))
+* **deps:** bump tokio from 1.43.1 to 1.48.0 ([#649](https://github.com/mdn/rumba/issues/649)) ([d2d6f96](https://github.com/mdn/rumba/commit/d2d6f96598036185b70bfd170f3fa64784b900ba))
+* **deps:** bump url from 2.5.2 to 2.5.7 ([#672](https://github.com/mdn/rumba/issues/672)) ([148c886](https://github.com/mdn/rumba/commit/148c886e6bd4379d431428508a8ee94531b39c15))
+* **deps:** bump uuid from 1.10.0 to 1.16.0 ([#688](https://github.com/mdn/rumba/issues/688)) ([0bfcbca](https://github.com/mdn/rumba/commit/0bfcbca2cb49044f27eb8870aee9e2894022014e))
+* **deps:** bump validator from 0.18.1 to 0.20.0 ([#670](https://github.com/mdn/rumba/issues/670)) ([3471bf1](https://github.com/mdn/rumba/commit/3471bf19f0d70a71217f7184279c4a6d7c3e793f))
+
+
+### Miscellaneous
+
+* **ai-test:** update author ([#677](https://github.com/mdn/rumba/issues/677)) ([aa3b743](https://github.com/mdn/rumba/commit/aa3b7434f42a1591f62721712e114f761032d628))
+* **CODEOWNERS:** add Engineering for workflows and CODEOWNERS ([dfafd28](https://github.com/mdn/rumba/commit/dfafd2868ad042ea03f7c9f5a8d607559ecd30b2))
+* **deps:** bump rust from 1.81 to 1.90 ([#679](https://github.com/mdn/rumba/issues/679)) ([2081d9b](https://github.com/mdn/rumba/commit/2081d9b54e7295b827517d7d0d308428eaf69528))
+* **docker:** ignore `.env` file ([#644](https://github.com/mdn/rumba/issues/644)) ([adaa919](https://github.com/mdn/rumba/commit/adaa919966aab3154f438ce90b79d4815033fdcc))
+* **docker:** ignore tmp + log files ([#643](https://github.com/mdn/rumba/issues/643)) ([ade36ae](https://github.com/mdn/rumba/commit/ade36ae06a8cd7f1e9a1f87dd4b5672dc15375fa))
+* **github:** add PR template ([#640](https://github.com/mdn/rumba/issues/640)) ([40a4306](https://github.com/mdn/rumba/commit/40a43063d9596ebe1462a9566a82a6af5b1b9261))
+* migrate GitHub team references ([#668](https://github.com/mdn/rumba/issues/668)) ([8d9b738](https://github.com/mdn/rumba/commit/8d9b73813155c59115ef6b8288c2171367628b31))
+
 ## [1.13.0](https://github.com/mdn/rumba/compare/v1.12.2...v1.13.0) (2025-09-09)
 
 
