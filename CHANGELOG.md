@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.13.2](https://github.com/mdn/rumba/compare/v1.13.1...v1.13.2) (2025-11-12)
+
+
+### Build
+
+* **deps:** bump anyhow from 1.0.95 to 1.0.100 ([#697](https://github.com/mdn/rumba/issues/697)) ([0dbab62](https://github.com/mdn/rumba/commit/0dbab6294ba1de47f17eacfd1ed263f1998b046a))
+* **deps:** bump config from 0.14.0 to 0.15.18 ([#695](https://github.com/mdn/rumba/issues/695)) ([24af45c](https://github.com/mdn/rumba/commit/24af45c102025b974d94b4f9b6c90556a0499990))
+* **deps:** bump jsonwebtoken from 10.1.0 to 10.2.0 ([#696](https://github.com/mdn/rumba/issues/696)) ([e1fb70d](https://github.com/mdn/rumba/commit/e1fb70d0cd577a455cd8c4fefcc464088687827d))
+
 ## [1.13.1](https://github.com/mdn/rumba/compare/v1.13.0...v1.13.1) (2025-11-07)
 
 
