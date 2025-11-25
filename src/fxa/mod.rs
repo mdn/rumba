@@ -66,10 +66,29 @@ impl From<UserInfoClaims<FxAClaims, CoreGenderClaim>> for FxAUser {
     }
 }
 
-#[derive(Deserialize)]
-pub struct AuthResponse {
-    pub code: String,
-    pub state: String,
+#[derive(Deserialize, Debug)]
+#[serde(untagged)]
+pub enum AuthResponse {
+    Success {
+        code: String,
+        state: String,
+    },
+    Error {
+        error: String,
+        #[serde(default)]
+        error_description: Option<String>,
+        #[serde(default)]
+        error_uri: Option<String>,
+        state: String,
+    },
+}
+
+impl AuthResponse {
+    pub fn state(&self) -> &str {
+        match self {
+            AuthResponse::Success { state, .. } | AuthResponse::Error { state, .. } => state,
+        }
+    }
 }
 
 impl AdditionalClaims for FxAClaims {}
