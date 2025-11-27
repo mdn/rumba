@@ -173,31 +173,62 @@ async fn callback(
             nonce,
             next,
         } = login_cookie.try_into()?;
-        if csrf_token.secret() == &q.state {
-            let uid = login_manager
-                .callback(q.code, nonce, &pool)
-                .await
-                .map_err(|err| {
-                    error!("{:?}", err);
+
+        // Validate CSRF token
+        if csrf_token.secret() != q.state() {
+            error!("CSRF token mismatch in OAuth callback");
+            return Ok(HttpResponse::Unauthorized().finish());
+        }
+
+        // Handle both success and error responses from FxA
+        match q {
+            AuthResponse::Error {
+                error,
+                error_description,
+                ..
+            } => {
+                // Log with full context for debugging
+                error!(
+                    "FxA OAuth error: {} - {:?} (user-agent: {:?})",
+                    error,
+                    error_description,
+                    req.headers().get("user-agent")
+                );
+            }
+            AuthResponse::Success { code, .. } => {
+                // Existing success flow
+                let uid = login_manager
+                    .callback(code, nonce, &pool)
+                    .await
+                    .map_err(|err| {
+                        error!("{:?}", err);
+                        actix_web::error::ErrorInternalServerError(err)
+                    })?;
+
+                Identity::login(&req.extensions(), uid).map_err(|err| {
+                    error!("{}", err);
                     actix_web::error::ErrorInternalServerError(err)
                 })?;
-            Identity::login(&req.extensions(), uid).map_err(|err| {
-                error!("{}", err);
-                actix_web::error::ErrorInternalServerError(err)
-            })?;
-
-            let cookie = LoginCookie::removal();
-            let next = match next {
-                Some(next) => resolve_redirect(&next),
-                _ => String::from("/"),
-            };
-
-            return Ok(HttpResponse::TemporaryRedirect()
-                .cookie(cookie)
-                .append_header((http::header::LOCATION, next))
-                .finish());
+            }
         }
+
+        let cookie = LoginCookie::removal();
+        let next = match next {
+            Some(next) => resolve_redirect(&next),
+            _ => String::from("/"),
+        };
+
+        return Ok(HttpResponse::TemporaryRedirect()
+            .cookie(cookie)
+            .append_header((http::header::LOCATION, next))
+            .finish());
     }
+
+    // No login cookie - probably expired or cookie blocked
+    error!(
+        "OAuth callback missing login cookie (user-agent: {:?})",
+        req.headers().get("user-agent")
+    );
     Ok(HttpResponse::Unauthorized().finish())
 }
 
