@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.13.2](https://github.com/mdn/rumba/compare/v1.13.1...v1.13.2) (2025-11-27)
+
+
+### Build
+
+* **deps:** bump actix-web from 4.11.0 to 4.12.0 ([#703](https://github.com/mdn/rumba/issues/703)) ([f62d841](https://github.com/mdn/rumba/commit/f62d841b6f4355c24b17405ba35b5247856127ab))
+* **deps:** bump anyhow from 1.0.95 to 1.0.100 ([#697](https://github.com/mdn/rumba/issues/697)) ([0dbab62](https://github.com/mdn/rumba/commit/0dbab6294ba1de47f17eacfd1ed263f1998b046a))
+* **deps:** bump clap from 4.5.51 to 4.5.53 ([#702](https://github.com/mdn/rumba/issues/702)) ([8d0bbc2](https://github.com/mdn/rumba/commit/8d0bbc257bf3c09b5dc1363fd54ffb6063b0a1f3))
+* **deps:** bump config from 0.14.0 to 0.15.18 ([#695](https://github.com/mdn/rumba/issues/695)) ([24af45c](https://github.com/mdn/rumba/commit/24af45c102025b974d94b4f9b6c90556a0499990))
+* **deps:** bump jsonwebtoken from 10.1.0 to 10.2.0 ([#696](https://github.com/mdn/rumba/issues/696)) ([e1fb70d](https://github.com/mdn/rumba/commit/e1fb70d0cd577a455cd8c4fefcc464088687827d))
+* **deps:** bump tiktoken-rs from 0.7.0 to 0.9.1 ([#704](https://github.com/mdn/rumba/issues/704)) ([8a3ce90](https://github.com/mdn/rumba/commit/8a3ce909e819ced6e4f43ea3503c2156c4e34d7d))
+
+
+### Miscellaneous
+
+* **auth:** improve error handling ([#707](https://github.com/mdn/rumba/issues/707)) ([f4b84be](https://github.com/mdn/rumba/commit/f4b84bea63863c40b8b2ecd877123304537059e8))
+
 ## [1.13.1](https://github.com/mdn/rumba/compare/v1.13.0...v1.13.1) (2025-11-07)
 
 
