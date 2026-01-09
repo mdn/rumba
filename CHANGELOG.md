@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.13.3](https://github.com/mdn/rumba/compare/v1.13.2...v1.13.3) (2026-01-09)
+
+
+### Build
+
+* **deps:** bump clap from 4.5.53 to 4.5.54 ([#718](https://github.com/mdn/rumba/issues/718)) ([b37a5f1](https://github.com/mdn/rumba/commit/b37a5f1d846fc835bab33836746381582277a83d))
+* **deps:** bump rsa from 0.9.6 to 0.9.10 ([#720](https://github.com/mdn/rumba/issues/720)) ([a12d101](https://github.com/mdn/rumba/commit/a12d1019ac6f3896c2160c254e399ece31495391))
+* **deps:** bump serde_json from 1.0.145 to 1.0.148 ([#717](https://github.com/mdn/rumba/issues/717)) ([593b3d7](https://github.com/mdn/rumba/commit/593b3d7c3b95aadb8f856b17b909affcbe7f5896))
+* **deps:** bump tokio from 1.48.0 to 1.49.0 ([#719](https://github.com/mdn/rumba/issues/719)) ([a4834e8](https://github.com/mdn/rumba/commit/a4834e83321e8aee61109891659aba83afc4def9))
+
 ## [1.13.2](https://github.com/mdn/rumba/compare/v1.13.1...v1.13.2) (2025-12-08)
 
 
