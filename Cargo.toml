@@ -36,8 +36,8 @@ diesel = { version = "2", features = [
 ] }
 diesel_migrations = "2"
 diesel-derive-enum = { version = "2", features = ["postgres"] }
-pgvector = { version = "0.3", features = ["postgres", "sqlx"] }
-sqlx = { version = "0.7", features = ["macros", "runtime-tokio-rustls", "postgres"], default-features = false }
+pgvector = { version = "0.4", features = ["postgres", "sqlx"] }
+sqlx = { version = "0.8", features = ["macros", "runtime-tokio-rustls", "postgres"], default-features = false }
 
 elasticsearch = "7.17.7-alpha.1"
 harsh = "0.2"
