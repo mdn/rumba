@@ -4365,6 +4365,7 @@ dependencies = [
  "r2d2",
  "regex",
  "reqwest 0.11.24",
+ "rustls 0.23.20",
  "sentry",
  "sentry-actix 0.46.1",
  "serde",
