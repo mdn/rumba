@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.13.3](https://github.com/mdn/rumba/compare/v1.13.2...v1.13.3) (2026-01-14)
+
+
+### Build
+
+* **deps:** bump actix-web-lab from 0.23.0 to 0.24.3 ([#715](https://github.com/mdn/rumba/issues/715)) ([1e29f2c](https://github.com/mdn/rumba/commit/1e29f2cd188f0136526a1fee5fc7c2c2b183b73b))
+* **deps:** bump clap from 4.5.53 to 4.5.54 ([#718](https://github.com/mdn/rumba/issues/718)) ([b37a5f1](https://github.com/mdn/rumba/commit/b37a5f1d846fc835bab33836746381582277a83d))
+* **deps:** bump rsa from 0.9.6 to 0.9.10 ([#720](https://github.com/mdn/rumba/issues/720)) ([a12d101](https://github.com/mdn/rumba/commit/a12d1019ac6f3896c2160c254e399ece31495391))
+* **deps:** bump sentry-actix from 0.46.0 to 0.46.1 ([#724](https://github.com/mdn/rumba/issues/724)) ([000481c](https://github.com/mdn/rumba/commit/000481c23b2cb1d06d6a09589948b6757ea75fbc))
+* **deps:** bump serde_json from 1.0.145 to 1.0.148 ([#717](https://github.com/mdn/rumba/issues/717)) ([593b3d7](https://github.com/mdn/rumba/commit/593b3d7c3b95aadb8f856b17b909affcbe7f5896))
+* **deps:** bump serde_json from 1.0.148 to 1.0.149 ([#723](https://github.com/mdn/rumba/issues/723)) ([e12ee20](https://github.com/mdn/rumba/commit/e12ee203cc8c49ba26d983621b738a116ebd99da))
+* **deps:** bump tokio from 1.48.0 to 1.49.0 ([#719](https://github.com/mdn/rumba/issues/719)) ([a4834e8](https://github.com/mdn/rumba/commit/a4834e83321e8aee61109891659aba83afc4def9))
+* **deps:** bump tracing-subscriber from 0.3.18 to 0.3.22 ([#727](https://github.com/mdn/rumba/issues/727)) ([2c0a944](https://github.com/mdn/rumba/commit/2c0a944fa07f23bfb10920ad4dc2307f758f8e06))
+* **deps:** bump url from 2.5.7 to 2.5.8 ([#722](https://github.com/mdn/rumba/issues/722)) ([e58bdb5](https://github.com/mdn/rumba/commit/e58bdb51eda0533475bafb206cfb856713aebc17))
+
+
+### Miscellaneous
+
+* **api/auth:** set secure flag even for removal ([#728](https://github.com/mdn/rumba/issues/728)) ([3357fe8](https://github.com/mdn/rumba/commit/3357fe843b15d04444ddd89db57e87daf94fe816))
+
 ## [1.13.2](https://github.com/mdn/rumba/compare/v1.13.1...v1.13.2) (2025-12-08)
 
 
