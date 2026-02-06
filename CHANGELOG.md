@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.13.4](https://github.com/mdn/rumba/compare/v1.13.3...v1.13.4) (2026-02-06)
+
+
+### Build
+
+* **deps:** bump bytes from 1.5.0 to 1.11.1 ([#741](https://github.com/mdn/rumba/issues/741)) ([429f103](https://github.com/mdn/rumba/commit/429f10354bf91fe8950224ac6f0b03c05da44863))
+* **deps:** bump clap from 4.5.54 to 4.5.56 ([#737](https://github.com/mdn/rumba/issues/737)) ([c2c8e7f](https://github.com/mdn/rumba/commit/c2c8e7f7aad4d8f70c1a3209eefbb85bafd957c8))
+* **deps:** bump jsonwebtoken from 10.2.0 to 10.3.0 ([#736](https://github.com/mdn/rumba/issues/736)) ([10c1477](https://github.com/mdn/rumba/commit/10c147797965896fc67a8c2cf64d33a19a9c0e46))
+* **deps:** bump time from 0.3.36 to 0.3.47 ([#743](https://github.com/mdn/rumba/issues/743)) ([e98b74c](https://github.com/mdn/rumba/commit/e98b74c37871b7b7124469154434a2571b7e7099))
+
 ## [1.13.3](https://github.com/mdn/rumba/compare/v1.13.2...v1.13.3) (2026-01-27)
 
 
