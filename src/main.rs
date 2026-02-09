@@ -43,6 +43,11 @@ async fn main() -> anyhow::Result<()> {
         std::env::set_var("RUST_LOG", "info");
     }
 
+    // Initialize rustls crypto provider (required for rustls 0.23+)
+    rustls::crypto::ring::default_provider()
+        .install_default()
+        .expect("Failed to install rustls crypto provider");
+
     init_logging(!SETTINGS.logging.human_logs);
     info!("starting…");
     debug!("DEBUG logging enabled");
