@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.13.4](https://github.com/mdn/rumba/compare/v1.13.3...v1.13.4) (2026-02-23)
+
+
+### Build
+
+* **deps:** bump actix-http from 3.11.2 to 3.12.0 ([#753](https://github.com/mdn/rumba/issues/753)) ([570b9f7](https://github.com/mdn/rumba/commit/570b9f75252109c7bc56b54a0dd64451702c1c28))
+* **deps:** bump actix-web from 4.12.1 to 4.13.0 ([#756](https://github.com/mdn/rumba/issues/756)) ([b2706b3](https://github.com/mdn/rumba/commit/b2706b357d1112e0112623fcf72b6ec073fd647d))
+* **deps:** bump anyhow from 1.0.100 to 1.0.101 ([#746](https://github.com/mdn/rumba/issues/746)) ([d86ae97](https://github.com/mdn/rumba/commit/d86ae97fb64e55a8b16a6cea45f19794b47b572f))
+* **deps:** bump anyhow from 1.0.101 to 1.0.102 ([#754](https://github.com/mdn/rumba/issues/754)) ([ea0fba0](https://github.com/mdn/rumba/commit/ea0fba0af02bd39d2f4a32c24e085a554b5d8e45))
+* **deps:** bump bytes from 1.5.0 to 1.11.1 ([#741](https://github.com/mdn/rumba/issues/741)) ([429f103](https://github.com/mdn/rumba/commit/429f10354bf91fe8950224ac6f0b03c05da44863))
+* **deps:** bump cadence from 1.6.0 to 1.7.0 ([#745](https://github.com/mdn/rumba/issues/745)) ([1855328](https://github.com/mdn/rumba/commit/18553283006a4fa4f742749fad02243bc2bab616))
+* **deps:** bump clap from 4.5.54 to 4.5.56 ([#737](https://github.com/mdn/rumba/issues/737)) ([c2c8e7f](https://github.com/mdn/rumba/commit/c2c8e7f7aad4d8f70c1a3209eefbb85bafd957c8))
+* **deps:** bump clap from 4.5.56 to 4.5.57 ([#747](https://github.com/mdn/rumba/issues/747)) ([5148e6b](https://github.com/mdn/rumba/commit/5148e6b0b497d19315e0eba6044fa80f3ba2ae39))
+* **deps:** bump clap from 4.5.57 to 4.5.58 ([#748](https://github.com/mdn/rumba/issues/748)) ([75d5986](https://github.com/mdn/rumba/commit/75d5986ec1e6382d44ba34797f224213d2d664c1))
+* **deps:** bump clap from 4.5.58 to 4.5.60 ([#755](https://github.com/mdn/rumba/issues/755)) ([f5e307a](https://github.com/mdn/rumba/commit/f5e307a9653eae7a54849dbaacd22c3cd95e47c1))
+* **deps:** bump futures from 0.3.31 to 0.3.32 ([#749](https://github.com/mdn/rumba/issues/749)) ([e478c9c](https://github.com/mdn/rumba/commit/e478c9c39a74aab1df4d193ce3bb8d106ec2c9a4))
+* **deps:** bump futures-util from 0.3.31 to 0.3.32 ([#750](https://github.com/mdn/rumba/issues/750)) ([b48b77c](https://github.com/mdn/rumba/commit/b48b77ce4ca3e991b4e3a7688723c4f0f01da92e))
+* **deps:** bump jsonwebtoken from 10.2.0 to 10.3.0 ([#736](https://github.com/mdn/rumba/issues/736)) ([10c1477](https://github.com/mdn/rumba/commit/10c147797965896fc67a8c2cf64d33a19a9c0e46))
+* **deps:** bump regex from 1.12.2 to 1.12.3 ([#744](https://github.com/mdn/rumba/issues/744)) ([4dae550](https://github.com/mdn/rumba/commit/4dae550f2e4ac00d86a252a65341c08c2270a81d))
+* **deps:** bump sentry-actix from 0.46.1 to 0.46.2 ([#752](https://github.com/mdn/rumba/issues/752)) ([cc90406](https://github.com/mdn/rumba/commit/cc904065bb3b1a5e4bd6186ed4a7115901bb446c))
+* **deps:** bump time from 0.3.36 to 0.3.47 ([#743](https://github.com/mdn/rumba/issues/743)) ([e98b74c](https://github.com/mdn/rumba/commit/e98b74c37871b7b7124469154434a2571b7e7099))
+
 ## [1.13.3](https://github.com/mdn/rumba/compare/v1.13.2...v1.13.3) (2026-01-27)
 
 
