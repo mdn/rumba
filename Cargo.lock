@@ -189,7 +189,7 @@ dependencies = [
  "foldhash",
  "futures-core",
  "futures-util",
- "impl-more",
+ "impl-more 0.1.9",
  "itoa",
  "language-tags",
  "log",
@@ -237,9 +237,9 @@ dependencies = [
 
 [[package]]
 name = "actix-web-lab"
-version = "0.24.3"
+version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fde7e471db19a782577913d5fb56974fd247c5c841c56069632d4ea353f88e3"
+checksum = "80dde3f4f21d81049431a95032b96302866c1f7c7865ff9bd0fa7a17fb061ad3"
 dependencies = [
  "actix-http",
  "actix-router",
@@ -257,7 +257,7 @@ dependencies = [
  "futures-core",
  "futures-util",
  "http 0.2.11",
- "impl-more",
+ "impl-more 0.3.1",
  "itertools 0.14.0",
  "local-channel",
  "mime",
@@ -2714,6 +2714,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e8a5a9a0ff0086c7a148acb942baaabeadf9504d10400b5a05645853729b9cd2"
 
 [[package]]
+name = "impl-more"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "35a84fd5aa25fae5c0f4a33d9cac2ca017fc622cbd089be2229993514990f870"
+
+[[package]]
 name = "indexmap"
 version = "1.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4868,15 +4874,15 @@ dependencies = [
 
 [[package]]
 name = "serde_html_form"
-version = "0.2.7"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d2de91cf02bbc07cde38891769ccd5d4f073d22a40683aa4bc7a95781aaa2c4"
+checksum = "0946d52b4b7e28823148aebbeceb901012c595ad737920d504fa8634bb099e6f"
 dependencies = [
  "form_urlencoded",
  "indexmap 2.2.3",
  "itoa",
  "ryu",
- "serde",
+ "serde_core",
 ]
 
 [[package]]
