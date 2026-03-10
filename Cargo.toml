@@ -44,7 +44,7 @@ harsh = "0.2"
 itertools = "0.14"
 r2d2 = "0.8"
 
-openidconnect = "3"
+openidconnect = "4"
 jsonwebtoken = {version = "10", features = ["rust_crypto"]}
 
 serde = { version = "1", features = ["derive"] }
