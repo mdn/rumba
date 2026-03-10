@@ -10,13 +10,12 @@ use crate::diesel::ExpressionMethods;
 use crate::diesel::QueryDsl;
 use crate::diesel::RunQueryDsl;
 use crate::settings::SETTINGS;
-use actix_http::StatusCode;
 use actix_rt::ArbiterHandle;
 use actix_web::{web::Data, HttpResponse};
 use chrono::NaiveDate;
 use diesel::upsert::excluded;
 use diesel::{sql_query, update, PgConnection};
-use reqwest::Client;
+use reqwest::{Client, StatusCode};
 use serde_json::Value;
 
 use crate::diesel::BoolExpressionMethods;
