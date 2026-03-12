@@ -234,7 +234,9 @@ impl ResponseError for ApiError {
                 error: self.name(),
             }),
             ApiError::PlaygroundError(error) => {
-                sentry::capture_error(error);
+                if error.status_code().is_server_error() {
+                    sentry::capture_error(error);
+                }
                 error.error_response()
             }
             ApiError::AIError(error) => error.error_response(),
