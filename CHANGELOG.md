@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.5](https://github.com/mdn/rumba/compare/v1.13.4...v1.13.5) (2026-03-13)
+
+
+### Miscellaneous
+
+* **playground:** capture only server errors ([#766](https://github.com/mdn/rumba/issues/766)) ([427cd45](https://github.com/mdn/rumba/commit/427cd45df3b0925bab3fbf64b3eb3e3618d3c162))
+
 ## [1.13.4](https://github.com/mdn/rumba/compare/v1.13.3...v1.13.4) (2026-03-11)
 
 
