@@ -1,6 +1,5 @@
-use actix_http::StatusCode;
 use actix_web::web::Data;
-use reqwest::Client;
+use reqwest::{Client, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use url::Url;

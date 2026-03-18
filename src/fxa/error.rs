@@ -14,7 +14,9 @@ pub enum FxaError {
     #[error(transparent)]
     BlockingError(#[from] actix_web::error::BlockingError),
     #[error("Error fetching user info: {0}")]
-    UserInfoError(#[from] openidconnect::reqwest::Error<reqwest::Error>),
+    UserInfoError(
+        #[from] openidconnect::UserInfoError<openidconnect::HttpClientError<reqwest::Error>>,
+    ),
     #[error("Bad status getting user info: {0}")]
     UserInfoBadStatus(StatusCode),
     #[error("Error deserializing user info: {0}")]
