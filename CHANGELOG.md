@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.13.6](https://github.com/mdn/rumba/compare/v1.13.5...v1.13.6) (2026-04-07)
+
+
+### Build
+
+* **deps:** bump clap from 4.5.60 to 4.6.0 ([#768](https://github.com/mdn/rumba/issues/768)) ([30b51b1](https://github.com/mdn/rumba/commit/30b51b1098acc1070f891952663e1ef2250c0d75))
+* **deps:** bump config from 0.15.19 to 0.15.21 ([#770](https://github.com/mdn/rumba/issues/770)) ([80cc7cf](https://github.com/mdn/rumba/commit/80cc7cf1cda06951a813c964ea294260015f02df))
+* **deps:** bump config from 0.15.21 to 0.15.22 ([#774](https://github.com/mdn/rumba/issues/774)) ([6c16c7b](https://github.com/mdn/rumba/commit/6c16c7b81d754fc1c779f4afbf64319950f59b38))
+* **deps:** bump diesel_migrations from 2.2.0 to 2.3.1 ([#775](https://github.com/mdn/rumba/issues/775)) ([e7166fb](https://github.com/mdn/rumba/commit/e7166fba91e4d101a3f785ccd03045aa6b1fe8f2))
+* **deps:** bump hmac to 0.13 and sha2 to 0.11 ([#778](https://github.com/mdn/rumba/issues/778)) ([2b18e26](https://github.com/mdn/rumba/commit/2b18e26f6f59ba07da5eecf03f49135b36e58924))
+* **deps:** bump once_cell from 1.21.3 to 1.21.4 ([#769](https://github.com/mdn/rumba/issues/769)) ([3fad46e](https://github.com/mdn/rumba/commit/3fad46e1b9565ecca0cd31e7e68f51c7991985e5))
+* **deps:** bump sentry-actix from 0.46.2 to 0.47.0 ([#771](https://github.com/mdn/rumba/issues/771)) ([5308072](https://github.com/mdn/rumba/commit/53080729e594da02b3dbe6ebbe4e656313635593))
+* **deps:** bump serde_with from 3.14.0 to 3.18.0 ([#776](https://github.com/mdn/rumba/issues/776)) ([f45a9fe](https://github.com/mdn/rumba/commit/f45a9fe0e69a2c6f2acc69d3db67f564a7c5513a))
+* **deps:** bump tokio from 1.50.0 to 1.51.0 ([#780](https://github.com/mdn/rumba/issues/780)) ([061b78d](https://github.com/mdn/rumba/commit/061b78d5c35f29ed9df23f7b6d30430d3b65c935))
+
 ## [1.13.5](https://github.com/mdn/rumba/compare/v1.13.4...v1.13.5) (2026-03-13)
 
 
