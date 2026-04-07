@@ -49,7 +49,7 @@ pub enum FxaWebhookError {
 
 #[derive(Error, Debug)]
 pub enum PlaygroundError {
-    #[error("Octocrab error: {0}")]
+    #[error("Octocrab error: {0:?}")]
     OctocrabError(#[from] octocrab::Error),
     #[error("Crypt error: {0}")]
     CryptError(#[from] aes_gcm::Error),
@@ -233,7 +233,12 @@ impl ResponseError for ApiError {
                 message: format!("Please login to use feature: {0}", feature).as_str(),
                 error: self.name(),
             }),
-            ApiError::PlaygroundError(error) => error.error_response(),
+            ApiError::PlaygroundError(error) => {
+                if error.status_code().is_server_error() {
+                    sentry::capture_error(error);
+                }
+                error.error_response()
+            }
             ApiError::AIError(error) => error.error_response(),
             _ if status_code == StatusCode::INTERNAL_SERVER_ERROR => builder.json(ErrorResponse {
                 code: status_code.as_u16(),

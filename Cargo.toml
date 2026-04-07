@@ -1,6 +1,6 @@
 [package]
 name = "rumba"
-version = "1.13.2"
+version = "1.13.5"
 edition = "2021"
 rust-version = "1.90"
 
@@ -25,7 +25,7 @@ actix-rt = "2"
 actix-identity = "0.9"
 actix-session = { version = "0.11", features = ["cookie-session"] }
 actix-web-httpauth = "0.8"
-actix-web-lab = "0.24"
+actix-web-lab = "0.26"
 
 diesel = { version = "2", features = [
     "postgres",
@@ -40,7 +40,7 @@ pgvector = { version = "0.4", features = ["postgres", "sqlx"] }
 sqlx = { version = "0.8", features = ["macros", "runtime-tokio-rustls", "postgres"], default-features = false }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 
-elasticsearch = "7.17.7-alpha.1"
+elasticsearch = "9.1.0-alpha.1"
 harsh = "0.2"
 itertools = "0.14"
 r2d2 = "0.8"
@@ -86,7 +86,7 @@ once_cell = "1"
 cadence = "1"
 woothee = "0.13"
 sentry = "0.39"
-sentry-actix = "0.46"
+sentry-actix = "0.47"
 
 basket = "0.0.5"
 async-openai = "0.14"

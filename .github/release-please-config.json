@@ -10,6 +10,7 @@
     {"type": "build", "section": "Build", "hidden": false},
     {"type": "chore", "section": "Miscellaneous", "hidden": false}
   ],
+  "draft-pull-request": true,
   "include-component-in-tag": false,
   "include-v-in-tag": true,
   "packages": {

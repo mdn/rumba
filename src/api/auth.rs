@@ -51,6 +51,7 @@ impl LoginCookie {
     pub fn removal() -> Cookie<'static> {
         let mut cookie = Cookie::build(&SETTINGS.auth.login_cookie_name, "")
             .http_only(true)
+            .secure(SETTINGS.auth.auth_cookie_secure)
             .path("/")
             .finish();
         cookie.make_removal();
