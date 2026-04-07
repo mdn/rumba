@@ -3,7 +3,7 @@ use crate::helpers::db::{get_pool, reset};
 use actix_web::test;
 use anyhow::Error;
 use diesel::{QueryDsl, RunQueryDsl};
-use hmac::Mac;
+use hmac::{KeyInit, Mac};
 use rumba::ai::constants::AI_EXPLAIN_VERSION;
 use rumba::ai::explain::{hash_highlighted, ExplainRequest, HmacSha256};
 use rumba::db::ai_explain::{add_explain_answer, ExplainFeedback};
