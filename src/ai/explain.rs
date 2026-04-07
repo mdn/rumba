@@ -6,7 +6,7 @@ use async_openai::{
     },
     Client,
 };
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use serde::{Deserialize, Serialize};
 use serde_with::{base64::Base64, serde_as};
 use sha2::{Digest, Sha256};
