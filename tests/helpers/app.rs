@@ -31,6 +31,7 @@ use stubr::{Config, Stubr};
 use super::db::reset;
 use super::http_client::TestHttpClient;
 use super::RumbaTestResponse;
+use std::sync::OnceLock;
 
 pub async fn test_app(
     pool: &Pool,
@@ -60,6 +61,7 @@ pub async fn test_app_with_login(
         >,
     >,
 > {
+    init_rustls();
     let pool = Data::new(pool.clone());
     let login_manager = Data::new(LoginManager::init().await?);
     let client = Data::new(Client::new());
@@ -119,6 +121,16 @@ pub async fn test_app_only_search() -> App<
     add_services(app)
 }
 
+static CRYPTO_PROVIDER_INIT: OnceLock<()> = OnceLock::new();
+
+fn init_rustls() {
+    CRYPTO_PROVIDER_INIT.get_or_init(|| {
+        rustls::crypto::ring::default_provider()
+            .install_default()
+            .expect("Failed to install rustls crypto provider");
+    });
+}
+
 fn init_logging() {
     let decorator = slog_term::PlainSyncDecorator::new(slog_term::TestStdoutWriter);
     let drain = std::sync::Mutex::new(slog_envlogger::new(
@@ -146,6 +158,7 @@ pub async fn init_test(
     ),
     anyhow::Error,
 > {
+    init_rustls();
     let pool = reset()?;
     let stubr = Stubr::start_blocking_with(
         custom_stubs,
