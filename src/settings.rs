@@ -89,7 +89,8 @@ pub struct AI {
 #[serde_as]
 #[derive(Debug, Deserialize)]
 pub struct Playground {
-    pub github_token: String,
+    pub gist_token: String,
+    pub flags_token: String,
     #[serde_as(as = "Base64")]
     pub crypt_key: [u8; 32],
     pub flag_repo: String,
