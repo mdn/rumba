@@ -25,8 +25,8 @@ use crate::{
 const FILENAME: &str = "playground.json";
 const DESCRIPTION: &str = "Code shared from the MDN Playground";
 
-pub struct GistClient(pub Option<Octocrab>);
-pub struct FlagsClient(pub Option<Octocrab>);
+pub struct GithubGistClient(pub Option<Octocrab>);
+pub struct GithubFlagsClient(pub Option<Octocrab>);
 
 #[derive(Deserialize, Serialize, Default, Debug)]
 pub struct PlayCode {
@@ -169,9 +169,9 @@ pub async fn save(
     save: web::Json<PlayCode>,
     id: Option<Identity>,
     pool: web::Data<Pool>,
-    gist_client: web::Data<GistClient>,
+    github_gist_client: web::Data<GithubGistClient>,
 ) -> Result<HttpResponse, ApiError> {
-    if let Some(client) = &gist_client.0 {
+    if let Some(client) = &github_gist_client.0 {
         if let Some(user_id) = id {
             let gist =
                 create_gist(client, serde_json::to_string_pretty(&save.into_inner())?).await?;
@@ -199,9 +199,9 @@ pub async fn save(
 
 pub async fn load(
     gist_id: web::Path<String>,
-    gist_client: web::Data<GistClient>,
+    github_gist_client: web::Data<GithubGistClient>,
 ) -> Result<HttpResponse, ApiError> {
-    if let Some(client) = &gist_client.0 {
+    if let Some(client) = &github_gist_client.0 {
         let id = decrypt(&gist_id.into_inner())?;
         let gist = load_gist(client, &id).await?;
         Ok(HttpResponse::Ok().json(gist.code))
@@ -213,9 +213,9 @@ pub async fn load(
 pub async fn flag(
     flag: web::Json<PlayFlagRequest>,
     pool: web::Data<Pool>,
-    flags_client: web::Data<FlagsClient>,
+    github_flags_client: web::Data<GithubFlagsClient>,
 ) -> Result<HttpResponse, ApiError> {
-    if let Some(client) = &flags_client.0 {
+    if let Some(client) = &github_flags_client.0 {
         let PlayFlagRequest { id, reason } = flag.into_inner();
         let gist_id = decrypt(&id)?;
         let mut conn = pool.get()?;

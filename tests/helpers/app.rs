@@ -21,7 +21,7 @@ use octocrab::OctocrabBuilder;
 use reqwest::Client;
 use rumba::add_services;
 use rumba::api::error::error_handler;
-use rumba::api::play::{FlagsClient, GistClient};
+use rumba::api::play::{GithubFlagsClient, GithubGistClient};
 use rumba::db::{Pool, SupaPool};
 use rumba::fxa::LoginManager;
 use rumba::settings::SETTINGS;
@@ -68,13 +68,13 @@ pub async fn test_app_with_login(
     let arbiter = Arbiter::new();
     let arbiter_handle = Data::new(arbiter.handle());
     let session_cookie_key = Key::derive_from(&SETTINGS.auth.cookie_key);
-    let gist_client = Data::new(GistClient(Some(
+    let github_gist_client = Data::new(GithubGistClient(Some(
         OctocrabBuilder::new()
             .base_uri("http://localhost:4321")
             .unwrap()
             .build()?,
     )));
-    let flags_client = Data::new(FlagsClient(Some(
+    let github_flags_client = Data::new(GithubFlagsClient(Some(
         OctocrabBuilder::new()
             .base_uri("http://localhost:4321")
             .unwrap()
@@ -102,8 +102,8 @@ pub async fn test_app_with_login(
         .app_data(Data::clone(&arbiter_handle))
         .app_data(Data::clone(&openai_client))
         .app_data(Data::clone(&supabase_pool))
-        .app_data(Data::clone(&gist_client))
-        .app_data(Data::clone(&flags_client))
+        .app_data(Data::clone(&github_gist_client))
+        .app_data(Data::clone(&github_flags_client))
         .app_data(Data::clone(&pool))
         .app_data(Data::clone(&client))
         .app_data(Data::clone(&basket_client))

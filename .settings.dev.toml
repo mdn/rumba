@@ -44,8 +44,8 @@ api_key = ""
 basket_url = ""
 
 [playground]
-gist_token = ""
-flags_token = ""
+github_gist_token = ""
+github_flags_token = ""
 crypt_key = ""
 flag_repo = "flags"
 

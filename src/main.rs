@@ -22,7 +22,7 @@ use reqwest::Client as HttpClient;
 use rumba::{
     add_services,
     api::error::{error_handler, ERROR_ID_HEADER_NAME_STR},
-    api::play::{FlagsClient, GistClient},
+    api::play::{GithubFlagsClient, GithubGistClient},
     db,
     fxa::LoginManager,
     logging::{self, init_logging},
@@ -100,18 +100,22 @@ async fn main() -> anyhow::Result<()> {
             async_openai::Client::with_config(OpenAIConfig::new().with_api_key(&c.api_key))
         }));
 
-    let gist_client = Data::new(GistClient(SETTINGS.playground.as_ref().and_then(|p| {
-        OctocrabBuilder::new()
-            .personal_token(p.gist_token.clone())
-            .build()
-            .ok()
-    })));
-    let flags_client = Data::new(FlagsClient(SETTINGS.playground.as_ref().and_then(|p| {
-        OctocrabBuilder::new()
-            .personal_token(p.flags_token.clone())
-            .build()
-            .ok()
-    })));
+    let github_gist_client = Data::new(GithubGistClient(SETTINGS.playground.as_ref().and_then(
+        |p| {
+            OctocrabBuilder::new()
+                .personal_token(p.github_gist_token.clone())
+                .build()
+                .ok()
+        },
+    )));
+    let github_flags_client = Data::new(GithubFlagsClient(SETTINGS.playground.as_ref().and_then(
+        |p| {
+            OctocrabBuilder::new()
+                .personal_token(p.github_flags_token.clone())
+                .build()
+                .ok()
+        },
+    )));
 
     HttpServer::new(move || {
         let app = App::new()
@@ -131,8 +135,8 @@ async fn main() -> anyhow::Result<()> {
             )
             .wrap(Logger::new(LOG_FMT).exclude("/healthz"))
             .app_data(Data::clone(&openai_client))
-            .app_data(Data::clone(&gist_client))
-            .app_data(Data::clone(&flags_client))
+            .app_data(Data::clone(&github_gist_client))
+            .app_data(Data::clone(&github_flags_client))
             .app_data(Data::clone(&basket_client))
             .app_data(Data::clone(&metrics))
             .app_data(Data::clone(&pool))
