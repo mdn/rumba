@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.13.7](https://github.com/mdn/rumba/compare/v1.13.6...v1.13.7) (2026-06-09)
+
+
+### Build
+
+* **deps:** bump chrono from 0.4.44 to 0.4.45 ([#814](https://github.com/mdn/rumba/issues/814)) ([b4b5dca](https://github.com/mdn/rumba/commit/b4b5dcaa976729fa26f81e918678ce87902fb5bb))
+* **deps:** bump diesel from 2.3.9 to 2.3.10 ([#816](https://github.com/mdn/rumba/issues/816)) ([952f70e](https://github.com/mdn/rumba/commit/952f70e4af5f8bd4ad2fe9a14dd3eedb82349c61))
+* **deps:** bump openssl from 0.10.79 to 0.10.80 ([#806](https://github.com/mdn/rumba/issues/806)) ([d2f9c28](https://github.com/mdn/rumba/commit/d2f9c2851f1c240d16154d81c1ffa8783a187399))
+* **deps:** bump serde_json from 1.0.149 to 1.0.150 ([#808](https://github.com/mdn/rumba/issues/808)) ([22d8edc](https://github.com/mdn/rumba/commit/22d8edc90e89c13ea5d3358dc38f1aee6850e671))
+* **deps:** bump serde_with from 3.20.0 to 3.21.0 ([#815](https://github.com/mdn/rumba/issues/815)) ([7a5b0fe](https://github.com/mdn/rumba/commit/7a5b0fe1f628d286af396c3e7c4c5882823c16f5))
+
+
+### Miscellaneous
+
+* **play:** verify gist owner ([#817](https://github.com/mdn/rumba/issues/817)) ([f468e4f](https://github.com/mdn/rumba/commit/f468e4f75e7549e57feb75b8ace06934351a30b5))
+
 ## [1.13.6](https://github.com/mdn/rumba/compare/v1.13.5...v1.13.6) (2026-05-20)
 
 
