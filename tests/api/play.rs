@@ -67,6 +67,28 @@ async fn test_playground() -> Result<(), Error> {
 
 #[actix_rt::test]
 #[stubr::mock(port = 4321)]
+async fn test_load_gist_wrong_owner() -> Result<(), Error> {
+    let pool = reset()?;
+    let app = test_app_with_login(&pool).await?;
+    let service = test::init_service(app).await;
+    let mut client = TestHttpClient::new(service).await;
+    let gist_id = rumba::api::play::encrypt("8a1f3c5e7b9d2046f1a3")?;
+    let res = client
+        .get(
+            &format!(
+                "/api/v1/play/{}",
+                utf8_percent_encode(&gist_id, NON_ALPHANUMERIC)
+            ),
+            None,
+        )
+        .await;
+    assert_eq!(res.status(), StatusCode::FORBIDDEN);
+    drop_stubr(stubr).await;
+    Ok(())
+}
+
+#[actix_rt::test]
+#[stubr::mock(port = 4321)]
 async fn test_invalid_id() -> Result<(), Error> {
     let pool = reset()?;
     let app = test_app_with_login(&pool).await?;
