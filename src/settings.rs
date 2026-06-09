@@ -86,6 +86,10 @@ pub struct AI {
     pub history_deletion_period_in_sec: u64,
 }
 
+fn default_gist_owner() -> String {
+    "mdn-bot".to_string()
+}
+
 #[serde_as]
 #[derive(Debug, Deserialize)]
 pub struct Playground {
@@ -94,6 +98,8 @@ pub struct Playground {
     #[serde_as(as = "Base64")]
     pub crypt_key: [u8; 32],
     pub flag_repo: String,
+    #[serde(default = "default_gist_owner")]
+    pub github_gist_owner: String,
 }
 
 #[derive(Deserialize)]

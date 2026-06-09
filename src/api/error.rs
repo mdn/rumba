@@ -61,6 +61,8 @@ pub enum PlaygroundError {
     UtfDecodeError(#[from] FromUtf8Error),
     #[error("Playground error: no settings")]
     SettingsError,
+    #[error("Gist not owned by the playground bot user")]
+    NotGistOwner,
 }
 
 impl ResponseError for PlaygroundError {
@@ -70,6 +72,7 @@ impl ResponseError for PlaygroundError {
             | PlaygroundError::DecodeError(_)
             | PlaygroundError::NoNonceError
             | PlaygroundError::UtfDecodeError(_) => StatusCode::BAD_REQUEST,
+            PlaygroundError::NotGistOwner => StatusCode::FORBIDDEN,
             PlaygroundError::OctocrabError(_) | PlaygroundError::SettingsError => {
                 StatusCode::INTERNAL_SERVER_ERROR
             }

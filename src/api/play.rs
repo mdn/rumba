@@ -48,6 +48,18 @@ pub struct Gist {
 }
 
 #[derive(Deserialize)]
+struct GistOwner {
+    login: String,
+}
+
+#[derive(Deserialize)]
+struct GistWithOwner {
+    owner: Option<GistOwner>,
+    #[serde(flatten)]
+    gist: octocrab::models::gists::Gist,
+}
+
+#[derive(Deserialize)]
 pub struct PlayFlagRequest {
     id: String,
     reason: Option<String>,
@@ -61,7 +73,7 @@ static CIPHER: Lazy<Option<Aes256Gcm>> = Lazy::new(|| {
         .map(|playground| Aes256Gcm::new(GenericArray::from_slice(&playground.crypt_key)))
 });
 
-fn encrypt(gist_id: &str) -> Result<String, PlaygroundError> {
+pub fn encrypt(gist_id: &str) -> Result<String, PlaygroundError> {
     if let Some(cipher) = &*CIPHER {
         let mut nonce = vec![0; NONCE_LEN];
         OsRng.fill_bytes(&mut nonce);
@@ -157,12 +169,16 @@ pub async fn create_flag_issue(
 }
 
 pub async fn load_gist(client: &Octocrab, id: &str) -> Result<Gist, PlaygroundError> {
-    client
-        .gists()
-        .get(id)
-        .await
-        .map(Into::into)
-        .map_err(Into::into)
+    let expected_owner = SETTINGS
+        .playground
+        .as_ref()
+        .map(|p| p.github_gist_owner.as_str())
+        .ok_or(PlaygroundError::SettingsError)?;
+    let GistWithOwner { owner, gist } = client.get(format!("/gists/{id}"), None::<&()>).await?;
+    if owner.as_ref().map(|owner| owner.login.as_str()) != Some(expected_owner) {
+        return Err(PlaygroundError::NotGistOwner);
+    }
+    Ok(gist.into())
 }
 
 pub async fn save(
