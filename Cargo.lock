@@ -39,7 +39,7 @@ dependencies = [
  "flate2",
  "foldhash",
  "futures-core",
- "h2",
+ "h2 0.3.27",
  "http 0.2.11",
  "httparse",
  "httpdate",
@@ -625,7 +625,7 @@ dependencies = [
  "derive_builder",
  "futures",
  "rand 0.8.5",
- "reqwest 0.11.24",
+ "reqwest 0.11.27",
  "reqwest-eventsource",
  "serde",
  "serde_json",
@@ -796,7 +796,7 @@ version = "0.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2e9599ba7c07ce35f1e5e1f31b349c2c513c25193dae6016e71e22824b548f3"
 dependencies = [
- "reqwest 0.11.24",
+ "reqwest 0.11.27",
  "serde",
  "serde_derive",
  "serde_json",
@@ -2388,6 +2388,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "h2"
+version = "0.4.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "171fefbc92fe4a4de27e0698d6a5b392d6a0e333506bc49133760b3bcf948733"
+dependencies = [
+ "atomic-waker",
+ "bytes",
+ "fnv",
+ "futures-core",
+ "futures-sink",
+ "http 1.0.0",
+ "indexmap 2.2.3",
+ "slab",
+ "tokio",
+ "tokio-util",
+ "tracing",
+]
+
+[[package]]
 name = "handlebars"
 version = "4.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2638,14 +2657,14 @@ dependencies = [
  "futures-channel",
  "futures-core",
  "futures-util",
- "h2",
+ "h2 0.3.27",
  "http 0.2.11",
  "http-body 0.4.6",
  "httparse",
  "httpdate",
  "itoa",
  "pin-project-lite",
- "socket2 0.5.5",
+ "socket2 0.4.10",
  "tokio",
  "tower-service",
  "tracing",
@@ -2661,6 +2680,7 @@ dependencies = [
  "bytes",
  "futures-channel",
  "futures-util",
+ "h2 0.4.14",
  "http 1.0.0",
  "http-body 1.0.0",
  "httparse",
@@ -3445,7 +3465,7 @@ dependencies = [
  "getrandom 0.2.12",
  "http 0.2.11",
  "rand 0.8.5",
- "reqwest 0.11.24",
+ "reqwest 0.11.27",
  "serde",
  "serde_json",
  "serde_path_to_error",
@@ -4369,16 +4389,16 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "reqwest"
-version = "0.11.24"
+version = "0.11.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c6920094eb85afde5e4a138be3f2de8bbdf28000f0029e72c45025a56b042251"
+checksum = "dd67538700a17451e7cba03ac727fb961abb7607553461627b97de0b89cf4a62"
 dependencies = [
  "base64 0.21.7",
  "bytes",
  "encoding_rs",
  "futures-core",
  "futures-util",
- "h2",
+ "h2 0.3.27",
  "http 0.2.11",
  "http-body 0.4.6",
  "hyper 0.14.28",
@@ -4424,9 +4444,11 @@ dependencies = [
  "async-compression",
  "base64 0.22.1",
  "bytes",
+ "encoding_rs",
  "futures-channel",
  "futures-core",
  "futures-util",
+ "h2 0.4.14",
  "http 1.0.0",
  "http-body 1.0.0",
  "http-body-util",
@@ -4446,6 +4468,7 @@ dependencies = [
  "serde_json",
  "serde_urlencoded",
  "sync_wrapper",
+ "system-configuration",
  "tokio",
  "tokio-native-tls",
  "tokio-util",
@@ -4469,7 +4492,7 @@ dependencies = [
  "mime",
  "nom",
  "pin-project-lite",
- "reqwest 0.11.24",
+ "reqwest 0.11.27",
  "thiserror 1.0.69",
 ]
 
@@ -4587,7 +4610,7 @@ dependencies = [
  "pgvector",
  "r2d2",
  "regex",
- "reqwest 0.11.24",
+ "reqwest 0.12.4",
  "sentry",
  "sentry-actix 0.48.2",
  "serde",
