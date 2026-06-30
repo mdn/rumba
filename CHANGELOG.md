@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.13.8](https://github.com/mdn/rumba/compare/v1.13.7...v1.13.8) (2026-06-30)
+
+
+### Build
+
+* **deps:** bump actix-http from 3.13.0 to 3.13.1 ([#826](https://github.com/mdn/rumba/issues/826)) ([51c532a](https://github.com/mdn/rumba/commit/51c532a4c01f616bb8fba062dece41406f6f0c49))
+* **deps:** bump actix-web from 4.13.0 to 4.14.0 ([#823](https://github.com/mdn/rumba/issues/823)) ([2dfdedc](https://github.com/mdn/rumba/commit/2dfdedc12b5206a8a399cc23ac37909408cdbd60))
+* **deps:** bump anyhow from 1.0.102 to 1.0.103 ([#824](https://github.com/mdn/rumba/issues/824)) ([fbaa141](https://github.com/mdn/rumba/commit/fbaa141b76ae97a10301a81b40b22a253a9ddacc))
+* **deps:** bump itertools from 0.14.0 to 0.15.0 ([#822](https://github.com/mdn/rumba/issues/822)) ([487301d](https://github.com/mdn/rumba/commit/487301d7ef361fa97cda46214af7f414d56d0f83))
+* **deps:** bump regex from 1.12.3 to 1.12.4 ([#818](https://github.com/mdn/rumba/issues/818)) ([c61fe89](https://github.com/mdn/rumba/commit/c61fe891e3b763d0385e0ec8e6b3066e46fe7ad5))
+* **deps:** bump sentry-actix from 0.48.2 to 0.48.3 ([#827](https://github.com/mdn/rumba/issues/827)) ([706bfdd](https://github.com/mdn/rumba/commit/706bfdd252d8457c433f8a5b10d48ab34f0d3286))
+
 ## [1.13.7](https://github.com/mdn/rumba/compare/v1.13.6...v1.13.7) (2026-06-09)
 
 
