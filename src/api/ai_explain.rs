@@ -77,7 +77,7 @@ pub async fn explain(
                 sse::Data::new_json(GeneratedChunk::from(explanation.as_str()))
                     .map_err(OpenAIError::JSONDeserialize)?,
             ];
-            let stream = futures::stream::iter(parts.into_iter());
+            let stream = futures::stream::iter(parts);
             return Ok(Either::Left(sse::Sse::from_stream(
                 stream.map(|r| Ok::<_, ApiError>(sse::Event::Data(r))),
             )));
