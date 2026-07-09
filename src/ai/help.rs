@@ -175,7 +175,7 @@ pub async fn prepare_ai_help_req(
     let req = CreateChatCompletionRequestArgs::default()
         .model(config.model)
         .messages(messages)
-        .temperature(0.0)
+        .temperature(0.0_f32)
         .stop(config.stop_phrase.unwrap_or_default())
         .build()?;
     request_meta.model = Some(config.model);
@@ -201,7 +201,7 @@ pub fn prepare_ai_help_summary_req(
     let req = CreateChatCompletionRequestArgs::default()
         .model(BASIC_MODEL)
         .messages(messages)
-        .temperature(0.0)
+        .temperature(0.0_f32)
         .build()?;
 
     Ok(req)
