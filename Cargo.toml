@@ -2,7 +2,7 @@
 name = "rumba"
 version = "1.13.7"
 edition = "2021"
-rust-version = "1.90"
+rust-version = "1.97"
 
 [lib]
 path = "src/lib.rs"
