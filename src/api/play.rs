@@ -161,7 +161,7 @@ pub async fn create_flag_issue(
     if let Some(reason) = reason {
         issue = issue.body(&format!(
             "url: {}/en-US/play?id={}\n{reason}",
-            &SETTINGS.application.document_base_url,
+            SETTINGS.application.document_base_url,
             utf8_percent_encode(&id, NON_ALPHANUMERIC)
         ));
     }
