@@ -105,7 +105,7 @@ pub async fn prepare_explain_req(
     let req = CreateChatCompletionRequestArgs::default()
         .model(BASIC_MODEL)
         .messages(vec![system_message, context_message, user_message])
-        .temperature(0.0)
+        .temperature(0.0_f32)
         .build()?;
     Ok(req)
 }

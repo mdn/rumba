@@ -294,7 +294,7 @@ pub async fn create_multiple_collection(
     match created {
         Err(db_err) => match db_err {
             DbError::Conflict(_) => Ok(HttpResponse::Conflict().json(ConflictResponse {
-                error: format!("Collection with name '{}' already exists", &req.name),
+                error: format!("Collection with name '{}' already exists", req.name),
             })),
             _ => Err(ApiError::DbError(db_err)),
         },
@@ -325,7 +325,7 @@ pub async fn modify_collection(
     if let Err(db_err) = updated {
         match db_err {
             DbError::Conflict(_) => Ok(HttpResponse::Conflict().json(ConflictResponse {
-                error: format!("Collection with name '{}' already exists", &req.name),
+                error: format!("Collection with name '{}' already exists", req.name),
             })),
             DbError::NotFound(_) => Err(ApiError::CollectionNotFound(c_id.id)),
             _ => Err(ApiError::DbError(db_err)),
