@@ -36,11 +36,14 @@ pub async fn get_document_metadata(
     http_client: Data<Client>,
     url: &String,
 ) -> Result<DocumentMetadata, ApiError> {
-    let document_url = Url::parse(&format!(
-        "{}{}/index.json",
-        SETTINGS.application.document_base_url, url
-    ))
-    .map_err(|_| ApiError::MalformedUrl)?;
+    let base =
+        Url::parse(&SETTINGS.application.document_base_url).map_err(|_| ApiError::MalformedUrl)?;
+    let document_url = base
+        .join(&format!("{url}/index.json"))
+        .map_err(|_| ApiError::MalformedUrl)?;
+    if document_url.origin() != base.origin() {
+        return Err(ApiError::MalformedUrl);
+    }
 
     let document = http_client
         .get(document_url.to_owned())
