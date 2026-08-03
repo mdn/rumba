@@ -4589,7 +4589,7 @@ dependencies = [
  "regex",
  "reqwest 0.11.24",
  "sentry",
- "sentry-actix 0.48.4",
+ "sentry-actix 0.49.0",
  "serde",
  "serde_json",
  "serde_path_to_error",
@@ -4934,15 +4934,15 @@ dependencies = [
 
 [[package]]
 name = "sentry-actix"
-version = "0.48.4"
+version = "0.49.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3bb4d1d4d51490bbce81d23a9808a70f12ef5a51a114abe0d08196562887eead"
+checksum = "5a12b26925e70eba6c346588650f8b346d9e78a83249970b706068456005cd61"
 dependencies = [
  "actix-http",
  "actix-web",
  "bytes",
  "futures-util",
- "sentry-core 0.48.4",
+ "sentry-core 0.49.0",
 ]
 
 [[package]]
@@ -4984,12 +4984,12 @@ dependencies = [
 
 [[package]]
 name = "sentry-core"
-version = "0.48.4"
+version = "0.49.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b8c44ee52fa3d30581f951b57aec754ef9cd70186df5fb788367804360c48097"
+checksum = "2f9efafefbb78d7e02cb06c10aec08b77e7500428389eabbf6d5a668325265e8"
 dependencies = [
  "rand 0.9.4",
- "sentry-types 0.48.4",
+ "sentry-types 0.49.0",
  "serde",
  "serde_json",
  "url",
@@ -5046,9 +5046,9 @@ dependencies = [
 
 [[package]]
 name = "sentry-types"
-version = "0.48.4"
+version = "0.49.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1be93ef0435a5ab91f88178fb7681249437e875d004f996ecb35be94dc99a0e0"
+checksum = "f967748632cd4c5405dbed45426b27b407c0e53ac59b7df1c163e7f5aa57a77c"
 dependencies = [
  "debugid",
  "hex",
