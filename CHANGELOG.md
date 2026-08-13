@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.13.9](https://github.com/mdn/rumba/compare/v1.13.8...v1.13.9) (2026-08-13)
+
+
+### Bug Fixes
+
+* **fxa:** verify aud value ([#853](https://github.com/mdn/rumba/issues/853)) ([51447aa](https://github.com/mdn/rumba/commit/51447aa9feb06df3563c07b34626087e6a28e4c9))
+
+
+### Build
+
+* **deps:** bump base64 from 0.22.1 to 0.23.1 ([#852](https://github.com/mdn/rumba/issues/852)) ([a57b019](https://github.com/mdn/rumba/commit/a57b019fed83aa5c6ff6cf581015e76fad8984dd))
+* **deps:** bump clap from 4.6.1 to 4.6.4 ([#849](https://github.com/mdn/rumba/issues/849)) ([b2494b4](https://github.com/mdn/rumba/commit/b2494b4d77bce753a75535bdd39018233598d5b8))
+* **deps:** bump clap from 4.6.4 to 4.6.6 ([#851](https://github.com/mdn/rumba/issues/851)) ([256a22b](https://github.com/mdn/rumba/commit/256a22b9907e509df305f975723a48c41b119fe0))
+* **deps:** bump jsonwebtoken from 10.4.0 to 11.0.0 ([#845](https://github.com/mdn/rumba/issues/845)) ([92bb788](https://github.com/mdn/rumba/commit/92bb78884c2a848b22326873655e82a605407ee1))
+* **deps:** bump sentry-actix from 0.48.4 to 0.49.0 ([#847](https://github.com/mdn/rumba/issues/847)) ([ef9ce42](https://github.com/mdn/rumba/commit/ef9ce4292286fca9bc93fb08835e95bb92dc0baf))
+* **deps:** bump serde from 1.0.228 to 1.0.229 ([#844](https://github.com/mdn/rumba/issues/844)) ([f0fa5e1](https://github.com/mdn/rumba/commit/f0fa5e18cef761607be16b60437922d68cdd3f2a))
+* **deps:** bump tokio from 1.53.0 to 1.53.1 ([#841](https://github.com/mdn/rumba/issues/841)) ([98cf4a9](https://github.com/mdn/rumba/commit/98cf4a9175154b274558e657a0d6682e0380069f))
+
 ## [1.13.8](https://github.com/mdn/rumba/compare/v1.13.7...v1.13.8) (2026-07-23)
 
 
