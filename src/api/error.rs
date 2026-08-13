@@ -43,6 +43,8 @@ pub enum FxaWebhookError {
     Base64(#[from] base64::DecodeError),
     #[error("Invalid SET")]
     InvalidSET,
+    #[error("Invalid audience")]
+    InvalidAud,
     #[error("Invalid signature")]
     InvalidSignature(#[from] openidconnect::SignatureVerificationError),
 }

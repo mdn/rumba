@@ -287,6 +287,57 @@ async fn invalid_set_test() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
+#[stubr::mock(port = 4321)]
+async fn set_for_other_rp_test() -> Result<(), Error> {
+    let json_str = std::fs::read_to_string(
+        "tests/data/set_tokens/set_token_subscription_state_change_to_10m.json",
+    )
+    .unwrap();
+    let mut claim: Value = serde_json::from_str(&json_str).unwrap();
+    claim["aud"] = json!("SOME_OTHER_RP_CLIENT_ID");
+    let set_token = token_from_claim(&claim);
+
+    let pool = reset()?;
+    let app = test_app_with_login(&pool).await?;
+    let service = test::init_service(app).await;
+    let mut logged_in_client = TestHttpClient::new(service).await;
+    let whoami = logged_in_client
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
+        .await;
+    assert!(whoami.response().status().is_success());
+    let json = read_json(whoami).await;
+    assert_eq!(json["username"], "TEST_SUB");
+    assert_eq!(
+        json["subscription_type"], "mdn_plus_5m",
+        "Subscription type wrong"
+    );
+
+    let res = logged_in_client.trigger_webhook(&set_token).await;
+    assert!(res.response().status().is_success());
+
+    let whoami = logged_in_client
+        .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
+        .await;
+    assert!(whoami.response().status().is_success());
+    let json = read_json(whoami).await;
+    assert_eq!(json["username"], "TEST_SUB");
+    assert_eq!(json["subscription_type"], "mdn_plus_5m");
+
+    let mut conn = pool.get()?;
+    let events = schema::webhook_events::table
+        .count()
+        .first::<i64>(&mut conn)?;
+    assert_eq!(events, 0);
+
+    let failed_token = schema::raw_webhook_events_tokens::table
+        .select(schema::raw_webhook_events_tokens::token)
+        .first::<String>(&mut conn)?;
+    assert_eq!(failed_token, set_token);
+    drop_stubr(stubr).await;
+    Ok(())
+}
+
+#[actix_rt::test]
 async fn whoami_test() -> Result<(), Error> {
     let stubr = Stubr::start_blocking_with(
         vec!["tests/stubs"],

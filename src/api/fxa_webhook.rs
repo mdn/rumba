@@ -27,6 +27,7 @@ use crate::{
         },
     },
     helpers::{deserialize_string_or_vec, serde_utc_milliseconds, serde_utc_seconds_f},
+    settings::SETTINGS,
 };
 use crate::{
     db::{fxa_webhook::update_subscription_state_from_webhook, Pool},
@@ -120,6 +121,15 @@ fn verify(raw_token: &str, key: &CoreJsonWebKey) -> Result<FxASetTokenPayload, F
 
     let signing_input = format!("{}.{}", parts[0], parts[1]);
     key.verify_signature(&header.algorithm, signing_input.as_bytes(), &signature)?;
+
+    if !payload
+        .audiences
+        .iter()
+        .any(|aud| aud.as_str() == SETTINGS.auth.client_id)
+    {
+        return Err(FxaWebhookError::InvalidAud);
+    }
+
     Ok(payload)
 }
 
@@ -219,4 +229,71 @@ async fn set_token(
 
 pub fn fxa_webhook_app() -> impl HttpServiceFactory {
     web::scope("/events").service(web::resource("/fxa").to(set_token))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use jsonwebtoken::{Algorithm, EncodingKey, Header};
+    use serde_json::json;
+
+    fn fxa_key() -> CoreJsonWebKey {
+        let jwks: Value =
+            serde_json::from_str(include_str!("../../tests/stubs/jwks.json")).unwrap();
+        serde_json::from_value(jwks["response"]["jsonBody"]["keys"][0].clone()).unwrap()
+    }
+
+    fn sign(claims: &Value) -> String {
+        let header = Header {
+            kid: Some("TEST_KEY".to_owned()),
+            alg: Algorithm::RS256,
+            ..Default::default()
+        };
+        let key =
+            EncodingKey::from_rsa_pem(include_bytes!("../../tests/data/rumba-test.pem")).unwrap();
+        jsonwebtoken::encode(&header, claims, &key).unwrap()
+    }
+
+    fn delete_user_token(audience: Option<Value>) -> String {
+        let mut claims = json!({
+            "iss": SETTINGS.auth.issuer_url,
+            "iat": 1654425318.762,
+            "jti": "eeb9d9ae-90d5-499f-8056-94eaf635e09b",
+            "sub": "TEST_SUB",
+            "events": {
+                "https://schemas.accounts.firefox.com/event/delete-user": {}
+            }
+        });
+        if let Some(aud) = audience {
+            claims["aud"] = aud;
+        }
+        sign(&claims)
+    }
+
+    #[test]
+    fn accepts_token_for_our_client_id() {
+        let set = delete_user_token(Some(json!(SETTINGS.auth.client_id)));
+        assert!(verify(&set, &fxa_key()).is_ok());
+    }
+
+    #[test]
+    fn accepts_audience_list_containing_our_client_id() {
+        let set = delete_user_token(Some(json!([
+            "SOME_OTHER_RP_CLIENT_ID",
+            SETTINGS.auth.client_id
+        ])));
+        assert!(verify(&set, &fxa_key()).is_ok());
+    }
+
+    #[test]
+    fn rejects_token_for_another_relying_party() {
+        let set = delete_user_token(Some(json!("SOME_OTHER_RP_CLIENT_ID")));
+        assert!(verify(&set, &fxa_key()).is_err());
+    }
+
+    #[test]
+    fn rejects_token_without_an_audience() {
+        let set = delete_user_token(None);
+        assert!(verify(&set, &fxa_key()).is_err());
+    }
 }
