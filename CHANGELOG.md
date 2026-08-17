@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.13.10](https://github.com/mdn/rumba/compare/v1.13.9...v1.13.10) (2026-08-17)
+
+
+### Build
+
+* **deps:** bump actix-http from 3.13.1 to 3.13.3 ([#855](https://github.com/mdn/rumba/issues/855)) ([ba73f94](https://github.com/mdn/rumba/commit/ba73f947f0f1146c8b858d35a036c677d8e2bb8f))
+* **deps:** bump regex from 1.13.0 to 1.13.1 ([#856](https://github.com/mdn/rumba/issues/856)) ([6cdd4e8](https://github.com/mdn/rumba/commit/6cdd4e8670222e5e483ced16ea76565381437a71))
+* **deps:** bump serde_with from 3.21.0 to 3.22.0 ([#854](https://github.com/mdn/rumba/issues/854)) ([5c1689a](https://github.com/mdn/rumba/commit/5c1689aac8d9f90e8af97ddec36101c5c8d87922))
+
 ## [1.13.9](https://github.com/mdn/rumba/compare/v1.13.8...v1.13.9) (2026-08-13)
 
 
