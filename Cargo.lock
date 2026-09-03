@@ -237,9 +237,9 @@ dependencies = [
 
 [[package]]
 name = "actix-web-lab"
-version = "0.26.0"
+version = "0.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a89606b86fd2f8c0ddd72ef0be171e58c919ee0b6914aa7b52354063e5ee361"
+checksum = "d113865590e5f97352dd9194edc9cfc10fda1716df38e60a4844e6dbdf2b240b"
 dependencies = [
  "actix-http",
  "actix-router",
@@ -275,12 +275,12 @@ dependencies = [
 
 [[package]]
 name = "actix-web-lab-derive"
-version = "0.26.0"
+version = "0.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ac4d6e04e97fe707286509b4f338e99c5fb7249c770e1da074af5e27faa96b3"
+checksum = "67713d6e3867c3327f081a10211c56bc9b749b041d268a6cc15599356c1945f1"
 dependencies = [
  "quote",
- "syn 2.0.117",
+ "syn 3.0.3",
 ]
 
 [[package]]
