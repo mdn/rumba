@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.14.0](https://github.com/mdn/rumba/compare/v1.13.9...v1.14.0) (2026-09-08)
+
+
+### Features
+
+* **ai-explain:** remove AI Explain ([#871](https://github.com/mdn/rumba/issues/871)) ([5f56d97](https://github.com/mdn/rumba/commit/5f56d97f009430e5725e5b22a334d046ece26079))
+
+
+### Build
+
+* **deps:** bump actix-http from 3.13.1 to 3.13.3 ([#855](https://github.com/mdn/rumba/issues/855)) ([ba73f94](https://github.com/mdn/rumba/commit/ba73f947f0f1146c8b858d35a036c677d8e2bb8f))
+* **deps:** bump actix-http from 3.13.3 to 3.13.5 ([#868](https://github.com/mdn/rumba/issues/868)) ([56fb7da](https://github.com/mdn/rumba/commit/56fb7dada06a5f0a2072d67b9cd7c585a204b52d))
+* **deps:** bump actix-rt from 2.11.0 to 2.12.0 ([#864](https://github.com/mdn/rumba/issues/864)) ([43450ad](https://github.com/mdn/rumba/commit/43450ad8ec8322ac57e26729ceeba033b916ff66))
+* **deps:** bump actix-web from 4.14.0 to 4.15.0 ([#863](https://github.com/mdn/rumba/issues/863)) ([4eacf8f](https://github.com/mdn/rumba/commit/4eacf8ffd10744035e265695578add4a7bf6e408))
+* **deps:** bump actix-web-lab from 0.26.0 to 0.27.0 ([#865](https://github.com/mdn/rumba/issues/865)) ([58fac93](https://github.com/mdn/rumba/commit/58fac9350096d37df5f8c8e0af019bb68c0cea91))
+* **deps:** bump futures from 0.3.33 to 0.3.34 ([#860](https://github.com/mdn/rumba/issues/860)) ([0ec9e3f](https://github.com/mdn/rumba/commit/0ec9e3fe6f39ede68eb554d4665c5d6b72c85752))
+* **deps:** bump postgres-protocol from 0.6.6 to 0.6.12 ([#862](https://github.com/mdn/rumba/issues/862)) ([0996a16](https://github.com/mdn/rumba/commit/0996a16345f73c183ab2b1afae4fe5f3f9ac4d5a))
+* **deps:** bump regex from 1.13.0 to 1.13.1 ([#856](https://github.com/mdn/rumba/issues/856)) ([6cdd4e8](https://github.com/mdn/rumba/commit/6cdd4e8670222e5e483ced16ea76565381437a71))
+* **deps:** bump sentry-actix from 0.49.0 to 0.49.1 ([#858](https://github.com/mdn/rumba/issues/858)) ([69584c0](https://github.com/mdn/rumba/commit/69584c0785cd34927b0123fd5e6b8fdec6670364))
+* **deps:** bump sentry-actix from 0.49.1 to 0.49.2 ([#869](https://github.com/mdn/rumba/issues/869)) ([81f794b](https://github.com/mdn/rumba/commit/81f794b5e1e9a7713057bed4fef8f9657b73170a))
+* **deps:** bump serde_json from 1.0.150 to 1.0.151 ([#859](https://github.com/mdn/rumba/issues/859)) ([bc65798](https://github.com/mdn/rumba/commit/bc6579859577d516a9ac9668a916a7cf34471efc))
+* **deps:** bump serde_with from 3.21.0 to 3.22.0 ([#854](https://github.com/mdn/rumba/issues/854)) ([5c1689a](https://github.com/mdn/rumba/commit/5c1689aac8d9f90e8af97ddec36101c5c8d87922))
+* **deps:** bump thiserror from 2.0.18 to 2.0.20 ([#867](https://github.com/mdn/rumba/issues/867)) ([af26aed](https://github.com/mdn/rumba/commit/af26aed133f6d19ec3211751e48ad063f44b3226))
+
 ## [1.13.9](https://github.com/mdn/rumba/compare/v1.13.8...v1.13.9) (2026-08-13)
 
 
