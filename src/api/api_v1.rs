@@ -1,4 +1,3 @@
-use crate::api::ai_explain::{explain, explain_feedback};
 use crate::api::ai_help::{
     ai_help, ai_help_delete_full_history, ai_help_delete_history, ai_help_history,
     ai_help_list_history, ai_help_title_summary, quota,
@@ -55,14 +54,6 @@ pub fn api_v1_service() -> impl HttpServiceFactory {
                             web::scope("/ask")
                                 .service(web::resource("").route(web::post().to(ai_help)))
                                 .service(web::resource("/quota").route(web::get().to(quota))),
-                        )
-                        .service(
-                            web::scope("/explain")
-                                .service(web::resource("").route(web::post().to(explain)))
-                                .service(
-                                    web::resource("/feedback")
-                                        .route(web::post().to(explain_feedback)),
-                                ),
                         ),
                 )
                 .service(

@@ -1,4 +1,3 @@
-pub mod ai_explain;
 pub mod ai_help;
 pub mod ai_history;
 pub mod documents;
