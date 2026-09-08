@@ -74,7 +74,6 @@ pub struct Basket {
     pub basket_url: Url,
 }
 
-#[serde_as]
 #[derive(Debug, Deserialize)]
 pub struct AI {
     pub api_key: String,
