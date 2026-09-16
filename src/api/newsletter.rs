@@ -64,7 +64,7 @@ pub async fn subscribe_anonymous_handler(
                 Some(SubscribeOpts {
                     source_url: Some(format!(
                         "{}/en-US/newsletter",
-                        &SETTINGS.application.document_base_url
+                        SETTINGS.application.document_base_url
                     )),
                     ..Default::default()
                 }),
@@ -89,7 +89,7 @@ pub async fn subscribe(
                 optin: Some(YesNo::Y),
                 source_url: Some(format!(
                     "{}/en-US/settings",
-                    &SETTINGS.application.document_base_url
+                    SETTINGS.application.document_base_url
                 )),
                 ..Default::default()
             }),

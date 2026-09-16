@@ -2,7 +2,6 @@ use chrono::{Duration, NaiveDateTime, Utc};
 use diesel::{delete, prelude::*, update};
 use diesel::{insert_into, PgConnection};
 use once_cell::sync::Lazy;
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::db::error::DbError;
@@ -23,13 +22,6 @@ static AI_HELP_RESET_DURATION: Lazy<Duration> = Lazy::new(|| {
             .map_or(0, |s| s.limit_reset_duration_in_sec),
     )
 });
-
-#[derive(Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "snake_case")]
-pub enum FeedbackTyp {
-    ThumbsDown,
-    ThumbsUp,
-}
 
 pub fn get_count(conn: &mut PgConnection, user: &UserQuery) -> Result<i64, DbError> {
     let some_time_ago = Utc::now().naive_utc() - *AI_HELP_RESET_DURATION;

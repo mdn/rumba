@@ -1,5 +1,106 @@
 # Changelog
 
+## [1.13.9](https://github.com/mdn/rumba/compare/v1.13.8...v1.13.9) (2026-08-13)
+
+
+### Bug Fixes
+
+* **fxa:** verify aud value ([#853](https://github.com/mdn/rumba/issues/853)) ([51447aa](https://github.com/mdn/rumba/commit/51447aa9feb06df3563c07b34626087e6a28e4c9))
+
+
+### Build
+
+* **deps:** bump base64 from 0.22.1 to 0.23.1 ([#852](https://github.com/mdn/rumba/issues/852)) ([a57b019](https://github.com/mdn/rumba/commit/a57b019fed83aa5c6ff6cf581015e76fad8984dd))
+* **deps:** bump clap from 4.6.1 to 4.6.4 ([#849](https://github.com/mdn/rumba/issues/849)) ([b2494b4](https://github.com/mdn/rumba/commit/b2494b4d77bce753a75535bdd39018233598d5b8))
+* **deps:** bump clap from 4.6.4 to 4.6.6 ([#851](https://github.com/mdn/rumba/issues/851)) ([256a22b](https://github.com/mdn/rumba/commit/256a22b9907e509df305f975723a48c41b119fe0))
+* **deps:** bump jsonwebtoken from 10.4.0 to 11.0.0 ([#845](https://github.com/mdn/rumba/issues/845)) ([92bb788](https://github.com/mdn/rumba/commit/92bb78884c2a848b22326873655e82a605407ee1))
+* **deps:** bump sentry-actix from 0.48.4 to 0.49.0 ([#847](https://github.com/mdn/rumba/issues/847)) ([ef9ce42](https://github.com/mdn/rumba/commit/ef9ce4292286fca9bc93fb08835e95bb92dc0baf))
+* **deps:** bump serde from 1.0.228 to 1.0.229 ([#844](https://github.com/mdn/rumba/issues/844)) ([f0fa5e1](https://github.com/mdn/rumba/commit/f0fa5e18cef761607be16b60437922d68cdd3f2a))
+* **deps:** bump tokio from 1.53.0 to 1.53.1 ([#841](https://github.com/mdn/rumba/issues/841)) ([98cf4a9](https://github.com/mdn/rumba/commit/98cf4a9175154b274558e657a0d6682e0380069f))
+
+## [1.13.8](https://github.com/mdn/rumba/compare/v1.13.7...v1.13.8) (2026-07-23)
+
+
+### Bug Fixes
+
+* **api:** validate document urls ([#840](https://github.com/mdn/rumba/issues/840)) ([9b04a86](https://github.com/mdn/rumba/commit/9b04a86a7d6e557e980b1f313cb22a3bd64da3b2))
+
+
+### Build
+
+* **deps:** bump actix-http from 3.13.0 to 3.13.1 ([#826](https://github.com/mdn/rumba/issues/826)) ([51c532a](https://github.com/mdn/rumba/commit/51c532a4c01f616bb8fba062dece41406f6f0c49))
+* **deps:** bump actix-web from 4.13.0 to 4.14.0 ([#823](https://github.com/mdn/rumba/issues/823)) ([2dfdedc](https://github.com/mdn/rumba/commit/2dfdedc12b5206a8a399cc23ac37909408cdbd60))
+* **deps:** bump anyhow from 1.0.102 to 1.0.103 ([#824](https://github.com/mdn/rumba/issues/824)) ([fbaa141](https://github.com/mdn/rumba/commit/fbaa141b76ae97a10301a81b40b22a253a9ddacc))
+* **deps:** bump anyhow from 1.0.103 to 1.0.104 ([#837](https://github.com/mdn/rumba/issues/837)) ([768de8e](https://github.com/mdn/rumba/commit/768de8e2685f0ff57eda5017a04a3891d2d03585))
+* **deps:** bump cmov from 0.5.2 to 0.5.4 ([#832](https://github.com/mdn/rumba/issues/832)) ([a0c852c](https://github.com/mdn/rumba/commit/a0c852c2d47ab910705f80028e499d4540007072))
+* **deps:** bump config from 0.15.23 to 0.15.25 ([#831](https://github.com/mdn/rumba/issues/831)) ([f1a54c4](https://github.com/mdn/rumba/commit/f1a54c42f2ad7f8636e62e192b8c73e314af7427))
+* **deps:** bump diesel from 2.3.10 to 2.3.11 ([#834](https://github.com/mdn/rumba/issues/834)) ([6abeea8](https://github.com/mdn/rumba/commit/6abeea8a82c8311b71acca678f493c777dbe4a27))
+* **deps:** bump futures from 0.3.32 to 0.3.33 ([#838](https://github.com/mdn/rumba/issues/838)) ([adf5af1](https://github.com/mdn/rumba/commit/adf5af1c68031432c1948410550e2ecca091aef7))
+* **deps:** bump itertools from 0.14.0 to 0.15.0 ([#822](https://github.com/mdn/rumba/issues/822)) ([487301d](https://github.com/mdn/rumba/commit/487301d7ef361fa97cda46214af7f414d56d0f83))
+* **deps:** bump regex from 1.12.3 to 1.12.4 ([#818](https://github.com/mdn/rumba/issues/818)) ([c61fe89](https://github.com/mdn/rumba/commit/c61fe891e3b763d0385e0ec8e6b3066e46fe7ad5))
+* **deps:** bump regex from 1.12.4 to 1.13.0 ([#836](https://github.com/mdn/rumba/issues/836)) ([f40fa70](https://github.com/mdn/rumba/commit/f40fa70aa2cb9a15e7f50c9a92c7eb95bee54a14))
+* **deps:** bump sentry-actix from 0.48.2 to 0.48.3 ([#827](https://github.com/mdn/rumba/issues/827)) ([706bfdd](https://github.com/mdn/rumba/commit/706bfdd252d8457c433f8a5b10d48ab34f0d3286))
+* **deps:** bump sentry-actix from 0.48.3 to 0.48.4 ([#835](https://github.com/mdn/rumba/issues/835)) ([7e28087](https://github.com/mdn/rumba/commit/7e28087d95a95983132bd1b11e0f84e944aa6cdc))
+* **deps:** bump tokio from 1.52.3 to 1.53.0 ([#839](https://github.com/mdn/rumba/issues/839)) ([9834922](https://github.com/mdn/rumba/commit/9834922730f200be33bf03d15982eddf3af8a4ba))
+
+
+### Miscellaneous
+
+* **deps:** bump MSRV from 1.90 to 1.97 ([#833](https://github.com/mdn/rumba/issues/833)) ([13c9ce9](https://github.com/mdn/rumba/commit/13c9ce9b14a478493ae835b4c4ae21aa39ee3f35))
+
+## [1.13.7](https://github.com/mdn/rumba/compare/v1.13.6...v1.13.7) (2026-06-09)
+
+
+### Build
+
+* **deps:** bump chrono from 0.4.44 to 0.4.45 ([#814](https://github.com/mdn/rumba/issues/814)) ([b4b5dca](https://github.com/mdn/rumba/commit/b4b5dcaa976729fa26f81e918678ce87902fb5bb))
+* **deps:** bump diesel from 2.3.9 to 2.3.10 ([#816](https://github.com/mdn/rumba/issues/816)) ([952f70e](https://github.com/mdn/rumba/commit/952f70e4af5f8bd4ad2fe9a14dd3eedb82349c61))
+* **deps:** bump openssl from 0.10.79 to 0.10.80 ([#806](https://github.com/mdn/rumba/issues/806)) ([d2f9c28](https://github.com/mdn/rumba/commit/d2f9c2851f1c240d16154d81c1ffa8783a187399))
+* **deps:** bump serde_json from 1.0.149 to 1.0.150 ([#808](https://github.com/mdn/rumba/issues/808)) ([22d8edc](https://github.com/mdn/rumba/commit/22d8edc90e89c13ea5d3358dc38f1aee6850e671))
+* **deps:** bump serde_with from 3.20.0 to 3.21.0 ([#815](https://github.com/mdn/rumba/issues/815)) ([7a5b0fe](https://github.com/mdn/rumba/commit/7a5b0fe1f628d286af396c3e7c4c5882823c16f5))
+
+
+### Miscellaneous
+
+* **play:** verify gist owner ([#817](https://github.com/mdn/rumba/issues/817)) ([f468e4f](https://github.com/mdn/rumba/commit/f468e4f75e7549e57feb75b8ace06934351a30b5))
+
+## [1.13.6](https://github.com/mdn/rumba/compare/v1.13.5...v1.13.6) (2026-05-20)
+
+
+### Build
+
+* **deps:** bump cadence from 1.7.0 to 1.8.0 ([#782](https://github.com/mdn/rumba/issues/782)) ([61d70ff](https://github.com/mdn/rumba/commit/61d70ff83f9520d82f80c4493e9b6694715325e9))
+* **deps:** bump clap from 4.5.60 to 4.6.0 ([#768](https://github.com/mdn/rumba/issues/768)) ([30b51b1](https://github.com/mdn/rumba/commit/30b51b1098acc1070f891952663e1ef2250c0d75))
+* **deps:** bump clap from 4.6.0 to 4.6.1 ([#791](https://github.com/mdn/rumba/issues/791)) ([e4ee9f4](https://github.com/mdn/rumba/commit/e4ee9f4006c0a07940da06ff1a9ca31ee780670d))
+* **deps:** bump config from 0.15.19 to 0.15.21 ([#770](https://github.com/mdn/rumba/issues/770)) ([80cc7cf](https://github.com/mdn/rumba/commit/80cc7cf1cda06951a813c964ea294260015f02df))
+* **deps:** bump config from 0.15.21 to 0.15.22 ([#774](https://github.com/mdn/rumba/issues/774)) ([6c16c7b](https://github.com/mdn/rumba/commit/6c16c7b81d754fc1c779f4afbf64319950f59b38))
+* **deps:** bump config from 0.15.22 to 0.15.23 ([#803](https://github.com/mdn/rumba/issues/803)) ([e652775](https://github.com/mdn/rumba/commit/e6527758c571f47ff77e25159f1b2153bb46346e))
+* **deps:** bump const_format from 0.2.35 to 0.2.36 ([#788](https://github.com/mdn/rumba/issues/788)) ([0cc8555](https://github.com/mdn/rumba/commit/0cc85554465393f1e86dba1be7ee938d49a1dbd6))
+* **deps:** bump diesel from 2.3.7 to 2.3.9 ([#795](https://github.com/mdn/rumba/issues/795)) ([d6da2b2](https://github.com/mdn/rumba/commit/d6da2b2e64a4b640f828bf805a00fd4b2f75d0b8))
+* **deps:** bump diesel_migrations from 2.2.0 to 2.3.1 ([#775](https://github.com/mdn/rumba/issues/775)) ([e7166fb](https://github.com/mdn/rumba/commit/e7166fba91e4d101a3f785ccd03045aa6b1fe8f2))
+* **deps:** bump diesel_migrations from 2.3.1 to 2.3.2 ([#789](https://github.com/mdn/rumba/issues/789)) ([3b089c4](https://github.com/mdn/rumba/commit/3b089c44e34e4de76b0ea22457ab041e6c246ddc))
+* **deps:** bump hmac to 0.13 and sha2 to 0.11 ([#778](https://github.com/mdn/rumba/issues/778)) ([2b18e26](https://github.com/mdn/rumba/commit/2b18e26f6f59ba07da5eecf03f49135b36e58924))
+* **deps:** bump jsonwebtoken from 10.3.0 to 10.4.0 ([#801](https://github.com/mdn/rumba/issues/801)) ([4e25db2](https://github.com/mdn/rumba/commit/4e25db2dd5865af3ada396499fa11c1dbb3b6bea))
+* **deps:** bump once_cell from 1.21.3 to 1.21.4 ([#769](https://github.com/mdn/rumba/issues/769)) ([3fad46e](https://github.com/mdn/rumba/commit/3fad46e1b9565ecca0cd31e7e68f51c7991985e5))
+* **deps:** bump openssl from 0.10.72 to 0.10.78 ([#787](https://github.com/mdn/rumba/issues/787)) ([5ee8aec](https://github.com/mdn/rumba/commit/5ee8aeca23a177f1e9f05be2aa679ac67143b07b))
+* **deps:** bump openssl from 0.10.78 to 0.10.79 ([#797](https://github.com/mdn/rumba/issues/797)) ([dbbfab8](https://github.com/mdn/rumba/commit/dbbfab801818191d6b01fb3f2191e510c31b605a))
+* **deps:** bump sentry-actix from 0.46.2 to 0.47.0 ([#771](https://github.com/mdn/rumba/issues/771)) ([5308072](https://github.com/mdn/rumba/commit/53080729e594da02b3dbe6ebbe4e656313635593))
+* **deps:** bump sentry-actix from 0.47.0 to 0.48.0 ([#796](https://github.com/mdn/rumba/issues/796)) ([f45b8c0](https://github.com/mdn/rumba/commit/f45b8c047536ddf83594638cea22b592c223cd34))
+* **deps:** bump sentry-actix from 0.48.0 to 0.48.1 ([#798](https://github.com/mdn/rumba/issues/798)) ([4f433a0](https://github.com/mdn/rumba/commit/4f433a06f2f56d78ad6dc75e6999418a341f79fd))
+* **deps:** bump sentry-actix from 0.48.1 to 0.48.2 ([#802](https://github.com/mdn/rumba/issues/802)) ([2529941](https://github.com/mdn/rumba/commit/252994109826df1f2b03336d69085d0b81fb7dfc))
+* **deps:** bump serde_with from 3.14.0 to 3.18.0 ([#776](https://github.com/mdn/rumba/issues/776)) ([f45a9fe](https://github.com/mdn/rumba/commit/f45a9fe0e69a2c6f2acc69d3db67f564a7c5513a))
+* **deps:** bump serde_with from 3.18.0 to 3.19.0 ([#794](https://github.com/mdn/rumba/issues/794)) ([1792d3b](https://github.com/mdn/rumba/commit/1792d3bf97fec2e679f0ded4299eb49c22af40ff))
+* **deps:** bump serde_with from 3.19.0 to 3.20.0 ([#799](https://github.com/mdn/rumba/issues/799)) ([3c162b6](https://github.com/mdn/rumba/commit/3c162b639d58e8c48cd28da8b6ba12b1d7132665))
+* **deps:** bump tokio from 1.50.0 to 1.51.0 ([#780](https://github.com/mdn/rumba/issues/780)) ([061b78d](https://github.com/mdn/rumba/commit/061b78d5c35f29ed9df23f7b6d30430d3b65c935))
+* **deps:** bump tokio from 1.51.0 to 1.51.1 ([#783](https://github.com/mdn/rumba/issues/783)) ([24ce85d](https://github.com/mdn/rumba/commit/24ce85d468efc2f5aa4be478d582380078d8e6e3))
+* **deps:** bump tokio from 1.51.1 to 1.52.1 ([#790](https://github.com/mdn/rumba/issues/790)) ([c0835ad](https://github.com/mdn/rumba/commit/c0835ad6ead121544f0512fff12bf5cebf0606d2))
+* **deps:** bump tokio from 1.52.1 to 1.52.3 ([#800](https://github.com/mdn/rumba/issues/800)) ([7573c51](https://github.com/mdn/rumba/commit/7573c51294c410479bb0cdfedfa8316dc0f1c763))
+
+
+### Miscellaneous
+
+* **play:** split playground PAT into gist and flags tokens ([#805](https://github.com/mdn/rumba/issues/805)) ([dfb472d](https://github.com/mdn/rumba/commit/dfb472d926b554d954fcfe9d71103ab71a127698))
+
 ## [1.13.5](https://github.com/mdn/rumba/compare/v1.13.4...v1.13.5) (2026-03-13)
 
 

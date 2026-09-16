@@ -36,11 +36,14 @@ pub async fn get_document_metadata(
     http_client: Data<Client>,
     url: &String,
 ) -> Result<DocumentMetadata, ApiError> {
-    let document_url = Url::parse(&format!(
-        "{}{}/index.json",
-        SETTINGS.application.document_base_url, url
-    ))
-    .map_err(|_| ApiError::MalformedUrl)?;
+    let base =
+        Url::parse(&SETTINGS.application.document_base_url).map_err(|_| ApiError::MalformedUrl)?;
+    let document_url = base
+        .join(&format!("{url}/index.json"))
+        .map_err(|_| ApiError::MalformedUrl)?;
+    if document_url.origin() != base.origin() {
+        return Err(ApiError::MalformedUrl);
+    }
 
     let document = http_client
         .get(document_url.to_owned())
@@ -83,43 +86,4 @@ pub async fn get_document_metadata(
         title: metadata.doc.title,
         paths,
     })
-}
-
-#[derive(Serialize, Default)]
-pub struct GeneratedChunkDelta {
-    pub content: String,
-}
-
-#[derive(Serialize, Default)]
-pub struct GeneratedChunkChoice {
-    pub delta: GeneratedChunkDelta,
-    pub finish_reason: Option<String>,
-}
-#[derive(Serialize)]
-pub struct GeneratedChunk {
-    pub choices: Vec<GeneratedChunkChoice>,
-    pub id: i64,
-}
-
-impl Default for GeneratedChunk {
-    fn default() -> Self {
-        Self {
-            choices: Default::default(),
-            id: 1,
-        }
-    }
-}
-
-impl From<&str> for GeneratedChunk {
-    fn from(content: &str) -> Self {
-        GeneratedChunk {
-            choices: vec![GeneratedChunkChoice {
-                delta: GeneratedChunkDelta {
-                    content: content.into(),
-                },
-                ..Default::default()
-            }],
-            ..Default::default()
-        }
-    }
 }

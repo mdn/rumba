@@ -74,25 +74,29 @@ pub struct Basket {
     pub basket_url: Url,
 }
 
-#[serde_as]
 #[derive(Debug, Deserialize)]
 pub struct AI {
     pub api_key: String,
     pub trigger_error_for_search_term: Option<String>,
     pub trigger_error_for_chat_term: Option<String>,
     pub limit_reset_duration_in_sec: i64,
-    #[serde_as(as = "Base64")]
-    pub explain_sign_key: [u8; 32],
     pub history_deletion_period_in_sec: u64,
+}
+
+fn default_gist_owner() -> String {
+    "mdn-bot".to_string()
 }
 
 #[serde_as]
 #[derive(Debug, Deserialize)]
 pub struct Playground {
-    pub github_token: String,
+    pub github_gist_token: String,
+    pub github_flags_token: String,
     #[serde_as(as = "Base64")]
     pub crypt_key: [u8; 32],
     pub flag_repo: String,
+    #[serde(default = "default_gist_owner")]
+    pub github_gist_owner: String,
 }
 
 #[derive(Deserialize)]
