@@ -1,6 +1,6 @@
 use std::io;
 
-use slog::{slog_o, Drain};
+use slog::Drain;
 use slog_mozlog_json::MozLogJson;
 
 pub fn init_logging(json: bool) {
@@ -22,13 +22,13 @@ pub fn init_logging(json: bool) {
             .fuse();
         let drain = slog_envlogger::new(drain);
         let drain = slog_async::Async::new(drain).build().fuse();
-        slog::Logger::root(drain, slog_o!())
+        slog::Logger::root(drain, slog::o!())
     } else {
         let decorator = slog_term::TermDecorator::new().build();
         let drain = slog_term::FullFormat::new(decorator).build().fuse();
         let drain = slog_envlogger::new(drain);
         let drain = slog_async::Async::new(drain).build().fuse();
-        slog::Logger::root(drain, slog_o!())
+        slog::Logger::root(drain, slog::o!())
     };
     // XXX: cancel slog_scope's NoGlobalLoggerSet for now, it's difficult to
     // prevent it from potentially panicing during tests. reset_logging resets
@@ -39,6 +39,6 @@ pub fn init_logging(json: bool) {
 }
 
 pub fn reset_logging() {
-    let logger = slog::Logger::root(slog::Discard, slog_o!());
+    let logger = slog::Logger::root(slog::Discard, slog::o!());
     slog_scope::set_global_logger(logger).cancel_reset();
 }
