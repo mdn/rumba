@@ -41,6 +41,22 @@
                                 "boost": 1.0
                               }
                             }
+                          },
+                          {
+                            "term": {
+                              "inline_code.exact": {
+                                "value": "veryspecificquery",
+                                "boost": 20.0
+                              }
+                            }
+                          },
+                          {
+                            "match": {
+                              "inline_code.partial": {
+                                "query": "veryspecificquery",
+                                "boost": 5.0
+                              }
+                            }
                           }
                         ]
                       }

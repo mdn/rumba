@@ -24,6 +24,7 @@ pub struct Count<'a> {
 #[serde(rename_all = "snake_case")]
 pub enum Query<'a> {
     Bool(QueryBool<'a>),
+    Term(QueryTerm),
     Terms(QueryTerms),
     Match(QueryMatch),
     MatchPhrase(QueryMatch),
@@ -37,6 +38,18 @@ pub struct QueryBool<'a> {
     pub filter: Option<Vec<Query<'a>>>,
     pub must: Option<Vec<Query<'a>>>,
     pub should: Option<Vec<Query<'a>>>,
+}
+
+#[derive(Serialize)]
+pub enum QueryTerm {
+    #[serde(rename = "inline_code.exact")]
+    InlineCodeExact(QueryTermField),
+}
+
+#[derive(Serialize)]
+pub struct QueryTermField {
+    pub value: String,
+    pub boost: f64,
 }
 
 #[derive(Serialize)]
@@ -83,6 +96,8 @@ impl FromStr for Locale {
 pub enum QueryMatch {
     Title(QueryMatchField),
     Body(QueryMatchField),
+    #[serde(rename = "inline_code.partial")]
+    InlineCodePartial(QueryMatchField),
 }
 
 #[derive(Serialize)]
@@ -277,4 +292,42 @@ pub enum ResponseTotalRelation {
 #[derive(Deserialize)]
 pub struct CountResponse {
     pub count: u64,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_serialize_inline_code_queries() {
+        struct Case {
+            name: &'static str,
+            query: Query<'static>,
+            expected: &'static str,
+        }
+
+        let cases = [
+            Case {
+                name: "term on inline_code.exact",
+                query: Query::Term(QueryTerm::InlineCodeExact(QueryTermField {
+                    value: "max-age".to_string(),
+                    boost: 20.0,
+                })),
+                expected: r#"{"term":{"inline_code.exact":{"value":"max-age","boost":20.0}}}"#,
+            },
+            Case {
+                name: "match on inline_code.partial",
+                query: Query::Match(QueryMatch::InlineCodePartial(QueryMatchField {
+                    query: "addEvent".to_string(),
+                    boost: 5.0,
+                })),
+                expected: r#"{"match":{"inline_code.partial":{"query":"addEvent","boost":5.0}}}"#,
+            },
+        ];
+
+        for case in cases {
+            let actual = serde_json::to_string(&case.query).unwrap();
+            assert_eq!(actual, case.expected, "case: {}", case.name);
+        }
+    }
 }

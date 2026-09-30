@@ -225,10 +225,11 @@ async fn do_search(
     and each different way as a different boost which dictates its importance.
     The importance order is as follows:
 
-     1. Title match-phrase
-     2. Title match
-     3. Body match-phrase
-     4. Body match
+     1. Inline code exact term
+     2. Title match-phrase
+     3. Title match / Inline code partial match
+     4. Body match-phrase
+     5. Body match
 
     The order is determined by the `boost` number in the code below.
     Remember that sort order is a combination of "match" and popularity, but
@@ -244,6 +245,18 @@ async fn do_search(
             query: params.q.clone(),
             boost: 1.0,
         })),
+        elastic::Query::Term(elastic::QueryTerm::InlineCodeExact(
+            elastic::QueryTermField {
+                value: params.q.trim().to_string(),
+                boost: 20.0,
+            },
+        )),
+        elastic::Query::Match(elastic::QueryMatch::InlineCodePartial(
+            elastic::QueryMatchField {
+                query: params.q.clone(),
+                boost: 5.0,
+            },
+        )),
     ];
     if params.q.contains(' ') {
         subqueries.push(elastic::Query::MatchPhrase(elastic::QueryMatch::Title(
