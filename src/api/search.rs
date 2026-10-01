@@ -292,7 +292,7 @@ fn subqueries(q: &str) -> Vec<elastic::Query<'static>> {
     subqueries
 }
 
-/// Used when `subqueries` find nothing: typos and stopwords (`a`, `then`).
+/// Used when `subqueries` find nothing: typos, stopwords (`a`, `then`) and joined words.
 fn fallback_subqueries(q: &str) -> Vec<elastic::Query<'static>> {
     vec![
         // Title terms tolerate 1 edit from 4 characters and 2 from 6; the larger body
@@ -302,6 +302,9 @@ fn fallback_subqueries(q: &str) -> Vec<elastic::Query<'static>> {
         // No stopwords, and term frequency favors pages using the value a lot.
         elastic::Query::Match(elastic::QueryMatch::InlineCode(match_field(q, 5.0))),
         constant_term(elastic::QueryTerm::SlugLeaf(q.trim().to_lowercase()), 20.0),
+        elastic::Query::Match(elastic::QueryMatch::TitleJoined(fuzzy_field(
+            q, 5.0, "AUTO:4,6",
+        ))),
     ]
 }
 
@@ -585,7 +588,7 @@ mod tests {
                 name: "fallback",
                 q: " Then",
                 fallback: true,
-                expected: r#"[{"match":{"title":{"query":" Then","fuzziness":"AUTO:4,6","prefix_length":1,"boost":5}}},{"match":{"body":{"query":" Then","fuzziness":"AUTO:6,9","prefix_length":1,"boost":1}}},{"match":{"inline_code":{"query":" Then","boost":5}}},{"constant_score":{"filter":{"term":{"slug_leaf":"then"}},"boost":20}}]"#,
+                expected: r#"[{"match":{"title":{"query":" Then","fuzziness":"AUTO:4,6","prefix_length":1,"boost":5}}},{"match":{"body":{"query":" Then","fuzziness":"AUTO:6,9","prefix_length":1,"boost":1}}},{"match":{"inline_code":{"query":" Then","boost":5}}},{"constant_score":{"filter":{"term":{"slug_leaf":"then"}},"boost":20}},{"match":{"title.joined":{"query":" Then","fuzziness":"AUTO:4,6","prefix_length":1,"boost":5}}}]"#,
             },
         ];
 

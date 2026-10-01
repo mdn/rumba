@@ -63,6 +63,16 @@
                               },
                               "boost": 20.0
                             }
+                          },
+                          {
+                            "match": {
+                              "title.joined": {
+                                "query": "lenght",
+                                "boost": 5.0,
+                                "fuzziness": "AUTO:4,6",
+                                "prefix_length": 1
+                              }
+                            }
                           }
                         ]
                       }

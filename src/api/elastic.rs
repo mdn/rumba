@@ -101,6 +101,8 @@ pub enum QueryMatch {
     Body(QueryMatchField),
     #[serde(rename = "title.code")]
     TitleCode(QueryMatchField),
+    #[serde(rename = "title.joined")]
+    TitleJoined(QueryMatchField),
     #[serde(rename = "summary.code")]
     SummaryCode(QueryMatchField),
     #[serde(rename = "inline_code")]
