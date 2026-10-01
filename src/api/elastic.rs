@@ -45,6 +45,8 @@ pub struct QueryBool<'a> {
 pub enum QueryTerm {
     #[serde(rename = "inline_code.exact")]
     InlineCodeExact(String),
+    #[serde(rename = "slug_leaf")]
+    SlugLeaf(String),
 }
 
 #[derive(Serialize)]
@@ -101,6 +103,8 @@ pub enum QueryMatch {
     TitleCode(QueryMatchField),
     #[serde(rename = "summary.code")]
     SummaryCode(QueryMatchField),
+    #[serde(rename = "inline_code")]
+    InlineCode(QueryMatchField),
 }
 
 #[derive(Serialize)]
@@ -117,10 +121,13 @@ pub enum Field {
     Popularity,
 }
 
-#[derive(Serialize)]
+#[serde_with::skip_serializing_none]
+#[derive(Default, Serialize)]
 pub struct QueryMatchField {
     pub query: String,
     pub boost: f64,
+    pub fuzziness: Option<&'static str>,
+    pub prefix_length: Option<u64>,
 }
 
 #[derive(Serialize)]
@@ -325,8 +332,19 @@ mod tests {
                 query: Query::Match(QueryMatch::TitleCode(QueryMatchField {
                     query: "%".to_string(),
                     boost: 10.0,
+                    ..QueryMatchField::default()
                 })),
                 expected: r#"{"match":{"title.code":{"query":"%","boost":10.0}}}"#,
+            },
+            Case {
+                name: "fuzzy match on title",
+                query: Query::Match(QueryMatch::Title(QueryMatchField {
+                    query: "lenght".to_string(),
+                    boost: 5.0,
+                    fuzziness: Some("AUTO:4,6"),
+                    prefix_length: Some(1),
+                })),
+                expected: r#"{"match":{"title":{"query":"lenght","boost":5.0,"fuzziness":"AUTO:4,6","prefix_length":1}}}"#,
             },
         ];
 

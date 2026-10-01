@@ -148,14 +148,15 @@ pub async fn search(
 ) -> Result<HttpResponse, ApiError> {
     let params: Params = request.query_string().parse()?;
 
-    let search_response: elastic::SearchResponse =
-        match parse_or_get_error_reason(do_search(&client, &params).await).await {
-            Ok(x) => x,
-            Err(e) => {
-                error!("{}", e);
-                return Err(e.into());
-            }
-        };
+    let mut search_response: elastic::SearchResponse =
+        parse_or_log(do_search(&client, &params, subqueries(&params.q), true).await).await?;
+    if search_response.hits.total.value == 0 {
+        let fallback: elastic::SearchResponse =
+            parse_or_log(do_search(&client, &params, fallback_subqueries(&params.q), false).await)
+                .await?;
+        search_response.took += fallback.took;
+        search_response.hits = fallback.hits;
+    }
 
     let response = SearchResponse {
         documents: search_response
@@ -193,6 +194,15 @@ pub async fn search(
         .json(response))
 }
 
+async fn parse_or_log(
+    result: Result<ElasticResponse, elasticsearch::Error>,
+) -> Result<elastic::SearchResponse, ApiError> {
+    parse_or_get_error_reason(result).await.map_err(|e| {
+        error!("{}", e);
+        e.into()
+    })
+}
+
 /// Whether the query contains punctuation or a camelCase transition.
 fn is_code_like(q: &str) -> bool {
     let chars: Vec<char> = q.chars().collect();
@@ -215,6 +225,15 @@ fn match_field(query: &str, boost: f64) -> elastic::QueryMatchField {
     elastic::QueryMatchField {
         query: query.to_string(),
         boost,
+        ..elastic::QueryMatchField::default()
+    }
+}
+
+fn fuzzy_field(query: &str, boost: f64, fuzziness: &'static str) -> elastic::QueryMatchField {
+    elastic::QueryMatchField {
+        fuzziness: Some(fuzziness),
+        prefix_length: Some(1),
+        ..match_field(query, boost)
     }
 }
 
@@ -273,35 +292,51 @@ fn subqueries(q: &str) -> Vec<elastic::Query<'static>> {
     subqueries
 }
 
+/// Used when `subqueries` find nothing: typos and stopwords (`a`, `then`).
+fn fallback_subqueries(q: &str) -> Vec<elastic::Query<'static>> {
+    vec![
+        // Title terms tolerate 1 edit from 4 characters and 2 from 6; the larger body
+        // vocabulary only 1 edit from 6 characters, to limit junk matches.
+        elastic::Query::Match(elastic::QueryMatch::Title(fuzzy_field(q, 5.0, "AUTO:4,6"))),
+        elastic::Query::Match(elastic::QueryMatch::Body(fuzzy_field(q, 1.0, "AUTO:6,9"))),
+        // No stopwords, and term frequency favors pages using the value a lot.
+        elastic::Query::Match(elastic::QueryMatch::InlineCode(match_field(q, 5.0))),
+        constant_term(elastic::QueryTerm::SlugLeaf(q.trim().to_lowercase()), 20.0),
+    ]
+}
+
 async fn do_search(
     client: &Elasticsearch,
     params: &Params,
+    subqueries: Vec<elastic::Query<'_>>,
+    with_suggest: bool,
 ) -> Result<ElasticResponse, elasticsearch::Error> {
-    let suggest = if params.q.len() > 100 || params.q.split(' ').any(|x| x.len() > 30) {
-        /*
-        If it's a really long query, or a specific word is just too long, you can get those tricky
-        TransportError(500, 'search_phase_execution_exception', 'Term too complex:
-        errors which are hard to prevent against.
-        */
-        None
-    } else {
-        /*
-        XXX research if it it's better to use phrase suggesters and if that works
-        https://www.elastic.co/guide/en/elasticsearch/reference/current/search-suggesters.html#phrase-suggester
-        */
-        Some(elastic::Suggest {
-            text: params.q.clone(),
-            title_suggestions: elastic::Suggester::Term(elastic::TermSuggester {
-                field: elastic::Field::Title,
-            }),
-            body_suggestions: elastic::Suggester::Term(elastic::TermSuggester {
-                field: elastic::Field::Body,
-            }),
-        })
-    };
+    let suggest =
+        if !with_suggest || params.q.len() > 100 || params.q.split(' ').any(|x| x.len() > 30) {
+            /*
+            If it's a really long query, or a specific word is just too long, you can get those tricky
+            TransportError(500, 'search_phase_execution_exception', 'Term too complex:
+            errors which are hard to prevent against.
+            */
+            None
+        } else {
+            /*
+            XXX research if it it's better to use phrase suggesters and if that works
+            https://www.elastic.co/guide/en/elasticsearch/reference/current/search-suggesters.html#phrase-suggester
+            */
+            Some(elastic::Suggest {
+                text: params.q.clone(),
+                title_suggestions: elastic::Suggester::Term(elastic::TermSuggester {
+                    field: elastic::Field::Title,
+                }),
+                body_suggestions: elastic::Suggester::Term(elastic::TermSuggester {
+                    field: elastic::Field::Body,
+                }),
+            })
+        };
 
     let subquery = elastic::Query::Bool(elastic::QueryBool {
-        should: Some(subqueries(&params.q)),
+        should: Some(subqueries),
         ..elastic::QueryBool::default()
     });
 
@@ -505,6 +540,7 @@ mod tests {
         struct Case {
             name: &'static str,
             q: &'static str,
+            fallback: bool,
             expected: &'static str,
         }
 
@@ -512,37 +548,54 @@ mod tests {
             Case {
                 name: "plain word",
                 q: "flexbox",
+                fallback: false,
                 expected: r#"[{"match":{"title":{"query":"flexbox","boost":5}}},{"match":{"body":{"query":"flexbox","boost":1}}}]"#,
             },
             Case {
                 name: "multi-word",
                 q: "css grid",
+                fallback: false,
                 expected: r#"[{"match":{"title":{"query":"css grid","boost":5}}},{"match":{"body":{"query":"css grid","boost":1}}},{"match_phrase":{"title":{"query":"css grid","boost":10}}},{"match_phrase":{"body":{"query":"css grid","boost":2}}}]"#,
             },
             Case {
                 name: "symbol",
                 q: "%",
+                fallback: false,
                 expected: r#"[{"match":{"title":{"query":"%","boost":5}}},{"match":{"body":{"query":"%","boost":1}}},{"constant_score":{"filter":{"term":{"inline_code.exact":"%"}},"boost":10}},{"match":{"title.code":{"query":"%","boost":10}}},{"match":{"summary.code":{"query":"%","boost":5}}}]"#,
             },
             Case {
                 name: "code-like",
                 q: "::before",
+                fallback: false,
                 expected: r#"[{"match":{"title":{"query":"::before","boost":5}}},{"match":{"body":{"query":"::before","boost":1}}},{"constant_score":{"filter":{"term":{"inline_code.exact":"::before"}},"boost":10}}]"#,
             },
             Case {
                 name: "camelCase",
                 q: "addEventListener",
+                fallback: false,
                 expected: r#"[{"match":{"title":{"query":"addEventListener","boost":5}}},{"match":{"body":{"query":"addEventListener","boost":1}}},{"constant_score":{"filter":{"term":{"inline_code.exact":"addEventListener"}},"boost":10}}]"#,
             },
             Case {
                 name: "code-like with space",
                 q: "position: sticky",
+                fallback: false,
                 expected: r#"[{"match":{"title":{"query":"position: sticky","boost":5}}},{"match":{"body":{"query":"position: sticky","boost":1}}},{"constant_score":{"filter":{"term":{"inline_code.exact":"position: sticky"}},"boost":10}},{"match_phrase":{"title":{"query":"position: sticky","boost":10}}},{"match_phrase":{"body":{"query":"position: sticky","boost":2}}}]"#,
+            },
+            Case {
+                name: "fallback",
+                q: " Then",
+                fallback: true,
+                expected: r#"[{"match":{"title":{"query":" Then","fuzziness":"AUTO:4,6","prefix_length":1,"boost":5}}},{"match":{"body":{"query":" Then","fuzziness":"AUTO:6,9","prefix_length":1,"boost":1}}},{"match":{"inline_code":{"query":" Then","boost":5}}},{"constant_score":{"filter":{"term":{"slug_leaf":"then"}},"boost":20}}]"#,
             },
         ];
 
         for case in cases {
-            let actual = normalize(serde_json::to_value(subqueries(case.q)).unwrap());
+            let queries = if case.fallback {
+                fallback_subqueries(case.q)
+            } else {
+                subqueries(case.q)
+            };
+            let actual = normalize(serde_json::to_value(&queries).unwrap());
             let expected = normalize(serde_json::from_str(case.expected).unwrap());
             assert_eq!(actual, expected, "case: {}", case.name);
         }
