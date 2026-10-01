@@ -39,22 +39,6 @@
                             "boost": 1.0
                           }
                         }
-                      },
-                      {
-                        "term": {
-                          "inline_code.exact": {
-                            "value": "mozilla",
-                            "boost": 20.0
-                          }
-                        }
-                      },
-                      {
-                        "match": {
-                          "inline_code.partial": {
-                            "query": "mozilla",
-                            "boost": 5.0
-                          }
-                        }
                       }
                     ]
                   }

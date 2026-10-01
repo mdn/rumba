@@ -41,22 +41,6 @@
                                 "boost": 1.0
                               }
                             }
-                          },
-                          {
-                            "term": {
-                              "inline_code.exact": {
-                                "value": "closedindex",
-                                "boost": 20.0
-                              }
-                            }
-                          },
-                          {
-                            "match": {
-                              "inline_code.partial": {
-                                "query": "closedindex",
-                                "boost": 5.0
-                              }
-                            }
                           }
                         ]
                       }

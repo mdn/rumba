@@ -41,22 +41,6 @@
                                 "boost": 1.0
                               }
                             }
-                          },
-                          {
-                            "term": {
-                              "inline_code.exact": {
-                                "value": "foobar",
-                                "boost": 20.0
-                              }
-                            }
-                          },
-                          {
-                            "match": {
-                              "inline_code.partial": {
-                                "query": "foobar",
-                                "boost": 5.0
-                              }
-                            }
                           }
                         ]
                       }

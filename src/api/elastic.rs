@@ -30,6 +30,7 @@ pub enum Query<'a> {
     MatchPhrase(QueryMatch),
     MultiMatch(QueryMultiMatch),
     FunctionScore(QueryFunctionScore<'a>),
+    ConstantScore(QueryConstantScore<'a>),
 }
 
 #[serde_with::skip_serializing_none]
@@ -43,12 +44,12 @@ pub struct QueryBool<'a> {
 #[derive(Serialize)]
 pub enum QueryTerm {
     #[serde(rename = "inline_code.exact")]
-    InlineCodeExact(QueryTermField),
+    InlineCodeExact(String),
 }
 
 #[derive(Serialize)]
-pub struct QueryTermField {
-    pub value: String,
+pub struct QueryConstantScore<'a> {
+    pub filter: Box<Query<'a>>,
     pub boost: f64,
 }
 
@@ -96,8 +97,6 @@ impl FromStr for Locale {
 pub enum QueryMatch {
     Title(QueryMatchField),
     Body(QueryMatchField),
-    #[serde(rename = "inline_code.partial")]
-    InlineCodePartial(QueryMatchField),
 }
 
 #[derive(Serialize)]
@@ -299,31 +298,23 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_serialize_inline_code_queries() {
+    fn test_serialize_queries() {
         struct Case {
             name: &'static str,
             query: Query<'static>,
             expected: &'static str,
         }
 
-        let cases = [
-            Case {
-                name: "term on inline_code.exact",
-                query: Query::Term(QueryTerm::InlineCodeExact(QueryTermField {
-                    value: "max-age".to_string(),
-                    boost: 20.0,
-                })),
-                expected: r#"{"term":{"inline_code.exact":{"value":"max-age","boost":20.0}}}"#,
-            },
-            Case {
-                name: "match on inline_code.partial",
-                query: Query::Match(QueryMatch::InlineCodePartial(QueryMatchField {
-                    query: "addEvent".to_string(),
-                    boost: 5.0,
-                })),
-                expected: r#"{"match":{"inline_code.partial":{"query":"addEvent","boost":5.0}}}"#,
-            },
-        ];
+        let cases = [Case {
+            name: "constant_score term on inline_code.exact",
+            query: Query::ConstantScore(QueryConstantScore {
+                filter: Box::new(Query::Term(QueryTerm::InlineCodeExact(
+                    "max-age".to_string(),
+                ))),
+                boost: 10.0,
+            }),
+            expected: r#"{"constant_score":{"filter":{"term":{"inline_code.exact":"max-age"}},"boost":10.0}}"#,
+        }];
 
         for case in cases {
             let actual = serde_json::to_string(&case.query).unwrap();
