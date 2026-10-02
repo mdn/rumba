@@ -1,6 +1,5 @@
 [db]
 uri = "postgres://rumba:rumba@127.0.0.1:5432/mdn"
-supabase_uri = ""
 
 [server]
 host = "localhost"
@@ -39,15 +38,19 @@ human_logs = true
 statsd_label = "rumba"
 statsd_port = 8125
 
-[basket]
-api_key = ""
-basket_url = ""
+# Optional: uncomment and fill in to enable the newsletter endpoints.
+# [basket]
+# api_key = ""
+# basket_url = ""
 
-[playground]
-github_gist_token = ""
-github_flags_token = ""
-crypt_key = ""
-flag_repo = "flags"
+# Optional: uncomment and fill in to enable the Playground endpoints.
+# `crypt_key` must be a base64-encoded 32-byte key (e.g. `openssl rand -base64 32`).
+# [playground]
+# github_gist_token = ""
+# github_gist_owner = ""
+# github_flags_token = ""
+# crypt_key = ""
+# flag_repo = "flags"
 
 [ai]
 api_key = ""
