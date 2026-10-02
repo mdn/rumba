@@ -216,6 +216,8 @@ pub struct ResponseHit {
     pub _id: String,
     pub _score: f64,
     pub _source: ResponseSource,
+    // Absent when a hit matches only fields that aren't highlighted.
+    #[serde(default)]
     pub highlight: ResponseHighlight,
 }
 
@@ -232,7 +234,7 @@ pub struct ResponseSource {
     pub summary: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Default, Deserialize, Serialize)]
 pub struct ResponseHighlight {
     #[serde(default = "Vec::default")]
     pub body: Vec<String>,
