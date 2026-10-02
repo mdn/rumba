@@ -1,0 +1,144 @@
+{
+  "uuid": "search",
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "url": "/mdn_docs/_search",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "from": 0,
+          "size": 10,
+          "query": {
+            "bool": {
+              "filter": [
+                {
+                  "terms": {
+                    "locale": [
+                      "en-us"
+                    ]
+                  }
+                }
+              ],
+              "must": [
+                {
+                  "function_score": {
+                    "query": {
+                      "bool": {
+                        "should": [
+                          {
+                            "match": {
+                              "title": {
+                                "query": "veryspecificquery",
+                                "boost": 5.0,
+                                "fuzziness": "AUTO:4,6",
+                                "prefix_length": 1
+                              }
+                            }
+                          },
+                          {
+                            "match": {
+                              "body": {
+                                "query": "veryspecificquery",
+                                "boost": 1.0,
+                                "fuzziness": "AUTO:6,9",
+                                "prefix_length": 1
+                              }
+                            }
+                          },
+                          {
+                            "match": {
+                              "inline_code": {
+                                "query": "veryspecificquery",
+                                "boost": 5.0
+                              }
+                            }
+                          },
+                          {
+                            "constant_score": {
+                              "filter": {
+                                "term": {
+                                  "slug_leaf": "veryspecificquery"
+                                }
+                              },
+                              "boost": 20.0
+                            }
+                          },
+                          {
+                            "match": {
+                              "title.joined": {
+                                "query": "veryspecificquery",
+                                "boost": 5.0,
+                                "fuzziness": "AUTO:4,6",
+                                "prefix_length": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "functions": [
+                      {
+                        "field_value_factor": {
+                          "field": "popularity",
+                          "factor": 10,
+                          "missing": 0
+                        }
+                      }
+                    ],
+                    "boost_mode": "sum",
+                    "score_mode": "max"
+                  }
+                }
+              ]
+            }
+          },
+          "_source": {
+            "excludes": [
+              "body"
+            ]
+          },
+          "highlight": {
+            "fields": {
+              "title": {},
+              "body": {}
+            },
+            "pre_tags": [
+              "<mark>"
+            ],
+            "post_tags": [
+              "</mark>"
+            ],
+            "number_of_fragments": 3,
+            "fragment_size": 120,
+            "encoder": "html"
+          }
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "took": 2,
+      "timed_out": false,
+      "_shards": {
+        "total": 1,
+        "successful": 1,
+        "skipped": 0,
+        "failed": 0
+      },
+      "hits": {
+        "total": {
+          "value": 0,
+          "relation": "eq"
+        },
+        "max_score": null,
+        "hits": []
+      }
+    }
+  }
+}
