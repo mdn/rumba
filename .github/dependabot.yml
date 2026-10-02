@@ -4,6 +4,14 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 3
+    groups:
+      cargo:
+        update-types:
+          - minor
+          - patch
     commit-message:
       prefix: build
       include: scope
@@ -12,6 +20,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 3
     commit-message:
       prefix: ci
       include: scope
