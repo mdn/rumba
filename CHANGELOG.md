@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.1](https://github.com/mdn/rumba/compare/v1.14.0...v1.14.1) (2026-10-02)
+
+
+### Build
+
+* **deps:** bump the cargo group with 3 updates ([#891](https://github.com/mdn/rumba/issues/891)) ([e8c7b33](https://github.com/mdn/rumba/commit/e8c7b3332627b71e31862bdfe2d92e5e12a00ba2))
+
 ## [1.14.0](https://github.com/mdn/rumba/compare/v1.13.9...v1.14.0) (2026-09-28)
 
 
