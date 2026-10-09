@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.14.1](https://github.com/mdn/rumba/compare/v1.14.0...v1.14.1) (2026-10-09)
+
+
+### Build
+
+* **deps:** bump the cargo group with 2 updates ([#896](https://github.com/mdn/rumba/issues/896)) ([9fa64d5](https://github.com/mdn/rumba/commit/9fa64d516321da6914567293cc2c19eca9b0248f))
+* **deps:** bump the cargo group with 3 updates ([#891](https://github.com/mdn/rumba/issues/891)) ([e8c7b33](https://github.com/mdn/rumba/commit/e8c7b3332627b71e31862bdfe2d92e5e12a00ba2))
+
+
+### Miscellaneous
+
+* **github:** use `.md` extension for PR template ([#886](https://github.com/mdn/rumba/issues/886)) ([59f3aa9](https://github.com/mdn/rumba/commit/59f3aa9a4d3c955c607b611ebe80fe86b12764b9))
+* rename `.github/PULL_REQUEST_TEMPLATE` to `.github/PULL_REQUEST_TEMPLATE.md` ([59f3aa9](https://github.com/mdn/rumba/commit/59f3aa9a4d3c955c607b611ebe80fe86b12764b9))
+
 ## [1.14.0](https://github.com/mdn/rumba/compare/v1.13.9...v1.14.0) (2026-09-28)
 
 
