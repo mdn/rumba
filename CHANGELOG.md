@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.14.1](https://github.com/mdn/rumba/compare/v1.14.0...v1.14.1) (2026-10-16)
+
+
+### Build
+
+* **deps:** bump actix-web-lab from 0.27.0 to 0.29.0 ([#897](https://github.com/mdn/rumba/issues/897)) ([edb383b](https://github.com/mdn/rumba/commit/edb383b1fc462ef95b319a3daef1c7053a1b2664))
+* **deps:** bump the cargo group with 2 updates ([#896](https://github.com/mdn/rumba/issues/896)) ([9fa64d5](https://github.com/mdn/rumba/commit/9fa64d516321da6914567293cc2c19eca9b0248f))
+* **deps:** bump the cargo group with 3 updates ([#891](https://github.com/mdn/rumba/issues/891)) ([e8c7b33](https://github.com/mdn/rumba/commit/e8c7b3332627b71e31862bdfe2d92e5e12a00ba2))
+* **deps:** bump the cargo group with 5 updates ([#899](https://github.com/mdn/rumba/issues/899)) ([7a5a51d](https://github.com/mdn/rumba/commit/7a5a51d76811dc29dc022f2d9bab40b6dc393d50))
+
+
+### Miscellaneous
+
+* **github:** use `.md` extension for PR template ([#886](https://github.com/mdn/rumba/issues/886)) ([59f3aa9](https://github.com/mdn/rumba/commit/59f3aa9a4d3c955c607b611ebe80fe86b12764b9))
+* rename `.github/PULL_REQUEST_TEMPLATE` to `.github/PULL_REQUEST_TEMPLATE.md` ([59f3aa9](https://github.com/mdn/rumba/commit/59f3aa9a4d3c955c607b611ebe80fe86b12764b9))
+* **rust:** add rust-toolchain.toml for 1.97 ([#898](https://github.com/mdn/rumba/issues/898)) ([4208ecb](https://github.com/mdn/rumba/commit/4208ecb6c5e30e715b49a1984e50653d222046cb))
+
 ## [1.14.0](https://github.com/mdn/rumba/compare/v1.13.9...v1.14.0) (2026-09-28)
 
 
