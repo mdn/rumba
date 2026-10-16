@@ -1,0 +1,157 @@
+{
+  "uuid": "search",
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "url": "/mdn_docs/_search",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "from": 0,
+          "size": 10,
+          "query": {
+            "bool": {
+              "filter": [
+                {
+                  "terms": {
+                    "locale": [
+                      "en-us"
+                    ]
+                  }
+                }
+              ],
+              "must": [
+                {
+                  "function_score": {
+                    "query": {
+                      "bool": {
+                        "should": [
+                          {
+                            "match": {
+                              "title": {
+                                "query": "lenght",
+                                "boost": 5.0,
+                                "fuzziness": "AUTO:4,6",
+                                "prefix_length": 1
+                              }
+                            }
+                          },
+                          {
+                            "match": {
+                              "body": {
+                                "query": "lenght",
+                                "boost": 1.0,
+                                "fuzziness": "AUTO:6,9",
+                                "prefix_length": 1
+                              }
+                            }
+                          },
+                          {
+                            "match": {
+                              "inline_code": {
+                                "query": "lenght",
+                                "boost": 5.0
+                              }
+                            }
+                          },
+                          {
+                            "constant_score": {
+                              "filter": {
+                                "term": {
+                                  "slug_leaf": "lenght"
+                                }
+                              },
+                              "boost": 20.0
+                            }
+                          },
+                          {
+                            "match": {
+                              "title.joined": {
+                                "query": "lenght",
+                                "boost": 5.0,
+                                "fuzziness": "AUTO:4,6",
+                                "prefix_length": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "functions": [
+                      {
+                        "field_value_factor": {
+                          "field": "popularity",
+                          "factor": 10,
+                          "missing": 0
+                        }
+                      }
+                    ],
+                    "boost_mode": "sum",
+                    "score_mode": "max"
+                  }
+                }
+              ]
+            }
+          },
+          "_source": {
+            "excludes": [
+              "body"
+            ]
+          },
+          "highlight": {
+            "fields": {
+              "title": {},
+              "body": {}
+            },
+            "pre_tags": [
+              "<mark>"
+            ],
+            "post_tags": [
+              "</mark>"
+            ],
+            "number_of_fragments": 3,
+            "fragment_size": 120,
+            "encoder": "html"
+          }
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "took": 4,
+      "timed_out": false,
+      "_shards": {
+        "total": 1,
+        "successful": 1,
+        "skipped": 0,
+        "failed": 0
+      },
+      "hits": {
+        "total": {
+          "value": 1,
+          "relation": "eq"
+        },
+        "max_score": 36.1,
+        "hits": [
+          {
+            "_index": "mdn_docs",
+            "_id": "/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/length",
+            "_score": 36.1,
+            "_source": {
+              "title": "Array: length",
+              "locale": "en-us",
+              "slug": "web/javascript/reference/global_objects/array/length",
+              "popularity": 0.1,
+              "summary": "The length data property of an Array instance represents the number of elements in that array."
+            }
+          }
+        ]
+      }
+    }
+  }
+}

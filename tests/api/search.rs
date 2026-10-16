@@ -253,7 +253,8 @@ async fn test_no_results() -> Result<(), Error> {
     );
 
     let json = read_json(search).await;
-    assert_eq!(json["metadata"]["took_ms"], 98_i64);
+    // Primary query plus the zero-hit fallback.
+    assert_eq!(json["metadata"]["took_ms"], 100_i64);
     assert_eq!(json["metadata"]["total"]["value"], 0_i64);
     assert_eq!(json["metadata"]["total"]["relation"], "eq");
     assert_eq!(json["documents"].as_array().unwrap().len(), 0);
@@ -274,6 +275,23 @@ async fn test_hit_without_highlight() -> Result<(), Error> {
     );
     assert_eq!(json["documents"][0]["highlight"]["title"], json!([]));
     assert_eq!(json["documents"][0]["highlight"]["body"], json!([]));
+    Ok(())
+}
+
+#[actix_rt::test]
+async fn test_fallback() -> Result<(), Error> {
+    let search = do_request("/api/v1/search?q=lenght&locale=en-US").await?;
+
+    assert!(search.status().is_success());
+
+    let json = read_json(search).await;
+    assert_eq!(json["metadata"]["took_ms"], 7_i64);
+    assert_eq!(json["metadata"]["total"]["value"], 1_i64);
+    assert_eq!(
+        json["documents"][0]["mdn_url"],
+        "/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/length"
+    );
+    assert_eq!(json["documents"][0]["highlight"]["title"], json!([]));
     Ok(())
 }
 
