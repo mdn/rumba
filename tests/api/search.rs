@@ -3,6 +3,7 @@ use crate::helpers::read_json;
 use actix_http::body::BoxBody;
 use actix_web::{http::header, test};
 use anyhow::Error;
+use serde_json::json;
 use stubr::{Config, Stubr};
 
 async fn do_request(path: &str) -> Result<actix_web::dev::ServiceResponse<BoxBody>, Error> {
@@ -256,6 +257,23 @@ async fn test_no_results() -> Result<(), Error> {
     assert_eq!(json["metadata"]["total"]["value"], 0_i64);
     assert_eq!(json["metadata"]["total"]["relation"], "eq");
     assert_eq!(json["documents"].as_array().unwrap().len(), 0);
+    Ok(())
+}
+
+#[actix_rt::test]
+async fn test_hit_without_highlight() -> Result<(), Error> {
+    let search = do_request("/api/v1/search?q=length&locale=en-US").await?;
+
+    assert!(search.status().is_success());
+
+    let json = read_json(search).await;
+    assert_eq!(json["metadata"]["total"]["value"], 1_i64);
+    assert_eq!(
+        json["documents"][0]["mdn_url"],
+        "/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/length"
+    );
+    assert_eq!(json["documents"][0]["highlight"]["title"], json!([]));
+    assert_eq!(json["documents"][0]["highlight"]["body"], json!([]));
     Ok(())
 }
 
