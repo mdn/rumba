@@ -11,11 +11,10 @@ Before you can start working with Rumba, you need to:
 2. Install additional dependencies:
    - Mac OS `brew install libpq && brew link --force libpq`
    - Ubuntu: `apt install gcc libpq-dev libssl-dev pkg-config`
-3. Run a PostgreSQL instance:
-   - Mac OS: e.g. [Postgres.app](https://postgresapp.com/)
-   - Docker: `docker run --name postgres -p 5432:5432 -e POSTGRES_USER=rumba -e POSTGRES_PASSWORD=rumba -e POSTGRES_DB=mdn -d postgres`).
-4. Run an Elastic instance:
-   - Docker: `docker run --name elastic -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" -d elasticsearch:8.3.3`
+3. Run PostgreSQL and Elasticsearch:
+   - Docker: `docker compose up -d --wait` (uses `docker-compose.yml`)
+   - Or run PostgreSQL yourself, e.g. with [Postgres.app](https://postgresapp.com/), and Elasticsearch 9 with the settings from `docker-compose.yml` (single node, security disabled).
+4. To test search with indexed content, see [local search](./docs/local-search.md).
 5. Copy `.settings.dev.toml` to `.settings.toml`.
 6. Run `cargo run`.
 7. To create an authenticated session navigate to http://localhost:8000/users/fxa/login/authenticate/?next=%2F and login with your firefox staging account
