@@ -5,12 +5,12 @@ use std::collections::HashMap;
 
 use url::Url;
 
-use crate::helpers::app::{drop_stubr, test_app_with_login};
+use crate::helpers::app::{start_stubr, test_app_with_login};
 use crate::helpers::db::reset;
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
 async fn basic() -> Result<(), Error> {
+    let stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
 
     let app = test_app_with_login(&pool).await.unwrap();
@@ -48,13 +48,13 @@ async fn basic() -> Result<(), Error> {
     let res = test::call_service(&app, base.to_request()).await;
     assert!(res.status().is_redirection());
     assert_eq!(res.headers().get("Location").unwrap(), "/");
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
 async fn next() -> Result<(), Error> {
+    let stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
 
     let app = test_app_with_login(&pool).await.unwrap();
@@ -95,13 +95,13 @@ async fn next() -> Result<(), Error> {
         res.headers().get("Location").unwrap(),
         "http://localhost:8000/foo"
     );
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
 async fn next_absolute() -> Result<(), Error> {
+    let stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
 
     let app = test_app_with_login(&pool).await.unwrap();
@@ -139,13 +139,13 @@ async fn next_absolute() -> Result<(), Error> {
     let res = test::call_service(&app, base.to_request()).await;
     assert!(res.status().is_redirection());
     assert_eq!(res.headers().get("Location").unwrap(), "/");
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
 async fn next_absolute_without_protocol() -> Result<(), Error> {
+    let stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
 
     let app = test_app_with_login(&pool).await.unwrap();
@@ -183,13 +183,13 @@ async fn next_absolute_without_protocol() -> Result<(), Error> {
     let res = test::call_service(&app, base.to_request()).await;
     assert!(res.status().is_redirection());
     assert_eq!(res.headers().get("Location").unwrap(), "/");
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
 async fn next_absolute_with_path_exploit() -> Result<(), Error> {
+    let stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
 
     let app = test_app_with_login(&pool).await.unwrap();
@@ -230,13 +230,13 @@ async fn next_absolute_with_path_exploit() -> Result<(), Error> {
         res.headers().get("Location").unwrap(),
         "http://localhost:8000//foo.com/bar"
     );
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
 async fn no_prompt() -> Result<(), Error> {
+    let stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
 
     let app = test_app_with_login(&pool).await.unwrap();
@@ -284,6 +284,6 @@ async fn no_prompt() -> Result<(), Error> {
         res.headers().get("Location").unwrap(),
         "http://localhost:8000/foo"
     );
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }

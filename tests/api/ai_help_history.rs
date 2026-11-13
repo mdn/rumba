@@ -1,4 +1,4 @@
-use crate::helpers::app::{drop_stubr, test_app_with_login};
+use crate::helpers::app::{start_stubr, test_app_with_login};
 use crate::helpers::db::{get_pool, reset};
 use crate::helpers::http_client::TestHttpClient;
 use actix_web::test;
@@ -68,8 +68,8 @@ fn add_history_log() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
 async fn test_history() -> Result<(), Error> {
+    let stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
     let app = test_app_with_login(&pool).await.unwrap();
     let service = test::init_service(app).await;
@@ -99,13 +99,13 @@ async fn test_history() -> Result<(), Error> {
             test::read_body(history).await.as_ref()
         ))
     );
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
 async fn test_history_deletion() -> Result<(), Error> {
+    let stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
     let app = test_app_with_login(&pool).await.unwrap();
     let service = test::init_service(app).await;
@@ -198,7 +198,7 @@ async fn test_history_deletion() -> Result<(), Error> {
         records.first().unwrap().and_utc().timestamp_micros()
     );
 
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 

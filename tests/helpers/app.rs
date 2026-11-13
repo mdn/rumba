@@ -1,7 +1,6 @@
 use actix_http::body::BoxBody;
 use actix_http::Request;
 use actix_identity::IdentityMiddleware;
-use actix_rt::time::sleep;
 use actix_rt::Arbiter;
 use actix_session::storage::CookieSessionStore;
 use actix_session::SessionMiddleware;
@@ -32,6 +31,10 @@ use stubr::{Config, Stubr};
 use super::db::reset;
 use super::http_client::TestHttpClient;
 use super::RumbaTestResponse;
+
+// The test settings and stubs hardcode this port. A previous stub server can still
+// hold it after drop, and stubr then silently binds a random port instead.
+const STUBR_PORT: u16 = 4321;
 
 pub async fn test_app(
     pool: &Pool,
@@ -70,13 +73,13 @@ pub async fn test_app_with_login(
     let session_cookie_key = Key::derive_from(&SETTINGS.auth.cookie_key);
     let github_gist_client = Data::new(GithubGistClient(Some(
         OctocrabBuilder::new()
-            .base_uri("http://localhost:4321")
+            .base_uri(format!("http://localhost:{STUBR_PORT}"))
             .unwrap()
             .build()?,
     )));
     let github_flags_client = Data::new(GithubFlagsClient(Some(
         OctocrabBuilder::new()
-            .base_uri("http://localhost:4321")
+            .base_uri(format!("http://localhost:{STUBR_PORT}"))
             .unwrap()
             .build()?,
     )));
@@ -120,7 +123,8 @@ pub async fn test_app_only_search() -> App<
         InitError = (),
     >,
 > {
-    let elastic_transport = Transport::single_node("http://localhost:4321").unwrap();
+    let elastic_transport =
+        Transport::single_node(&format!("http://localhost:{STUBR_PORT}")).unwrap();
     let elastic_client = Elasticsearch::new(elastic_transport);
 
     let app = App::new().app_data(Data::new(elastic_client));
@@ -155,28 +159,38 @@ pub async fn init_test(
     anyhow::Error,
 > {
     let pool = reset()?;
-    let stubr = Stubr::start_blocking_with(
-        custom_stubs,
-        Config {
-            port: Some(4321),
-            latency: None,
-            global_delay: None,
-            verbose: true,
-            verify: false,
-        },
-    );
+    let stubr = start_stubr(custom_stubs);
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
     let logged_in_client = TestHttpClient::new(service).await;
     Ok((logged_in_client, stubr))
 }
 
-// We drop the stubr instances explicitly and add a small
-// delay to give it time to shutdown. This is necessary to fix
-// flaky tests that fail because leftover stubr instances are still
-// holding on the network port in some cases.
-const STUBR_POST_DROP_SLEEP: std::time::Duration = Duration::from_millis(10);
-pub async fn drop_stubr(stubr: Stubr) {
-    drop(stubr);
-    sleep(STUBR_POST_DROP_SLEEP).await;
+pub fn start_stubr(folders: Vec<&str>) -> Stubr {
+    wait_for_port_release(STUBR_PORT);
+    let stubr = Stubr::start_blocking_with(
+        folders,
+        Config {
+            port: Some(STUBR_PORT),
+            verbose: true,
+            ..Default::default()
+        },
+    );
+    assert!(
+        stubr.uri().ends_with(&format!(":{STUBR_PORT}")),
+        "stubr bound {} instead of port {STUBR_PORT}",
+        stubr.uri()
+    );
+    stubr
+}
+
+fn wait_for_port_release(port: u16) {
+    let deadline = std::time::Instant::now() + Duration::from_secs(5);
+    while std::net::TcpListener::bind(("127.0.0.1", port)).is_err() {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "port {port} still in use"
+        );
+        std::thread::sleep(Duration::from_millis(10));
+    }
 }

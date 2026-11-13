@@ -3,7 +3,7 @@ use crate::helpers::api_assertions::{
     assert_conflict_with_json_containing, assert_created, assert_created_returning_json,
     assert_created_with_json_containing, assert_ok, assert_ok_with_json_containing,
 };
-use crate::helpers::app::{drop_stubr, init_test};
+use crate::helpers::app::init_test;
 use crate::helpers::http_client::PostPayload;
 use crate::helpers::read_json;
 
@@ -61,7 +61,7 @@ async fn test_create_and_get_collection() -> Result<(), Error> {
         ),
     )
     .await;
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -152,7 +152,7 @@ async fn test_add_items_to_collection() -> Result<(), Error> {
         }),
     )
     .await;
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -215,7 +215,7 @@ async fn test_collection_name_conflicts() -> Result<(), Error> {
         )
         .await;
     assert_created_with_json_containing(res, json!({"name":"Test 2"})).await;
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -296,7 +296,7 @@ async fn test_collection_item_conflicts() -> Result<(), Error> {
         }),
     )
     .await;
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -365,7 +365,7 @@ async fn test_edit_item_in_collection() -> Result<(), Error> {
         }),
     )
     .await;
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -423,7 +423,7 @@ async fn test_delete_item_in_collection() -> Result<(), Error> {
         json!({"id": collection_1,"article_count": 0, "items": []}),
     )
     .await;
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -508,7 +508,7 @@ async fn test_delete_collection() -> Result<(), Error> {
         .await;
 
     assert_created(res);
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -560,7 +560,7 @@ async fn test_no_modify_delete_default() -> Result<(), Error> {
         json!({"error": "Cannot delete default collection"}),
     )
     .await;
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -585,7 +585,7 @@ async fn test_long_collection_name_is_bad_request() -> Result<(), Error> {
         )
         .await;
     assert_bad_request_with_json_containing(res, json!({"code":400,"error":"Validation Error","message":"Error validating input name: 'name' must be between 1 and 1024 chars"})).await;
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -612,7 +612,7 @@ async fn test_very_long_collection_description_is_bad_request() -> Result<(), Er
         )
         .await;
     assert_bad_request_with_json_containing(res, json!({"code":400,"error":"Validation Error","message":"Error validating input description: 'description' must not be longer than 65536 chars"})).await;
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -652,7 +652,7 @@ async fn test_long_collection_item_title_is_bad_request() -> Result<(), Error> {
         )
         .await;
     assert_bad_request_with_json_containing(res, json!({"code":400,"error":"Validation Error","message":"Error validating input title: 'title' must be between 1 and 1024 chars"})).await;
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -699,7 +699,7 @@ async fn test_very_long_collection_item_notes_is_bad_request() -> Result<(), Err
         )
         .await;
     assert_bad_request_with_json_containing(res, json!({"code":400,"error":"Validation Error","message":"Error validating input notes: 'notes' must not be longer than 65536 chars"})).await;
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -766,7 +766,7 @@ async fn test_collection_subscription_limits() -> Result<(), Error> {
         )
         .await;
     assert_created(res);
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -790,7 +790,7 @@ async fn test_paying_user_no_collection_limit() -> Result<(), Error> {
             .await;
         assert_created(res);
     }
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 #[actix_rt::test]
@@ -855,7 +855,7 @@ async fn test_delete_collection_items_also_deleted() -> Result<(), Error> {
         )
         .await;
     assert_ok_with_json_containing(res, json!({"results": [] })).await;
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -913,6 +913,6 @@ async fn test_create_and_get_many_collections() -> Result<(), Error> {
         assert!(t1 < t2);
         next
     });
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
