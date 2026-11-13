@@ -24,11 +24,13 @@ pub struct Count<'a> {
 #[serde(rename_all = "snake_case")]
 pub enum Query<'a> {
     Bool(QueryBool<'a>),
+    Term(QueryTerm),
     Terms(QueryTerms),
     Match(QueryMatch),
     MatchPhrase(QueryMatch),
     MultiMatch(QueryMultiMatch),
     FunctionScore(QueryFunctionScore<'a>),
+    ConstantScore(QueryConstantScore<'a>),
 }
 
 #[serde_with::skip_serializing_none]
@@ -37,6 +39,18 @@ pub struct QueryBool<'a> {
     pub filter: Option<Vec<Query<'a>>>,
     pub must: Option<Vec<Query<'a>>>,
     pub should: Option<Vec<Query<'a>>>,
+}
+
+#[derive(Serialize)]
+pub enum QueryTerm {
+    #[serde(rename = "inline_code.exact")]
+    InlineCodeExact(String),
+}
+
+#[derive(Serialize)]
+pub struct QueryConstantScore<'a> {
+    pub filter: Box<Query<'a>>,
+    pub boost: f64,
 }
 
 #[derive(Serialize)]
@@ -277,4 +291,34 @@ pub enum ResponseTotalRelation {
 #[derive(Deserialize)]
 pub struct CountResponse {
     pub count: u64,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_serialize_queries() {
+        struct Case {
+            name: &'static str,
+            query: Query<'static>,
+            expected: &'static str,
+        }
+
+        let cases = [Case {
+            name: "constant_score term on inline_code.exact",
+            query: Query::ConstantScore(QueryConstantScore {
+                filter: Box::new(Query::Term(QueryTerm::InlineCodeExact(
+                    "max-age".to_string(),
+                ))),
+                boost: 10.0,
+            }),
+            expected: r#"{"constant_score":{"filter":{"term":{"inline_code.exact":"max-age"}},"boost":10.0}}"#,
+        }];
+
+        for case in cases {
+            let actual = serde_json::to_string(&case.query).unwrap();
+            assert_eq!(actual, case.expected, "case: {}", case.name);
+        }
+    }
 }
