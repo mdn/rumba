@@ -1,4 +1,4 @@
-use crate::helpers::app::{drop_stubr, start_stubr};
+use crate::helpers::app::start_stubr;
 use crate::helpers::db::reset;
 use crate::helpers::http_client::TestHttpClient;
 use crate::helpers::read_json;
@@ -21,7 +21,7 @@ async fn whoami_anonymous_test() -> Result<(), Error> {
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Unknown");
     assert_eq!(json["geo"]["country_iso"], "ZZ");
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -42,7 +42,7 @@ async fn whoami_anonymous_test_gcp() -> Result<(), Error> {
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Iceland");
     assert_eq!(json["geo"]["country_iso"], "IS");
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -63,7 +63,7 @@ async fn whoami_anonymous_test_aws() -> Result<(), Error> {
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Iceland");
     assert_eq!(json["geo"]["country_iso"], "IS");
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -98,7 +98,7 @@ async fn whoami_legacy_logged_in_test() -> Result<(), Error> {
     assert_eq!(json["geo"]["country_iso"], "IS");
     // old sessions do not work anymore
     assert!(json["username"].is_null());
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -129,7 +129,7 @@ async fn whoami_logged_in_test() -> Result<(), Error> {
         json["subscription_type"], "mdn_plus_5m",
         "Subscription type wrong"
     );
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -179,7 +179,7 @@ async fn whoami_settings_test() -> Result<(), Error> {
     let json = read_json(whoami).await;
     assert_eq!(json["settings"]["locale_override"], "zh-TW");
     assert_eq!(json["settings"]["mdnplus_newsletter"], false);
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -208,6 +208,6 @@ async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
     );
     assert_eq!(json["is_subscriber"], true);
     assert_eq!(json["subscription_type"], "mdn_plus_5y");
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }

@@ -193,7 +193,3 @@ fn wait_for_port_release(port: u16) {
         std::thread::sleep(Duration::from_millis(10));
     }
 }
-
-pub async fn drop_stubr(stubr: Stubr) {
-    drop(stubr);
-}

@@ -1,4 +1,4 @@
-use crate::helpers::app::{drop_stubr, init_test, start_stubr, test_app_with_login};
+use crate::helpers::app::{init_test, start_stubr, test_app_with_login};
 use crate::helpers::db::reset;
 use crate::helpers::http_client::TestHttpClient;
 use crate::helpers::read_json;
@@ -37,7 +37,7 @@ async fn settings_newsletter_subscribe() -> Result<(), Error> {
     assert_eq!(newsletter.status(), 201);
     let json = read_json(newsletter).await;
     assert_eq!(json["subscribed"], true);
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -64,7 +64,7 @@ async fn settings_newsletter_test() -> Result<(), Error> {
     assert!(whoami.response().status().is_success());
     let json = read_json(whoami).await;
     assert_eq!(json["settings"]["mdnplus_newsletter"], true);
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -81,7 +81,7 @@ async fn anonymous_newsletter_test() -> Result<(), Error> {
     let newsletter_res = test::call_service(&service, request).await;
 
     assert!(newsletter_res.status().is_success());
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -103,6 +103,6 @@ async fn anonymous_newsletter_error_test() -> Result<(), Error> {
     let newsletter_res = test::call_service(&service, request).await;
 
     assert!(newsletter_res.status().is_server_error());
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }

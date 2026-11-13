@@ -5,7 +5,7 @@ use anyhow::Error;
 use url::Url;
 
 use crate::helpers::{
-    app::{drop_stubr, start_stubr, test_app_with_login},
+    app::{start_stubr, test_app_with_login},
     db::reset,
 };
 
@@ -54,6 +54,6 @@ async fn test_next() -> Result<(), Error> {
             .and_then(|l| l.to_str().ok()),
         Some("http://localhost:8000/foo")
     );
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }

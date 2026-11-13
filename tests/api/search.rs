@@ -1,4 +1,4 @@
-use crate::helpers::app::{drop_stubr, start_stubr, test_app_only_search};
+use crate::helpers::app::{start_stubr, test_app_only_search};
 use crate::helpers::read_json;
 use actix_http::body::BoxBody;
 use actix_web::{http::header, test};
@@ -10,7 +10,7 @@ async fn do_request(path: &str) -> Result<actix_web::dev::ServiceResponse<BoxBod
     let service = test::init_service(app).await;
     let request = test::TestRequest::get().uri(path).to_request();
     let response = test::call_service(&service, request).await;
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(response)
 }
 

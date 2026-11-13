@@ -1,4 +1,4 @@
-use crate::helpers::app::{drop_stubr, start_stubr, test_app_with_login};
+use crate::helpers::app::{start_stubr, test_app_with_login};
 use crate::helpers::db::reset;
 use crate::helpers::http_client::TestHttpClient;
 use crate::helpers::read_json;
@@ -61,7 +61,7 @@ async fn test_playground() -> Result<(), Error> {
     let playground: PlaygroundQuery = schema::playground::table.first(&mut conn)?;
     assert_eq!(playground.user_id, None);
     assert_eq!(playground.deleted_user_id, Some(user_id));
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -83,7 +83,7 @@ async fn test_load_gist_wrong_owner() -> Result<(), Error> {
         )
         .await;
     assert_eq!(res.status(), StatusCode::FORBIDDEN);
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -97,6 +97,6 @@ async fn test_invalid_id() -> Result<(), Error> {
     let res = client.get("/api/v1/play/sssieddidxsx", None).await;
     // This used to panic, now it should just 400
     assert_eq!(res.status(), StatusCode::BAD_REQUEST);
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }

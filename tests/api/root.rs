@@ -1,7 +1,7 @@
 use crate::helpers::api_assertions::{
     assert_created_with_json_containing, assert_ok_with_json_containing,
 };
-use crate::helpers::app::{drop_stubr, start_stubr};
+use crate::helpers::app::start_stubr;
 use crate::helpers::db::{get_pool, reset};
 use crate::helpers::http_client::TestHttpClient;
 use crate::helpers::{app::test_app_with_login, http_client::PostPayload};
@@ -206,6 +206,6 @@ async fn find_user() -> Result<(), Error> {
         }),
     )
     .await;
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }

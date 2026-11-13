@@ -1,7 +1,7 @@
 use std::fs;
 use std::time::Duration;
 
-use crate::helpers::app::{drop_stubr, start_stubr, test_app_with_login};
+use crate::helpers::app::{start_stubr, test_app_with_login};
 use crate::helpers::db::reset;
 use crate::helpers::http_client::{PostPayload, TestHttpClient};
 use crate::helpers::read_json;
@@ -123,7 +123,7 @@ async fn test_bcd_updates_basic_pagination() -> Result<(), Error> {
             }
           }
     )));
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -149,7 +149,7 @@ async fn test_bcd_updates_filter_by_collections() -> Result<(), Error> {
         .expect("Json snapshot opened");
     let snapshot_json: Value = serde_json::from_reader(file).expect("Error reading snapshot json");
     assert_eq!(res_json, snapshot_json);
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 

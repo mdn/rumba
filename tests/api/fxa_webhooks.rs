@@ -1,5 +1,5 @@
+use crate::helpers::app::start_stubr;
 use crate::helpers::app::test_app_with_login;
-use crate::helpers::app::{drop_stubr, start_stubr};
 use crate::helpers::db::reset;
 use crate::helpers::http_client::PostPayload;
 use crate::helpers::http_client::TestHttpClient;
@@ -116,7 +116,7 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
         FxaEvent::SubscriptionStateChange,
         FxaEventStatus::Ignored,
     )?;
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -241,7 +241,7 @@ async fn delete_user_test() -> Result<(), Error> {
         FxaEvent::DeleteUser,
         FxaEventStatus::Processed,
     )?;
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -272,7 +272,7 @@ async fn invalid_set_test() -> Result<(), Error> {
         .select(schema::raw_webhook_events_tokens::token)
         .first::<String>(&mut conn)?;
     assert_eq!(failed_token, set_token);
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -323,7 +323,7 @@ async fn set_for_other_rp_test() -> Result<(), Error> {
         .select(schema::raw_webhook_events_tokens::token)
         .first::<String>(&mut conn)?;
     assert_eq!(failed_token, set_token);
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -342,7 +342,7 @@ async fn whoami_test() -> Result<(), Error> {
     let json = read_json(whoami).await;
     assert_eq!(json["username"], "TEST_SUB");
     assert_eq!(json["email"], "test@test.com");
-    drop_stubr(stubr).await;
+    drop(stubr);
 
     let stubr = start_stubr(vec![
         "tests/stubs",
@@ -382,7 +382,7 @@ async fn whoami_test() -> Result<(), Error> {
         FxaEvent::ProfileChange,
         FxaEventStatus::Processed,
     )?;
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
 
@@ -515,6 +515,6 @@ async fn record_subscription_state_transitions_test() -> Result<(), Error> {
         );
     }
 
-    drop_stubr(stubr).await;
+    drop(stubr);
     Ok(())
 }
