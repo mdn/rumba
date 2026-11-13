@@ -1,7 +1,7 @@
 use std::fs;
 use std::time::Duration;
 
-use crate::helpers::app::{drop_stubr, test_app_with_login};
+use crate::helpers::app::{drop_stubr, start_stubr, test_app_with_login};
 use crate::helpers::db::reset;
 use crate::helpers::http_client::{PostPayload, TestHttpClient};
 use crate::helpers::read_json;
@@ -15,20 +15,10 @@ use diesel::query_dsl::methods::SelectDsl;
 use diesel::RunQueryDsl;
 use rumba::db::{self, Pool};
 use serde_json::{json, Value};
-use stubr::{Config, Stubr};
 
 macro_rules! test_setup {
     () => {{
-        let stubr = Stubr::start_blocking_with(
-            vec!["tests/stubs", "tests/test_specific_stubs/bcd_updates"],
-            Config {
-                port: Some(4321),
-                latency: None,
-                global_delay: None,
-                verbose: true,
-                verify: false,
-            },
-        );
+        let stubr = start_stubr(vec!["tests/stubs", "tests/test_specific_stubs/bcd_updates"]);
         let mut pool = reset()?;
         let app = test_app_with_login(&pool).await?;
         let service = test::init_service(app).await;

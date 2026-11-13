@@ -5,13 +5,13 @@ use anyhow::Error;
 use url::Url;
 
 use crate::helpers::{
-    app::{drop_stubr, test_app_with_login},
+    app::{drop_stubr, start_stubr, test_app_with_login},
     db::reset,
 };
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
 async fn test_next() -> Result<(), Error> {
+    let stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;

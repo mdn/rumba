@@ -1,5 +1,5 @@
-use crate::helpers::app::drop_stubr;
 use crate::helpers::app::test_app_with_login;
+use crate::helpers::app::{drop_stubr, start_stubr};
 use crate::helpers::db::reset;
 use crate::helpers::http_client::PostPayload;
 use crate::helpers::http_client::TestHttpClient;
@@ -25,7 +25,6 @@ use serde_json::json;
 use serde_json::Value;
 use std::thread;
 use std::time::Duration;
-use stubr::{Config, Stubr};
 
 const TEN_MS: std::time::Duration = Duration::from_millis(10);
 
@@ -70,8 +69,8 @@ fn assert_last_fxa_webhook_with_retry(
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
 async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
+    let stubr = start_stubr(vec!["tests/stubs"]);
     let set_token =
         token_from_file("tests/data/set_tokens/set_token_subscription_state_change_to_10m.json");
     let pool = reset()?;
@@ -122,16 +121,16 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
 async fn subscription_state_change_to_core_test_empty_subscription() -> Result<(), Error> {
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let set_token =
         token_from_file("tests/data/set_tokens/set_token_subscription_state_change_to_core.json");
     subscription_state_change_to_core_test(&set_token).await
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
 async fn subscription_state_change_to_core_test_inactive() -> Result<(), Error> {
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let set_token = token_from_file(
         "tests/data/set_tokens/set_token_subscription_state_change_to_core_inactive.json",
     );
@@ -177,16 +176,7 @@ async fn subscription_state_change_to_core_test(set_token: &str) -> Result<(), E
 
 #[actix_rt::test]
 async fn delete_user_test() -> Result<(), Error> {
-    let stubr = Stubr::start_blocking_with(
-        vec!["tests/stubs", "tests/test_specific_stubs/collections"],
-        Config {
-            port: Some(4321),
-            latency: None,
-            global_delay: None,
-            verbose: true,
-            verify: false,
-        },
-    );
+    let stubr = start_stubr(vec!["tests/stubs", "tests/test_specific_stubs/collections"]);
     let pool = reset()?;
     let set_token = token_from_file("tests/data/set_tokens/set_token_delete_user.json");
 
@@ -256,8 +246,8 @@ async fn delete_user_test() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
 async fn invalid_set_test() -> Result<(), Error> {
+    let stubr = start_stubr(vec!["tests/stubs"]);
     let set_token =
         invalid_token_from_json_file("tests/data/set_tokens/set_token_delete_user.json");
     let pool = reset()?;
@@ -287,8 +277,8 @@ async fn invalid_set_test() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
 async fn set_for_other_rp_test() -> Result<(), Error> {
+    let stubr = start_stubr(vec!["tests/stubs"]);
     let json_str = std::fs::read_to_string(
         "tests/data/set_tokens/set_token_subscription_state_change_to_10m.json",
     )
@@ -339,16 +329,7 @@ async fn set_for_other_rp_test() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn whoami_test() -> Result<(), Error> {
-    let stubr = Stubr::start_blocking_with(
-        vec!["tests/stubs"],
-        Config {
-            port: Some(4321),
-            latency: None,
-            global_delay: None,
-            verbose: true,
-            verify: false,
-        },
-    );
+    let stubr = start_stubr(vec!["tests/stubs"]);
 
     let pool = reset()?;
     let app = test_app_with_login(&pool).await?;
@@ -363,16 +344,10 @@ async fn whoami_test() -> Result<(), Error> {
     assert_eq!(json["email"], "test@test.com");
     drop_stubr(stubr).await;
 
-    let stubr = Stubr::start_blocking_with(
-        vec!["tests/stubs", "tests/test_specific_stubs/fxa_webhooks"],
-        Config {
-            port: Some(4321),
-            latency: None,
-            global_delay: None,
-            verbose: true,
-            verify: false,
-        },
-    );
+    let stubr = start_stubr(vec![
+        "tests/stubs",
+        "tests/test_specific_stubs/fxa_webhooks",
+    ]);
     let set_token = token_from_file("tests/data/set_tokens/set_token_profile_change.json");
     let pool = reset()?;
     let app = test_app_with_login(&pool).await?;
@@ -413,16 +388,7 @@ async fn whoami_test() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn record_subscription_state_transitions_test() -> Result<(), Error> {
-    let stubr = Stubr::start_blocking_with(
-        vec!["tests/stubs", "tests/test_specific_stubs/core_user"],
-        Config {
-            port: Some(4321),
-            latency: None,
-            global_delay: None,
-            verbose: true,
-            verify: false,
-        },
-    );
+    let stubr = start_stubr(vec!["tests/stubs", "tests/test_specific_stubs/core_user"]);
     let pool = reset()?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;

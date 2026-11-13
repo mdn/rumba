@@ -1,21 +1,11 @@
-use crate::helpers::app::{drop_stubr, test_app_only_search};
+use crate::helpers::app::{drop_stubr, start_stubr, test_app_only_search};
 use crate::helpers::read_json;
 use actix_http::body::BoxBody;
 use actix_web::{http::header, test};
 use anyhow::Error;
-use stubr::{Config, Stubr};
 
 async fn do_request(path: &str) -> Result<actix_web::dev::ServiceResponse<BoxBody>, Error> {
-    let stubr = Stubr::start_blocking_with(
-        vec!["tests/test_specific_stubs/search"],
-        Config {
-            port: Some(4321),
-            verbose: true,
-            verify: false,
-            global_delay: None,
-            latency: None,
-        },
-    );
+    let stubr = start_stubr(vec!["tests/test_specific_stubs/search"]);
     let app = test_app_only_search().await;
     let service = test::init_service(app).await;
     let request = test::TestRequest::get().uri(path).to_request();

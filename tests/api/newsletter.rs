@@ -1,15 +1,14 @@
-use crate::helpers::app::{drop_stubr, init_test, test_app_with_login};
+use crate::helpers::app::{drop_stubr, init_test, start_stubr, test_app_with_login};
 use crate::helpers::db::reset;
 use crate::helpers::http_client::TestHttpClient;
 use crate::helpers::read_json;
 use actix_web::test;
 use anyhow::Error;
 use serde_json::json;
-use stubr::{Config, Stubr};
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
 async fn settings_newsletter_subscribe() -> Result<(), Error> {
+    let stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -44,19 +43,10 @@ async fn settings_newsletter_subscribe() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn settings_newsletter_test() -> Result<(), Error> {
-    let stubr = Stubr::start_blocking_with(
-        vec![
-            "tests/stubs",
-            "tests/test_specific_stubs/newsletter/basket_lookup_user.json",
-        ],
-        Config {
-            port: Some(4321),
-            latency: None,
-            global_delay: None,
-            verbose: true,
-            verify: false,
-        },
-    );
+    let stubr = start_stubr(vec![
+        "tests/stubs",
+        "tests/test_specific_stubs/newsletter/basket_lookup_user.json",
+    ]);
     let pool = reset()?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -79,8 +69,8 @@ async fn settings_newsletter_test() -> Result<(), Error> {
 }
 
 #[actix_rt::test]
-#[stubr::mock(port = 4321)]
 async fn anonymous_newsletter_test() -> Result<(), Error> {
+    let stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
     let app = test_app_with_login(&pool).await.unwrap();
     let service = test::init_service(app).await;
