@@ -32,6 +32,10 @@ use super::db::reset;
 use super::http_client::TestHttpClient;
 use super::RumbaTestResponse;
 
+// The test settings and stubs hardcode this port. A previous stub server can still
+// hold it after drop, and stubr then silently binds a random port instead.
+const STUBR_PORT: u16 = 4321;
+
 pub async fn test_app(
     pool: &Pool,
 ) -> App<
@@ -69,13 +73,13 @@ pub async fn test_app_with_login(
     let session_cookie_key = Key::derive_from(&SETTINGS.auth.cookie_key);
     let github_gist_client = Data::new(GithubGistClient(Some(
         OctocrabBuilder::new()
-            .base_uri("http://localhost:4321")
+            .base_uri(format!("http://localhost:{STUBR_PORT}"))
             .unwrap()
             .build()?,
     )));
     let github_flags_client = Data::new(GithubFlagsClient(Some(
         OctocrabBuilder::new()
-            .base_uri("http://localhost:4321")
+            .base_uri(format!("http://localhost:{STUBR_PORT}"))
             .unwrap()
             .build()?,
     )));
@@ -119,7 +123,8 @@ pub async fn test_app_only_search() -> App<
         InitError = (),
     >,
 > {
-    let elastic_transport = Transport::single_node("http://localhost:4321").unwrap();
+    let elastic_transport =
+        Transport::single_node(&format!("http://localhost:{STUBR_PORT}")).unwrap();
     let elastic_client = Elasticsearch::new(elastic_transport);
 
     let app = App::new().app_data(Data::new(elastic_client));
@@ -160,10 +165,6 @@ pub async fn init_test(
     let logged_in_client = TestHttpClient::new(service).await;
     Ok((logged_in_client, stubr))
 }
-
-// The test settings and stubs hardcode this port. A previous stub server can still
-// hold it after drop, and stubr then silently binds a random port instead.
-const STUBR_PORT: u16 = 4321;
 
 pub fn start_stubr(folders: Vec<&str>) -> Stubr {
     wait_for_port_release(STUBR_PORT);
