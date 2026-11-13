@@ -97,6 +97,10 @@ impl FromStr for Locale {
 pub enum QueryMatch {
     Title(QueryMatchField),
     Body(QueryMatchField),
+    #[serde(rename = "title.code")]
+    TitleCode(QueryMatchField),
+    #[serde(rename = "summary.code")]
+    SummaryCode(QueryMatchField),
 }
 
 #[derive(Serialize)]
@@ -305,16 +309,26 @@ mod tests {
             expected: &'static str,
         }
 
-        let cases = [Case {
-            name: "constant_score term on inline_code.exact",
-            query: Query::ConstantScore(QueryConstantScore {
-                filter: Box::new(Query::Term(QueryTerm::InlineCodeExact(
-                    "max-age".to_string(),
-                ))),
-                boost: 10.0,
-            }),
-            expected: r#"{"constant_score":{"filter":{"term":{"inline_code.exact":"max-age"}},"boost":10.0}}"#,
-        }];
+        let cases = [
+            Case {
+                name: "constant_score term on inline_code.exact",
+                query: Query::ConstantScore(QueryConstantScore {
+                    filter: Box::new(Query::Term(QueryTerm::InlineCodeExact(
+                        "max-age".to_string(),
+                    ))),
+                    boost: 10.0,
+                }),
+                expected: r#"{"constant_score":{"filter":{"term":{"inline_code.exact":"max-age"}},"boost":10.0}}"#,
+            },
+            Case {
+                name: "match on title.code",
+                query: Query::Match(QueryMatch::TitleCode(QueryMatchField {
+                    query: "%".to_string(),
+                    boost: 10.0,
+                })),
+                expected: r#"{"match":{"title.code":{"query":"%","boost":10.0}}}"#,
+            },
+        ];
 
         for case in cases {
             let actual = serde_json::to_string(&case.query).unwrap();
