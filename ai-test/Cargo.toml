@@ -15,6 +15,6 @@ serde_json = "1"
 tokio = { version = "1", features = ["full"] }
 anyhow = "1"
 futures = "0.3"
-async-openai = "0.14"
+async-openai = { version = "0.43", features = ["chat-completion", "embedding", "moderation"] }
 itertools = "0.15"
 rumba = { path = "../"}

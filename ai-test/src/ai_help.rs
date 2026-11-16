@@ -8,12 +8,18 @@ use std::{
 use anyhow::Error;
 use async_openai::{
     config::OpenAIConfig,
-    types::{ChatCompletionRequestMessage, ChatCompletionResponseMessage, Role::User},
+    types::chat::{
+        ChatCompletionRequestMessage, ChatCompletionRequestUserMessage,
+        ChatCompletionResponseMessage,
+    },
 };
 use futures::{stream, StreamExt, TryStreamExt};
 use itertools::Itertools;
 use rumba::{
-    ai::help::{prepare_ai_help_req, AIHelpRequest},
+    ai::{
+        help::{prepare_ai_help_req, AIHelpRequest},
+        helpers::message_text,
+    },
     db,
     settings::SETTINGS,
 };
@@ -31,8 +37,15 @@ pub struct Storage {
 const MD_DELIM: &str = "\n---\n---\n";
 
 fn msg_to_md(msg: &ChatCompletionRequestMessage) -> String {
-    let role = &msg.role;
-    let content = msg.content.as_deref().unwrap_or_default();
+    let role = match msg {
+        ChatCompletionRequestMessage::Developer(_) => "developer",
+        ChatCompletionRequestMessage::System(_) => "system",
+        ChatCompletionRequestMessage::User(_) => "user",
+        ChatCompletionRequestMessage::Assistant(_) => "assistant",
+        ChatCompletionRequestMessage::Tool(_) => "tool",
+        ChatCompletionRequestMessage::Function(_) => "function",
+    };
+    let content = message_text(msg).unwrap_or_default();
     format!("{role}:{MD_DELIM}{content}")
 }
 
@@ -46,7 +59,7 @@ impl Storage {
             .join("\n");
         let res = if let Some(res) = &self.res {
             let res_content = res.content.as_deref().unwrap_or_default();
-            let res_role = &res.role;
+            let res_role = format!("{:?}", res.role).to_lowercase();
             format!("{res_role}:{MD_DELIM}{res_content}")
         } else {
             "**no response**".to_string()
@@ -94,16 +107,13 @@ pub async fn ai_help_all(
         let md_out = md_path(out, i);
         let messages = prompts
             .into_iter()
-            .map(|prompt| ChatCompletionRequestMessage {
-                role: User,
-                content: Some(prompt),
-                name: None,
-                function_call: None,
+            .map(|prompt| {
+                ChatCompletionRequestMessage::from(ChatCompletionRequestUserMessage::from(prompt))
             })
             .collect();
         let mut meta = Default::default();
         let req = prepare_ai_help_req(
-            openai_client,
+            openai_client.as_ref(),
             supabase_pool,
             !no_subscription,
             messages,

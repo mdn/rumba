@@ -1,5 +1,8 @@
-use async_openai::types::{ChatCompletionRequestMessage, Role};
-use tiktoken_rs::async_openai::num_tokens_from_messages;
+use async_openai::types::chat::{
+    ChatCompletionRequestAssistantMessageContent, ChatCompletionRequestMessage,
+    ChatCompletionRequestSystemMessageContent, ChatCompletionRequestUserMessageContent,
+};
+use tiktoken_rs::ChatCompletionRequestMessage as TiktokenMessage;
 
 use crate::ai::{constants::AIHelpConfig, error::AIError};
 
@@ -8,7 +11,12 @@ pub fn sanitize_messages(
 ) -> Vec<ChatCompletionRequestMessage> {
     messages
         .into_iter()
-        .filter(|message| message.role == Role::User || message.role == Role::Assistant)
+        .filter(|message| {
+            matches!(
+                message,
+                ChatCompletionRequestMessage::User(_) | ChatCompletionRequestMessage::Assistant(_)
+            )
+        })
         .collect()
 }
 
@@ -17,8 +25,53 @@ pub fn into_user_messages(
 ) -> Vec<ChatCompletionRequestMessage> {
     messages
         .into_iter()
-        .filter(|message| message.role == Role::User)
+        .filter(|message| matches!(message, ChatCompletionRequestMessage::User(_)))
         .collect()
+}
+
+/// Returns the text of a message, if it has plain text content.
+pub fn message_text(message: &ChatCompletionRequestMessage) -> Option<&str> {
+    match message {
+        ChatCompletionRequestMessage::User(m) => match &m.content {
+            ChatCompletionRequestUserMessageContent::Text(text) => Some(text),
+            ChatCompletionRequestUserMessageContent::Array(_) => None,
+        },
+        ChatCompletionRequestMessage::Assistant(m) => match &m.content {
+            Some(ChatCompletionRequestAssistantMessageContent::Text(text)) => Some(text),
+            _ => None,
+        },
+        ChatCompletionRequestMessage::System(m) => match &m.content {
+            ChatCompletionRequestSystemMessageContent::Text(text) => Some(text),
+            ChatCompletionRequestSystemMessageContent::Array(_) => None,
+        },
+        _ => None,
+    }
+}
+
+fn role_name(message: &ChatCompletionRequestMessage) -> &'static str {
+    match message {
+        ChatCompletionRequestMessage::Developer(_) => "developer",
+        ChatCompletionRequestMessage::System(_) => "system",
+        ChatCompletionRequestMessage::User(_) => "user",
+        ChatCompletionRequestMessage::Assistant(_) => "assistant",
+        ChatCompletionRequestMessage::Tool(_) => "tool",
+        ChatCompletionRequestMessage::Function(_) => "function",
+    }
+}
+
+fn num_tokens_from_messages(
+    model: &str,
+    messages: &[ChatCompletionRequestMessage],
+) -> anyhow::Result<usize> {
+    let messages: Vec<TiktokenMessage> = messages
+        .iter()
+        .map(|message| TiktokenMessage {
+            role: role_name(message).to_string(),
+            content: message_text(message).map(str::to_string),
+            ..Default::default()
+        })
+        .collect();
+    tiktoken_rs::num_tokens_from_messages(model, &messages)
 }
 
 pub fn cap_messages(

@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use async_openai::{config::OpenAIConfig, types::CreateEmbeddingRequestArgs, Client};
+use async_openai::{config::OpenAIConfig, types::embeddings::CreateEmbeddingRequestArgs, Client};
 use itertools::Itertools;
 
 use crate::{

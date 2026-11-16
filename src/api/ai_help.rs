@@ -3,6 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use crate::ai::helpers::message_text;
 use actix_identity::Identity;
 use actix_web::{
     web::{Data, Json, Path},
@@ -12,9 +13,9 @@ use actix_web_lab::{__reexports::tokio::sync::mpsc, sse};
 use async_openai::{
     config::OpenAIConfig,
     error::OpenAIError,
-    types::{
-        ChatCompletionRequestMessage, CreateChatCompletionStreamResponse,
-        Role::{self, Assistant},
+    types::chat::{
+        ChatCompletionRequestAssistantMessage, ChatCompletionRequestMessage,
+        ChatCompletionRequestUserMessage, CreateChatCompletionStreamResponse, FinishReason,
     },
     Client,
 };
@@ -135,8 +136,8 @@ impl From<AIHelpHistoryMessage> for AIHelpLogMessage {
     fn from(value: AIHelpHistoryMessage) -> Self {
         let assistant: Option<ChatCompletionRequestMessage> =
             serde_json::from_value(value.response).unwrap_or_default();
-        let user: ChatCompletionRequestMessage =
-            serde_json::from_value(value.request).unwrap_or_default();
+        let user: ChatCompletionRequestMessage = serde_json::from_value(value.request)
+            .unwrap_or_else(|_| ChatCompletionRequestUserMessage::from("").into());
         let sources: Vec<RefDoc> = serde_json::from_value(value.sources).unwrap_or_default();
         AIHelpLogMessage {
             metadata: AIHelpMeta {
@@ -302,7 +303,7 @@ fn log_errors_and_record_response(
                     answer.push(part);
                 }
                 if let Some(finish_reason) = c.finish_reason {
-                    debug!("Finish reason: {finish_reason}");
+                    debug!("Finish reason: {finish_reason:?}");
                     has_finish_reason = true;
                 }
             }
@@ -317,11 +318,9 @@ fn log_errors_and_record_response(
             message_id,
             parent_id,
         } = help_ids;
-        let response = ChatCompletionRequestMessage {
-            role: Assistant,
-            content: Some(answer.join("")),
-            ..Default::default()
-        };
+        let response = ChatCompletionRequestMessage::from(
+            ChatCompletionRequestAssistantMessage::from(answer.join("")),
+        );
         let insert = AIHelpHistoryMessageInsert {
             user_id,
             chat_id,
@@ -432,7 +431,8 @@ pub async fn ai_help(
                 let refs_sse_data = if qa_error_triggered {
                     Err(OpenAIError::InvalidArgument("Artificial Error".to_owned()))
                 } else {
-                    sse::Data::new_json(ai_help_meta).map_err(OpenAIError::JSONDeserialize)
+                    sse::Data::new_json(ai_help_meta)
+                        .map_err(|e| OpenAIError::JSONDeserialize(e, String::new()))
                 }
                 .map(sse::Event::Data)
                 .inspect_err(|_e| {
@@ -456,12 +456,14 @@ pub async fn ai_help(
                                     if let Some(part) = &c.delta.content {
                                         context.len += part.len();
                                     }
-                                    context.status = match c.finish_reason.as_deref() {
-                                        Some("length") => {
+                                    context.status = match c.finish_reason {
+                                        Some(FinishReason::Length) => {
                                             db::types::AiHelpMessageStatus::FinishedTooLong
                                         }
-                                        Some("stop") => db::types::AiHelpMessageStatus::Success,
-                                        Some("content_filter") => {
+                                        Some(FinishReason::Stop) => {
+                                            db::types::AiHelpMessageStatus::Success
+                                        }
+                                        Some(FinishReason::ContentFilter) => {
                                             db::types::AiHelpMessageStatus::FinishedContentFilter
                                         }
                                         Some(_) => db::types::AiHelpMessageStatus::Unknown,
@@ -689,10 +691,10 @@ fn qa_check_for_error_trigger(
     {
         if let Some(msg_text) = messages
             .iter()
-            .rfind(|m| m.role == Role::User)
-            .and_then(|m| m.content.as_ref())
+            .rfind(|m| matches!(m, ChatCompletionRequestMessage::User(_)))
+            .and_then(|m| message_text(m))
         {
-            if msg_text == magic_words {
+            if msg_text == magic_words.as_str() {
                 return Err(crate::api::error::ApiError::Artificial);
             }
         }
