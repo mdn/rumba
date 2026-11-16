@@ -3,9 +3,12 @@ use std::time::Duration;
 use async_openai::{
     config::OpenAIConfig,
     types::{
-        ChatCompletionRequestMessage, ChatCompletionRequestMessageArgs,
-        CreateChatCompletionRequest, CreateChatCompletionRequestArgs, CreateModerationRequestArgs,
-        Role,
+        chat::{
+            ChatCompletionRequestMessage, ChatCompletionRequestSystemMessage,
+            ChatCompletionRequestUserMessage, CreateChatCompletionRequest,
+            CreateChatCompletionRequestArgs,
+        },
+        moderations::CreateModerationRequestArgs,
     },
     Client,
 };
@@ -17,7 +20,7 @@ use crate::{
         constants::{AI_HELP_ADVANCED, AI_HELP_BASIC},
         embeddings::{get_related_docs, get_related_macro_docs},
         error::AIError,
-        helpers::{cap_messages, into_user_messages, sanitize_messages},
+        helpers::{cap_messages, into_user_messages, message_text, sanitize_messages},
     },
     db::SupaPool,
     settings::SETTINGS,
@@ -72,7 +75,7 @@ pub async fn prepare_ai_help_req(
     let moderations = FuturesUnordered::from_iter(
         context_messages
             .iter()
-            .filter_map(|msg| msg.content.clone())
+            .filter_map(|msg| message_text(msg).map(str::to_string))
             .map(|content| {
                 CreateModerationRequestArgs::default()
                     .input(content)
@@ -95,7 +98,7 @@ pub async fn prepare_ai_help_req(
     let last_user_message = context_messages
         .iter()
         .last()
-        .and_then(|msg| msg.content.as_ref())
+        .and_then(|msg| message_text(msg))
         .ok_or(AIError::NoUserPrompt)?;
     request_meta.query_len = Some(last_user_message.len());
 
@@ -143,29 +146,19 @@ pub async fn prepare_ai_help_req(
     request_meta.sources = Some(refs.clone());
     request_meta.context_len = Some(context_len);
 
-    let system_message = ChatCompletionRequestMessageArgs::default()
-        .role(Role::System)
-        .content(config.system_prompt)
-        .build()
-        .unwrap();
+    let system_message = ChatCompletionRequestMessage::from(
+        ChatCompletionRequestSystemMessage::from(config.system_prompt),
+    );
     let context_message = if context.is_empty() {
         None
     } else {
-        Some(
-            ChatCompletionRequestMessageArgs::default()
-                .role(Role::User)
-                .content((config.make_context)(context))
-                .build()
-                .unwrap(),
-        )
+        Some(ChatCompletionRequestMessage::from(
+            ChatCompletionRequestUserMessage::from((config.make_context)(context)),
+        ))
     };
-    let user_message = config.user_prompt.map(|x| {
-        ChatCompletionRequestMessageArgs::default()
-            .role(Role::User)
-            .content(x)
-            .build()
-            .unwrap()
-    });
+    let user_message = config
+        .user_prompt
+        .map(|x| ChatCompletionRequestMessage::from(ChatCompletionRequestUserMessage::from(x)));
     let init_messages = vec![Some(system_message), context_message, user_message]
         .into_iter()
         .flatten()
@@ -186,16 +179,12 @@ pub async fn prepare_ai_help_req(
 pub fn prepare_ai_help_summary_req(
     messages: Vec<ChatCompletionRequestMessage>,
 ) -> Result<CreateChatCompletionRequest, AIError> {
-    let system_message = ChatCompletionRequestMessageArgs::default()
-        .role(Role::System)
-        .content(include_str!("prompts/summary/system.md"))
-        .build()
-        .unwrap();
-    let user_message = ChatCompletionRequestMessageArgs::default()
-        .role(Role::User)
-        .content(include_str!("prompts/summary/user.md"))
-        .build()
-        .unwrap();
+    let system_message = ChatCompletionRequestMessage::from(
+        ChatCompletionRequestSystemMessage::from(include_str!("prompts/summary/system.md")),
+    );
+    let user_message = ChatCompletionRequestMessage::from(ChatCompletionRequestUserMessage::from(
+        include_str!("prompts/summary/user.md"),
+    ));
     let messages = [&[system_message], &messages[..], &[user_message]].concat();
 
     let req = CreateChatCompletionRequestArgs::default()
@@ -222,17 +211,12 @@ fn qa_check_for_error_trigger(
     {
         if let Some(msg_text) = messages
             .iter()
-            .rfind(|m| m.role == Role::User)
-            .and_then(|m| m.content.as_ref())
+            .rfind(|m| matches!(m, ChatCompletionRequestMessage::User(_)))
+            .and_then(|m| message_text(m))
         {
-            if msg_text == magic_words {
-                return Err(async_openai::error::OpenAIError::ApiError(
-                    async_openai::error::ApiError {
-                        message: "Artificial QA error in search phase".to_string(),
-                        r#type: None,
-                        param: None,
-                        code: None,
-                    },
+            if msg_text == magic_words.as_str() {
+                return Err(async_openai::error::OpenAIError::InvalidArgument(
+                    "Artificial QA error in search phase".to_string(),
                 ));
             }
         }
