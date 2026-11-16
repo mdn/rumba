@@ -5,10 +5,11 @@ use crate::ai::embeddings::RelatedDoc;
 #[derive(Debug, Copy, Clone)]
 pub struct AIHelpConfig {
     pub model: &'static str,
+    /// Model name that tiktoken knows, for counting tokens.
+    pub token_model: &'static str,
     pub full_doc: bool,
     pub system_prompt: &'static str,
     pub user_prompt: Option<&'static str>,
-    pub stop_phrase: Option<&'static str>,
     pub token_limit: usize,
     pub context_limit: usize,
     pub max_completion_tokens: usize,
@@ -22,16 +23,17 @@ fn join_with_tags(related_docs: Vec<RelatedDoc>) -> String {
         .join("\n")
 }
 
-pub const BASIC_MODEL: &str = "gpt-4o-mini-2024-07-18";
-pub const ADVANCED_MODEL: &str = "gpt-4o-2024-08-06";
+pub const BASIC_MODEL: &str = "gpt-6-luna";
+pub const ADVANCED_MODEL: &str = "gpt-6-luna";
+const TOKEN_MODEL: &str = "gpt-4o";
 pub const EMBEDDING_MODEL: &str = "text-embedding-3-small";
 
 pub const AI_HELP_BASIC: AIHelpConfig = AIHelpConfig {
     model: BASIC_MODEL,
+    token_model: TOKEN_MODEL,
     full_doc: true,
     system_prompt: include_str!("prompts/new_prompt/system.md"),
     user_prompt: None,
-    stop_phrase: Some(include_str!("prompts/new_prompt/stop_phrase.txt")),
     token_limit: 16_384,
     context_limit: 12_000,
     max_completion_tokens: 2_048,
@@ -40,10 +42,10 @@ pub const AI_HELP_BASIC: AIHelpConfig = AIHelpConfig {
 
 pub const AI_HELP_ADVANCED: AIHelpConfig = AIHelpConfig {
     model: ADVANCED_MODEL,
+    token_model: TOKEN_MODEL,
     full_doc: true,
     system_prompt: include_str!("prompts/new_prompt/system.md"),
     user_prompt: None,
-    stop_phrase: Some(include_str!("prompts/new_prompt/stop_phrase.txt")),
     token_limit: 32_768,
     context_limit: 20_000,
     max_completion_tokens: 4_096,
