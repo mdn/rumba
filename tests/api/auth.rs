@@ -11,7 +11,7 @@ use crate::helpers::{
 
 #[actix_rt::test]
 async fn test_next() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -54,6 +54,5 @@ async fn test_next() -> Result<(), Error> {
             .and_then(|l| l.to_str().ok()),
         Some("http://localhost:8000/foo")
     );
-    drop(stubr);
     Ok(())
 }

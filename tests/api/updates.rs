@@ -30,7 +30,7 @@ macro_rules! test_setup {
 
 #[actix_rt::test]
 async fn test_bcd_updates_basic_pagination() -> Result<(), Error> {
-    let (mut logged_in_client, stubr) = test_setup!();
+    let (mut logged_in_client, _stubr) = test_setup!();
     let res = logged_in_client.get("/api/v2/updates/", None).await;
     let json = read_json(res).await;
     // 3 browsers x 3 browser releases = 9 total rows, (5 per page so 2 pages total)
@@ -123,13 +123,12 @@ async fn test_bcd_updates_basic_pagination() -> Result<(), Error> {
             }
           }
     )));
-    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_bcd_updates_filter_by_collections() -> Result<(), Error> {
-    let (mut logged_in_client, stubr) = test_setup!();
+    let (mut logged_in_client, _stubr) = test_setup!();
     let res = logged_in_client.get("/api/v2/collections/", None).await;
     let vals = read_json(res).await;
     let default_id = &vals.as_array().unwrap()[0]["id"];
@@ -149,7 +148,6 @@ async fn test_bcd_updates_filter_by_collections() -> Result<(), Error> {
         .expect("Json snapshot opened");
     let snapshot_json: Value = serde_json::from_reader(file).expect("Error reading snapshot json");
     assert_eq!(res_json, snapshot_json);
-    drop(stubr);
     Ok(())
 }
 

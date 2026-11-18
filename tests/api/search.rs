@@ -5,12 +5,11 @@ use actix_web::{http::header, test};
 use anyhow::Error;
 
 async fn do_request(path: &str) -> Result<actix_web::dev::ServiceResponse<BoxBody>, Error> {
-    let stubr = start_stubr(vec!["tests/test_specific_stubs/search"]);
+    let _stubr = start_stubr(vec!["tests/test_specific_stubs/search"]);
     let app = test_app_only_search().await;
     let service = test::init_service(app).await;
     let request = test::TestRequest::get().uri(path).to_request();
     let response = test::call_service(&service, request).await;
-    drop(stubr);
     Ok(response)
 }
 

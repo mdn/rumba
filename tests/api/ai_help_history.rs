@@ -69,7 +69,7 @@ fn add_history_log() -> Result<(), Error> {
 
 #[actix_rt::test]
 async fn test_history() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
     let app = test_app_with_login(&pool).await.unwrap();
     let service = test::init_service(app).await;
@@ -99,13 +99,12 @@ async fn test_history() -> Result<(), Error> {
             test::read_body(history).await.as_ref()
         ))
     );
-    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_history_deletion() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
     let app = test_app_with_login(&pool).await.unwrap();
     let service = test::init_service(app).await;
@@ -198,7 +197,6 @@ async fn test_history_deletion() -> Result<(), Error> {
         records.first().unwrap().and_utc().timestamp_micros()
     );
 
-    drop(stubr);
     Ok(())
 }
 

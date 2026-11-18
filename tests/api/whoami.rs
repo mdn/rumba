@@ -9,7 +9,7 @@ use serde_json::json;
 
 #[actix_rt::test]
 async fn whoami_anonymous_test() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
     let app = test_app_with_login(&pool).await.unwrap();
     let service = test::init_service(app).await;
@@ -21,13 +21,12 @@ async fn whoami_anonymous_test() -> Result<(), Error> {
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Unknown");
     assert_eq!(json["geo"]["country_iso"], "ZZ");
-    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn whoami_anonymous_test_gcp() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
     let app = test_app_with_login(&pool).await.unwrap();
     let service = test::init_service(app).await;
@@ -42,13 +41,12 @@ async fn whoami_anonymous_test_gcp() -> Result<(), Error> {
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Iceland");
     assert_eq!(json["geo"]["country_iso"], "IS");
-    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn whoami_anonymous_test_aws() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
     let app = test_app_with_login(&pool).await.unwrap();
     let service = test::init_service(app).await;
@@ -63,13 +61,12 @@ async fn whoami_anonymous_test_aws() -> Result<(), Error> {
     let json = read_json(whoami).await;
     assert_eq!(json["geo"]["country"], "Iceland");
     assert_eq!(json["geo"]["country_iso"], "IS");
-    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn whoami_legacy_logged_in_test() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -98,13 +95,12 @@ async fn whoami_legacy_logged_in_test() -> Result<(), Error> {
     assert_eq!(json["geo"]["country_iso"], "IS");
     // old sessions do not work anymore
     assert!(json["username"].is_null());
-    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn whoami_logged_in_test() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -129,13 +125,12 @@ async fn whoami_logged_in_test() -> Result<(), Error> {
         json["subscription_type"], "mdn_plus_5m",
         "Subscription type wrong"
     );
-    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn whoami_settings_test() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -179,13 +174,12 @@ async fn whoami_settings_test() -> Result<(), Error> {
     let json = read_json(whoami).await;
     assert_eq!(json["settings"]["locale_override"], "zh-TW");
     assert_eq!(json["settings"]["mdnplus_newsletter"], false);
-    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs", "tests/test_specific_stubs/whoami"]);
+    let _stubr = start_stubr(vec!["tests/stubs", "tests/test_specific_stubs/whoami"]);
     let pool = reset()?;
 
     let app = test_app_with_login(&pool).await?;
@@ -208,6 +202,5 @@ async fn whoami_multiple_subscriptions_test() -> Result<(), Error> {
     );
     assert_eq!(json["is_subscriber"], true);
     assert_eq!(json["subscription_type"], "mdn_plus_5y");
-    drop(stubr);
     Ok(())
 }

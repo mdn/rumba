@@ -9,7 +9,7 @@ use serde_json::{json, Value};
 
 #[actix_rt::test]
 async fn test_empty() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
 
     let app = test_app_with_login(&pool).await?;
@@ -26,13 +26,12 @@ async fn test_empty() -> Result<(), Error> {
         .select(schema::activity_pings::activity)
         .first::<Value>(&mut conn)?;
     assert_eq!(activity_data, json!({ "subscription_type": "mdn_plus_5m" }));
-    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_garbage() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
 
     let app = test_app_with_login(&pool).await?;
@@ -53,13 +52,12 @@ async fn test_garbage() -> Result<(), Error> {
         .select(schema::activity_pings::activity)
         .first::<Value>(&mut conn)?;
     assert_eq!(activity_data, json!({ "subscription_type": "mdn_plus_5m" }));
-    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_offline_disabled() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
 
     let app = test_app_with_login(&pool).await?;
@@ -80,13 +78,12 @@ async fn test_offline_disabled() -> Result<(), Error> {
         .select(schema::activity_pings::activity)
         .first::<Value>(&mut conn)?;
     assert_eq!(activity_data, json!({ "subscription_type": "mdn_plus_5m" }));
-    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_offline_enabled() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
 
     let app = test_app_with_login(&pool).await?;
@@ -110,13 +107,12 @@ async fn test_offline_enabled() -> Result<(), Error> {
         activity_data,
         json!({ "subscription_type": "mdn_plus_5m", "offline": true })
     );
-    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_offline_upsert() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
 
     let app = test_app_with_login(&pool).await?;
@@ -179,6 +175,5 @@ async fn test_offline_upsert() -> Result<(), Error> {
         .count()
         .first::<i64>(&mut conn)?;
     assert_eq!(count, 1);
-    drop(stubr);
     Ok(())
 }

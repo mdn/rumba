@@ -14,7 +14,7 @@ use serde_json::json;
 
 #[actix_rt::test]
 async fn find_user() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     reset()?;
     let pool = get_pool();
     let mut conn = pool.get()?;
@@ -206,6 +206,5 @@ async fn find_user() -> Result<(), Error> {
         }),
     )
     .await;
-    drop(stubr);
     Ok(())
 }

@@ -70,7 +70,7 @@ fn assert_last_fxa_webhook_with_retry(
 
 #[actix_rt::test]
 async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let set_token =
         token_from_file("tests/data/set_tokens/set_token_subscription_state_change_to_10m.json");
     let pool = reset()?;
@@ -116,7 +116,6 @@ async fn subscription_state_change_to_10m_test() -> Result<(), Error> {
         FxaEvent::SubscriptionStateChange,
         FxaEventStatus::Ignored,
     )?;
-    drop(stubr);
     Ok(())
 }
 
@@ -176,7 +175,7 @@ async fn subscription_state_change_to_core_test(set_token: &str) -> Result<(), E
 
 #[actix_rt::test]
 async fn delete_user_test() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs", "tests/test_specific_stubs/collections"]);
+    let _stubr = start_stubr(vec!["tests/stubs", "tests/test_specific_stubs/collections"]);
     let pool = reset()?;
     let set_token = token_from_file("tests/data/set_tokens/set_token_delete_user.json");
 
@@ -241,13 +240,12 @@ async fn delete_user_test() -> Result<(), Error> {
         FxaEvent::DeleteUser,
         FxaEventStatus::Processed,
     )?;
-    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn invalid_set_test() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let set_token =
         invalid_token_from_json_file("tests/data/set_tokens/set_token_delete_user.json");
     let pool = reset()?;
@@ -272,13 +270,12 @@ async fn invalid_set_test() -> Result<(), Error> {
         .select(schema::raw_webhook_events_tokens::token)
         .first::<String>(&mut conn)?;
     assert_eq!(failed_token, set_token);
-    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn set_for_other_rp_test() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let json_str = std::fs::read_to_string(
         "tests/data/set_tokens/set_token_subscription_state_change_to_10m.json",
     )
@@ -323,7 +320,6 @@ async fn set_for_other_rp_test() -> Result<(), Error> {
         .select(schema::raw_webhook_events_tokens::token)
         .first::<String>(&mut conn)?;
     assert_eq!(failed_token, set_token);
-    drop(stubr);
     Ok(())
 }
 
@@ -344,7 +340,7 @@ async fn whoami_test() -> Result<(), Error> {
     assert_eq!(json["email"], "test@test.com");
     drop(stubr);
 
-    let stubr = start_stubr(vec![
+    let _stubr = start_stubr(vec![
         "tests/stubs",
         "tests/test_specific_stubs/fxa_webhooks",
     ]);
@@ -382,13 +378,12 @@ async fn whoami_test() -> Result<(), Error> {
         FxaEvent::ProfileChange,
         FxaEventStatus::Processed,
     )?;
-    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn record_subscription_state_transitions_test() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs", "tests/test_specific_stubs/core_user"]);
+    let _stubr = start_stubr(vec!["tests/stubs", "tests/test_specific_stubs/core_user"]);
     let pool = reset()?;
     let app = test_app_with_login(&pool).await?;
     let service = test::init_service(app).await;
@@ -515,6 +510,5 @@ async fn record_subscription_state_transitions_test() -> Result<(), Error> {
         );
     }
 
-    drop(stubr);
     Ok(())
 }

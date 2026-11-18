@@ -10,7 +10,7 @@ use crate::helpers::db::reset;
 
 #[actix_rt::test]
 async fn basic() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
 
     let app = test_app_with_login(&pool).await.unwrap();
@@ -48,13 +48,12 @@ async fn basic() -> Result<(), Error> {
     let res = test::call_service(&app, base.to_request()).await;
     assert!(res.status().is_redirection());
     assert_eq!(res.headers().get("Location").unwrap(), "/");
-    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn next() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
 
     let app = test_app_with_login(&pool).await.unwrap();
@@ -95,13 +94,12 @@ async fn next() -> Result<(), Error> {
         res.headers().get("Location").unwrap(),
         "http://localhost:8000/foo"
     );
-    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn next_absolute() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
 
     let app = test_app_with_login(&pool).await.unwrap();
@@ -139,13 +137,12 @@ async fn next_absolute() -> Result<(), Error> {
     let res = test::call_service(&app, base.to_request()).await;
     assert!(res.status().is_redirection());
     assert_eq!(res.headers().get("Location").unwrap(), "/");
-    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn next_absolute_without_protocol() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
 
     let app = test_app_with_login(&pool).await.unwrap();
@@ -183,13 +180,12 @@ async fn next_absolute_without_protocol() -> Result<(), Error> {
     let res = test::call_service(&app, base.to_request()).await;
     assert!(res.status().is_redirection());
     assert_eq!(res.headers().get("Location").unwrap(), "/");
-    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn next_absolute_with_path_exploit() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
 
     let app = test_app_with_login(&pool).await.unwrap();
@@ -230,13 +226,12 @@ async fn next_absolute_with_path_exploit() -> Result<(), Error> {
         res.headers().get("Location").unwrap(),
         "http://localhost:8000//foo.com/bar"
     );
-    drop(stubr);
     Ok(())
 }
 
 #[actix_rt::test]
 async fn no_prompt() -> Result<(), Error> {
-    let stubr = start_stubr(vec!["tests/stubs"]);
+    let _stubr = start_stubr(vec!["tests/stubs"]);
     let pool = reset()?;
 
     let app = test_app_with_login(&pool).await.unwrap();
@@ -284,6 +279,5 @@ async fn no_prompt() -> Result<(), Error> {
         res.headers().get("Location").unwrap(),
         "http://localhost:8000/foo"
     );
-    drop(stubr);
     Ok(())
 }
