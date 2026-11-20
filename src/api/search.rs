@@ -204,6 +204,13 @@ fn is_code_like(q: &str) -> bool {
             .any(|w| w[0].is_lowercase() && w[1].is_uppercase())
 }
 
+/// Whether the query consists only of punctuation, like `%` or `?.`.
+fn is_symbols_only(q: &str) -> bool {
+    !q.is_empty()
+        && q.chars()
+            .all(|c| !c.is_alphanumeric() && !c.is_whitespace())
+}
+
 fn match_field(query: &str, boost: f64) -> elastic::QueryMatchField {
     elastic::QueryMatchField {
         query: query.to_string(),
@@ -224,7 +231,8 @@ and each different way as a different boost which dictates its importance.
 The importance order is as follows:
 
  1. Title match-phrase
- 2. Title match
+ 2. Title match, and for symbol-only queries (`%`) title and summary
+    matches that keep punctuation
  3. Exact inline code value, as a flat bonus for code-like queries
  4. Body match-phrase
  5. Body match
@@ -245,6 +253,14 @@ fn subqueries(q: &str) -> Vec<elastic::Query<'static>> {
             elastic::QueryTerm::InlineCodeExact(q.trim().to_string()),
             10.0,
         ));
+    }
+    if is_symbols_only(q) {
+        subqueries.push(elastic::Query::Match(elastic::QueryMatch::TitleCode(
+            match_field(q, 10.0),
+        )));
+        subqueries.push(elastic::Query::Match(elastic::QueryMatch::SummaryCode(
+            match_field(q, 5.0),
+        )));
     }
     if q.contains(' ') {
         subqueries.push(elastic::Query::MatchPhrase(elastic::QueryMatch::Title(
@@ -504,6 +520,11 @@ mod tests {
                 expected: r#"[{"match":{"title":{"query":"css grid","boost":5}}},{"match":{"body":{"query":"css grid","boost":1}}},{"match_phrase":{"title":{"query":"css grid","boost":10}}},{"match_phrase":{"body":{"query":"css grid","boost":2}}}]"#,
             },
             Case {
+                name: "symbol",
+                q: "%",
+                expected: r#"[{"match":{"title":{"query":"%","boost":5}}},{"match":{"body":{"query":"%","boost":1}}},{"constant_score":{"filter":{"term":{"inline_code.exact":"%"}},"boost":10}},{"match":{"title.code":{"query":"%","boost":10}}},{"match":{"summary.code":{"query":"%","boost":5}}}]"#,
+            },
+            Case {
                 name: "code-like",
                 q: "::before",
                 expected: r#"[{"match":{"title":{"query":"::before","boost":5}}},{"match":{"body":{"query":"::before","boost":1}}},{"constant_score":{"filter":{"term":{"inline_code.exact":"::before"}},"boost":10}}]"#,
@@ -532,40 +553,49 @@ mod tests {
         struct Case {
             q: &'static str,
             code_like: bool,
+            symbols_only: bool,
         }
 
         let cases = [
             Case {
                 q: "flexbox",
                 code_like: false,
+                symbols_only: false,
             },
             Case {
                 q: "css grid",
                 code_like: false,
+                symbols_only: false,
             },
             Case {
                 q: "HTML",
                 code_like: false,
+                symbols_only: false,
             },
             Case {
                 q: "addEventListener",
                 code_like: true,
+                symbols_only: false,
             },
             Case {
                 q: "max-age",
                 code_like: true,
+                symbols_only: false,
             },
             Case {
                 q: "?.",
                 code_like: true,
+                symbols_only: true,
             },
             Case {
                 q: "% ",
                 code_like: true,
+                symbols_only: false,
             },
             Case {
                 q: "",
                 code_like: false,
+                symbols_only: false,
             },
         ];
 
@@ -574,6 +604,12 @@ mod tests {
                 is_code_like(case.q),
                 case.code_like,
                 "code-like: {:?}",
+                case.q
+            );
+            assert_eq!(
+                is_symbols_only(case.q),
+                case.symbols_only,
+                "symbols only: {:?}",
                 case.q
             );
         }
