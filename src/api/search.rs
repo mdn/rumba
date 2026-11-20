@@ -193,6 +193,70 @@ pub async fn search(
         .json(response))
 }
 
+/// Whether the query contains punctuation or a camelCase transition.
+fn is_code_like(q: &str) -> bool {
+    let chars: Vec<char> = q.chars().collect();
+    chars
+        .iter()
+        .any(|c| !c.is_alphanumeric() && !c.is_whitespace())
+        || chars
+            .windows(2)
+            .any(|w| w[0].is_lowercase() && w[1].is_uppercase())
+}
+
+fn match_field(query: &str, boost: f64) -> elastic::QueryMatchField {
+    elastic::QueryMatchField {
+        query: query.to_string(),
+        boost,
+    }
+}
+
+fn constant_term(term: elastic::QueryTerm, boost: f64) -> elastic::Query<'static> {
+    elastic::Query::ConstantScore(elastic::QueryConstantScore {
+        filter: Box::new(elastic::Query::Term(term)),
+        boost,
+    })
+}
+
+/*
+The business logic here that we search for things different ways,
+and each different way as a different boost which dictates its importance.
+The importance order is as follows:
+
+ 1. Title match-phrase
+ 2. Title match
+ 3. Exact inline code value, as a flat bonus for code-like queries
+ 4. Body match-phrase
+ 5. Body match
+
+The order is determined by the `boost` number in the code below.
+Remember that sort order is a combination of "match" and popularity, but
+ideally the popularity should complement. Try to get a pretty good
+sort by pure relevance first, and let popularity just make it better.
+*/
+fn subqueries(q: &str) -> Vec<elastic::Query<'static>> {
+    let mut subqueries = vec![
+        elastic::Query::Match(elastic::QueryMatch::Title(match_field(q, 5.0))),
+        elastic::Query::Match(elastic::QueryMatch::Body(match_field(q, 1.0))),
+    ];
+    if is_code_like(q) {
+        // Constant, so that the many pages mentioning a value don't outrank its title match.
+        subqueries.push(constant_term(
+            elastic::QueryTerm::InlineCodeExact(q.trim().to_string()),
+            10.0,
+        ));
+    }
+    if q.contains(' ') {
+        subqueries.push(elastic::Query::MatchPhrase(elastic::QueryMatch::Title(
+            match_field(q, 10.0),
+        )));
+        subqueries.push(elastic::Query::MatchPhrase(elastic::QueryMatch::Body(
+            match_field(q, 2.0),
+        )));
+    }
+    subqueries
+}
+
 async fn do_search(
     client: &Elasticsearch,
     params: &Params,
@@ -220,48 +284,8 @@ async fn do_search(
         })
     };
 
-    /*
-    The business logic here that we search for things different ways,
-    and each different way as a different boost which dictates its importance.
-    The importance order is as follows:
-
-     1. Title match-phrase
-     2. Title match
-     3. Body match-phrase
-     4. Body match
-
-    The order is determined by the `boost` number in the code below.
-    Remember that sort order is a combination of "match" and popularity, but
-    ideally the popularity should complement. Try to get a pretty good
-    sort by pure relevance first, and let popularity just make it better.
-    */
-    let mut subqueries: Vec<elastic::Query> = vec![
-        elastic::Query::Match(elastic::QueryMatch::Title(elastic::QueryMatchField {
-            query: params.q.clone(),
-            boost: 5.0,
-        })),
-        elastic::Query::Match(elastic::QueryMatch::Body(elastic::QueryMatchField {
-            query: params.q.clone(),
-            boost: 1.0,
-        })),
-    ];
-    if params.q.contains(' ') {
-        subqueries.push(elastic::Query::MatchPhrase(elastic::QueryMatch::Title(
-            elastic::QueryMatchField {
-                query: params.q.clone(),
-                boost: 10.0,
-            },
-        )));
-        subqueries.push(elastic::Query::MatchPhrase(elastic::QueryMatch::Body(
-            elastic::QueryMatchField {
-                query: params.q.clone(),
-                boost: 2.0,
-            },
-        )));
-    }
-
     let subquery = elastic::Query::Bool(elastic::QueryBool {
-        should: Some(subqueries),
+        should: Some(subqueries(&params.q)),
         ..elastic::QueryBool::default()
     });
 
@@ -438,6 +462,120 @@ where
                     .to_string(),
                 source: e,
             })
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::Value;
+
+    /// Compares numbers as floats, since lab configs write `5` where serde writes `5.0`.
+    fn normalize(value: Value) -> Value {
+        match value {
+            Value::Number(n) => json!(n.as_f64().unwrap()),
+            Value::Array(a) => Value::Array(a.into_iter().map(normalize).collect()),
+            Value::Object(o) => {
+                Value::Object(o.into_iter().map(|(k, v)| (k, normalize(v))).collect())
+            }
+            x => x,
+        }
+    }
+
+    // Expected bodies are generated from the search lab config (`lab/configs/final.json`).
+    #[test]
+    fn test_subqueries() {
+        struct Case {
+            name: &'static str,
+            q: &'static str,
+            expected: &'static str,
+        }
+
+        let cases = [
+            Case {
+                name: "plain word",
+                q: "flexbox",
+                expected: r#"[{"match":{"title":{"query":"flexbox","boost":5}}},{"match":{"body":{"query":"flexbox","boost":1}}}]"#,
+            },
+            Case {
+                name: "multi-word",
+                q: "css grid",
+                expected: r#"[{"match":{"title":{"query":"css grid","boost":5}}},{"match":{"body":{"query":"css grid","boost":1}}},{"match_phrase":{"title":{"query":"css grid","boost":10}}},{"match_phrase":{"body":{"query":"css grid","boost":2}}}]"#,
+            },
+            Case {
+                name: "code-like",
+                q: "::before",
+                expected: r#"[{"match":{"title":{"query":"::before","boost":5}}},{"match":{"body":{"query":"::before","boost":1}}},{"constant_score":{"filter":{"term":{"inline_code.exact":"::before"}},"boost":10}}]"#,
+            },
+            Case {
+                name: "camelCase",
+                q: "addEventListener",
+                expected: r#"[{"match":{"title":{"query":"addEventListener","boost":5}}},{"match":{"body":{"query":"addEventListener","boost":1}}},{"constant_score":{"filter":{"term":{"inline_code.exact":"addEventListener"}},"boost":10}}]"#,
+            },
+            Case {
+                name: "code-like with space",
+                q: "position: sticky",
+                expected: r#"[{"match":{"title":{"query":"position: sticky","boost":5}}},{"match":{"body":{"query":"position: sticky","boost":1}}},{"constant_score":{"filter":{"term":{"inline_code.exact":"position: sticky"}},"boost":10}},{"match_phrase":{"title":{"query":"position: sticky","boost":10}}},{"match_phrase":{"body":{"query":"position: sticky","boost":2}}}]"#,
+            },
+        ];
+
+        for case in cases {
+            let actual = normalize(serde_json::to_value(subqueries(case.q)).unwrap());
+            let expected = normalize(serde_json::from_str(case.expected).unwrap());
+            assert_eq!(actual, expected, "case: {}", case.name);
+        }
+    }
+
+    #[test]
+    fn test_query_gates() {
+        struct Case {
+            q: &'static str,
+            code_like: bool,
+        }
+
+        let cases = [
+            Case {
+                q: "flexbox",
+                code_like: false,
+            },
+            Case {
+                q: "css grid",
+                code_like: false,
+            },
+            Case {
+                q: "HTML",
+                code_like: false,
+            },
+            Case {
+                q: "addEventListener",
+                code_like: true,
+            },
+            Case {
+                q: "max-age",
+                code_like: true,
+            },
+            Case {
+                q: "?.",
+                code_like: true,
+            },
+            Case {
+                q: "% ",
+                code_like: true,
+            },
+            Case {
+                q: "",
+                code_like: false,
+            },
+        ];
+
+        for case in cases {
+            assert_eq!(
+                is_code_like(case.q),
+                case.code_like,
+                "code-like: {:?}",
+                case.q
+            );
         }
     }
 }
