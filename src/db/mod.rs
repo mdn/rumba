@@ -17,12 +17,24 @@ pub mod v2;
 
 use std::str::FromStr;
 
+use diesel::dsl::sql;
 use diesel::pg::PgConnection;
+use diesel::prelude::*;
 use diesel::r2d2::ConnectionManager;
+use diesel::sql_types::Integer;
 use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions},
     ConnectOptions,
 };
+
+/// Must match `database_version` of the stage/prod Cloud SQL instances and the CI `postgres` image.
+pub const POSTGRES_MAJOR_VERSION: i32 = 18;
+
+pub fn server_major_version(conn: &mut PgConnection) -> QueryResult<i32> {
+    diesel::select(sql::<Integer>("current_setting('server_version_num')::int"))
+        .get_result::<i32>(conn)
+        .map(|num| num / 10_000)
+}
 
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 

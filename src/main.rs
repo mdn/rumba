@@ -29,7 +29,7 @@ use rumba::{
     metrics::{metrics_from_opts, MetricsData},
     settings::{Sentry, SETTINGS},
 };
-use slog_scope::{debug, info};
+use slog_scope::{debug, info, warn};
 
 const MIGRATIONS: diesel_migrations::EmbeddedMigrations = diesel_migrations::embed_migrations!();
 
@@ -85,6 +85,8 @@ async fn main() -> anyhow::Result<()> {
             ..Default::default()
         })
     };
+
+    check_postgres_version(&pool);
 
     let session_cookie_key = Key::derive_from(&SETTINGS.auth.cookie_key);
 
@@ -155,4 +157,26 @@ async fn main() -> anyhow::Result<()> {
     logging::reset_logging();
 
     Ok(())
+}
+
+fn check_postgres_version(pool: &db::Pool) {
+    let major = match pool.get() {
+        Ok(mut conn) => db::server_major_version(&mut conn).map_err(anyhow::Error::from),
+        Err(e) => Err(e.into()),
+    };
+    let major = match major {
+        Ok(major) => major,
+        Err(e) => {
+            warn!("failed to determine PostgreSQL server version: {e}");
+            return;
+        }
+    };
+    if major != db::POSTGRES_MAJOR_VERSION {
+        let msg = format!(
+            "PostgreSQL server major version {major} differs from expected {}",
+            db::POSTGRES_MAJOR_VERSION
+        );
+        warn!("{msg}");
+        sentry::capture_message(&msg, sentry::Level::Warning);
+    }
 }
