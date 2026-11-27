@@ -21,6 +21,40 @@ Before you can start working with Rumba, you need to:
 7. To create an authenticated session navigate to http://localhost:8000/users/fxa/login/authenticate/?next=%2F and login with your firefox staging account
 8. To check you are logged in and ready to go navigate to http://localhost:8000/api/v1/whoami you should see your logged in user information.
 
+## Database migrations
+
+Rumba uses [Diesel](https://diesel.rs/) to manage the PostgreSQL schema. Migrations live in [`migrations/`](./migrations/) and run automatically on startup (unless `skip_migrations = true` is set in `.settings.toml`).
+
+To work with migrations manually, install the Diesel CLI with PostgreSQL support only:
+
+```sh
+cargo install diesel_cli --no-default-features --features postgres
+```
+
+The CLI reads the connection string from `DATABASE_URL` (or `--database-url`), e.g. the `db.uri` from your `.settings.toml`:
+
+```sh
+export DATABASE_URL=postgres://rumba:rumba@127.0.0.1:5432/mdn
+```
+
+Common commands:
+
+```sh
+# Generate a new migration (creates `migrations/<timestamp>_<name>/{up,down}.sql`)
+diesel migration generate <name>
+
+# Run all pending migrations (also regenerates `src/db/schema.rs`, see `diesel.toml`)
+diesel migration run
+
+# Roll back the latest migration
+diesel migration revert
+
+# Verify that the latest migration can be rolled back and reapplied
+diesel migration redo
+```
+
+Do not edit `src/db/schema.rs` by hand. Commit the regenerated file together with the migration.
+
 ## Formatting & Linting
 
 All changes to Rumba are required to be formatted with [Rustfmt](https://doc.rust-lang.org/stable/clippy/index.html) (`cargo fmt --all`) and free of [Clippy](https://doc.rust-lang.org/stable/clippy/index.html) linting errors or warnings (`cargo clippy --all --all-features -- -D warnings`).
