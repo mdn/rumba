@@ -1,11 +1,11 @@
-use crate::helpers::app::{drop_stubr, init_test};
+use crate::helpers::app::init_test;
 use crate::helpers::read_json;
 use anyhow::Error;
 use serde_json::json;
 
 #[actix_rt::test]
 async fn test_core_settings() -> Result<(), Error> {
-    let (mut client, stubr) =
+    let (mut client, _stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/core_user"]).await?;
     let whoami = client
         .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
@@ -38,13 +38,12 @@ async fn test_core_settings() -> Result<(), Error> {
     assert_eq!(json["is_authenticated"], true);
     assert_eq!(json["is_subscriber"], false);
     assert_eq!(json["settings"]["no_ads"], false);
-    drop_stubr(stubr).await;
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_subscriber_settings() -> Result<(), Error> {
-    let (mut client, stubr) = init_test(vec!["tests/stubs"]).await?;
+    let (mut client, _stubr) = init_test(vec!["tests/stubs"]).await?;
     let whoami = client
         .get("/api/v1/whoami", Some(vec![("X-Appengine-Country", "IS")]))
         .await;
@@ -76,6 +75,5 @@ async fn test_subscriber_settings() -> Result<(), Error> {
     assert_eq!(json["is_authenticated"], true);
     assert_eq!(json["is_subscriber"], true);
     assert_eq!(json["settings"]["no_ads"], true);
-    drop_stubr(stubr).await;
     Ok(())
 }

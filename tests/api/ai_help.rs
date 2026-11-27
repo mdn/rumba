@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use crate::helpers::api_assertions::assert_ok_with_json_containing;
-use crate::helpers::app::{drop_stubr, init_test};
+use crate::helpers::app::init_test;
 use actix_http::StatusCode;
 use actix_rt::time::sleep;
 use anyhow::Error;
@@ -10,7 +10,7 @@ use serde_json::json;
 
 #[actix_rt::test]
 async fn test_quota() -> Result<(), Error> {
-    let (mut client, stubr) =
+    let (mut client, _stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/core_user"]).await?;
 
     let quota = client.get("/api/v1/plus/ai/ask/quota", None).await;
@@ -58,13 +58,12 @@ async fn test_quota() -> Result<(), Error> {
         )
         .await;
     assert_eq!(ai_help.status(), StatusCode::PAYMENT_REQUIRED);
-    drop_stubr(stubr).await;
     Ok(())
 }
 
 #[actix_rt::test]
 async fn test_quota_rest() -> Result<(), Error> {
-    let (mut client, stubr) =
+    let (mut client, _stubr) =
         init_test(vec!["tests/stubs", "tests/test_specific_stubs/core_user"]).await?;
 
     let quota = client.get("/api/v1/plus/ai/ask/quota", None).await;
@@ -142,6 +141,5 @@ async fn test_quota_rest() -> Result<(), Error> {
     assert_eq!(ai_help.status(), StatusCode::NOT_IMPLEMENTED);
     let quota = client.get("/api/v1/plus/ai/ask/quota", None).await;
     assert_ok_with_json_containing(quota, json!({"quota": { "count": 1, "limit": 5}})).await;
-    drop_stubr(stubr).await;
     Ok(())
 }
