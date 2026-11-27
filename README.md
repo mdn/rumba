@@ -13,7 +13,8 @@ Before you can start working with Rumba, you need to:
    - Ubuntu: `apt install gcc libpq-dev libssl-dev pkg-config`
 3. Run a PostgreSQL instance:
    - Mac OS: e.g. [Postgres.app](https://postgresapp.com/)
-   - Docker: `docker run --name postgres -p 5432:5432 -e POSTGRES_USER=rumba -e POSTGRES_PASSWORD=rumba -e POSTGRES_DB=mdn -d postgres`).
+   - Docker: `docker run --name postgres -p 5432:5432 -e POSTGRES_USER=rumba -e POSTGRES_PASSWORD=rumba -e POSTGRES_DB=mdn -d postgres:18`
+   - Use the major version set in `POSTGRES_MAJOR_VERSION` (`src/db/mod.rs`), which matches stage and prod.
 4. Run an Elastic instance:
    - Docker: `docker run --name elastic -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" -d elasticsearch:8.3.3`
 5. Copy `.settings.dev.toml` to `.settings.toml`.

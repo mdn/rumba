@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
+        # Keep in sync with `POSTGRES_MAJOR_VERSION` in `src/db/mod.rs`.
         image: postgres:18
         env:
           POSTGRES_USER: rumba
